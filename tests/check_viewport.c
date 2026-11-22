@@ -1434,12 +1434,44 @@ static void snapshot_amiga_occlusion() {
 		restore_timeline_state(&before);repaint_restored_state();return;
 	}
 }
+static void snapshot_city_lift() {
+	if(g_vars.level!=4 || !getenv("BLUES_VIEW_TEST_OUTPUT"))return;
+	struct bb_state before;assert(capture_game_state(&before));
+	int slot=-1;for(int i=0;i<MAX_OBJECTS;++i)if(g_vars.objects[i].type==35){slot=i;break;}
+	assert(slot>=0);
+	for(int i=0;i<MAX_OBJECTS;++i)g_vars.objects[i].visible_flag=false;
+	struct object_t *lift=&g_vars.objects[slot],*player=&g_vars.objects[OBJECT_NUM_PLAYER1];
+	lift->visible_flag=player->visible_flag=true;lift->anim_frame=SPRITES_COUNT;
+	player->xpos=lift->xpos;player->ypos=lift->ypos-15;player->anim_frame=0;
+	g_vars.screen_tilemap_xorigin=MAX(0,MIN(player->xpos-160,g_vars.screen_tilemap_w*16-320));
+	g_vars.screen_tilemap_yorigin=MAX(0,MIN(lift->ypos-80,g_vars.screen_tilemap_h-160));
+	g_vars.screen_tilemap_xoffset=-(g_vars.screen_tilemap_xorigin&15);g_vars.screen_tilemap_yoffset=-(g_vars.screen_tilemap_yorigin&15);
+	for(int i=0;i<MAX_OBJECTS;++i) {
+		g_vars.objects[i].screen_xpos=g_vars.objects[i].xpos-g_vars.screen_tilemap_xorigin;
+		g_vars.objects[i].screen_ypos=g_vars.objects[i].ypos-g_vars.screen_tilemap_yorigin;
+	}
+	repaint_restored_state();snapshot("city-lift-fixed");
+	/* Recreate the exact old palette error in the same real scene. */
+	struct spritesheet_t *sheet=&_spritesheets[RENDER_SPR_LEVEL];
+	const int w=READ_LE_UINT16(g_res.spr_frames[SPRITES_COUNT]-2),h=READ_LE_UINT16(g_res.spr_frames[SPRITES_COUNT]-4);
+	SDL_Surface *surface=SDL_CreateRGBSurface(0,w,h,8,0,0,0,0);assert(surface);
+	SDL_SetSurfacePalette(surface,_palette);SDL_SetColorKey(surface,1,0);
+	for(int y=0;y<h;++y)for(int x=0;x<w;++x)((uint8_t *)surface->pixels)[y*surface->pitch+x]=native_sprite_pixel(SPRITES_COUNT,x,y);
+	SDL_Texture *broken=SDL_CreateTextureFromSurface(_renderer,surface);assert(broken);SDL_FreeSurface(surface);
+	SDL_Texture *texture=sheet->texture;const SDL_Rect rect=sheet->r[0];
+	sheet->texture=broken;sheet->r[0]=(SDL_Rect){0,0,w,h};
+	sdl2_draw_screen(0,0,1);snapshot("city-lift-before");
+	sheet->texture=texture;sheet->r[0]=rect;SDL_DestroyTexture(broken);
+	restore_timeline_state(&before);repaint_restored_state();
+}
+
 static void test_amiga_layers() {
 	assert(g_res.amiga_data);
 
 	SDL_SetWindowSize(_window,320,200);
 	g_sys.set_scroll_interpolation(0,0,0,false);
 	snapshot_amiga_occlusion();
+	snapshot_city_lift();
 	uint8_t canvas[320*200];memset(canvas,24,sizeof(canvas));
 	uint32_t pixels[320*200];int checked=0,opaque=0,holes=0;
 	/* Every native .m entry is rendered over a visible marker behind it,
@@ -1484,7 +1516,13 @@ static void test_amiga_layers() {
 		g_sys.set_sprite_owner(-1);g_sys.set_scroll_interpolation(0,0,33,true);
 		sdl2_draw_screen(0,0,.5f);read_native_test_pixels(pixels);
 		for(int y=0;y<h;++y)for(int x=0;x<w;++x) {
-			const uint8_t color=native_sprite_pixel(frame,flip ? w-1-x : x,y);
+			const int sample_x=flip ? w-1-x : x;
+			uint8_t color=native_sprite_pixel(frame,sample_x,y);
+			if(frame==SPRITES_COUNT && (g_vars.level==0 || g_vars.level==4) && color) {
+				/* Independent city reference: the native map's first BLK tile,
+				 * not the malformed sprite colors copied by the old test. */
+				color=g_vars.level==4 ? g_res.tiles[y*640+(sample_x&15)] : native_sprite_pixel(frame+1,sample_x,y);
+			}
 			assert((pixels[(60+y)*320+50+x]&0xffffff)==(_screen_palette[color ? color : 24]&0xffffff));
 		}
 	}

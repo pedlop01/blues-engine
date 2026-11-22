@@ -269,6 +269,21 @@ static void decode_graphics(int spr_type, int start, int end, const uint8_t *dit
 			}
 			const bool amiga_player=g_res.amiga_data && i<101;
 			decode_spr(ptr, w, w, h, amiga_player ? 3 : 4, data, MAX_SPRITESHEET_W, current_x, current_y, g_res.amiga_data);
+			/* The shopping-centre/city lift uses frame 146 for coverage, but
+			 * its indices are not in the native level palette. Frame 147 is
+			 * the matching native artwork (city: exactly two copies of BLK
+			 * tile 0). Keep frame 146's transparent silhouette, use frame 147's colors. */
+			if(g_res.amiga_data && i==SPRITES_COUNT && (g_vars.level==0 || g_vars.level==4)) {
+				const uint8_t *art=g_res.spr_frames[i+1];
+				if(art && w==32 && h<=16 && READ_LE_UINT16(art-2)==w && READ_LE_UINT16(art-4)==h) {
+					uint8_t colors[32*16];
+					decode_spr(art,w,w,h,4,colors,w,0,0,true);
+					for(int yy=0;yy<h;++yy)for(int xx=0;xx<w;++xx) {
+						uint8_t *pixel=data+(current_y+yy)*MAX_SPRITESHEET_W+current_x+xx;
+						if(*pixel)*pixel=colors[yy*w+xx];
+					}
+				}
+			}
 			/* The objet file has four planes and uses level colors. Only the
 			 * 101 player frames use three planes and the upper sprite palette. */
 			if(amiga_player)for(int yy=0;yy<h;++yy)for(int xx=0;xx<w;++xx) {
