@@ -29,9 +29,13 @@ static const struct { char c; uint8_t rows[7]; } _pause_font[] = {
  {'>',{16,8,4,2,4,8,16}}, {'?',{14,17,1,2,4,0,4}}
 };
 
-static void pause_text(const char *text, int x, int y, int scale, bool selected) {
-	if (selected) SDL_SetRenderDrawColor(_renderer, 255, 215, 104, 255);
-	else SDL_SetRenderDrawColor(_renderer, 221, 231, 245, 255);
+static const SDL_Color PAUSE_TEXT = {221, 231, 245, 255};
+static const SDL_Color PAUSE_GOLD = {255, 215, 104, 255};
+static const SDL_Color PAUSE_MUTED = {146, 171, 191, 255};
+static const SDL_Color PAUSE_CYAN = {105, 207, 223, 255};
+static const SDL_Color PAUSE_DANGER = {255, 132, 119, 255};
+
+static void pause_text_pass(const char *text, int x, int y, int scale) {
 	for (; *text; ++text, x += 6 * scale) {
 		for (unsigned i = 0; i < ARRAYSIZE(_pause_font); ++i) {
 			if (_pause_font[i].c != *text) continue;
@@ -47,6 +51,17 @@ static void pause_text(const char *text, int x, int y, int scale, bool selected)
 	}
 }
 
+static void pause_text_color(const char *text, int x, int y, int scale, SDL_Color color) {
+	SDL_SetRenderDrawColor(_renderer, 4, 10, 20, 255);
+	pause_text_pass(text, x + 1, y + 1, scale);
+	SDL_SetRenderDrawColor(_renderer, color.r, color.g, color.b, color.a);
+	pause_text_pass(text, x, y, scale);
+}
+
+static void pause_text(const char *text, int x, int y, int scale, bool selected) {
+	pause_text_color(text, x, y, scale, selected ? PAUSE_GOLD : PAUSE_TEXT);
+}
+
 static void pause_center_text(const char *text, int y, int scale, bool selected) {
 	pause_text(text, (320 - ((int)strlen(text) * 6 - 1) * scale) / 2, y, scale, selected);
 }
@@ -58,10 +73,23 @@ static void sdl2_draw_pause_menu() {
 	SDL_RenderSetLogicalSize(_renderer, 0, 0);
 	SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 155);
 	SDL_RenderFillRect(_renderer, NULL);
-	SDL_RenderSetLogicalSize(_renderer, 320, 200);
+	/* Whole-pixel scaling keeps bitmap strokes uniform at fractional window
+	 * sizes. A smaller output still fits instead of clipping the dialog. */
+	int w, h;
+	SDL_GetRendererOutputSize(_renderer, &w, &h);
+	const float sx = w / 320.f, sy = h / 200.f;
+	float scale = sx < sy ? sx : sy;
+	if (scale >= 1.f) scale = (int)scale;
+	SDL_Rect viewport = {(int)((w - 320 * scale) / 2.f), (int)((h - 200 * scale) / 2.f),
+		(int)(320 * scale), (int)(200 * scale)};
+	SDL_RenderSetViewport(_renderer, &viewport);
+	SDL_RenderSetScale(_renderer, scale, scale);
 	SDL_Rect box = _pause_page == PAUSE_CONTROLS
 		? (SDL_Rect){12, 13, 296, 174} : (SDL_Rect){28, 31, 264, 138};
-	SDL_SetRenderDrawColor(_renderer, 13, 22, 40, 248);
+	SDL_Rect shadow = {box.x + 4, box.y + 4, box.w, box.h};
+	SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 155);
+	SDL_RenderFillRect(_renderer, &shadow);
+	SDL_SetRenderDrawColor(_renderer, 13, 22, 40, 255);
 	SDL_RenderFillRect(_renderer, &box);
 	SDL_SetRenderDrawColor(_renderer, 69, 189, 213, 255);
 	SDL_RenderDrawRect(_renderer, &box);
@@ -70,37 +98,56 @@ static void sdl2_draw_pause_menu() {
 	SDL_RenderDrawRect(_renderer, &box);
 	if (_pause_page == PAUSE_CONTROLS) {
 		pause_center_text("CONTROLES", 26, 2, true);
-		const char *lines[] = {
-			"MOVER: FLECHAS / STICK / CRUCETA",
-			"ACCION: ESPACIO O ENTER / A",
-			"SALTAR: SHIFT / B",
-			"PAUSA: ESC O P / START",
-			"ZOOM: - / + / 0",
-			"DOS / AMIGA: F6",
-			"HUD CLASICO / FIJO: F7"
+		SDL_SetRenderDrawColor(_renderer, 38, 68, 91, 255);
+		SDL_RenderDrawLine(_renderer, 26, 45, 293, 45);
+		const struct { const char *action, *binding; } lines[] = {
+			{"MOVER", "FLECHAS / STICK / CRUCETA"},
+			{"ACCION", "ESPACIO O ENTER / A"},
+			{"SALTAR", "SHIFT / B"},
+			{"PAUSA", "ESC O P / START"},
+			{"ZOOM", "- / + / 0"},
+			{"DOS/AMIGA", "F6"},
+			{"HUD", "F7: CLASICO / FIJO"}
 		};
-		for (unsigned i = 0; i < ARRAYSIZE(lines); ++i) pause_text(lines[i], 26, 53 + i * 14, 1, false);
+		for (unsigned i = 0; i < ARRAYSIZE(lines); ++i) {
+			pause_text_color(lines[i].action, 26, 53 + i * 14, 1, PAUSE_CYAN);
+			pause_text_color(lines[i].binding, 100, 53 + i * 14, 1, PAUSE_TEXT);
+		}
+		SDL_SetRenderDrawColor(_renderer, 38, 68, 91, 255);
+		SDL_RenderDrawLine(_renderer, 26, 158, 293, 158);
 		pause_center_text("ENTER / A / ESC / B: VOLVER", 169, 1, true);
 	} else {
 		pause_center_text(_pause_page == PAUSE_QUIT ? "SALIR DEL JUEGO?" : "PAUSA", 44,
-			_pause_page == PAUSE_QUIT ? 1 : 2, true);
+			2, true);
+		if (_pause_page == PAUSE_QUIT) {
+			pause_center_text("CONFIRMA PARA SALIR", 65, 1, false);
+		} else {
+			SDL_SetRenderDrawColor(_renderer, 38, 68, 91, 255);
+			SDL_RenderDrawLine(_renderer, 43, 65, 276, 65);
+		}
 		const char *main_items[] = {"CONTINUAR", "CONTROLES", "SALIR DEL JUEGO"};
 		const char *quit_items[] = {"VOLVER", "SALIR"};
 		const int count = _pause_page == PAUSE_QUIT ? 2 : 3;
 		for (int i = 0; i < count; ++i) {
-			const int y = 77 + i * 21;
+			const int y = (_pause_page == PAUSE_QUIT ? 87 : 77) + i * 21;
+			const SDL_Color accent = _pause_page == PAUSE_QUIT && i == 1 ? PAUSE_DANGER : PAUSE_GOLD;
 			if (i == _pause_selection) {
 				SDL_Rect selected = {43, y - 5, 234, 17};
 				SDL_SetRenderDrawColor(_renderer, 29, 55, 77, 255);
 				SDL_RenderFillRect(_renderer, &selected);
-				pause_text(">", 51, y, 1, true);
+				SDL_Rect stripe = {43, y - 5, 2, 17};
+				SDL_SetRenderDrawColor(_renderer, accent.r, accent.g, accent.b, 255);
+				SDL_RenderFillRect(_renderer, &stripe);
+				pause_text_color(">", 51, y, 1, accent);
 			}
-			pause_text(_pause_page == PAUSE_QUIT ? quit_items[i] : main_items[i], 69, y, 1,
-				i == _pause_selection);
+			pause_text_color(_pause_page == PAUSE_QUIT ? quit_items[i] : main_items[i], 69, y, 1,
+				i == _pause_selection ? accent : PAUSE_TEXT);
 		}
-		pause_center_text("FLECHAS / STICK   ENTER / A", 145, 1, false);
-		pause_center_text("ESC / P / START: VOLVER", 156, 1, false);
+		pause_text_color("FLECHAS / STICK   ENTER / A", 85, 145, 1, PAUSE_MUTED);
+		pause_text_color("ESC / P / START: VOLVER", 94, 156, 1, PAUSE_MUTED);
 	}
+	SDL_RenderSetScale(_renderer, 1.f, 1.f);
+	SDL_RenderSetViewport(_renderer, NULL);
 	SDL_SetRenderDrawBlendMode(_renderer, blend);
 	SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 255);
 	SDL_RenderSetLogicalSize(_renderer, _screen_w, _screen_h);

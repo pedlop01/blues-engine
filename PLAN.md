@@ -7,9 +7,9 @@ refieren a cada tarea; no representan una estimación del tiempo restante.
 
 ## Estado general
 
-- Tareas completadas: **5 de 18**.
-- Completadas: **01–05**.
-- En validación: **06**. Los selectores de cámara y HUD en el menú siguen previstos en **08**.
+- Tareas completadas: **6 de 18**.
+- Completadas: **01–06**.
+- En validación: **07**. Los selectores de cámara y HUD en el menú siguen previstos en **08**.
 - Las demás tareas están pendientes de implementación.
 
 ## Base disponible
@@ -38,8 +38,8 @@ confirmado por el usuario: el audio DOS funciona correctamente en Windows.
 | 03 | Suavizar personajes y objetos | Interpolar el desplazamiento a 60/120 Hz conservando física y colisiones a 30 Hz. Evitar saltos visuales en puertas, cambios de modo y zoom. | 01 | Completada: pruebas técnicas superadas a 60/120 Hz, física a 30 Hz y fluidez confirmada por el usuario al jugar. | 100 % |
 | 04 | Mejorar la cámara | Añadir anticipación hacia donde se camina y seguimiento suave, respetando bordes, habitaciones y cambios de dirección. Conservar cámara clásica y suavizada seleccionables; integrar el selector en el menú mediante la tarea 08. | 01 | Completada: selección al arrancar, pruebas técnicas superadas y seguimiento validado al jugar por el usuario. Selector en menú pendiente en 08. | 100 % |
 | 05 | Mantener legible el HUD | Ofrecer HUD clásico que escala con el mapa y HUD fijo legible, conservando los estilos DOS/Amiga. El HUD fijo debe reservar bandas propias y mostrar el encuadre completo sin ocultar ni deformar el mapa. | 01 | Completada: HUD clásico/fijo, encuadre corregido y ambos estilos conservados. Pruebas técnicas superadas y resultado validado al jugar por el usuario. | 100 % |
-| 06 | Crear el menú dentro del juego | Una tecla abre un cuadro centrado y pausa la acción. Navegación con teclado y mando; cerrar el menú devuelve el control sin entradas residuales. | 01 | Integrada y probada: Esc/P/Start, continuar, controles, salida confirmada y navegación con teclado/mando. Simulación/audio en pausa y controles retenidos hasta soltarlos. Pendiente de validación al jugar. | 75 % |
-| 07 | Diseñar el aspecto del menú | Fuente retro legible, colores que resalten la selección y distribución correcta en ventana, pantalla completa y distintos encuadres. | 06 | Pendiente | 0 % |
+| 06 | Crear el menú dentro del juego | Una tecla abre un cuadro centrado y pausa la acción. Navegación con teclado y mando; cerrar el menú devuelve el control sin entradas residuales. | 01 | Completada: pruebas técnicas superadas y menú validado al jugar por el usuario. Esc/P/Start, navegación con teclado/mando, pausa de simulación/audio y reanudación sin entradas residuales. | 100 % |
+| 07 | Diseñar el aspecto del menú | Fuente retro legible, colores que resalten la selección y distribución correcta en ventana, pantalla completa y distintos encuadres. | 06 | Integrada y probada: tipografía sombreada, selección dorada, confirmación de salida diferenciada y controles en columnas. Escalado nítido y centrado en ventana/pantalla completa. Pendiente de validación visual del usuario. | 75 % |
 | 08 | Integrar opciones generales | DOS/Amiga, cámara clásica o suavizada, HUD clásico o fijo, pantalla completa, frecuencia de presentación, encuadre y configuración de controles accesibles desde el menú. | 06, 07 | Pendiente | 0 % |
 | 09 | Añadir controles de volumen | Ajustes independientes para música y efectos, incluido silencio, aplicados sin reiniciar el juego ni producir chasquidos. | 02, 06 | Pendiente | 0 % |
 | 10 | Añadir ayudas de juego | Activar/desactivar invulnerabilidad, aumentar o reducir vidas y elegir vidas infinitas desde el menú. Mostrar con claridad qué ayudas están activas. | 06 | Pendiente | 0 % |
@@ -129,3 +129,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-22 | 05 | Pruebas superadas en los seis niveles con HUD clásico y fijo: zoom, puertas, cambios DOS/Amiga y alternancia F7 durante el zoom. Comprobadas las cuatro esquinas visibles del mundo y los píxeles originales del HUD fijo; AddressSanitizer y compilaciones Linux/Windows superados. | Validación al jugar del encuadre corregido y de la elección entre HUD clásico/fijo. |
 | 2026-11-22 | 05, 06 | El usuario valida ambos HUD y el zoom corregido: se cierra 05 al 100 %. Comienza el menú de pausa dentro del juego con teclado y mando. | Comprobar congelación de simulación/audio, navegación y ausencia de entradas residuales. |
 | 2026-11-22 | 06 | Menú centrado con Continuar, Controles y Salir con confirmación. Esc/P/Start, navegación por teclado, cruceta y stick; audio y escena congelados, sin entradas residuales al volver. Pruebas unitarias e integración en seis niveles, DOS/Amiga, ambos HUD y 30/60/120 Hz superadas. Compilaciones Linux/Windows y AddressSanitizer superados. | Validar apertura, navegación y reanudación al jugar. El diseño ampliado y las opciones se mantienen en 07–08. |
+| 2026-11-22 | 06, 07 | El usuario valida el menú y se cierra 06 al 100 %. Comienza el pulido visual, conservando la estructura aceptada. | Revisar tipografía, selección, controles y distribución en distintos tamaños. |
+| 2026-11-22 | 07 | Pulido visual sin cambiar la navegación aceptada: fuente con sombra, selección con franja dorada, confirmación de salida en otro color y controles en columnas. Pruebas de las tres pantallas y ambas selecciones de salida, cinco tamaños de ventana y pantalla completa, con escalado a píxeles enteros. Integración DOS/Amiga con ambos HUD y compilaciones Linux/Windows verificadas; AddressSanitizer superado. | Confirmar el aspecto al jugar antes de cerrar al 100 %. |

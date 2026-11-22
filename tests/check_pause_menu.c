@@ -127,27 +127,39 @@ int main() {
 	sdl2_run_pause_menu();
 	assert(SDL_GetAudioStatus() == SDL_AUDIO_PAUSED && audio_callbacks == callbacks);
 	/* The cyan frame stays centered across resize and differing aspect ratios. */
-	const int sizes[][2] = {{640,400},{800,600},{1280,720}};
+	const int sizes[][2] = {{320,200},{640,400},{800,600},{1280,720},{853,533},{0,0}};
 	_pause_page = PAUSE_MAIN;
 	for (unsigned i = 0; i < ARRAYSIZE(sizes); ++i) {
-		SDL_SetWindowSize(_window, sizes[i][0], sizes[i][1]);
-		_pause_menu_open = true;
-		sdl2_draw_screen(0,0,1);
-		_pause_menu_open = false;
-		int w, h;
-		SDL_GetRendererOutputSize(_renderer, &w, &h);
-		uint32_t *pixels = malloc((size_t)w*h*4);
-		assert(pixels);
-		SDL_RenderSetLogicalSize(_renderer,0,0);
-		assert(SDL_RenderReadPixels(_renderer,NULL,SDL_PIXELFORMAT_ARGB8888,pixels,w*4)==0);
-		SDL_RenderSetLogicalSize(_renderer,_screen_w,_screen_h);
-		int x1=w, x2=0, y1=h, y2=0;
-		for (int y=0;y<h;++y) for (int x=0;x<w;++x) {
-			if ((pixels[y*w+x]&0xffffff)!=0x45bdd5) continue;
-			x1=MIN(x1,x); x2=MAX(x2,x); y1=MIN(y1,y); y2=MAX(y2,y);
+		if (sizes[i][0]) SDL_SetWindowSize(_window, sizes[i][0], sizes[i][1]);
+		else assert(SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN_DESKTOP) == 0);
+		for (int page = 0; page < 4; ++page) {
+			_pause_page = page == 3 ? PAUSE_QUIT : (enum pause_page)page;
+			_pause_selection = page == 3 ? 1 : 0;
+			_pause_menu_open = true;
+			sdl2_draw_screen(0,0,1);
+			_pause_menu_open = false;
+			int w, h;
+			SDL_GetRendererOutputSize(_renderer, &w, &h);
+			uint32_t *pixels = malloc((size_t)w*h*4);
+			assert(pixels);
+			SDL_RenderSetLogicalSize(_renderer,0,0);
+			assert(SDL_RenderReadPixels(_renderer,NULL,SDL_PIXELFORMAT_ARGB8888,pixels,w*4)==0);
+			SDL_RenderSetLogicalSize(_renderer,_screen_w,_screen_h);
+			int x1=w, x2=0, y1=h, y2=0, gold=0, danger=0;
+			for (int y=0;y<h;++y) for (int x=0;x<w;++x) {
+				const uint32_t color = pixels[y*w+x]&0xffffff;
+				if (color == 0xffd768) ++gold;
+				if (color == 0xff8477) ++danger;
+				if (color!=0x45bdd5) continue;
+				x1=MIN(x1,x); x2=MAX(x2,x); y1=MIN(y1,y); y2=MAX(y2,y);
+			}
+			assert(x1<x2 && y1<y2 && abs(x1+x2+1-w)<=2 && abs(y1+y2+1-h)<=2);
+			assert(x1>=0 && x2<w && y1>=0 && y2<h);
+			const int scale = MIN(w/320,h/200);
+			assert(scale >= 1 && gold > 0 && gold % (scale*scale) == 0);
+			assert((danger > 0) == (page == 3));
+			free(pixels);
 		}
-		assert(x1<x2 && y1<y2 && abs(x1+x2+1-w)<=2 && abs(y1+y2+1-h)<=2);
-		free(pixels);
 	}
 	sdl2_stop_audio();
 	free(bitmap);

@@ -32,7 +32,7 @@ adjustment has been confirmed in gameplay.
 
 ## Ideas and roadmap
 
-The next phase adds visual polish and settings to the pause menu, configurable
+The next phase adds settings to the pause menu, configurable
 controls and volumes, invulnerability and life controls, level selection, eight save
 slots with thumbnails, and a short rewind with a VHS-style visual effect.
 Further work includes Windows packaging.
@@ -198,7 +198,14 @@ resources, HUD mode and presentation rate. Held menu controls must be released
 before they can act in gameplay, preventing accidental movement, jumps or
 resource/HUD switches on resume.
 
-This is the functional menu foundation (task 06). Visual polish is tracked in
+The menu retains a retro bitmap font with a dark shadow, gold selection stripe
+and a separate color for the confirmed Quit action. The Controls page groups
+actions and bindings in columns. It uses whole-pixel scaling when the output
+fits at least 320x200, keeping glyph strokes uniform at fractional window sizes;
+smaller outputs fit the dialog proportionally. Its size is independent of map
+zoom, and it stays centered in windowed and fullscreen modes.
+
+The menu foundation (task 06) is validated. This visual polish is tracked in
 07, and configurable options such as camera/HUD selection are tracked in 08.
 The existing F6/F7 and zoom shortcuts remain available during gameplay.
 
