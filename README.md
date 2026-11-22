@@ -22,6 +22,7 @@ focused on the first **Blues Brothers** game.
 | Dynamic framing | `-` reveals more of the map, `+` moves closer, and `0` restores the initial view; changes ease over about 300 ms. |
 | Original DOS audio | Native playback of four AdLib songs and 18 effects, read from the user's supported `1.EXE`, with Nuked OPL3 chip emulation. |
 | Live DOS / Amiga switch | `F6` changes graphics, palettes, HUD and native audio while retaining game state, map edits, rooms and framing. |
+| Readable native HUD | Top and bottom indicators keep their native display size during zoom, preserving the different DOS and Amiga artwork, fonts, colors and layouts. |
 | Larger views | Dynamic sprite storage replaces the fixed sprite limit; camera bounds and defeated-enemy visibility follow the current view. |
 | Regression tests | Tests cover DOS sequencer accuracy, PCM continuity, zoom, doors, defeated enemies and live presentation changes. |
 
@@ -33,7 +34,7 @@ adjustment has been confirmed in gameplay.
 The next phase includes a centered in-game options menu, configurable controls
 and volumes, invulnerability and life controls, level selection, eight save
 slots with thumbnails, and a short rewind with a VHS-style visual effect.
-Further work includes HUD polish and Windows packaging.
+Further work includes Windows packaging.
 
 **These are planned features, not features already available.** Progress,
 dependencies and completion criteria are tracked in [PLAN.md](PLAN.md).
@@ -125,6 +126,11 @@ limited by the level boundaries. The window size stays fixed; the larger map
 area is fitted into it, so characters and tiles become smaller. The camera
 keeps the player at the same relative position where map boundaries allow it.
 With the default settings, the logical view ranges from 320x200 to 960x600.
+The HUD keeps the original release's 320x200 display scale independently of
+map zoom: DOS retains its own bars, digits and icons, and Amiga retains its
+own. Only the original top/bottom bands are overlaid; their size responds to
+window size rather than camera distance. This also applies to two-player
+indicators and to live switches between DOS and Amiga.
 Menus keep their original resolution; the chosen framing is reapplied when
 entering the next level. `--screensize` sets the initial framing.
 Changes of framing ease in and out over approximately 300 ms. Pressing another
@@ -298,3 +304,17 @@ edits, room/zoom coordinates, actor rendering, PCM output from both soundtracks,
 matching player sprite/atlas dimensions after each switch, and safe rejection
 when the alternate resources are missing. It can start in
 either mode and run against each of the six levels.
+
+### Native HUD regression test
+
+```
+BLUES_TEST_HUD=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  build/tests/check_viewport --dos-datapath=../orig-games/dos \
+  --amiga-datapath=../orig-games/amiga --cheats=7 --level=0
+```
+
+The test compares the displayed HUD pixel-for-pixel with the original native
+presentation in both resource modes, with one and two players, three window
+sizes, all eight zoom steps and intermediate transition sizes. It also verifies
+that the HUD layer is disabled before returning to menus. Repeat for levels
+1 through 5 to cover the full set of level markers.

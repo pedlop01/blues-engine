@@ -255,6 +255,9 @@ static bool psp_resize_viewport(int w, int h) {
 	return false;
 }
 
+static void psp_set_hud_layout(int width, int height, int top, int bottom) {
+}
+
 static void psp_begin_sprite_frame() {
 }
 
@@ -444,6 +447,7 @@ struct sys_t g_sys = {
 	.set_scroll_interpolation = psp_set_scroll_interpolation,
 	.set_scroll_render_rate = psp_set_scroll_render_rate,
 	.resize_viewport = psp_resize_viewport,
+	.set_hud_layout = psp_set_hud_layout,
 	.begin_sprite_frame = psp_begin_sprite_frame,
 	.set_sprite_owner = psp_set_sprite_owner,
 };

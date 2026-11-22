@@ -247,6 +247,91 @@ static void snapshot(const char *name) {
 	SDL_FreeSurface(surface);
 }
 
+static uint32_t *read_output(int *w, int *h) {
+	assert(SDL_GetRendererOutputSize(_renderer, w, h) == 0);
+	uint32_t *pixels = malloc((size_t)*w * *h * sizeof(*pixels));
+	assert(pixels);
+	/* Read the complete output, including letterboxing. SDL's NULL rect
+	 * otherwise starts at the current world viewport's offset. */
+	SDL_RenderSetLogicalSize(_renderer, 0, 0);
+	assert(SDL_RenderReadPixels(_renderer, NULL, SDL_PIXELFORMAT_ARGB8888, pixels,
+		*w * sizeof(*pixels)) == 0);
+	SDL_RenderSetLogicalSize(_renderer, _screen_w, _screen_h);
+	return pixels;
+}
+
+static void assert_hud_pixels(const uint32_t *expected, int w, int h) {
+	int actual_w, actual_h;
+	uint32_t *actual = read_output(&actual_w, &actual_h);
+	assert(w == actual_w && h == actual_h);
+	const double scale = w / 320. < h / 200. ? w / 320. : h / 200.;
+	const int left = (w - 320 * scale) / 2;
+	const int top = (h - 200 * scale) / 2;
+	for (int y = top; y < top + 200 * scale; ++y) {
+		if (y >= top + 14 * scale && y < top + 174 * scale) continue;
+		if (memcmp(expected + y * w + left, actual + y * w + left,
+			(size_t)(320 * scale) * sizeof(*actual)) != 0) {
+			fprintf(stderr, "HUD mismatch: amiga=%d players=%d viewport=%dx%d output=%dx%d row=%d\n",
+				g_res.amiga_data, g_vars.two_players_flag + 1, GAME_SCREEN_W, GAME_SCREEN_H, w, h, y);
+
+			abort();
+		}
+	}
+	free(actual);
+}
+
+static void render_hud_test_frame() {
+	g_sys.render_clear_sprites();
+	do_level_redraw_tilemap(g_vars.screen_tilemap_xorigin, g_vars.screen_tilemap_yorigin);
+	draw_level_panel();
+	g_sys.copy_bitmap(g_res.vga, GAME_SCREEN_W, GAME_SCREEN_H);
+	/* Keep interpolation active to verify scrolling cannot move the HUD. */
+	g_sys.set_scroll_interpolation(6, 3, 33, true);
+	sdl2_draw_screen(3.f, 1.5f, .5f);
+}
+
+static void test_hud() {
+	const int sizes[][2] = {{640, 400}, {960, 600}, {800, 600}};
+	for (int mode = 0; mode < 2; ++mode) {
+		for (int players = 1; players <= 2; ++players) {
+			g_vars.two_players_flag = players == 2;
+			g_vars.player = PLAYER_ELWOOD;
+			for (int i = 0; i < 2; ++i) {
+				struct object_t *p = &g_vars.objects[OBJECT_NUM_PLAYER1 + i];
+				p->type = i;
+				p->data51 = 3;
+				p->lifes_count = 3 + i;
+				p->vinyls_count = 27 + i;
+			}
+			for (unsigned size = 0; size < ARRAYSIZE(sizes); ++size) {
+				SDL_SetWindowSize(_window, sizes[size][0], sizes[size][1]);
+				update_level_view(base_w, base_h, 0);
+				/* The unmodified native presentation is the pixel reference. */
+				g_sys.set_hud_layout(0, 0, 0, 0);
+				render_hud_test_frame();
+				int w, h;
+				uint32_t *expected = read_output(&w, &h);
+				g_sys.set_hud_layout(320, 200, 14, 26);
+				render_hud_test_frame();
+				assert_hud_pixels(expected, w, h);
+				for (int step = 1; step <= 8; ++step) {
+					update_level_view(base_w, base_h, step);
+					render_hud_test_frame();
+					assert_hud_pixels(expected, w, h);
+					/* Intermediate easing dimensions need the same exact HUD. */
+					resize_level_view(GAME_SCREEN_W - 3, GAME_SCREEN_H - 1, true);
+					render_hud_test_frame();
+					assert_hud_pixels(expected, w, h);
+				}
+				free(expected);
+			}
+		}
+		if (mode == 0) assert(switch_data_mode());
+	}
+	puts("HUD: original DOS/Amiga pixels, 1/2 players, 3 window sizes, 8 zoom steps and intermediate sizes passed");
+	g_sys.input.quit = true;
+}
+
 /* Exercise the camera against each real level and several viewport sizes. */
 static void test_camera() {
 	for (int step = 0; step <= 8; step += 4) {
@@ -337,6 +422,10 @@ static void test_events() {
 		base_h = previous_h = GAME_SCREEN_H;
 		saved_window_w = window_w;
 		saved_window_h = window_h;
+		if (getenv("BLUES_TEST_HUD")) {
+			test_hud();
+			return;
+		}
 		if (getenv("BLUES_TEST_CAMERA")) {
 			test_camera();
 			return;
@@ -446,6 +535,10 @@ int main(int argc, char **argv) {
 	}
 	if (getenv("BLUES_TEST_DOORS")) {
 		printf("doors: %d transitions at normal, wide and intermediate zoom sizes passed\n", doors_tested);
+		return result;
+	}
+	if (getenv("BLUES_TEST_HUD")) {
+		assert(_hud_width == 0); /* Disabled before menus/inter-level screens. */
 		return result;
 	}
 	if (getenv("BLUES_TEST_CAMERA")) return result;

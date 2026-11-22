@@ -2322,6 +2322,7 @@ static bool resize_level_view(int w, int h, bool anchor_player) {
 	screen_init();
 	g_sys.render_clear_sprites();
 	g_sys.render_set_sprites_clipping_rect(0, TILEMAP_OFFSET_Y, TILEMAP_SCREEN_W, TILEMAP_SCREEN_H);
+	g_sys.set_hud_layout(320, 200, TILEMAP_OFFSET_Y, 40 - TILEMAP_OFFSET_Y);
 	print_debug(DBG_SYSTEM, "Game viewport %dx%d", w, h);
 	return true;
 }
@@ -2418,6 +2419,7 @@ void do_level() {
 	g_vars.player2_scrolling_flag = 0;
 	g_vars.found_music_instrument_flag = 0;
 	g_sys.render_set_sprites_clipping_rect(0, TILEMAP_OFFSET_Y, TILEMAP_SCREEN_W, TILEMAP_SCREEN_H);
+	g_sys.set_hud_layout(320, 200, TILEMAP_OFFSET_Y, 40 - TILEMAP_OFFSET_Y);
 	bool screen_transition_flag = true;
 	int frame_duration_remainder = 0;
 	do {
@@ -2490,5 +2492,6 @@ void do_level() {
 	if (g_options.amiga_copper_bars) {
 		g_sys.set_copper_bars(0);
 	}
+	g_sys.set_hud_layout(0, 0, 0, 0);
 	g_sys.render_set_sprites_clipping_rect(0, 0, GAME_SCREEN_W, GAME_SCREEN_H);
 }

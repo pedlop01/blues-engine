@@ -35,6 +35,9 @@ static struct sprite_t *_previous_sprites;
 static int _previous_sprites_count, _previous_sprites_capacity;
 static int _sprite_owner = -1, _sprite_part;
 static SDL_Rect _sprites_cliprect;
+static int _hud_width, _hud_height, _hud_top, _hud_bottom;
+static SDL_Texture *_hud_texture_top, *_hud_texture_bottom;
+static void sdl2_draw_hud();
 
 static int _screen_w, _screen_h;
 static int _shake_dx, _shake_dy;
@@ -88,6 +91,10 @@ static void sdl2_init() {
 }
 
 static void sdl2_fini() {
+	SDL_DestroyTexture(_hud_texture_top);
+	SDL_DestroyTexture(_hud_texture_bottom);
+	_hud_texture_top = _hud_texture_bottom = 0;
+	_hud_width = _hud_height = 0;
 	if (_fmt) {
 		SDL_FreeFormat(_fmt);
 		_fmt = 0;
@@ -321,6 +328,7 @@ static void fade_palette_helper(int in) {
 		SDL_SetRenderDrawColor(_renderer, 0, 0, 0, alpha);
 		SDL_RenderClear(_renderer);
 		SDL_RenderCopy(_renderer, _texture, 0, 0);
+		sdl2_draw_hud();
 		SDL_RenderFillRect(_renderer, &r);
 		SDL_RenderPresent(_renderer);
 		SDL_Delay(30);
@@ -368,6 +376,7 @@ static void sdl2_transition_screen(enum sys_transition_e type, bool open) {
 		}
 		SDL_RenderClear(_renderer);
 		SDL_RenderCopy(_renderer, _texture, &r, &r);
+		sdl2_draw_hud();
 		SDL_RenderPresent(_renderer);
 		SDL_Delay(30);
 	} while (r.x > 0 && (type == TRANSITION_CURTAIN || r.y > 0));
@@ -404,6 +413,14 @@ static void sdl2_copy_bitmap(const uint8_t *p, int w, int h) {
 		}
 	}
 	SDL_UpdateTexture(_texture, 0, _screen_buffer, _screen_w * sizeof(uint32_t));
+	if (_hud_width > 0 && _screen_w >= _hud_width) {
+		const int x = (_screen_w - _hud_width) / 2;
+		SDL_UpdateTexture(_hud_texture_top, 0, _screen_buffer + x,
+			_screen_w * sizeof(uint32_t));
+		SDL_UpdateTexture(_hud_texture_bottom, 0,
+			_screen_buffer + (_screen_h - _hud_bottom) * _screen_w + x,
+			_screen_w * sizeof(uint32_t));
+	}
 }
 
 static void sdl2_render_background(float scroll_x, float scroll_y, int clip_x, int clip_y, int clip_w, int clip_h) {
@@ -427,6 +444,45 @@ static SDL_FRect sdl2_sprite_rect(const struct sprite_t *spr, float scroll_x, fl
 		r.y += scroll_y;
 	}
 	return r;
+}
+
+static void sdl2_set_hud_layout(int width, int height, int top, int bottom) {
+	if (width > 0 && (width != _hud_width || top != _hud_top || bottom != _hud_bottom)) {
+		SDL_DestroyTexture(_hud_texture_top);
+		SDL_DestroyTexture(_hud_texture_bottom);
+		_hud_texture_top = SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_RGB888,
+			SDL_TEXTUREACCESS_STREAMING, width, top);
+		_hud_texture_bottom = SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_RGB888,
+			SDL_TEXTUREACCESS_STREAMING, width, bottom);
+		if (!_hud_texture_top || !_hud_texture_bottom) print_error("Failed to allocate HUD textures");
+	}
+	_hud_width = width;
+	_hud_height = height;
+	_hud_top = top;
+	_hud_bottom = bottom;
+}
+
+static void sdl2_draw_hud() {
+	if (_hud_width <= 0 || _hud_height <= 0 || _screen_w < _hud_width ||
+		_screen_h < _hud_top + _hud_bottom) return;
+	/* Reuse the original release's pixels, palette and layout. Only the
+	 * presentation scale changes: the HUD keeps its native logical size
+	 * while the world has its own zoom. No artwork is replaced or decoded
+	 * a second time, and menus keep their normal rendering path. */
+	int output_w, output_h;
+	SDL_GetRendererOutputSize(_renderer, &output_w, &output_h);
+	const float scale_x = (float)output_w / _hud_width;
+	const float scale_y = (float)output_h / _hud_height;
+	const float scale = scale_x < scale_y ? scale_x : scale_y;
+	const float x = (output_w - _hud_width * scale) / 2.f;
+	const float y = (output_h - _hud_height * scale) / 2.f;
+	SDL_RenderSetLogicalSize(_renderer, 0, 0);
+	SDL_FRect dst = { x, y, _hud_width * scale, _hud_top * scale };
+	SDL_RenderCopyF(_renderer, _hud_texture_top, 0, &dst);
+	dst.y = y + (_hud_height - _hud_bottom) * scale;
+	dst.h = _hud_bottom * scale;
+	SDL_RenderCopyF(_renderer, _hud_texture_bottom, 0, &dst);
+	SDL_RenderSetLogicalSize(_renderer, _screen_w, _screen_h);
 }
 
 static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
@@ -475,6 +531,7 @@ static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
 		}
 	}
 	SDL_RenderSetClipRect(_renderer, 0);
+	sdl2_draw_hud();
 
 	SDL_RenderPresent(_renderer);
 }
@@ -1024,6 +1081,7 @@ struct sys_t g_sys = {
 	.set_scroll_interpolation = sdl2_set_scroll_interpolation,
 	.set_scroll_render_rate = sdl2_set_scroll_render_rate,
 	.resize_viewport = sdl2_resize_viewport,
+	.set_hud_layout = sdl2_set_hud_layout,
 	.begin_sprite_frame = sdl2_begin_sprite_frame,
 	.set_sprite_owner = sdl2_set_sprite_owner,
 };

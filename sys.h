@@ -69,6 +69,8 @@ struct sys_t {
 	void	(*set_scroll_interpolation)(int dx, int dy, int simulation_period, bool enabled);
 	void	(*set_scroll_render_rate)(int rate);
 	bool	(*resize_viewport)(int w, int h);
+	/* Overlay strips sampled from the centered native HUD in copy_bitmap. */
+	void	(*set_hud_layout)(int width, int height, int top, int bottom);
 	void	(*begin_sprite_frame)();
 	void	(*set_sprite_owner)(int owner);
 };

@@ -7,9 +7,9 @@ refieren a cada tarea; no representan una estimación del tiempo restante.
 
 ## Estado general
 
-- Tareas completadas: **3 de 18**.
-- Completadas: **01–03**.
-- En validación: **04** (selector del futuro menú previsto en **08**).
+- Tareas completadas: **4 de 18**.
+- Completadas: **01–04**.
+- En validación: **05**. El selector de cámara en el menú sigue previsto en **08**.
 - Las demás tareas están pendientes de implementación.
 
 ## Base disponible
@@ -36,8 +36,8 @@ confirmado por el usuario: el audio DOS funciona correctamente en Windows.
 | 01 | Consolidar el proyecto | Ordenar archivos generados, revisar rutas y separar los cambios en commits claros. La nueva estructura y sus ejemplos deben funcionar. | — | Completada: fuentes y documentación publicadas en pedlop01/blues-engine, rama main verificada; historial y autoría de cyxx/blues conservados. | 100 % |
 | 02 | Terminar de validar el audio | Confirmar la ausencia de petardeo DOS y comprobar música y efectos en ambos modos, en Windows. | — | Completada: pruebas técnicas superadas y audio DOS confirmado por el usuario en Windows. | 100 % |
 | 03 | Suavizar personajes y objetos | Interpolar el desplazamiento a 60/120 Hz conservando física y colisiones a 30 Hz. Evitar saltos visuales en puertas, cambios de modo y zoom. | 01 | Completada: pruebas técnicas superadas a 60/120 Hz, física a 30 Hz y fluidez confirmada por el usuario al jugar. | 100 % |
-| 04 | Mejorar la cámara | Añadir anticipación hacia donde se camina y seguimiento suave, respetando bordes, habitaciones y cambios de dirección. Conservar cámara clásica y suavizada seleccionables; integrar el selector en el menú mediante la tarea 08. | 01 | Implementada con selección al arrancar; pruebas técnicas superadas. Pendiente de validación al jugar. | 75 % |
-| 05 | Mantener legible el HUD | Conservar un tamaño cómodo de indicadores al alejar el encuadre, sin tapar innecesariamente el mapa. | 01 | Pendiente | 0 % |
+| 04 | Mejorar la cámara | Añadir anticipación hacia donde se camina y seguimiento suave, respetando bordes, habitaciones y cambios de dirección. Conservar cámara clásica y suavizada seleccionables; integrar el selector en el menú mediante la tarea 08. | 01 | Completada: selección al arrancar, pruebas técnicas superadas y seguimiento validado al jugar por el usuario. Selector en menú pendiente en 08. | 100 % |
+| 05 | Mantener legible el HUD | Conservar un tamaño cómodo de indicadores al alejar el encuadre, manteniendo el estilo y los gráficos propios de DOS y Amiga y sin tapar innecesariamente el mapa. | 01 | Integrada y probada: HUD a escala nativa independiente del zoom; gráficos DOS y Amiga conservados píxel a píxel. Pendiente de validación al jugar. | 75 % |
 | 06 | Crear el menú dentro del juego | Una tecla abre un cuadro centrado y pausa la acción. Navegación con teclado y mando; cerrar el menú devuelve el control sin entradas residuales. | 01 | Pendiente | 0 % |
 | 07 | Diseñar el aspecto del menú | Fuente retro legible, colores que resalten la selección y distribución correcta en ventana, pantalla completa y distintos encuadres. | 06 | Pendiente | 0 % |
 | 08 | Integrar opciones generales | DOS/Amiga, cámara clásica o suavizada, pantalla completa, frecuencia de presentación, encuadre y configuración de controles accesibles desde el menú. | 06, 07 | Pendiente | 0 % |
@@ -123,3 +123,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-22 | 03 | El usuario confirma que el movimiento es mucho más suave. Validación visual aceptada y tarea cerrada al 100 %. | Ninguna para esta tarea. |
 | 2026-11-22 | 04, 08 | A petición del usuario se conserva la cámara clásica y se añade una cámara suavizada con anticipación horizontal y tolerancia vertical. Selección provisional mediante --camera=classic/smooth; selector en el menú comprometido en 08. | Validar el seguimiento al jugar; integrar el selector al implementar el menú. |
 | 2026-11-22 | 04 | Pruebas de anticipación, inversión de dirección, parada, tolerancia vertical, caídas rápidas, límites, cortes y cámara clásica superadas en seis niveles. Regresiones de puertas y zoom comprobadas en DOS y Amiga; compilaciones Linux/Windows y comprobación con AddressSanitizer superadas. | Confirmación visual del usuario para cerrar el seguimiento de cámara. |
+| 2026-11-22 | 04, 05 | El usuario valida la cámara y se cierra 04 al 100 %. Comienza 05 con el requisito explícito de conservar los HUD distintos de DOS y Amiga. | Implementar escala independiente y comprobar ambos estilos. |
+| 2026-11-22 | 05 | HUD presentado en bandas a escala nativa independiente del zoom, con los gráficos y paletas originales de DOS y Amiga. Comparación de píxeles superada en ambos modos, uno/dos jugadores, tres tamaños de ventana y todos los encuadres, incluidos tamaños intermedios. Compilaciones Linux/Windows y AddressSanitizer superados. | Confirmar legibilidad y conservación de ambos estilos al jugar. |
