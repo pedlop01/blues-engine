@@ -5,6 +5,10 @@
 Este documento recoge el plan acordado y su estado real. Los porcentajes se
 refieren a cada tarea; no representan una estimación del tiempo restante.
 
+La [propuesta de plataforma Titus](docs/TITUS_PLATFORM_PLAN.md) prepara una futura
+biblioteca de juegos y motores con selector de edición. Su implementación queda
+aplazada hasta cerrar las tareas 17 y 18 de este plan; no cambia el trabajo actual.
+
 ## Estado general
 
 - Tareas completadas: **16 de 18**.

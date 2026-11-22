@@ -10,7 +10,8 @@ focused on the first **Blues Brothers** game.
 [Original project](https://github.com/cyxx/blues) ·
 [This extension](https://github.com/pedlop01/blues-engine) ·
 [Credits and lineage](CREDITS.md) ·
-[Plan y seguimiento](PLAN.md)
+[Plan y seguimiento](PLAN.md) ·
+[Plataforma Titus: propuesta futura](docs/TITUS_PLATFORM_PLAN.md)
 
 ## What this extension adds
 
