@@ -1,5 +1,6 @@
 /* Asset-free tests of the production modal loop, rendering and input routing. */
 #include "../sys_sdl2.c"
+struct options_t g_options;
 
 static int audio_callbacks;
 static int volume_applies;
@@ -132,8 +133,8 @@ int main() {
 	assert(pause_event(&ev) && g_sys.input.quit);
 	reset_menu();
 	/* Controls has one main-menu entry; Options ends directly at Back. */
-	_pause_page=PAUSE_OPTIONS; _pause_selection=8;
-	assert(pause_item_count()==9 && !pause_activate() && _pause_page==PAUSE_MAIN && _pause_selection==1);
+	_pause_page=PAUSE_OPTIONS; _pause_selection=9;
+	assert(pause_item_count()==10 && !pause_activate() && _pause_page==PAUSE_MAIN && _pause_selection==1);
 	_pause_selection=2; pause_activate();
 	assert(_pause_page==PAUSE_BINDINGS && pause_item_count()==5);
 	_pause_selection=2; pause_activate(); assert(_pause_page==PAUSE_CONTROLS);
@@ -248,9 +249,9 @@ int main() {
 	for (unsigned i = 0; i < ARRAYSIZE(sizes); ++i) {
 		if (sizes[i][0]) SDL_SetWindowSize(_window, sizes[i][0], sizes[i][1]);
 		else assert(SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN_DESKTOP) == 0);
-		for (int page = 0; page < 13; ++page) {
-			_pause_page = page == 12 ? PAUSE_QUIT : (enum pause_page)page;
-			_pause_selection = page == 12 ? 1 : 0;
+		for (int page = 0; page < 14; ++page) {
+			_pause_page = page == 13 ? PAUSE_QUIT : (enum pause_page)page;
+			_pause_selection = page == 13 ? 1 : 0;
 			_pause_menu_open = true;
 			sdl2_draw_screen(0,0,1);
 			_pause_menu_open = false;
@@ -273,7 +274,7 @@ int main() {
 			assert(x1>=0 && x2<w && y1>=0 && y2<h);
 			const int scale = MIN(w/320,h/200);
 			assert(scale >= 1 && gold > 0 && gold % (scale*scale) == 0);
-			assert((danger > 0) == (page == 12));
+			assert((danger > 0) == (page == 13));
 			free(pixels);
 		}
 	}

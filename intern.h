@@ -70,6 +70,9 @@ struct options_t {
 	enum hud_mode hud_mode;
 	enum sound_mode sound_mode;
 	int music_volume, effects_volume;
+	bool fullscreen;
+	int preferred_amiga; /* -1: automatic selection, 0: DOS, 1: Amiga. */
+	int initial_lives[2];
 	const char *dos_datapath;
 	const char *amiga_datapath;
 };

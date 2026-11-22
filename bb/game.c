@@ -344,7 +344,7 @@ static void game_run() {
 			g_vars.player1_dead_flag = g_vars.player2_dead_flag = 0;
 			for (int i=OBJECT_NUM_PLAYER1; i<=OBJECT_NUM_PLAYER2; ++i) {
 				struct object_t *player=&g_vars.objects[i];
-				player->lifes_count=3; player->data51=3; player->vinyls_count=0;
+				player->lifes_count=MAX(1,MIN(99,g_options.initial_lives[i-OBJECT_NUM_PLAYER1])); player->data51=3; player->vinyls_count=0;
 				player->restart_level_flag=player->level_complete_flag=0;
 				player->unk60=player->data5F=0;
 			}

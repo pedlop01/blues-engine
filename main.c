@@ -36,8 +36,9 @@ static const char *USAGE =
 	"  --hybrid          Enable fuchsia color as in Hybrid crack\n"
 ;
 
+extern struct game_t game_bb;
+
 static struct game_t *detect_game(const char *data_path) {
-	extern struct game_t game_bb;
 #if !defined(BLUES_ONLY)
 	extern struct game_t game_ja;
 	extern struct game_t game_p2;
@@ -69,6 +70,8 @@ int main(int argc, char *argv[]) {
 	int scale_factor = DEFAULT_SCALE_FACTOR;
 	const char *scale_filter = DEFAULT_SCALE_FILTER;
 	bool fullscreen = false;
+	g_options.initial_lives[0] = g_options.initial_lives[1] = 3;
+	g_options.preferred_amiga = -1;
 	g_options.start_xpos16 = -1;
 	g_options.start_ypos16 = -1;
 	g_options.scroll_rate = 60;
@@ -85,6 +88,8 @@ int main(int argc, char *argv[]) {
 	g_options.screen_w = 320;
 	g_options.screen_h = 200;
 	// g_options.jump_button = true;
+	if (g_sys.load_preferences) g_sys.load_preferences();
+	fullscreen = g_options.fullscreen;
 	if (argc == 2) {
 		struct stat st;
 		if (stat(argv[1], &st) == 0 && S_ISDIR(st.st_mode)) {
@@ -217,7 +222,8 @@ int main(int argc, char *argv[]) {
 	}
 #endif
 	if (data_path == DEFAULT_DATA_PATH) {
-		const char *initial = g_options.dos_datapath ? g_options.dos_datapath : g_options.amiga_datapath;
+		const char *initial = g_options.preferred_amiga==1 && g_options.amiga_datapath ? g_options.amiga_datapath :
+			(g_options.dos_datapath ? g_options.dos_datapath : g_options.amiga_datapath);
 		if (initial) data_path = strdup(initial);
 	}
 	struct game_t *game = detect_game(data_path);
@@ -229,8 +235,10 @@ int main(int argc, char *argv[]) {
 		g_sys.set_scroll_render_rate(g_options.scroll_rate);
 		game->res_init(data_path, GAME_SCREEN_W * GAME_SCREEN_H);
 		game->snd_init();
+		g_mix.set_volumes(g_options.music_volume,g_options.effects_volume);
 		g_mix.init();
 		game->run();
+		if (game == &game_bb && g_sys.save_preferences) g_sys.save_preferences();
 		g_mix.fini();
 		game->snd_fini();
 		game->res_fini();

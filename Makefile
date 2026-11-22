@@ -57,12 +57,17 @@ build/tests/check_pause_menu: tests/check_pause_menu.c sys_sdl2.c sys_sdl2_menu.
 	mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_pause_menu.c util.o $(SDL_LIBS)
 
+build/tests/check_preferences: tests/check_preferences.c sys_sdl2.c sys_sdl2_preferences.h sys_sdl2_menu.h util.o
+	mkdir -p $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_preferences.c util.o $(SDL_LIBS)
+
 build/tests/check_mixer_volumes: tests/check_mixer_volumes.c mixer.c audio_gain.h util.o
 	mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_mixer_volumes.c util.o $(MODPLUG_LIBS)
 
 clean:
 	$(RM) $(OBJS) $(DEPS) $(APP_OBJS) $(APP_OBJS:.o=.d) $(GAME_OBJS) blues
+	$(RM) build/tests/check_preferences build/tests/check_preferences.d
 	$(RM) build/tests/check_mixer_volumes build/tests/check_mixer_volumes.d
 	$(RM) build/tests/check_pause_menu build/tests/check_pause_menu.d
 	$(RM) build/tests/check_viewport build/tests/check_viewport.d build/tests/check_sprite_interpolation build/tests/check_sprite_interpolation.d
@@ -74,3 +79,5 @@ clean:
 -include build/tests/check_pause_menu.d
 
 -include build/tests/check_mixer_volumes.d
+
+-include build/tests/check_preferences.d

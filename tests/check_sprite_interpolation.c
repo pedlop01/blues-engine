@@ -1,5 +1,6 @@
 /* Deterministic tests of the production renderer's actor placement. */
 #include "../sys_sdl2.c"
+struct options_t g_options;
 #include <math.h>
 
 static void next_frame(void) {

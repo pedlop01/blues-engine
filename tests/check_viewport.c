@@ -705,6 +705,19 @@ static uint32_t options_script(uint32_t interval, void *param) {
 	return menu_timer_step==3 ? 0 : interval;
 }
 
+static uint32_t reset_preferences_script(uint32_t interval, void *param) {
+	const int step=menu_timer_step++;
+	if (step==0) {
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RETURN);
+		for (int i=0;i<8;++i) menu_tap(SDLK_DOWN);
+		menu_tap(SDLK_RETURN);
+	} else if (step==1) {
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RETURN);
+		push_menu_key(SDLK_ESCAPE,false);
+	} else {menu_tap(SDLK_UP);push_menu_key(SDLK_RETURN,true);}
+	return menu_timer_step==3 ? 0 : interval;
+}
+
 static bool volume_applied_paused;
 static void track_volume_apply(int music,int effects) {
 	assert(SDL_GetAudioStatus()!=SDL_AUDIO_PLAYING);
@@ -805,9 +818,11 @@ static void test_run_pause_menu() {
 	sdl2_draw_screen(0,0,1); snapshot("menu-audio");
 	_pause_page = PAUSE_ASSISTS;
 	sdl2_draw_screen(0,0,1); snapshot("menu-assists");
+	_pause_page = PAUSE_DEFAULTS; _pause_selection=0;
+	sdl2_draw_screen(0,0,1); snapshot("menu-defaults");
 	_pause_menu_open = false;
 	menu_timer_step = 0;
-	assert(SDL_AddTimer(60, getenv("BLUES_TEST_ASSIST_MENU") ? assist_script : (getenv("BLUES_TEST_VOLUMES") ? volume_script : (getenv("BLUES_TEST_OPTIONS") ? options_script : menu_script)), NULL));
+	assert(SDL_AddTimer(60, getenv("BLUES_TEST_RESET_PREFS") ? reset_preferences_script : (getenv("BLUES_TEST_ASSIST_MENU") ? assist_script : (getenv("BLUES_TEST_VOLUMES") ? volume_script : (getenv("BLUES_TEST_OPTIONS") ? options_script : menu_script))), NULL));
 	const uint32_t timestamp = SDL_GetTicks();
 	sdl2_run_pause_menu();
 	assert(SDL_GetTicks() - timestamp >= 150 && menu_timer_step == 3);
@@ -884,7 +899,7 @@ static void test_level_menu() {
  g_options.amiga_datapath="/nonexistent/blues-data";
  assert(!level_available(0,true)); g_options.amiga_datapath=path;
  struct object_t *player=&g_vars.objects[OBJECT_NUM_PLAYER1];
- player->lifes_count=17; player->data51=1; player->vinyls_count=35;
+ player->lifes_count=2; player->data51=1; player->vinyls_count=35;
  player->unk60=1; player->special_anim=18; player->scrolling_lock_flag=1;
  g_vars.found_music_instrument_flag=true;
  g_vars.switch_player_scrolling_flag=true;
@@ -954,6 +969,30 @@ static void test_level_events() {
  ++level_frames;
 }
 
+static void test_preferences_loaded() {
+	const char *expect=getenv("BLUES_TEST_PREFS_EXPECT");
+	const bool reset=!strcmp(expect,"reset"), override=!strcmp(expect,"override");
+	assert(g_options.camera_mode==((reset || override) ? CAMERA_SMOOTH : CAMERA_CLASSIC));
+	assert(g_options.hud_mode==((reset || override) ? HUD_CLASSIC : HUD_FIXED));
+	assert(g_options.scroll_rate==(override ? 30 : (reset ? 60 : 120)));
+	assert(_game_keys[BIND_ACTION]==(reset ? SDLK_SPACE : SDLK_x));
+	assert(_game_buttons[1]==(reset ? SDL_CONTROLLER_BUTTON_B : SDL_CONTROLLER_BUTTON_X));
+	assert(!g_options.fullscreen && !(SDL_GetWindowFlags(_window)&SDL_WINDOW_FULLSCREEN_DESKTOP));
+	if (!strcmp(expect,"assists")) {
+		assert(g_options.music_volume==40 && g_options.effects_volume==30 && g_sys.input.view_step==4);
+		assert(g_options.cheats==7 && g_options.initial_lives[0]==17);
+		assert(g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count==17);
+	} else {
+		assert(g_options.music_volume==100 && g_options.effects_volume==100);
+		assert(g_sys.input.view_step==(reset ? 0 : 5));
+		assert(g_options.cheats==0 && g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count==3);
+	}
+	assert(g_res.amiga_data==!reset);
+	if (getenv("BLUES_TEST_PREFS_LOSE_LIFE")) g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count=1;
+	g_sys.input.quit=true;
+	puts("preferences: separate launch restored effective options, controls, mode and initial lives passed");
+}
+
 static void test_events() {
 	sdl2_process_events();
 	if (_sprites_cliprect.y != TILEMAP_OFFSET_Y) {
@@ -968,8 +1007,9 @@ static void test_events() {
 		return;
 	}
 	g_sys.input.space = false;
+	if (getenv("BLUES_TEST_PREFS_EXPECT")) {test_preferences_loaded();return;}
 	if (getenv("BLUES_TEST_LEVELS")) {test_level_events();return;}
-	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU")) {
+	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU") || getenv("BLUES_TEST_RESET_PREFS")) {
 		if (test_frames == 0) {
 			g_sys.input.view_step = 4;
 			if(getenv("BLUES_TEST_ASSIST_TWO")) {g_vars.two_players_flag=1;init_level();}
@@ -989,8 +1029,16 @@ static void test_events() {
 			} else if(getenv("BLUES_TEST_VOLUMES")) {
 				assert(g_options.music_volume==40 && g_options.effects_volume==0);
 				g_sys.input.switch_mode=true;
-			} else if (!getenv("BLUES_TEST_OPTIONS")) g_sys.input.quit = true;
+			} else if (!getenv("BLUES_TEST_OPTIONS") && !getenv("BLUES_TEST_RESET_PREFS")) g_sys.input.quit = true;
 		}
+        if (test_frames==4 && getenv("BLUES_TEST_RESET_PREFS")) {
+            assert(g_options.camera_mode==CAMERA_SMOOTH && g_options.hud_mode==HUD_CLASSIC);
+            assert(g_options.initial_lives[0]==3 && g_options.initial_lives[1]==3);
+            assert(!g_options.cheats && g_options.music_volume==100 && g_options.effects_volume==100);
+            assert(g_vars.objects[OBJECT_NUM_PLAYER1].data51==assist_health_before[0]);
+            assert(!g_res.amiga_data && _game_keys[BIND_ACTION]==SDLK_SPACE);
+            g_sys.input.quit=true;
+        }
 		if(test_frames==4 && getenv("BLUES_TEST_ASSIST_MENU")) {
 			assert(g_res.amiga_data != options_before_test.amiga);
 			assert(_assist_invulnerable != options_before_test.invulnerable && _assist_lives != options_before_test.infinite_lives);
@@ -1126,10 +1174,11 @@ static void test_events() {
 }
 
 int main(int argc, char **argv) {
+	if (!SDL_getenv("BLUES_CONFIG_FILE")) SDL_setenv("BLUES_CONFIG_FILE","",1);
 	if (getenv("BLUES_TEST_MODES") || getenv("BLUES_TEST_VOLUMES")) g_sys.start_audio = capture_start_audio;
 	g_sys.process_events = test_events;
 	if (getenv("BLUES_TEST_LEVELS")) g_sys.run_pause_menu=test_level_menu;
-	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU")) g_sys.run_pause_menu = test_run_pause_menu;
+	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU") || getenv("BLUES_TEST_RESET_PREFS")) g_sys.run_pause_menu = test_run_pause_menu;
 	g_sys.sleep = no_sleep;
 	g_sys.fade_in_palette = no_fade;
 	g_sys.fade_out_palette = no_fade;
@@ -1151,11 +1200,12 @@ int main(int argc, char **argv) {
 		assert(_hud_width == 0); /* Disabled before menus/inter-level screens. */
 		return result;
 	}
-	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU")) {
+	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU") || getenv("BLUES_TEST_RESET_PREFS")) {
 		assert(!_pause_menu_enabled);
 		puts("menu: frozen game/objects/map/zoom/audio, preserved scene and clean resume through actual game loop passed");
 		return result;
 	}
+	if (getenv("BLUES_TEST_PREFS_EXPECT")) return result;
 	if (getenv("BLUES_TEST_LEVELS")) {assert(levels_started==7);return result;}
 	if (getenv("BLUES_TEST_TRAVERSAL")) return result;
 	if (getenv("BLUES_TEST_ASSISTS")) return result;

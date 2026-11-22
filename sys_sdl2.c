@@ -49,6 +49,7 @@ static bool _blocked_axes[SDL_CONTROLLER_AXIS_MAX];
 static bool _blocked_joy_buttons[32], _blocked_joy_axes[2], _blocked_hat;
 static void sdl2_draw_pause_menu();
 static void sdl2_draw_assist_status();
+static void allow_preferences_reset();
 static bool handle_bound_key(int key, bool down, struct input_t *input);
 static bool handle_bound_button(int button, bool down, struct input_t *input);
 
@@ -985,6 +986,7 @@ static int handle_event(const SDL_Event *ev, bool *paused) {
 }
 
 #include "sys_sdl2_menu.h"
+#include "sys_sdl2_preferences.h"
 
 static void sdl2_process_events() {
 	bool paused = false;
@@ -1183,6 +1185,8 @@ static void print_log(FILE *fp, const char *s) {
 
 struct sys_t g_sys = {
 	.init = sdl2_init,
+	.load_preferences = sdl2_load_preferences,
+	.save_preferences = sdl2_save_preferences,
 	.fini = sdl2_fini,
 	.set_screen_size = sdl2_set_screen_size,
 	.set_screen_palette = sdl2_set_screen_palette,

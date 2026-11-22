@@ -1,5 +1,5 @@
 /* SDL pause-menu implementation. Kept private to sys_sdl2.c. */
-enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD, PAUSE_AUDIO, PAUSE_ASSISTS, PAUSE_LEVELS, PAUSE_LEVEL_CONFIRM, PAUSE_CHARACTER_CONFIRM };
+enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD, PAUSE_AUDIO, PAUSE_ASSISTS, PAUSE_LEVELS, PAUSE_LEVEL_CONFIRM, PAUSE_CHARACTER_CONFIRM, PAUSE_DEFAULTS };
 static int _selected_level;
 static const char *_level_names[] = {"1 CENTRO COMERCIAL","2 ALMACEN","3 PRISION","4 ALCANTARILLAS","5 CIUDAD","6 CONCIERTO"};
 static enum pause_page _pause_page;
@@ -48,7 +48,7 @@ static bool handle_bound_button(int button, bool down, struct input_t *input) {
 
 static bool pause_large_page() {
 	return _pause_page == PAUSE_CONTROLS || _pause_page == PAUSE_OPTIONS ||
-		_pause_page == PAUSE_BINDINGS || _pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD || _pause_page == PAUSE_AUDIO || _pause_page == PAUSE_ASSISTS || _pause_page == PAUSE_LEVELS || _pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM;
+		_pause_page == PAUSE_BINDINGS || _pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD || _pause_page == PAUSE_AUDIO || _pause_page == PAUSE_ASSISTS || _pause_page == PAUSE_LEVELS || _pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM || _pause_page == PAUSE_DEFAULTS;
 }
 
 static int pause_item_count() {
@@ -57,7 +57,8 @@ static int pause_item_count() {
 	case PAUSE_LEVELS: return 7;
 	case PAUSE_LEVEL_CONFIRM: case PAUSE_CHARACTER_CONFIRM: return 2;
 	case PAUSE_QUIT: return 2;
-	case PAUSE_OPTIONS: return 9;
+	case PAUSE_OPTIONS: return 10;
+	case PAUSE_DEFAULTS: return 2;
 	case PAUSE_ASSISTS: return 5;
 	case PAUSE_AUDIO: return 3;
 	case PAUSE_BINDINGS: return 5;
@@ -228,8 +229,8 @@ static void pause_center_text(const char *text, int y, int scale, bool selected)
 }
 
 static void pause_row(const char *label, const char *value, int index, bool enabled) {
-	const int y = 50 + index * (_pause_page == PAUSE_OPTIONS ? 12 : 14);
-	const bool selected = index == _pause_selection + ((_pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM) ? 4 : 0);
+	const int y = 50 + index * (_pause_page == PAUSE_OPTIONS ? 11 : 14);
+	const bool selected = index == _pause_selection + ((_pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM || _pause_page == PAUSE_DEFAULTS) ? 4 : 0);
 	if (selected) {
 		SDL_Rect rect = {25,y-3,269,12};
 		SDL_SetRenderDrawColor(_renderer,29,55,77,255);
@@ -243,13 +244,13 @@ static void pause_row(const char *label, const char *value, int index, bool enab
 }
 
 static void pause_draw_settings() {
-	if (_pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM) {
+	if (_pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM || _pause_page == PAUSE_DEFAULTS) {
 		const bool character = _pause_page == PAUSE_CHARACTER_CONFIRM;
-		pause_center_text(character ? "ELEGIR PERSONAJE?" : "INICIAR NIVEL?",26,2,true);
-		pause_center_text(character ? "REINICIARAS EL NIVEL ACTUAL" : _level_names[_selected_level],60,1,true);
-		pause_center_text("SE PERDERA EL PROGRESO ACTUAL",82,1,false);
+		pause_center_text(_pause_page == PAUSE_DEFAULTS ? "RESTAURAR AJUSTES?" : (character ? "ELEGIR PERSONAJE?" : "INICIAR NIVEL?"),26,2,true);
+		pause_center_text(_pause_page == PAUSE_DEFAULTS ? "OPCIONES Y CONTROLES ORIGINALES" : (character ? "REINICIARAS EL NIVEL ACTUAL" : _level_names[_selected_level]),60,1,true);
+		pause_center_text(_pause_page == PAUSE_DEFAULTS ? "LA PARTIDA NO SE REINICIA" : "SE PERDERA EL PROGRESO ACTUAL",82,1,false);
 		pause_row("VOLVER",NULL,4,true);
-		pause_row("INICIAR",NULL,5,true);
+		pause_row(_pause_page == PAUSE_DEFAULTS ? "RESTAURAR" : "INICIAR",NULL,5,true);
 		pause_center_text("ENTER / A: ELEGIR  ESC: VOLVER",163,1,true);
 		return;
 	}
@@ -282,7 +283,8 @@ static void pause_draw_settings() {
 		pause_row("ENCUADRE",value,5,true);
 		pause_row("SONIDO",NULL,6,true);
 		pause_row("AYUDAS",NULL,7,true);
-		pause_row("VOLVER",NULL,8,true);
+		pause_row("RESTAURAR AJUSTES",NULL,8,true);
+		pause_row("VOLVER",NULL,9,true);
 	} else if (_pause_page == PAUSE_ASSISTS) {
 		pause_row("INVULNERABLE",_pause_options.invulnerable ? "ACTIVADA" : "DESACTIVADA",0,true);
 		pause_row("VIDAS INFINITAS",_pause_options.infinite_lives ? "ACTIVADAS" : "DESACTIVADAS",1,true);
@@ -435,7 +437,9 @@ static bool pause_back() {
 	_pause_notice = NULL;
 	if (_pause_capture >= 0) { _pause_capture = -1; return false; }
 	if (_pause_page == PAUSE_MAIN) return true;
-	if (_pause_page == PAUSE_CHARACTER_CONFIRM) {
+	if (_pause_page == PAUSE_DEFAULTS) {
+		_pause_page=PAUSE_OPTIONS; _pause_selection=8;
+	} else if (_pause_page == PAUSE_CHARACTER_CONFIRM) {
 		_pause_page=PAUSE_MAIN; _pause_selection=4;
 	} else if (_pause_page == PAUSE_LEVEL_CONFIRM) {
 		_pause_page=PAUSE_LEVELS; _pause_selection=_selected_level;
@@ -461,6 +465,24 @@ static bool pause_back() {
 
 static bool pause_activate() {
 	_pause_notice = NULL;
+	if (_pause_page == PAUSE_DEFAULTS) {
+		if (_pause_selection == 0) return pause_back();
+		_pause_options.camera=CAMERA_SMOOTH; _pause_options.hud=HUD_CLASSIC;
+		_pause_options.render_rate=60; _pause_options.view_step=0;
+		_pause_options.music_volume=_pause_options.effects_volume=100;
+		_pause_options.invulnerable=_pause_options.infinite_lives=false;
+		_pause_options.lives[0]=_pause_options.lives[1]=3;
+		if (_pause_options.can_switch) _pause_options.amiga=false;
+		_pause_options.reset_defaults=true;
+		_last_music_volume=_last_effects_volume=100;
+		memcpy(_edit_keys,_default_keys,sizeof(_edit_keys));
+		_edit_buttons[0]=SDL_CONTROLLER_BUTTON_A; _edit_buttons[1]=SDL_CONTROLLER_BUTTON_B;
+		SDL_SetWindowFullscreen(_window,0);
+		allow_preferences_reset();
+		pause_back(); _pause_notice="AJUSTES RESTAURADOS";
+		return false;
+	}
+
 	if (_pause_page == PAUSE_CHARACTER_CONFIRM) {
 		if (_pause_selection == 0) return pause_back();
 		_pause_options.select_character = true;
@@ -499,6 +521,7 @@ static bool pause_activate() {
 		if (_pause_selection < 6) pause_adjust(1);
 		else if (_pause_selection == 6) { _pause_page = PAUSE_AUDIO; _pause_selection = 0; }
 		else if (_pause_selection == 7) { _pause_page = PAUSE_ASSISTS; _pause_selection = 0; }
+		else if (_pause_selection == 8) { _pause_page = PAUSE_DEFAULTS; _pause_selection = 0; }
 		else return pause_back();
 		return false;
 	}

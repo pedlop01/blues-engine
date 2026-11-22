@@ -28,6 +28,7 @@ focused on the first **Blues Brothers** game.
 | Gameplay assists | Options → Assists offers invulnerability, independent infinite lives and finite counts from 1–99 per active player. Active protections are labeled in the original HUD’s empty margin. |
 | Level selection | Six stages from the pause menu, with confirmation, current-stage restart and unavailable-data detection. Starts fresh while retaining characters, life counts, assists and presentation settings. |
 | Larger views | Dynamic sprite storage replaces the fixed sprite limit; camera bounds and defeated-enemy visibility follow the current view. |
+| Persistent preferences | Presentation, volumes, controls, preferred DOS/Amiga release, assists and chosen starting lives survive restarts. Confirmed reset in Options restores defaults. |
 | Regression tests | Tests cover DOS sequencer accuracy, PCM continuity, zoom, doors, defeated enemies and live presentation changes. |
 
 Audio output is 44.1 kHz. Technical tests pass, and the Windows DOS audio
@@ -35,7 +36,7 @@ adjustment has been confirmed in gameplay.
 
 ## Ideas and roadmap
 
-The next phase adds persistent preferences, eight save
+The next phase adds eight save
 slots with thumbnails, and a short rewind with a VHS-style visual effect.
 Further work includes Windows packaging.
 
@@ -253,8 +254,8 @@ Menu navigation remains on arrows, Enter/Space, Esc/P and controller A/B/Start
 regardless of gameplay bindings. Menu/presentation shortcuts and player-select
 digits are reserved during keyboard capture. Controls shows the prepared
 bindings, and held capture/confirmation inputs are consumed on resume.
-Settings and bindings remain active through levels during this run; saving
-preferences across launches is task 12.
+Settings and bindings remain active through levels and across launches; see
+Persistent preferences below.
 
 ```
 BLUES_TEST_OPTIONS=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
@@ -275,7 +276,7 @@ the last nonzero level. The default is 100% for both. Changes apply when you
 resume, with the new gain targets set before audio restarts and a 20 ms ramp
 to avoid abrupt level changes. Muting continues playback rather than restarting
 songs or effects, and levels are retained across levels and DOS/Amiga switches.
-Saving them between launches remains part of task 12.
+They are also saved between launches.
 
 Amiga module music and PCM effects are scaled separately before mixing. DOS
 keeps the original single-chip sequencer and shared channel 6: its output is
@@ -316,9 +317,10 @@ Finite life pickups cap at 99 to stay within the original two-digit HUD range.
 
 The native DOS/Amiga HUD graphics remain intact. When enabled, **INVULNERABLE**
 and/or **VIDAS INFINITAS** appears in its empty bottom margin. This indicator
-follows the selected classic/fixed HUD scale. Settings last for this run; disk
-persistence is still task 12. A new game starts with three lives and normal
-health, including when using a nonzero `--level`.
+follows the selected classic/fixed HUD scale. Assists and the life counts explicitly chosen in the menu persist between
+launches. A new game uses those starting counts (three by default) and normal
+health, including when using a nonzero `--level`. Lives gained/lost during play
+do not change the chosen starting counts.
 
 ```
 BLUES_TEST_ASSISTS=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
@@ -363,6 +365,51 @@ restart, checking fresh world state and retained settings. Add
 `BLUES_TEST_LEVEL_MODE=1` to alternate the staged DOS/Amiga setting at each
 selection, and `BLUES_TEST_LEVEL_TWO=1` for two players. The pause-menu unit test
 also covers cancellation, disabled entries, default confirmation and layout.
+
+### Persistent preferences
+
+Options and controls load automatically at launch and are saved after applying
+the pause menu, changing live presentation settings, and exiting normally.
+Saved values include preferred DOS/Amiga release, camera, HUD, render rate,
+framing, fullscreen, independent audio volumes, keyboard/controller bindings,
+assists and manually chosen initial life counts. Game progress, resource paths,
+current level, health and remaining lives are not saved here.
+
+The per-user file is `preferences.ini` in SDL's application preference directory:
+
+- Windows: `%APPDATA%\pedlop01\blues-engine\preferences.ini`.
+- Linux/WSL: `$XDG_DATA_HOME/pedlop01/blues-engine/preferences.ini`, or
+  `~/.local/share/pedlop01/blues-engine/preferences.ini` by default.
+
+`BLUES_CONFIG_FILE` can select another file (its parent directory must exist);
+an empty value disables reading and writing. Linux/WSL and Windows keep separate
+preferences unless explicitly configured to use the same file.
+
+**Options → Restaurar ajustes** asks for confirmation, restores options and
+controls, and retains the running stage. It sets finite counts to three and
+disables assists; it does not heal damage or resurrect an eliminated player.
+The default release is DOS when both data sets are available; a single available
+release is kept. Select Continue to apply the prepared changes.
+
+Explicit command-line settings override loaded preferences. A saved Amiga
+preference is used when both data paths are supplied; `--datapath` explicitly
+chooses the initial data set, and a missing secondary path falls back to the
+provided release. Progress remains the separate save-state task.
+
+The text format is versioned. Invalid values are ignored, duplicate/reserved
+bindings are rejected, and unknown keys are tolerated. A newer format is left
+untouched until an explicit reset. Writes replace the old file only after a
+successful temporary write; configuration failures do not prevent playing.
+
+```
+make build/tests/check_preferences build/tests/check_viewport
+build/tests/check_preferences
+python3 tests/check_preferences_launches.py
+```
+
+Tests cover independent game-process launches, CLI precedence, Unicode paths
+and bindings, bad/truncated values, future formats, failed writes, the real reset
+menu, preserved health and restored controls/starting lives.
 
 ### Return to character selection
 

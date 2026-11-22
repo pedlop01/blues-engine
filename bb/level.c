@@ -161,6 +161,7 @@ static const struct {
 
 void load_level_data(int num) {
 	print_debug(DBG_GAME, "load_level_data num %d", num);
+	g_options.preferred_amiga = g_res.amiga_data;
 	memset(g_res.sql, 0, sizeof(_level_base_sql));
 	if (g_res.amiga_data && !g_options.amiga_datapath) g_options.amiga_datapath = strdup(g_res.datapath);
 	if (!g_res.amiga_data && !g_options.dos_datapath) g_options.dos_datapath = strdup(g_res.datapath);
@@ -332,6 +333,7 @@ static bool switch_data_mode() {
 	screen_init();
 	g_sys.render_clear_sprites();
 	g_sys.set_scroll_interpolation(0, 0, 0, false);
+	if (g_sys.save_preferences) g_sys.save_preferences();
 	print_info("Switched to %s graphics and %s audio", amiga ? "Amiga" : "DOS",
 		g_options.sound_mode == SOUND_AUTO ? (amiga ? "Amiga" : "DOS") : "selected");
 	return true;
@@ -474,7 +476,8 @@ static void init_level() {
 		if (!preserve_lives && obj->restart_level_flag == 0 && obj->level_complete_flag == 0 && (g_vars.level == 0 || g_vars.play_demo_flag)) {
 			g_vars.player1_dead_flag = 0;
 			g_vars.player2_scrolling_flag = 0;
-			obj->lifes_count = 3;
+			obj->lifes_count = i >= OBJECT_NUM_PLAYER1 && i <= OBJECT_NUM_PLAYER2 ?
+				MAX(1,MIN(99,g_options.initial_lives[i-OBJECT_NUM_PLAYER1])) : 3;
 			obj->data51 = 3;
 			obj->vinyls_count = 0;
 		} else if (obj->restart_level_flag != 0) {
@@ -2474,6 +2477,7 @@ static void update_assist_status() {
 }
 
 static void apply_game_assists(const struct sys_pause_options *options) {
+	if (options->reset_defaults) g_options.initial_lives[0]=g_options.initial_lives[1]=3;
 	const bool invulnerable = (g_options.cheats & CHEATS_INVULNERABLE) != 0;
 	if (options->invulnerable != invulnerable) {
 		g_options.cheats &= ~CHEATS_INVULNERABLE;
@@ -2481,8 +2485,11 @@ static void apply_game_assists(const struct sys_pause_options *options) {
 	}
 	g_options.cheats &= ~CHEATS_UNLIMITED_LIFES;
 	if (options->infinite_lives) g_options.cheats |= CHEATS_UNLIMITED_LIFES;
-	for (int i=0; i<2; ++i) if (assist_player_active(i))
-		g_vars.objects[OBJECT_NUM_PLAYER1+i].lifes_count = MAX(1,MIN(99,options->lives[i]));
+	for (int i=0; i<2; ++i) if (assist_player_active(i)) {
+		const int lives = MAX(1,MIN(99,options->lives[i]));
+		if (lives != g_vars.objects[OBJECT_NUM_PLAYER1+i].lifes_count) g_options.initial_lives[i] = lives;
+		g_vars.objects[OBJECT_NUM_PLAYER1+i].lifes_count = lives;
+	}
 	/* Adding lives during a last-life death allows the normal retry instead
 	 * of returning to the title. It does not rewind or heal the character. */
 	if (!g_vars.two_players_flag && g_vars.game_over_flag &&
@@ -2594,6 +2601,7 @@ void do_level() {
 					break;
 				}
 			}
+			if (!g_sys.input.quit && g_sys.save_preferences) g_sys.save_preferences();
 			continue; /* No simulation or zoom time elapses while paused. */
 		}
 		if (g_sys.input.quit) break;
@@ -2619,9 +2627,11 @@ void do_level() {
 			view_changed = true;
 			update_level_view(base_w, base_h, g_sys.input.view_step);
 			_camera.valid = false;
+			if (g_sys.save_preferences) g_sys.save_preferences();
 		}
 		if (view_step != g_sys.input.view_step) {
 			view_step = g_sys.input.view_step;
+			if (g_sys.save_preferences) g_sys.save_preferences();
 			if (screen_transition_flag) {
 				view_changed = update_level_view(base_w, base_h, view_step);
 			} else {
