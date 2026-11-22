@@ -1123,6 +1123,8 @@ inline void OPL3_Generate4Ch(opl3_chip *chip, int16_t *buf4)
         channel = &chip->channel[ii];
         out = channel->out;
         accm = *out[0] + *out[1] + *out[2] + *out[3];
+        /* blues-engine: unity is bit-exact; synthesis state is untouched. */
+        accm = (int16_t)((int32_t)accm * chip->channel_gain[ii] / 65536);
 #if OPL_ENABLE_STEREOEXT
         mix[0] += (int16_t)((accm * channel->leftpan) >> 16);
 #else
@@ -1156,6 +1158,8 @@ inline void OPL3_Generate4Ch(opl3_chip *chip, int16_t *buf4)
         channel = &chip->channel[ii];
         out = channel->out;
         accm = *out[0] + *out[1] + *out[2] + *out[3];
+        /* blues-engine: unity is bit-exact; synthesis state is untouched. */
+        accm = (int16_t)((int32_t)accm * chip->channel_gain[ii] / 65536);
 #if OPL_ENABLE_STEREOEXT
         mix[0] += (int16_t)((accm * channel->rightpan) >> 16);
 #else
@@ -1300,6 +1304,7 @@ void OPL3_Reset(opl3_chip *chip, uint32_t samplerate)
     for (channum = 0; channum < 18; channum++)
     {
         channel = &chip->channel[channum];
+        chip->channel_gain[channum] = 65536;
         local_ch_slot = ch_slot[channum];
         channel->slotz[0] = &chip->slot[local_ch_slot];
         channel->slotz[1] = &chip->slot[local_ch_slot + 3u];

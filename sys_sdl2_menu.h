@@ -1,5 +1,5 @@
 /* SDL pause-menu implementation. Kept private to sys_sdl2.c. */
-enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD };
+enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD, PAUSE_AUDIO };
 static enum pause_page _pause_page;
 static int _pause_selection, _pause_axis, _pause_hat;
 static bool _pause_focused;
@@ -10,7 +10,8 @@ static int _game_keys[BIND_COUNT] = {SDLK_LEFT, SDLK_RIGHT, SDLK_UP,SDLK_DOWN,SD
 static int _edit_keys[BIND_COUNT] = {SDLK_LEFT, SDLK_RIGHT, SDLK_UP,SDLK_DOWN,SDLK_SPACE,SDLK_LSHIFT};
 static int _game_buttons[2] = {SDL_CONTROLLER_BUTTON_A,SDL_CONTROLLER_BUTTON_B};
 static int _edit_buttons[2] = {SDL_CONTROLLER_BUTTON_A,SDL_CONTROLLER_BUTTON_B};
-static struct sys_pause_options _pause_options = {.camera=CAMERA_SMOOTH,.hud=HUD_CLASSIC,.render_rate=60};
+static struct sys_pause_options _pause_options = {.camera=CAMERA_SMOOTH,.hud=HUD_CLASSIC,.render_rate=60,.music_volume=100,.effects_volume=100};
+static int _last_music_volume = 100, _last_effects_volume = 100;
 static int _pause_capture = -1, _pause_xaxis;
 static int _capture_ignore_key = SDLK_UNKNOWN, _capture_ignore_button = -1;
 static int _capture_key_candidate = SDLK_UNKNOWN, _capture_button_candidate = -1;
@@ -44,14 +45,15 @@ static bool handle_bound_button(int button, bool down, struct input_t *input) {
 
 static bool pause_large_page() {
 	return _pause_page == PAUSE_CONTROLS || _pause_page == PAUSE_OPTIONS ||
-		_pause_page == PAUSE_BINDINGS || _pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD;
+		_pause_page == PAUSE_BINDINGS || _pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD || _pause_page == PAUSE_AUDIO;
 }
 
 static int pause_item_count() {
 	switch (_pause_page) {
 	case PAUSE_MAIN: return 4;
 	case PAUSE_QUIT: return 2;
-	case PAUSE_OPTIONS: return 7;
+	case PAUSE_OPTIONS: return 8;
+	case PAUSE_AUDIO: return 3;
 	case PAUSE_BINDINGS: return 5;
 	case PAUSE_KEYS: return BIND_COUNT + 1;
 	case PAUSE_PAD: return 3;
@@ -84,6 +86,15 @@ static const char *keyboard_binding_name(int key) {
 }
 
 static void pause_adjust(int direction) {
+	if (_pause_page == PAUSE_AUDIO) {
+		int *value = _pause_selection == 0 ? &_pause_options.music_volume : &_pause_options.effects_volume;
+		int *last = _pause_selection == 0 ? &_last_music_volume : &_last_effects_volume;
+		if (_pause_selection < 2) {
+			if (*value > 0) *last = *value;
+			*value = MAX(0,MIN(100,*value+direction*10));
+		}
+		return;
+	}
 	if (_pause_page != PAUSE_OPTIONS) return;
 	_pause_notice = NULL;
 	switch (_pause_selection) {
@@ -142,7 +153,7 @@ static const struct { char c; uint8_t rows[7]; } _pause_font[] = {
  {'8',{14,17,17,14,17,17,14}}, {'9',{14,17,17,15,1,1,14}},
  {':',{0,4,4,0,4,4,0}}, {'/',{1,2,2,4,8,8,16}},
  {'-',{0,0,0,31,0,0,0}}, {'+',{0,4,4,31,4,4,0}},
- {'.',{0,0,0,0,0,12,12}}, {'_', {0,0,0,0,0,0,31}},
+ {'%',{24,25,2,4,8,19,3}}, {'.',{0,0,0,0,0,12,12}}, {'_', {0,0,0,0,0,0,31}},
  {'>',{16,8,4,2,4,8,16}}, {'?',{14,17,1,2,4,0,4}}
 };
 
@@ -199,7 +210,7 @@ static void pause_row(const char *label, const char *value, int index, bool enab
 
 static void pause_draw_settings() {
 	const char *title = _pause_page == PAUSE_OPTIONS ? "OPCIONES" :
-		(_pause_page == PAUSE_BINDINGS ? "CONTROLES" : (_pause_page == PAUSE_KEYS ? "TECLADO" : "MANDO"));
+		(_pause_page == PAUSE_AUDIO ? "SONIDO" : (_pause_page == PAUSE_BINDINGS ? "CONTROLES" : (_pause_page == PAUSE_KEYS ? "TECLADO" : "MANDO")));
 	pause_center_text(title,26,2,true);
 	char value[24];
 	if (_pause_page == PAUSE_OPTIONS) {
@@ -212,7 +223,22 @@ static void pause_draw_settings() {
 		if (_pause_options.view_step) snprintf(value,sizeof(value),"PASO %d",_pause_options.view_step);
 		else strcpy(value,"NORMAL");
 		pause_row("ENCUADRE",value,5,true);
-		pause_row("VOLVER",NULL,6,true);
+		pause_row("SONIDO",NULL,6,true);
+		pause_row("VOLVER",NULL,7,true);
+	} else if (_pause_page == PAUSE_AUDIO) {
+		for (int i=0;i<2;++i) {
+			const int volume = i==0 ? _pause_options.music_volume : _pause_options.effects_volume;
+			if (volume) snprintf(value,sizeof(value),"%d%%",volume);
+			else strcpy(value,"SILENCIO");
+			pause_row(i==0 ? "MUSICA" : "EFECTOS",value,i,true);
+			SDL_Rect meter = {150,59+i*14,100,2};
+			SDL_SetRenderDrawColor(_renderer,38,68,91,255); SDL_RenderFillRect(_renderer,&meter);
+			meter.w = volume;
+			const SDL_Color color = i==_pause_selection ? PAUSE_GOLD : PAUSE_CYAN;
+			SDL_SetRenderDrawColor(_renderer,color.r,color.g,color.b,255);
+			if(volume) SDL_RenderFillRect(_renderer,&meter);
+		}
+		pause_row("VOLVER",NULL,2,true);
 	} else if (_pause_page == PAUSE_BINDINGS) {
 		pause_row("TECLADO",NULL,0,true);
 		pause_row("MANDO",NULL,1,true);
@@ -230,7 +256,8 @@ static void pause_draw_settings() {
 		pause_row("VOLVER",NULL,count,true);
 	}
 	const char *hint = _pause_capture >= 0 ? (_pause_page == PAUSE_PAD ? "PULSA UN BOTON - ESC CANCELA" : "PULSA UNA TECLA - ESC CANCELA") :
-		(_pause_page == PAUSE_OPTIONS ? "IZQ / DER: CAMBIAR  ENTER: ELEGIR" : "ENTER / A: REASIGNAR  ESC: VOLVER");
+		(_pause_page == PAUSE_AUDIO ? "IZQ / DER: VOLUMEN  ENTER: SILENCIO" :
+		(_pause_page == PAUSE_OPTIONS ? "IZQ / DER: CAMBIAR  ENTER: ELEGIR" : "ENTER / A: REASIGNAR  ESC: VOLVER"));
 	if (_pause_notice) hint = _pause_notice;
 	pause_center_text(hint,163,1,true);
 	pause_center_text("SE APLICA AL CONTINUAR",175,1,false);
@@ -339,7 +366,9 @@ static bool pause_back() {
 	_pause_notice = NULL;
 	if (_pause_capture >= 0) { _pause_capture = -1; return false; }
 	if (_pause_page == PAUSE_MAIN) return true;
-	if (_pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD) {
+	if (_pause_page == PAUSE_AUDIO) {
+		_pause_page = PAUSE_OPTIONS; _pause_selection = 6;
+	} else if (_pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD) {
 		_pause_selection = _pause_page == PAUSE_KEYS ? 0 : 1;
 		_pause_page = PAUSE_BINDINGS;
 	} else if (_pause_page == PAUSE_CONTROLS) {
@@ -360,8 +389,17 @@ static bool pause_activate() {
 		if (_pause_selection == 1) { g_sys.input.quit = true; return true; }
 		return pause_back();
 	}
+	if (_pause_page == PAUSE_AUDIO) {
+		if (_pause_selection == 2) return pause_back();
+		int *value = _pause_selection == 0 ? &_pause_options.music_volume : &_pause_options.effects_volume;
+		int *last = _pause_selection == 0 ? &_last_music_volume : &_last_effects_volume;
+		if (*value) { *last = *value; *value = 0; }
+		else *value = *last;
+		return false;
+	}
 	if (_pause_page == PAUSE_OPTIONS) {
 		if (_pause_selection < 6) pause_adjust(1);
+		else if (_pause_selection == 6) { _pause_page = PAUSE_AUDIO; _pause_selection = 0; }
 		else return pause_back();
 		return false;
 	}
@@ -546,6 +584,8 @@ static void sdl2_run_pause_menu() {
 	_pause_page = PAUSE_MAIN;
 	_pause_selection = _pause_axis = _pause_xaxis = _pause_hat = 0;
 	_pause_capture = -1; _pause_notice = NULL;
+	if (_pause_options.music_volume > 0) _last_music_volume = _pause_options.music_volume;
+	if (_pause_options.effects_volume > 0) _last_effects_volume = _pause_options.effects_volume;
 	_capture_ignore_key = SDLK_UNKNOWN; _capture_ignore_button = -1;
 	memcpy(_edit_keys,_game_keys,sizeof(_game_keys));
 	memcpy(_edit_buttons,_game_buttons,sizeof(_game_buttons));
@@ -564,6 +604,8 @@ static void sdl2_run_pause_menu() {
 	if (!g_sys.input.quit) {
 		memcpy(_game_keys,_edit_keys,sizeof(_game_keys));
 		memcpy(_game_buttons,_edit_buttons,sizeof(_game_buttons));
+		/* Set ramps before audio resumes, so the first callback sees them. */
+		if (_pause_options.apply_volumes) _pause_options.apply_volumes(_pause_options.music_volume,_pause_options.effects_volume);
 	}
 	clear_pause_input();
 	_pause_menu_open = false;

@@ -2,6 +2,7 @@
  * Offsets below refer to the data segment of the supported 1991 executable.
  * Game instruments and songs are loaded at runtime, never embedded here. */
 #include "dos_audio.h"
+#include "audio_gain.h"
 #include "third_party/nuked-opl3/opl3.h"
 #include <stdlib.h>
 #include <string.h>
@@ -26,7 +27,11 @@ struct dos_audio {
 	uint16_t instruments;
 	uint8_t rhythm, divider, countdown;
 	int rate, playing, failed, track_count, pending_sound;
-	uint64_t phase;
+	uint64_t phase, rendered;
+	int music_volume, effects_volume;
+	int writing_effect, effect_channel;
+	uint8_t rhythm_written;
+	struct audio_gain music_gain, effects_gain;
 };
 
 static uint16_t word(const struct dos_audio *a, uint16_t p) {
@@ -34,6 +39,17 @@ static uint16_t word(const struct dos_audio *a, uint16_t p) {
 }
 
 static void write_reg(struct dos_audio *a, uint8_t reg, uint8_t value) {
+	/* Channel 6 is shared by music's bass drum and DOS effects. Its owner
+	 * changes only when the original sequencer actually programs that voice. */
+	const int base = reg & 0xe0;
+	const int slot = reg & 0x1f;
+	const int op6 = (base == 0x20 || base == 0x40 || base == 0x60 || base == 0x80 || base == 0xe0) &&
+		(slot == a->data[0x8405+13] || slot == a->data[0x8405+16]);
+	if (op6 || reg == 0xa6 || reg == 0xb6 || reg == 0xc6 ||
+		(reg == 0xbd && ((value ^ a->rhythm_written) & 0x10))) {
+		a->effect_channel = a->writing_effect;
+	}
+	if (reg == 0xbd) a->rhythm_written = value;
 	OPL3_WriteRegBuffered(&a->opl, reg, value);
 }
 
@@ -225,6 +241,7 @@ static void tick(struct dos_audio *a) {
 			a->failed = 1;
 			return;
 		}
+		a->writing_effect = 1;
 		a->rhythm &= ~0x10;
 		write_reg(a, 0xbd, a->rhythm);
 		write_operator(a, p, 16);
@@ -233,6 +250,7 @@ static void tick(struct dos_audio *a) {
 		write_reg(a, 0xa6, 0x57);
 		write_reg(a, 0xb6, 0);
 		write_reg(a, 0xb6, 0x29);
+		a->writing_effect = 0;
 	}
 }
 
@@ -255,6 +273,9 @@ struct dos_audio *dos_audio_create(const uint8_t *exe, size_t size, int rate) {
 	if (!a) return NULL;
 	memcpy(a->data, exe + DOS_DATA_OFFSET, DOS_DATA_SIZE);
 	a->rate = rate;
+	a->music_volume = a->effects_volume = 100;
+	audio_gain_init(&a->music_gain,100);
+	audio_gain_init(&a->effects_gain,100);
 	a->rhythm = 0x20;
 	a->pending_sound = -1;
 	OPL3_Reset(&a->opl, rate);
@@ -295,6 +316,21 @@ void dos_audio_sound(struct dos_audio *a, int sound) {
 	if (a && sound >= 0 && sound < 18) a->pending_sound = sound;
 }
 
+void dos_audio_set_volumes(void *context, int music, int effects) {
+	struct dos_audio *a = context;
+	if (!a) return;
+	a->music_volume = audio_volume(music);
+	a->effects_volume = audio_volume(effects);
+	if (!a->rendered) {
+		/* New backends inherit mute/levels before their first sample. */
+		audio_gain_init(&a->music_gain,a->music_volume);
+		audio_gain_init(&a->effects_gain,a->effects_volume);
+	} else {
+		audio_gain_set(&a->music_gain,a->music_volume,a->rate);
+		audio_gain_set(&a->effects_gain,a->effects_volume,a->rate);
+	}
+}
+
 void dos_audio_render(void *context, int16_t *samples, int count) {
 	struct dos_audio *a = context;
 	for (int i = 0; i < count; ++i) {
@@ -307,6 +343,11 @@ void dos_audio_render(void *context, int16_t *samples, int count) {
 			a->phase -= (uint64_t)a->rate * PIT_DIVISOR;
 			if (a->playing) tick(a);
 		}
+		const int music_gain = audio_gain_next(&a->music_gain);
+		for (int ch = 0; ch < 18; ++ch) a->opl.channel_gain[ch] = music_gain;
+		const int effects_gain = audio_gain_next(&a->effects_gain);
+		a->opl.channel_gain[6] = a->effect_channel ? effects_gain : music_gain;
+		++a->rendered;
 		int16_t stereo[2];
 		OPL3_GenerateResampled(&a->opl, stereo);
 		samples[i] = ((int)stereo[0] + stereo[1]) / 2;

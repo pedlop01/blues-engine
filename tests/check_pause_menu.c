@@ -2,6 +2,12 @@
 #include "../sys_sdl2.c"
 
 static int audio_callbacks;
+static int volume_applies;
+static void test_apply_volumes(int music,int effects) {
+	assert(SDL_GetAudioStatus()!=SDL_AUDIO_PLAYING);
+	assert(music==90 && effects==0);
+	++volume_applies;
+}
 static void test_audio(void *param, uint8_t *data, int len) {
 	memset(data, 0, len);
 	++audio_callbacks;
@@ -99,8 +105,8 @@ int main() {
 	assert(pause_event(&ev) && g_sys.input.quit);
 	reset_menu();
 	/* Controls has one main-menu entry; Options ends directly at Back. */
-	_pause_page=PAUSE_OPTIONS; _pause_selection=6;
-	assert(pause_item_count()==7 && !pause_activate() && _pause_page==PAUSE_MAIN && _pause_selection==1);
+	_pause_page=PAUSE_OPTIONS; _pause_selection=7;
+	assert(pause_item_count()==8 && !pause_activate() && _pause_page==PAUSE_MAIN && _pause_selection==1);
 	_pause_selection=2; pause_activate();
 	assert(_pause_page==PAUSE_BINDINGS && pause_item_count()==5);
 	_pause_selection=2; pause_activate(); assert(_pause_page==PAUSE_CONTROLS);
@@ -122,6 +128,17 @@ int main() {
 	_pause_selection=5; pause_adjust(-1); assert(_pause_options.view_step==0);
 	for (int i=0; i<12; ++i) pause_adjust(1);
 	assert(_pause_options.view_step==8);
+	_pause_page=PAUSE_OPTIONS; _pause_selection=6; pause_activate();
+	assert(_pause_page==PAUSE_AUDIO && pause_item_count()==3);
+	_pause_options.music_volume=100; _pause_options.effects_volume=40;
+	_pause_selection=0; pause_adjust(-1); assert(_pause_options.music_volume==90 && _pause_options.effects_volume==40);
+	pause_activate(); assert(_pause_options.music_volume==0);
+	pause_activate(); assert(_pause_options.music_volume==90);
+	_pause_selection=1; pause_activate(); assert(_pause_options.effects_volume==0 && _pause_options.music_volume==90);
+	pause_activate(); assert(_pause_options.effects_volume==40);
+	for(int i=0;i<15;++i)pause_adjust(-1);
+	assert(_pause_options.effects_volume==0);
+	_pause_selection=2; pause_activate(); assert(_pause_page==PAUSE_OPTIONS && _pause_selection==6);
 	/* The activation key/button release must not bind itself. */
 	_pause_page=PAUSE_KEYS; _pause_selection=BIND_ACTION;
 	ev=key(SDLK_RETURN,true); pause_event(&ev); assert(_pause_capture==BIND_ACTION);
@@ -166,6 +183,8 @@ int main() {
 	assert(bitmap);
 	sdl2_copy_bitmap(bitmap, 320, 200);
 	sdl2_start_audio(test_audio, NULL);
+	_pause_options.music_volume=90; _pause_options.effects_volume=0;
+	_pause_options.apply_volumes=test_apply_volumes;
 	for (int hud = 0; hud < 2; ++hud) {
 		sdl2_set_hud_layout(hud ? 320 : 0, 200, 14, 26);
 		sdl2_copy_bitmap(bitmap, 320, 200);
@@ -180,15 +199,16 @@ int main() {
 	assert(SDL_AddTimer(50, close_menu_timer, NULL));
 	sdl2_run_pause_menu();
 	assert(SDL_GetAudioStatus() == SDL_AUDIO_PAUSED && audio_callbacks == callbacks);
+	assert(volume_applies==3);
 	/* The cyan frame stays centered across resize and differing aspect ratios. */
 	const int sizes[][2] = {{320,200},{640,400},{800,600},{1280,720},{853,533},{0,0}};
 	_pause_page = PAUSE_MAIN;
 	for (unsigned i = 0; i < ARRAYSIZE(sizes); ++i) {
 		if (sizes[i][0]) SDL_SetWindowSize(_window, sizes[i][0], sizes[i][1]);
 		else assert(SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN_DESKTOP) == 0);
-		for (int page = 0; page < 8; ++page) {
-			_pause_page = page == 7 ? PAUSE_QUIT : (enum pause_page)page;
-			_pause_selection = page == 7 ? 1 : 0;
+		for (int page = 0; page < 9; ++page) {
+			_pause_page = page == 8 ? PAUSE_QUIT : (enum pause_page)page;
+			_pause_selection = page == 8 ? 1 : 0;
 			_pause_menu_open = true;
 			sdl2_draw_screen(0,0,1);
 			_pause_menu_open = false;
@@ -211,7 +231,7 @@ int main() {
 			assert(x1>=0 && x2<w && y1>=0 && y2<h);
 			const int scale = MIN(w/320,h/200);
 			assert(scale >= 1 && gold > 0 && gold % (scale*scale) == 0);
-			assert((danger > 0) == (page == 7));
+			assert((danger > 0) == (page == 8));
 			free(pixels);
 		}
 	}

@@ -1,5 +1,6 @@
 
 #include "mixer.h"
+#include "audio_gain.h"
 #include "sys.h"
 #include "util.h"
 
@@ -18,6 +19,9 @@ static struct mixerchannel_t _channel;
 static ModPlugFile *_mpf;
 static mix_music_cb _music_callback;
 static void *_music_context;
+static mix_volume_cb _volume_callback;
+static int _music_volume = 100, _effects_volume = 100;
+static struct audio_gain _music_gain = {65536,65536,0}, _effects_gain = {65536,65536,0};
 
 static void mix(void *param, uint8_t *buf, int len) {
 	memset(buf, 0, len);
@@ -30,23 +34,25 @@ static void mix(void *param, uint8_t *buf, int len) {
 			ModPlug_SeekOrder(_mpf, 0);
 		}
 	}
-	if (_channel.data) {
-		for (int i = 0; i < len; i += sizeof(int16_t)) {
+	for (int i = 0; i + 1 < len; i += sizeof(int16_t)) {
+		const int music_gain = audio_gain_next(&_music_gain);
+		const int effects_gain = audio_gain_next(&_effects_gain);
+		int sample = *(int16_t *)(buf + i);
+		/* A combined native callback owns its two buses before summation. */
+		if (!_volume_callback) sample = audio_gain_apply(sample,music_gain);
+		if (_channel.data) {
 			int pos = _channel.pos >> 16;
 			if (pos >= _channel.size) {
 				_channel.data = 0;
-				if (_channel.repeat_cb) {
-					_channel.repeat_cb(&_channel.data, &_channel.size);
-				}
-				if (!_channel.data) {
-					break;
-				}
-				_channel.pos = pos = 0;
+				if (_channel.repeat_cb) _channel.repeat_cb(&_channel.data,&_channel.size);
+				if (_channel.data) _channel.pos = pos = 0;
 			}
-			const int sample = *(int16_t *)(buf + i) + ((int8_t)_channel.data[pos]) * 256;
-			*(int16_t *)(buf + i) = (sample < -32768 ? -32768 : (sample > 32767 ? 32767 : sample));
-			_channel.pos += _channel.step;
+			if (_channel.data) {
+				sample += audio_gain_apply(((int8_t)_channel.data[pos])*256,effects_gain);
+				_channel.pos += _channel.step;
+			}
 		}
+		*(int16_t *)(buf + i) = sample < -32768 ? -32768 : (sample > 32767 ? 32767 : sample);
 	}
 }
 
@@ -72,6 +78,7 @@ static void mixer_fini() {
 	}
 	_music_callback = 0;
 	_music_context = 0;
+	_volume_callback = 0;
 	memset(&_channel, 0, sizeof(_channel));
 }
 
@@ -79,7 +86,7 @@ static void play_sound(const uint8_t *data, uint32_t size, int freq, mix_repeat_
 	g_sys.lock_audio();
 	_channel.data = data;
 	_channel.pos = 0;
-	_channel.step = (freq << 16) / _rate;
+	_channel.step = ((uint64_t)freq << 16) / _rate;
 	_channel.size = size;
 	_channel.repeat_cb = repeat_cb;
 	g_sys.unlock_audio();
@@ -89,6 +96,7 @@ static void play_music(const uint8_t *data, uint32_t size) {
 	g_sys.lock_audio();
 	_music_callback = 0;
 	_music_context = 0;
+	_volume_callback = 0;
 	if (_mpf) {
 		ModPlug_Unload(_mpf);
 		_mpf = 0;
@@ -100,7 +108,7 @@ static void play_music(const uint8_t *data, uint32_t size) {
 	g_sys.unlock_audio();
 }
 
-static void set_music_callback(mix_music_cb callback, void *context) {
+static void set_music_callback(mix_music_cb callback, void *context, mix_volume_cb volumes) {
 	g_sys.lock_audio();
 	if (_mpf) {
 		ModPlug_Unload(_mpf);
@@ -108,6 +116,17 @@ static void set_music_callback(mix_music_cb callback, void *context) {
 	}
 	_music_callback = callback;
 	_music_context = context;
+	_volume_callback = volumes;
+	if (volumes) volumes(context,_music_volume,_effects_volume);
+	g_sys.unlock_audio();
+}
+
+static void set_volumes(int music, int effects) {
+	g_sys.lock_audio();
+	_music_volume = audio_volume(music); _effects_volume = audio_volume(effects);
+	audio_gain_set(&_music_gain,_music_volume,_rate);
+	audio_gain_set(&_effects_gain,_effects_volume,_rate);
+	if (_volume_callback) _volume_callback(_music_context,_music_volume,_effects_volume);
 	g_sys.unlock_audio();
 }
 
@@ -117,4 +136,5 @@ struct mixer_t g_mix = {
 	.play_sound = play_sound,
 	.play_music = play_music,
 	.set_music_callback = set_music_callback,
+	.set_volumes = set_volumes,
 };

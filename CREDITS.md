@@ -40,9 +40,11 @@ game data or the original executables.
 ## Bundled dependency
 
 **[Nuked OPL3](https://github.com/nukeykt/Nuked-OPL3)** by Nuke.YKT provides OPL
-chip emulation for the new DOS audio backend. Its unmodified source, pinned
+chip emulation for the new DOS audio backend. Its source, pinned
 revision information and LGPL 2.1-or-later license are included in
 [`third_party/nuked-opl3`](third_party/nuked-opl3).
+A small blues-engine extension adds per-channel output gains for independent
+music/effect volumes; operators and the original register stream are preserved.
 
 SDL2 and libmodplug are external build dependencies and retain their own
 licenses. The compiled SDL2 DLL and other build products are not committed.

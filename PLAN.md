@@ -7,9 +7,9 @@ refieren a cada tarea; no representan una estimación del tiempo restante.
 
 ## Estado general
 
-- Tareas completadas: **7 de 18**.
-- Completadas: **01–07**.
-- En validación: **08**.
+- Tareas completadas: **8 de 18**.
+- Completadas: **01–08**.
+- En validación: **09**.
 - Las demás tareas están pendientes de implementación.
 
 ## Base disponible
@@ -40,8 +40,8 @@ confirmado por el usuario: el audio DOS funciona correctamente en Windows.
 | 05 | Mantener legible el HUD | Ofrecer HUD clásico que escala con el mapa y HUD fijo legible, conservando los estilos DOS/Amiga. El HUD fijo debe reservar bandas propias y mostrar el encuadre completo sin ocultar ni deformar el mapa. | 01 | Completada: HUD clásico/fijo, encuadre corregido y ambos estilos conservados. Pruebas técnicas superadas y resultado validado al jugar por el usuario. | 100 % |
 | 06 | Crear el menú dentro del juego | Una tecla abre un cuadro centrado y pausa la acción. Navegación con teclado y mando; cerrar el menú devuelve el control sin entradas residuales. | 01 | Completada: pruebas técnicas superadas y menú validado al jugar por el usuario. Esc/P/Start, navegación con teclado/mando, pausa de simulación/audio y reanudación sin entradas residuales. | 100 % |
 | 07 | Diseñar el aspecto del menú | Fuente retro legible, colores que resalten la selección y distribución correcta en ventana, pantalla completa y distintos encuadres. | 06 | Completada: aspecto validado por el usuario y pruebas de tipografía, selección y distribución superadas en ventana y pantalla completa. | 100 % |
-| 08 | Integrar opciones generales | DOS/Amiga, cámara clásica o suavizada, HUD clásico o fijo, pantalla completa, frecuencia de presentación, encuadre y configuración de controles accesibles desde el menú. | 06, 07 | Integrada y probada: versión, cámara, HUD, pantalla completa, frecuencia, encuadre y reasignación de controles. Aplicación al continuar y detección de recursos compatibles. Pendiente de validación al jugar; persistencia prevista en 12. | 75 % |
-| 09 | Añadir controles de volumen | Ajustes independientes para música y efectos, incluido silencio, aplicados sin reiniciar el juego ni producir chasquidos. | 02, 06 | Pendiente | 0 % |
+| 08 | Integrar opciones generales | DOS/Amiga, cámara clásica o suavizada, HUD clásico o fijo, pantalla completa, frecuencia de presentación, encuadre y configuración de controles accesibles desde el menú. | 06, 07 | Completada: ajustes y navegación simplificada validados por el usuario. Persistencia entre ejecuciones prevista en 12. | 100 % |
+| 09 | Añadir controles de volumen | Ajustes independientes para música y efectos, incluido silencio, aplicados sin reiniciar el juego ni producir chasquidos. | 02, 06 | Integrada y probada: música/efectos independientes de 0 a 100 %, silencio y rampas de 20 ms. DOS/Amiga y nivel por defecto verificados. Pendiente de validación al escuchar; persistencia prevista en 12. | 75 % |
 | 10 | Añadir ayudas de juego | Activar/desactivar invulnerabilidad, aumentar o reducir vidas y elegir vidas infinitas desde el menú. Mostrar con claridad qué ayudas están activas. | 06 | Pendiente | 0 % |
 | 11 | Añadir selector de nivel | Elegir cualquiera de los seis niveles e iniciarlo con un estado coherente, conservando preferencias y modo gráfico. | 06 | Pendiente | 0 % |
 | 12 | Recordar preferencias | Guardar opciones y controles entre ejecuciones; permitir restaurar valores predeterminados y tolerar configuraciones inválidas. | 08, 09, 10 | Pendiente | 0 % |
@@ -134,3 +134,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-22 | 07, 08 | El usuario valida el aspecto del menú y se cierra 07 al 100 %. Comienzan los ajustes generales y la reasignación de controles. La persistencia entre ejecuciones sigue en 12. | Pruebas de cambios de presentación, recursos y captura de controles. |
 | 2026-11-22 | 08 | Opciones generales integradas en el menú. Configuración de seis acciones de teclado y botones de acción/salto del mando, intercambio de duplicados y restauración de controles. Cambios preparados en pausa y aplicados al continuar; pantalla completa con vista inmediata. Pruebas de cambios reales en los seis niveles, ambas versiones y HUD, captura de controles, compilaciones Linux/Windows y AddressSanitizer superados. | Validar los ajustes al jugar. Guardar preferencias entre ejecuciones continúa en 12. |
 | 2026-11-22 | 08 | A petición del usuario se elimina la entrada duplicada de Controles dentro de Opciones. La entrada exterior reúne teclado, mando, consulta de asignaciones y restauración; volver devuelve al menú principal. | Validar la navegación simplificada. |
+| 2026-11-22 | 08, 09 | El usuario da por completada 08. Comienzan los volúmenes independientes de música y efectos para DOS y Amiga, con silencio y rampas para evitar saltos de amplitud. | Pruebas de separación, continuidad, volumen por defecto y menú. |
+| 2026-11-22 | 09 | Opciones → Sonido con niveles independientes, barras y silencio/restauración. Rampas de 20 ms y reproducción que continúa al silenciar. Pruebas de mezcla, PCM original DOS al 100 %, secuenciador original, continuidad por bloques y audio real DOS/Amiga en seis niveles superadas. Compilaciones Linux/Windows y AddressSanitizer verificados. | Validar al escuchar música, efectos y silencio en ambas versiones. Persistencia entre ejecuciones pendiente en 12. |

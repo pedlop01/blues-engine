@@ -500,6 +500,56 @@ static uint32_t options_script(uint32_t interval, void *param) {
 	return menu_timer_step==3 ? 0 : interval;
 }
 
+static bool volume_applied_paused;
+static void track_volume_apply(int music,int effects) {
+	assert(SDL_GetAudioStatus()!=SDL_AUDIO_PLAYING);
+	volume_applied_paused=true;
+	g_mix.set_volumes(music,effects);
+}
+static uint32_t volume_script(uint32_t interval,void *param) {
+	assert(SDL_GetAudioStatus()!=SDL_AUDIO_PLAYING);
+	const int step=menu_timer_step++;
+	if (step==0) {
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RETURN);
+		for(int i=0;i<6;++i)menu_tap(SDLK_DOWN);
+		menu_tap(SDLK_RETURN);
+		for(int i=0;i<6;++i)menu_tap(SDLK_LEFT);
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RETURN);
+	} else if(step==1) {
+		push_menu_key(SDLK_ESCAPE,false); push_menu_key(SDLK_ESCAPE,false);
+	} else { menu_tap(SDLK_UP); push_menu_key(SDLK_RETURN,true); }
+	return menu_timer_step==3 ? 0 : interval;
+}
+static bool render_real_audio(int blocks) {
+	int16_t samples[4096]; bool audible=false;
+	assert(captured_audio);
+	for(int block=0;block<blocks;++block) {
+		captured_audio(captured_audio_param,(uint8_t*)samples,sizeof(samples));
+		for(int i=0;i<4096;++i) audible |= samples[i]!=0;
+	}
+	return audible;
+}
+static void test_native_volumes() {
+	SDL_PauseAudio(1);
+	g_options.music_volume=g_options.effects_volume=0;
+	g_mix.set_volumes(0,0);
+	for(int mode=0;mode<2;++mode) {
+		render_real_audio(1); assert(!render_real_audio(1));
+		g_mix.set_volumes(100,0);
+		assert(render_real_audio(12)); /* FX mute must leave native music audible. */
+		g_mix.set_volumes(0,100);
+		render_real_audio(1);
+		play_sound(SOUND_11);
+		assert(render_real_audio(3)); /* Music mute must leave native FX audible. */
+		g_mix.set_volumes(0,0);
+		render_real_audio(1); assert(!render_real_audio(2));
+		if(mode==0) { assert(switch_data_mode()); SDL_PauseAudio(1); }
+	}
+	g_options.music_volume=40; g_options.effects_volume=0;
+	g_mix.set_volumes(40,0);
+	puts("native volumes: music/effect isolation and exact mute in DOS/Amiga, retained across mode change passed");
+}
+
 static void test_run_pause_menu() {
 	const struct vars_t before = g_vars;
 	uint8_t sql[640 * 25];
@@ -509,6 +559,10 @@ static void test_run_pause_menu() {
 	const int w = GAME_SCREEN_W, h = GAME_SCREEN_H;
 	const enum hud_mode hud = g_options.hud_mode;
 	g_sys.get_pause_options(&options_before_test);
+	if(getenv("BLUES_TEST_VOLUMES")) {
+		struct sys_pause_options tracked=options_before_test;
+		tracked.apply_volumes=track_volume_apply; g_sys.set_pause_options(&tracked);
+	}
 	/* Capture actual game frames for visual review without changing state. */
 	sdl2_set_scroll_interpolation(0, 0, 0, false);
 	_pause_menu_open = true;
@@ -524,9 +578,11 @@ static void test_run_pause_menu() {
 	sdl2_draw_screen(0,0,1); snapshot("menu-keys");
 	_pause_page = PAUSE_PAD;
 	sdl2_draw_screen(0,0,1); snapshot("menu-pad");
+	_pause_page = PAUSE_AUDIO;
+	sdl2_draw_screen(0,0,1); snapshot("menu-audio");
 	_pause_menu_open = false;
 	menu_timer_step = 0;
-	assert(SDL_AddTimer(60, getenv("BLUES_TEST_OPTIONS") ? options_script : menu_script, NULL));
+	assert(SDL_AddTimer(60, getenv("BLUES_TEST_VOLUMES") ? volume_script : (getenv("BLUES_TEST_OPTIONS") ? options_script : menu_script), NULL));
 	const uint32_t timestamp = SDL_GetTicks();
 	sdl2_run_pause_menu();
 	assert(SDL_GetTicks() - timestamp >= 150 && menu_timer_step == 3);
@@ -536,6 +592,11 @@ static void test_run_pause_menu() {
 	assert(g_options.hud_mode == hud && !g_sys.input.menu && !g_sys.input.space && !g_sys.input.jump && !g_sys.input.direction);
 	assert(!g_sys.input.switch_mode && !g_sys.input.switch_hud && !g_sys.input.quit);
 	assert(_blocked_keys[SDL_SCANCODE_RETURN]);
+	if(getenv("BLUES_TEST_VOLUMES")) {
+		struct sys_pause_options after; g_sys.get_pause_options(&after);
+		assert(volume_applied_paused && after.music_volume==40 && after.effects_volume==0);
+		assert(g_options.music_volume==options_before_test.music_volume && g_options.effects_volume==options_before_test.effects_volume);
+	}
 	if (getenv("BLUES_TEST_OPTIONS")) {
 		struct sys_pause_options after; g_sys.get_pause_options(&after);
 		assert(after.amiga != options_before_test.amiga && after.camera != options_before_test.camera);
@@ -588,7 +649,7 @@ static void test_events() {
 		return;
 	}
 	g_sys.input.space = false;
-	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS")) {
+	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES")) {
 		if (test_frames == 0) g_sys.input.view_step = 4;
 		if (test_frames == 2) {
 			bool paused = false;
@@ -596,7 +657,15 @@ static void test_events() {
 		}
 		if (test_frames == 3) {
 			assert(menus_tested == 1);
-			if (!getenv("BLUES_TEST_OPTIONS")) g_sys.input.quit = true;
+			if(getenv("BLUES_TEST_VOLUMES")) {
+				assert(g_options.music_volume==40 && g_options.effects_volume==0);
+				g_sys.input.switch_mode=true;
+			} else if (!getenv("BLUES_TEST_OPTIONS")) g_sys.input.quit = true;
+		}
+		if(test_frames==4 && getenv("BLUES_TEST_VOLUMES")) {
+			assert(g_options.music_volume==40 && g_options.effects_volume==0);
+			test_native_volumes();
+			g_sys.input.quit=true;
 		}
 		if (test_frames == 4 && getenv("BLUES_TEST_OPTIONS")) {
 			assert(g_res.amiga_data != options_before_test.amiga);
@@ -716,9 +785,9 @@ static void test_events() {
 }
 
 int main(int argc, char **argv) {
-	if (getenv("BLUES_TEST_MODES")) g_sys.start_audio = capture_start_audio;
+	if (getenv("BLUES_TEST_MODES") || getenv("BLUES_TEST_VOLUMES")) g_sys.start_audio = capture_start_audio;
 	g_sys.process_events = test_events;
-	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS")) g_sys.run_pause_menu = test_run_pause_menu;
+	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES")) g_sys.run_pause_menu = test_run_pause_menu;
 	g_sys.sleep = no_sleep;
 	g_sys.fade_in_palette = no_fade;
 	g_sys.fade_out_palette = no_fade;
@@ -740,7 +809,7 @@ int main(int argc, char **argv) {
 		assert(_hud_width == 0); /* Disabled before menus/inter-level screens. */
 		return result;
 	}
-	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS")) {
+	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES")) {
 		assert(!_pause_menu_enabled);
 		puts("menu: frozen game/objects/map/zoom/audio, preserved scene and clean resume through actual game loop passed");
 		return result;

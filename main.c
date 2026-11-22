@@ -72,6 +72,7 @@ int main(int argc, char *argv[]) {
 	g_options.start_xpos16 = -1;
 	g_options.start_ypos16 = -1;
 	g_options.scroll_rate = 60;
+	g_options.music_volume = g_options.effects_volume = 100;
 	g_options.camera_mode = CAMERA_SMOOTH;
 	g_options.amiga_copper_bars = true;
 	g_options.amiga_colors = true;

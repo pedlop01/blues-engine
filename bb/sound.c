@@ -113,7 +113,7 @@ void play_music(int num) {
 		g_sys.lock_audio();
 		dos_audio_music(_dos_audio, num);
 		g_sys.unlock_audio();
-		g_mix.set_music_callback(dos_audio_render, _dos_audio);
+		g_mix.set_music_callback(dos_audio_render, _dos_audio, dos_audio_set_volumes);
 		return;
 	}
 	const char *filename = _modules[num * 2]; // Amiga

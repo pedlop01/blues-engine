@@ -24,6 +24,7 @@ focused on the first **Blues Brothers** game.
 | Live DOS / Amiga switch | `F6` changes graphics, palettes, HUD and native audio while retaining game state, map edits, rooms and framing. |
 | HUD choice | Classic HUD scales with the map (default); fixed HUD keeps its display size and reserves separate bands without covering the map. `F7` switches live. Both preserve DOS/Amiga artwork and layout. |
 | In-game pause menu | `Esc`, `P` or controller Start opens a centered menu with Resume, Options, Controls and confirmed Quit. Simulation, zoom and audio pause; menu inputs are consumed before returning to play. |
+| Separate audio levels | Options → Sound provides independent 0–100% music/effect levels and mute, with short gain ramps in DOS and Amiga. |
 | Larger views | Dynamic sprite storage replaces the fixed sprite limit; camera bounds and defeated-enemy visibility follow the current view. |
 | Regression tests | Tests cover DOS sequencer accuracy, PCM continuity, zoom, doors, defeated enemies and live presentation changes. |
 
@@ -32,7 +33,7 @@ adjustment has been confirmed in gameplay.
 
 ## Ideas and roadmap
 
-The next phase adds music/effect volumes, persistent preferences,
+The next phase adds persistent preferences,
 invulnerability and life controls, level selection, eight save
 slots with thumbnails, and a short rewind with a VHS-style visual effect.
 Further work includes Windows packaging.
@@ -264,6 +265,38 @@ This exercises the real menu, prepares every setting, reassigns keyboard and
 controller actions, checks that the world stays frozen in the menu, and verifies
 that the settings are applied after resuming. Repeat across levels, initial
 resource releases and HUD modes for the full matrix.
+
+### Music and effect volumes
+
+**Options → Sound** has independent Music and Effects levels. Left/Right changes
+the selected level in 10% steps from 0 to 100; Enter/A toggles mute and restores
+the last nonzero level. The default is 100% for both. Changes apply when you
+resume, with the new gain targets set before audio restarts and a 20 ms ramp
+to avoid abrupt level changes. Muting continues playback rather than restarting
+songs or effects, and levels are retained across levels and DOS/Amiga switches.
+Saving them between launches remains part of task 12.
+
+Amiga module music and PCM effects are scaled separately before mixing. DOS
+keeps the original single-chip sequencer and shared channel 6: its output is
+assigned to music or effects according to the sequencer's actual writes. This
+retains the original percussion/effect channel stealing. A small documented
+Nuked OPL3 extension scales channel outputs after synthesis; 100% output is
+bit-identical to the previous unmodified chip renderer for the reference EXE.
+
+```
+make build/tests/check_mixer_volumes
+build/tests/check_mixer_volumes
+python3 tests/check_audio_volumes.py ../orig-games/dos/1.EXE
+BLUES_TEST_VOLUMES=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  build/tests/check_viewport --dos-datapath=../orig-games/dos \
+  --amiga-datapath=../orig-games/amiga --cheats=7 --level=0
+```
+
+These tests cover independent music/PCM gains, bounded ramps, exact mute,
+continuity over arbitrary callback sizes, reference DOS PCM hashes, unchanged
+synthesis progression while muted, real DOS/Amiga audio, menu changes and level
+retention through resource changes. The existing DOS IRQ/register comparison
+also remains unchanged.
 
 ### Blues Brothers audio
 

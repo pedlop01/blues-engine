@@ -69,6 +69,7 @@ struct options_t {
 	enum camera_mode camera_mode;
 	enum hud_mode hud_mode;
 	enum sound_mode sound_mode;
+	int music_volume, effects_volume;
 	const char *dos_datapath;
 	const char *amiga_datapath;
 };

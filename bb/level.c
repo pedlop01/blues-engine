@@ -2447,7 +2447,9 @@ void do_level() {
 				.amiga = g_res.amiga_data,
 				.can_switch = g_options.dos_datapath && g_options.amiga_datapath && check_data_mode(false),
 				.camera = g_options.camera_mode, .hud = g_options.hud_mode,
-				.render_rate = g_options.scroll_rate, .view_step = g_sys.input.view_step
+				.render_rate = g_options.scroll_rate, .view_step = g_sys.input.view_step,
+				.music_volume = g_options.music_volume, .effects_volume = g_options.effects_volume,
+				.apply_volumes = g_mix.set_volumes
 			};
 			g_sys.set_pause_options(&options);
 			g_sys.run_pause_menu();
@@ -2456,6 +2458,8 @@ void do_level() {
 				if (options.amiga != g_res.amiga_data) g_sys.input.switch_mode = true;
 				if (options.camera != g_options.camera_mode) _camera.valid = false;
 				g_options.camera_mode = options.camera;
+				g_options.music_volume = options.music_volume;
+				g_options.effects_volume = options.effects_volume;
 				g_options.scroll_rate = options.render_rate;
 				g_sys.set_scroll_render_rate(options.render_rate);
 				g_sys.input.view_step = options.view_step;

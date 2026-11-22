@@ -114,6 +114,8 @@ typedef struct _opl3_writebuf {
 } opl3_writebuf;
 
 struct _opl3_chip {
+    /* blues-engine extension: optional Q16 gain at each channel output. */
+    int32_t channel_gain[18];
     opl3_channel channel[18];
     opl3_slot slot[36];
     uint16_t timer;

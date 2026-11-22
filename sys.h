@@ -45,6 +45,8 @@ struct sys_pause_options {
 	enum camera_mode camera;
 	enum hud_mode hud;
 	int render_rate, view_step;
+	int music_volume, effects_volume;
+	void (*apply_volumes)(int music, int effects);
 };
 
 struct sys_t {
