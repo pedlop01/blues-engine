@@ -7,9 +7,8 @@ refieren a cada tarea; no representan una estimación del tiempo restante.
 
 ## Estado general
 
-- Tareas completadas: **2 de 18**.
-- Completadas: **01–02**.
-- Implementada, pendiente de validación al jugar: **03**.
+- Tareas completadas: **3 de 18**.
+- Completadas: **01–03**.
 - Las demás tareas están pendientes de implementación.
 
 ## Base disponible
@@ -35,7 +34,7 @@ confirmado por el usuario: el audio DOS funciona correctamente en Windows.
 |---|---|---|---|---|---:|
 | 01 | Consolidar el proyecto | Ordenar archivos generados, revisar rutas y separar los cambios en commits claros. La nueva estructura y sus ejemplos deben funcionar. | — | Completada: fuentes y documentación publicadas en pedlop01/blues-engine, rama main verificada; historial y autoría de cyxx/blues conservados. | 100 % |
 | 02 | Terminar de validar el audio | Confirmar la ausencia de petardeo DOS y comprobar música y efectos en ambos modos, en Windows. | — | Completada: pruebas técnicas superadas y audio DOS confirmado por el usuario en Windows. | 100 % |
-| 03 | Suavizar personajes y objetos | Interpolar el desplazamiento a 60/120 Hz conservando física y colisiones a 30 Hz. Evitar saltos visuales en puertas, cambios de modo y zoom. | 01 | Integrada y probada a 60/120 Hz; física a 30 Hz. Pendiente de validación visual del usuario en DOS y Amiga. | 75 % |
+| 03 | Suavizar personajes y objetos | Interpolar el desplazamiento a 60/120 Hz conservando física y colisiones a 30 Hz. Evitar saltos visuales en puertas, cambios de modo y zoom. | 01 | Completada: pruebas técnicas superadas a 60/120 Hz, física a 30 Hz y fluidez confirmada por el usuario al jugar. | 100 % |
 | 04 | Mejorar la cámara | Añadir anticipación hacia donde se camina y seguimiento suave, respetando bordes, habitaciones y cambios de dirección. | 01 | Pendiente | 0 % |
 | 05 | Mantener legible el HUD | Conservar un tamaño cómodo de indicadores al alejar el encuadre, sin tapar innecesariamente el mapa. | 01 | Pendiente | 0 % |
 | 06 | Crear el menú dentro del juego | Una tecla abre un cuadro centrado y pausa la acción. Navegación con teclado y mando; cerrar el menú devuelve el control sin entradas residuales. | 01 | Pendiente | 0 % |
@@ -120,3 +119,4 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-22 | 02 | El usuario confirma que el audio DOS funciona bien. Tarea cerrada al 100 %. | Ninguna. |
 | 2026-11-22 | 03 | Inicio de la interpolación visual de personajes y objetos, priorizada por el usuario antes del menú. | Implementación, pruebas de continuidad y validación al jugar a 60/120 Hz. |
 | 2026-11-22 | 03 | Interpolación por objeto y parte del sprite, con anclaje al centro de los pies para los cambios de animación. Pruebas deterministas a 60/120 Hz y regresiones de puertas, zoom, enemigos y cambio DOS/Amiga superadas. Compilaciones Linux y Windows actualizadas. | Validar al jugar la fluidez en ambos modos antes de cerrar al 100 %. |
+| 2026-11-22 | 03 | El usuario confirma que el movimiento es mucho más suave. Validación visual aceptada y tarea cerrada al 100 %. | Ninguna para esta tarea. |
