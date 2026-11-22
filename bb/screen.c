@@ -235,6 +235,19 @@ static void dither_graphics(uint8_t *dst, int dst_pitch, int w, int h, const uin
 	}
 }
 
+/* Rideable lift types share the DOS animation table, but their native bank
+ * keeps a color reference immediately after the coverage frame. Select by
+ * actual stage objects: Concert's type 40 uses 160/161, not 146/147. */
+static bool is_native_lift_frame(int frame) {
+	for(int slot=0;slot<MAX_OBJECTS;++slot) {
+		const int type=level_data[g_vars.level*MAX_OBJECTS+slot];
+		if(type>=MAX_OBJECTS || level_obj_type[type]!=1)continue;
+		const uint8_t *idle=animframes_059d[type*29];
+		if(idle && idle[0]==1 && idle[1]==frame)return true;
+	}
+	return false;
+}
+
 static void decode_graphics(int spr_type, int start, int end, const uint8_t *dither_lut) {
 	struct sys_rect_t r[MAX_SPR_FRAMES];
 	uint8_t *data = (uint8_t *)calloc(MAX_SPRITESHEET_W * MAX_SPRITESHEET_H, 1);
@@ -269,11 +282,9 @@ static void decode_graphics(int spr_type, int start, int end, const uint8_t *dit
 			}
 			const bool amiga_player=g_res.amiga_data && i<101;
 			decode_spr(ptr, w, w, h, amiga_player ? 3 : 4, data, MAX_SPRITESHEET_W, current_x, current_y, g_res.amiga_data);
-			/* The shopping-centre/city lift uses frame 146 for coverage, but
-			 * its indices are not in the native level palette. Frame 147 is
-			 * the matching native artwork (city: exactly two copies of BLK
-			 * tile 0). Keep frame 146's transparent silhouette, use frame 147's colors. */
-			if(g_res.amiga_data && i==SPRITES_COUNT && (g_vars.level==0 || g_vars.level==4)) {
+			/* Preserve the selected lift's coverage while using its matching
+			 * native colors, regardless of level or animation-bank offset. */
+			if(g_res.amiga_data && i>=SPRITES_COUNT && is_native_lift_frame(i) && i+1<end) {
 				const uint8_t *art=g_res.spr_frames[i+1];
 				if(art && w==32 && h<=16 && READ_LE_UINT16(art-2)==w && READ_LE_UINT16(art-4)==h) {
 					uint8_t colors[32*16];

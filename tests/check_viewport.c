@@ -1435,13 +1435,14 @@ static void snapshot_amiga_occlusion() {
 	}
 }
 static void snapshot_city_lift() {
-	if(g_vars.level!=4 || !getenv("BLUES_VIEW_TEST_OUTPUT"))return;
+	if((g_vars.level!=4 && g_vars.level!=5) || !getenv("BLUES_VIEW_TEST_OUTPUT"))return;
 	struct bb_state before;assert(capture_game_state(&before));
-	int slot=-1;for(int i=0;i<MAX_OBJECTS;++i)if(g_vars.objects[i].type==35){slot=i;break;}
+	int slot=-1;for(int i=0;i<MAX_OBJECTS;++i)if(g_vars.objects[i].type==(g_vars.level==5 ? 40 : 35)){slot=i;break;}
 	assert(slot>=0);
 	for(int i=0;i<MAX_OBJECTS;++i)g_vars.objects[i].visible_flag=false;
 	struct object_t *lift=&g_vars.objects[slot],*player=&g_vars.objects[OBJECT_NUM_PLAYER1];
-	lift->visible_flag=player->visible_flag=true;lift->anim_frame=SPRITES_COUNT;
+	const int lift_frame=g_vars.level==5 ? 160 : SPRITES_COUNT;
+	lift->visible_flag=player->visible_flag=true;lift->anim_frame=lift_frame;
 	player->xpos=lift->xpos;player->ypos=lift->ypos-15;player->anim_frame=0;
 	g_vars.screen_tilemap_xorigin=MAX(0,MIN(player->xpos-160,g_vars.screen_tilemap_w*16-320));
 	g_vars.screen_tilemap_yorigin=MAX(0,MIN(lift->ypos-80,g_vars.screen_tilemap_h-160));
@@ -1450,19 +1451,57 @@ static void snapshot_city_lift() {
 		g_vars.objects[i].screen_xpos=g_vars.objects[i].xpos-g_vars.screen_tilemap_xorigin;
 		g_vars.objects[i].screen_ypos=g_vars.objects[i].ypos-g_vars.screen_tilemap_yorigin;
 	}
-	repaint_restored_state();snapshot("city-lift-fixed");
+	repaint_restored_state();snapshot(g_vars.level==5 ? "concert-lift-fixed" : "city-lift-fixed");
 	/* Recreate the exact old palette error in the same real scene. */
 	struct spritesheet_t *sheet=&_spritesheets[RENDER_SPR_LEVEL];
-	const int w=READ_LE_UINT16(g_res.spr_frames[SPRITES_COUNT]-2),h=READ_LE_UINT16(g_res.spr_frames[SPRITES_COUNT]-4);
+	const int w=READ_LE_UINT16(g_res.spr_frames[lift_frame]-2),h=READ_LE_UINT16(g_res.spr_frames[lift_frame]-4);
 	SDL_Surface *surface=SDL_CreateRGBSurface(0,w,h,8,0,0,0,0);assert(surface);
 	SDL_SetSurfacePalette(surface,_palette);SDL_SetColorKey(surface,1,0);
-	for(int y=0;y<h;++y)for(int x=0;x<w;++x)((uint8_t *)surface->pixels)[y*surface->pitch+x]=native_sprite_pixel(SPRITES_COUNT,x,y);
+	for(int y=0;y<h;++y)for(int x=0;x<w;++x)((uint8_t *)surface->pixels)[y*surface->pitch+x]=native_sprite_pixel(lift_frame,x,y);
 	SDL_Texture *broken=SDL_CreateTextureFromSurface(_renderer,surface);assert(broken);SDL_FreeSurface(surface);
-	SDL_Texture *texture=sheet->texture;const SDL_Rect rect=sheet->r[0];
-	sheet->texture=broken;sheet->r[0]=(SDL_Rect){0,0,w,h};
-	sdl2_draw_screen(0,0,1);snapshot("city-lift-before");
-	sheet->texture=texture;sheet->r[0]=rect;SDL_DestroyTexture(broken);
+	SDL_Texture *texture=sheet->texture;const SDL_Rect rect=sheet->r[lift_frame-SPRITES_COUNT];
+	sheet->texture=broken;sheet->r[lift_frame-SPRITES_COUNT]=(SDL_Rect){0,0,w,h};
+	sdl2_draw_screen(0,0,1);snapshot(g_vars.level==5 ? "concert-lift-before" : "city-lift-before");
+	sheet->texture=texture;sheet->r[lift_frame-SPRITES_COUNT]=rect;SDL_DestroyTexture(broken);
 	restore_timeline_state(&before);repaint_restored_state();
+}
+
+static void test_native_lift_animation() {
+	if(g_vars.level!=0 && g_vars.level!=4 && g_vars.level!=5)return;
+	/* These references come from the real level/object assets, independent
+	 * of the production frame-selection helper. Concert is the regression
+	 * case omitted by the previous level-number-specific correction. */
+	const int frame=g_vars.level==5 ? 160 : 146;
+	const int type=g_vars.level==5 ? 40 : (g_vars.level==4 ? 35 : 7);
+	int instances=0;for(int i=0;i<MAX_OBJECTS;++i)instances+=g_vars.objects[i].type==type;
+	assert(instances>0);
+	const uint8_t *src=g_res.spr_frames[frame];
+	const int w=READ_LE_UINT16(src-2),h=READ_LE_UINT16(src-4);
+	uint8_t canvas[320*200];memset(canvas,24,sizeof(canvas));
+	uint32_t pixels[320*200];int different=0;
+	for(int y=0;y<h;++y)for(int x=0;x<w;++x)if(native_sprite_pixel(frame,x,y) && native_sprite_pixel(frame,x,y)!=native_sprite_pixel(frame+1,x,y))++different;
+	assert(different>0);
+	g_sys.set_scroll_interpolation(0,0,0,false);
+	for(int tick=0;tick<60;++tick) {
+		const int px=40+2*(tick%30),py=60+2*(tick%8),flip=tick&1;
+		const int prev_x=tick ? 40+2*((tick-1)%30) : px,prev_y=tick ? 60+2*((tick-1)%8) : py;
+		g_sys.begin_sprite_frame();g_sys.render_clear_sprites();g_sys.set_sprite_owner(700);
+		g_sys.render_add_sprite(RENDER_SPR_LEVEL,frame-SPRITES_COUNT,px,py,flip);
+		g_sys.set_sprite_owner(-1);g_sys.set_scroll_interpolation(0,0,33,true);
+		g_sys.copy_bitmap(canvas,320,200);
+		for(int phase=0;phase<=2;++phase) {
+			sdl2_draw_screen(0,0,phase/2.f);read_native_test_pixels(pixels);
+			const int dx=prev_x+(px-prev_x)*phase/2,dy=prev_y+(py-prev_y)*phase/2;
+			for(int y=0;y<h;++y)for(int x=0;x<w;++x) {
+				const int sample=flip ? w-1-x : x;
+				const bool covered=native_sprite_pixel(frame,sample,y)!=0;
+				const uint8_t color=covered ? (g_vars.level==4 ? g_res.tiles[y*640+(sample&15)] : native_sprite_pixel(frame+1,sample,y)) : 24;
+				assert((pixels[(dy+y)*320+dx+x]&0xffffff)==(_screen_palette[color]&0xffffff));
+			}
+		}
+	}
+	g_sys.set_scroll_interpolation(0,0,0,false);
+	printf("native lifts: %d real stage instances, frame %d, 60 moving/flipped ticks and all intermediate pixels passed\n",instances,frame);
 }
 
 static void test_amiga_layers() {
@@ -1540,6 +1579,7 @@ static void test_amiga_layers() {
 		}
 	}
 
+	test_native_lift_animation();
 	printf("Amiga: %d foreground tiles (%d opaque / %d hole pixels), complete copper height, native prop palettes and alternating lift frames passed\n",checked,opaque,holes);
 	g_sys.input.quit=true;
 }

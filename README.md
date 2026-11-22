@@ -701,12 +701,15 @@ holes, black, copper rows, native prop colors, level sprite flips and alternatin
 lift frames. They also compare 400 incremental tile edits with a full redraw at a
 non-aligned camera origin: moving lifts and their shafts must update in viewport
 coordinates, while the SQL map retains world coordinates. Tests run in all six
-Amiga stages and both HUD modes. The shopping-centre/city lift keeps frame 146's
-transparent silhouette and takes its colors from the paired native artwork in
-frame 147. The city reference matches BLK tile 0 exactly; its regression checks
-that independent map graphic, rather than treating the miscolored first frame
-as the expected image. With `BLUES_VIEW_TEST_OUTPUT` pointing to an existing
-directory, before/after actor occlusion and city lift captures are available.
+Amiga stages and both HUD modes. Rideable lifts select their native color
+reference from the actual platform type in the level, retaining the original
+transparent silhouette. This covers the shopping-centre/city pair 146/147 and
+Concert's pair 160/161. The city reference matches BLK tile 0 exactly; its
+regression checks that independent map graphic rather than the miscolored
+coverage indices. Moving/flipped lift tests compare all intermediate pixels
+for 60 ticks in each of those stages. With `BLUES_VIEW_TEST_OUTPUT` pointing to
+an existing directory, before/after occlusion, city lift and Concert lift
+captures are available.
 
 ### Scrolling edges and Amiga copper regression
 
