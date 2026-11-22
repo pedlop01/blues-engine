@@ -7,8 +7,8 @@ refieren a cada tarea; no representan una estimación del tiempo restante.
 
 ## Estado general
 
-- Tareas completadas: **0 de 18**.
-- En preparación: **01**.
+- Tareas completadas: **1 de 18**.
+- Publicada y completada: **01**.
 - Pendiente de validación al jugar: **02**.
 - Las demás tareas están pendientes de implementación.
 
@@ -33,7 +33,7 @@ pero falta confirmar si elimina el petardeo que se oía en Windows.
 
 | ID | Tarea | Alcance y criterio de finalización | Dependencias | Estado | Progreso |
 |---|---|---|---|---|---:|
-| 01 | Consolidar el proyecto | Ordenar archivos generados, revisar rutas y separar los cambios en commits claros. La nueva estructura y sus ejemplos deben funcionar. | — | Limpieza, exclusión de archivos generados, atribución al origen y pruebas completas listas; publicación en GitHub en curso. | 75 % |
+| 01 | Consolidar el proyecto | Ordenar archivos generados, revisar rutas y separar los cambios en commits claros. La nueva estructura y sus ejemplos deben funcionar. | — | Completada: fuentes y documentación publicadas en pedlop01/blues-engine, rama main verificada; historial y autoría de cyxx/blues conservados. | 100 % |
 | 02 | Terminar de validar el audio | Confirmar la ausencia de petardeo DOS y comprobar música y efectos en ambos modos, en Windows. | — | Salida a 44,1 kHz y pruebas listas; pendiente de confirmación al escuchar. | 75 % |
 | 03 | Suavizar personajes y objetos | Interpolar el desplazamiento a 60/120 Hz conservando física y colisiones a 30 Hz. Evitar saltos visuales en puertas, cambios de modo y zoom. | 01 | Pendiente | 0 % |
 | 04 | Mejorar la cámara | Añadir anticipación hacia donde se camina y seguimiento suave, respetando bordes, habitaciones y cambios de dirección. | 01 | Pendiente | 0 % |
@@ -115,3 +115,4 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-22 | 02 | Salida de audio a 44,1 kHz; comprobadas continuidad entre bloques, ausencia de saturación en las pruebas y tiempo de generación en Windows. | Confirmar al escuchar si desapareció el petardeo. |
 | 2026-11-22 | Todas | Creado este documento a partir del plan acordado en el chat. | Actualizar filas y registro conforme se implemente cada tarea. |
 | 2026-11-22 | 01 | Preparada la publicación en pedlop01/blues-engine. Historial original conservado y remoto upstream configurado; añadidos .gitignore y CREDITS.md, limpieza de compilación y README con mejoras actuales e ideas pendientes. Compilaciones Linux/Windows desde cero y pruebas de audio, modos, puertas, enemigos y zoom superadas. | Finalizar commits, autenticar la escritura y verificar la publicación remota. |
+| 2026-11-22 | 01 | Publicada y verificada la rama main en [pedlop01/blues-engine](https://github.com/pedlop01/blues-engine). Conservados los 49 commits originales; separados los cambios de implementación y documentación. Descripción del repositorio y README enlazan a cyxx/blues y reconocen a Gregory Montoir. | Ninguna para esta tarea. El audio continúa pendiente de confirmación en la tarea 02. |
