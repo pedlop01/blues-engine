@@ -2566,7 +2566,7 @@ void do_level() {
 				.render_rate = g_options.scroll_rate, .view_step = g_sys.input.view_step,
 				.music_volume = g_options.music_volume, .effects_volume = g_options.effects_volume,
 				.apply_volumes = g_mix.set_volumes,
-				.save_game = save_current_game, .prepare_load = prepare_game_load, .save_error = game_save_error,
+				.save_game = save_current_game, .prepare_load = prepare_game_load, .save_error = game_save_error, .inspect_save = inspect_game_save,
 				.load_notice = _state_load_reopen ? game_save_error() : NULL
 			};
 			for (int i=0;i<MAX_LEVELS;++i) {

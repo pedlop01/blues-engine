@@ -63,7 +63,8 @@ static uint64_t _render_schedule_origin, _next_render_counter;
 static bool _scroll_interpolation_active, _render_schedule_initialized;
 static SDL_Window *_window;
 static SDL_Renderer *_renderer;
-static SDL_Texture *_texture;
+static SDL_Texture *_texture, *_save_preview_texture;
+static bool _save_preview_capture;
 static SDL_PixelFormat *_fmt;
 static SDL_Palette *_palette;
 static uint32_t _screen_palette[256];
@@ -105,6 +106,7 @@ static void sdl2_init() {
 }
 
 static void sdl2_fini() {
+	SDL_DestroyTexture(_save_preview_texture);_save_preview_texture=NULL;
 	SDL_DestroyTexture(_hud_texture_top);
 	SDL_DestroyTexture(_hud_texture_bottom);
 	_hud_texture_top = _hud_texture_bottom = 0;
@@ -608,7 +610,7 @@ static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
 	sdl2_draw_assist_status();
 	if (_pause_menu_open) sdl2_draw_pause_menu();
 
-	SDL_RenderPresent(_renderer);
+	if (!_save_preview_capture) SDL_RenderPresent(_renderer);
 }
 
 static void sdl2_present_at(uint64_t timestamp) {
@@ -1190,6 +1192,8 @@ struct sys_t g_sys = {
 	.save_preferences = sdl2_save_preferences,
 	.read_save_file = sdl2_read_save_file,
 	.write_save_file = sdl2_write_save_file,
+	.save_file_status = sdl2_save_file_status,
+	.capture_save_preview = sdl2_capture_save_preview,
 	.fini = sdl2_fini,
 	.set_screen_size = sdl2_set_screen_size,
 	.set_screen_palette = sdl2_set_screen_palette,

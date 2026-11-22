@@ -35,10 +35,19 @@ static inline uint16_t READ_LE_UINT16(const uint8_t *p) {
 	return p[0] | (p[1] << 8);
 }
 
+static inline uint32_t READ_LE_UINT32(const uint8_t *p) {
+	return (uint32_t)p[0] | ((uint32_t)p[1]<<8) | ((uint32_t)p[2]<<16) | ((uint32_t)p[3]<<24);
+}
+
 static inline void WRITE_LE_UINT16(uint8_t *p, uint16_t value) {
 	p[0] = value & 0xFF;
 	p[1] = value >> 8;
 }
+
+#define SAVE_SLOT_COUNT 8
+#define SAVE_PREVIEW_WIDTH 128
+#define SAVE_PREVIEW_HEIGHT 80
+#define SAVE_PREVIEW_BYTES (SAVE_PREVIEW_WIDTH*SAVE_PREVIEW_HEIGHT*3)
 
 #define GAME_SCREEN_W g_options.screen_w
 #define GAME_SCREEN_H g_options.screen_h

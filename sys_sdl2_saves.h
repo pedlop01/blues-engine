@@ -4,7 +4,7 @@
 #include <direct.h>
 #endif
 static char *save_path(int slot) {
-	if (slot<0 || slot>=8) return NULL;
+	if (slot<0 || slot>=SAVE_SLOT_COUNT) return NULL;
 	const char *override=SDL_getenv("BLUES_SAVE_DIR");
 	if (override && !*override) return NULL;
 	char *directory=override ? SDL_strdup(override) : SDL_GetPrefPath("pedlop01","blues-engine");
@@ -58,4 +58,33 @@ static bool sdl2_write_save_file(int slot,const uint8_t *data,size_t size) {
 		 * temporary is never read as a save and can be replaced next time. */
 	}
 	SDL_free(temporary);SDL_free(path);return success;
+}
+
+static int sdl2_save_file_status(int slot) {
+	char *path=save_path(slot);if(!path)return -1;
+	errno=0;FILE *fp=preferences_open(path,false);const int error=errno;
+	SDL_free(path);if(fp){fclose(fp);return 1;}return error==ENOENT ? 0 : -1;
+}
+static bool sdl2_capture_save_preview(uint8_t *rgb) {
+	int w,h;if(SDL_GetRendererOutputSize(_renderer,&w,&h)!=0 || w<=0 || h<=0)return false;
+	uint8_t *pixels=malloc((size_t)w*h*3);if(!pixels)return false;
+	const bool menu=_pause_menu_open;
+	_pause_menu_open=false;_save_preview_capture=true;
+	sdl2_draw_screen(0,0,1); /* Read before Present; never capture the menu. */
+	_save_preview_capture=false;_pause_menu_open=menu;
+	SDL_RenderSetLogicalSize(_renderer,0,0);
+	const bool ok=SDL_RenderReadPixels(_renderer,NULL,SDL_PIXELFORMAT_RGB24,pixels,w*3)==0;
+	SDL_RenderSetLogicalSize(_renderer,_screen_w,_screen_h);
+	if(ok) {
+		memset(rgb,0,SAVE_PREVIEW_BYTES);
+		int tw=SAVE_PREVIEW_WIDTH,th=(int)((int64_t)h*tw/w);
+		if(th>SAVE_PREVIEW_HEIGHT){th=SAVE_PREVIEW_HEIGHT;tw=(int)((int64_t)w*th/h);}
+		tw=MAX(1,tw);th=MAX(1,th);
+		const int ox=(SAVE_PREVIEW_WIDTH-tw)/2,oy=(SAVE_PREVIEW_HEIGHT-th)/2;
+		for(int y=0;y<th;++y)for(int x=0;x<tw;++x) {
+			const int sx=(int)((int64_t)(2*x+1)*w/(2*tw)),sy=(int)((int64_t)(2*y+1)*h/(2*th));
+			memcpy(rgb+((y+oy)*SAVE_PREVIEW_WIDTH+x+ox)*3,pixels+((size_t)sy*w+sx)*3,3);
+		}
+	}
+	free(pixels);return ok;
 }

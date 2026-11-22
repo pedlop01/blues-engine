@@ -40,13 +40,24 @@ enum sys_transition_e {
 	TRANSITION_CURTAIN
 };
 
+enum sys_save_status { SAVE_EMPTY, SAVE_READY, SAVE_INCOMPATIBLE, SAVE_DAMAGED, SAVE_UNREADABLE };
+struct sys_save_slot {
+	enum sys_save_status status;
+	int level, lives[2];
+	bool amiga, two_players, infinite_lives, has_preview, has_metadata;
+	uint64_t timestamp;
+	const char *reason;
+	uint8_t preview[SAVE_PREVIEW_BYTES];
+};
+
 struct sys_pause_options {
 	bool amiga, can_switch;
 	bool invulnerable, infinite_lives, two_players, player_alive[2];
 	int lives[2];
 	bool select_character, reset_defaults, load_game;
-	bool (*save_game)();
-	bool (*prepare_load)();
+	bool (*save_game)(int slot);
+	bool (*prepare_load)(int slot);
+	void (*inspect_save)(int slot, struct sys_save_slot *info);
 	const char *(*save_error)();
 	const char *load_notice;
 	int current_level, requested_level; /* -1 means continue. */
@@ -65,6 +76,8 @@ struct sys_t {
 	void	(*save_preferences)();
 	bool	(*read_save_file)(int slot, uint8_t *data, size_t capacity, size_t *size);
 	bool	(*write_save_file)(int slot, const uint8_t *data, size_t size);
+	int	(*save_file_status)(int slot);
+	bool	(*capture_save_preview)(uint8_t *rgb);
 	void	(*fini)();
 	void	(*set_screen_size)(int w, int h, const char *caption, int scale, const char *filter, bool fullscreen);
 	void	(*set_screen_palette)(const uint8_t *colors, int offset, int count, int depth);

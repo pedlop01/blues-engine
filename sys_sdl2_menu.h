@@ -1,5 +1,9 @@
+#include <time.h>
 /* SDL pause-menu implementation. Kept private to sys_sdl2.c. */
-enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD, PAUSE_AUDIO, PAUSE_ASSISTS, PAUSE_LEVELS, PAUSE_LEVEL_CONFIRM, PAUSE_CHARACTER_CONFIRM, PAUSE_DEFAULTS, PAUSE_GAME, PAUSE_SAVE_CONFIRM, PAUSE_LOAD_CONFIRM };
+enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD, PAUSE_AUDIO, PAUSE_ASSISTS, PAUSE_LEVELS, PAUSE_LEVEL_CONFIRM, PAUSE_CHARACTER_CONFIRM, PAUSE_DEFAULTS, PAUSE_GAME, PAUSE_SAVE_CONFIRM, PAUSE_LOAD_CONFIRM, PAUSE_SLOTS };
+static struct sys_save_slot _save_slots[SAVE_SLOT_COUNT];
+static int _save_slot, _preview_texture_slot=-1;
+static bool _save_browser_load;
 static int _selected_level;
 static const char *_level_names[] = {"1 CENTRO COMERCIAL","2 ALMACEN","3 PRISION","4 ALCANTARILLAS","5 CIUDAD","6 CONCIERTO"};
 static enum pause_page _pause_page;
@@ -47,7 +51,7 @@ static bool handle_bound_button(int button, bool down, struct input_t *input) {
 }
 
 static bool pause_large_page() {
-	return _pause_page == PAUSE_MAIN || _pause_page == PAUSE_GAME || _pause_page == PAUSE_SAVE_CONFIRM || _pause_page == PAUSE_LOAD_CONFIRM || _pause_page == PAUSE_CONTROLS || _pause_page == PAUSE_OPTIONS ||
+	return _pause_page == PAUSE_SLOTS || _pause_page == PAUSE_MAIN || _pause_page == PAUSE_GAME || _pause_page == PAUSE_SAVE_CONFIRM || _pause_page == PAUSE_LOAD_CONFIRM || _pause_page == PAUSE_CONTROLS || _pause_page == PAUSE_OPTIONS ||
 		_pause_page == PAUSE_BINDINGS || _pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD || _pause_page == PAUSE_AUDIO || _pause_page == PAUSE_ASSISTS || _pause_page == PAUSE_LEVELS || _pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM || _pause_page == PAUSE_DEFAULTS;
 }
 
@@ -55,6 +59,7 @@ static int pause_item_count() {
 	switch (_pause_page) {
 	case PAUSE_MAIN: return 7;
 	case PAUSE_GAME: return 3;
+	case PAUSE_SLOTS: return SAVE_SLOT_COUNT+1;
 	case PAUSE_SAVE_CONFIRM: case PAUSE_LOAD_CONFIRM: return 2;
 	case PAUSE_LEVELS: return 7;
 	case PAUSE_LEVEL_CONFIRM: case PAUSE_CHARACTER_CONFIRM: return 2;
@@ -245,21 +250,78 @@ static void pause_row(const char *label, const char *value, int index, bool enab
 	if (value) pause_text_color(value,_pause_page == PAUSE_LEVELS ? 220 : 150,y,1,enabled ? PAUSE_CYAN : PAUSE_MUTED);
 }
 
+static void pause_refresh_save(int slot) {
+	memset(&_save_slots[slot],0,sizeof(_save_slots[slot]));
+	if(_pause_options.inspect_save) _pause_options.inspect_save(slot,&_save_slots[slot]);
+	_preview_texture_slot=-1;
+}
+static void pause_draw_save_slots() {
+	pause_center_text(_save_browser_load ? "CARGAR PARTIDA" : "GUARDAR PARTIDA",26,2,true);
+	for(int i=0;i<=SAVE_SLOT_COUNT;++i) {
+		const int y=50+i*12;
+		if(i==_pause_selection) {
+			SDL_SetRenderDrawColor(_renderer,29,55,77,255);SDL_Rect r={25,y-3,140,12};SDL_RenderFillRect(_renderer,&r);
+			r.w=2;SDL_SetRenderDrawColor(_renderer,255,215,104,255);SDL_RenderFillRect(_renderer,&r);
+		}
+		char label[24];SDL_Color color=PAUSE_MUTED;
+		if(i==SAVE_SLOT_COUNT) {strcpy(label,"VOLVER");color=PAUSE_TEXT;}
+		else {
+			const struct sys_save_slot *info=&_save_slots[i];
+			if(info->status==SAVE_READY) {snprintf(label,sizeof(label),"%d  NIVEL %d",i+1,info->level+1);color=PAUSE_CYAN;}
+			else snprintf(label,sizeof(label),"%d  %s",i+1,info->status==SAVE_EMPTY ? "VACIO" : (info->status==SAVE_INCOMPATIBLE ? "INCOMPATIBLE" : (info->status==SAVE_DAMAGED ? "DANADO" : "ERROR LECTURA")));
+			if(info->status==SAVE_INCOMPATIBLE || info->status==SAVE_DAMAGED || info->status==SAVE_UNREADABLE)color=PAUSE_DANGER;
+		}
+		pause_text_color(label,34,y,1,i==_pause_selection ? PAUSE_GOLD : color);
+	}
+	const int slot=_pause_selection<SAVE_SLOT_COUNT ? _pause_selection : _save_slot;
+	const struct sys_save_slot *info=&_save_slots[slot];
+	SDL_Rect image={172,48,SAVE_PREVIEW_WIDTH,SAVE_PREVIEW_HEIGHT},border={170,46,SAVE_PREVIEW_WIDTH+4,SAVE_PREVIEW_HEIGHT+4};
+	SDL_SetRenderDrawColor(_renderer,69,189,213,255);SDL_RenderDrawRect(_renderer,&border);
+	SDL_SetRenderDrawColor(_renderer,4,10,20,255);SDL_RenderFillRect(_renderer,&image);
+	if(info->has_preview) {
+		if(!_save_preview_texture)_save_preview_texture=SDL_CreateTexture(_renderer,SDL_PIXELFORMAT_RGB24,SDL_TEXTUREACCESS_STATIC,SAVE_PREVIEW_WIDTH,SAVE_PREVIEW_HEIGHT);
+		if(_save_preview_texture && _preview_texture_slot!=slot) {SDL_UpdateTexture(_save_preview_texture,NULL,info->preview,SAVE_PREVIEW_WIDTH*3);_preview_texture_slot=slot;}
+		if(_save_preview_texture)SDL_RenderCopy(_renderer,_save_preview_texture,NULL,&image);
+	} else {
+		const char *text=info->status==SAVE_EMPTY ? "SLOT VACIO" : "SIN MINIATURA";
+		pause_text_color(text,172+(SAVE_PREVIEW_WIDTH-((int)strlen(text)*6-1))/2,83,1,PAUSE_MUTED);
+	}
+	if(info->has_metadata) {
+		char text[48];snprintf(text,sizeof(text),"NIVEL %d - %s",info->level+1,info->amiga ? "AMIGA" : "DOS");pause_text_color(text,172,134,1,PAUSE_CYAN);
+		strcpy(text,"FECHA NO DISPONIBLE");
+		if(info->timestamp && info->timestamp<=253402300799ULL) {
+			const time_t date=(time_t)info->timestamp;
+			struct tm *local=(uint64_t)date==info->timestamp ? localtime(&date) : NULL;
+			if(local)strftime(text,sizeof(text),"%d/%m/%Y %H:%M",local);
+		}
+		pause_text_color(text,172,145,1,PAUSE_TEXT);
+		if(info->infinite_lives)strcpy(text,"VIDAS: INFINITAS");
+		else if(info->two_players)snprintf(text,sizeof(text),"VIDAS: %02d / %02d",info->lives[0],info->lives[1]);
+		else snprintf(text,sizeof(text),"VIDAS: %02d",info->lives[0]);
+		pause_text_color(text,172,156,1,PAUSE_TEXT);
+	}
+	const char *hint=_pause_notice;
+	if(!hint && _save_browser_load && info->status!=SAVE_READY && _pause_selection<SAVE_SLOT_COUNT)hint=info->reason;
+	pause_center_text(hint ? hint : "ENTER / A: ELEGIR  ESC: VOLVER",176,1,true);
+}
+
 static void pause_draw_settings() {
+	if(_pause_page==PAUSE_SLOTS){pause_draw_save_slots();return;}
 	if (_pause_page == PAUSE_GAME) {
 		pause_center_text("PARTIDA",26,2,true);
 		pause_row("GUARDAR PARTIDA",NULL,0,_pause_options.save_game!=NULL);
 		pause_row("CARGAR PARTIDA",NULL,1,_pause_options.prepare_load!=NULL);
 		pause_row("VOLVER",NULL,2,true);
-		pause_center_text("GUARDADO UNICO",115,1,false);
-		pause_center_text("NIVEL, OBJETOS Y HABITACION",131,1,false);
+		pause_center_text("8 SLOTS CON MINIATURAS",115,1,false);
+		pause_center_text("NIVEL, FECHA Y VIDAS",131,1,false);
 		pause_center_text(_pause_notice ? _pause_notice : "ENTER / A: ELEGIR  ESC: VOLVER",163,1,true);
 		return;
 	}
 	if (_pause_page == PAUSE_SAVE_CONFIRM || _pause_page == PAUSE_LOAD_CONFIRM) {
 		const bool load=_pause_page == PAUSE_LOAD_CONFIRM;
-		pause_center_text(load ? "CARGAR PARTIDA?" : "GUARDAR PARTIDA?",26,2,true);
-		pause_center_text(load ? "SE PERDERA EL PROGRESO ACTUAL" : "REEMPLAZARA EL GUARDADO ANTERIOR",65,1,false);
+		char title[32];snprintf(title,sizeof(title),load ? "CARGAR SLOT %d?" : (_save_slots[_save_slot].status==SAVE_EMPTY ? "GUARDAR EN SLOT %d?" : "SOBRESCRIBIR SLOT %d?"),_save_slot+1);
+		pause_center_text(title,26,2,true);
+		pause_center_text(load ? "SE PERDERA EL PROGRESO ACTUAL" : (_save_slots[_save_slot].status==SAVE_EMPTY ? "SE GUARDARA EL ESTADO ACTUAL" : "REEMPLAZARA LA PARTIDA GUARDADA"),65,1,false);
 		pause_row("VOLVER",NULL,4,true);
 		pause_row(load ? "CARGAR" : "GUARDAR",NULL,5,true);
 		pause_center_text("ENTER / A: ELEGIR  ESC: VOLVER",163,1,true);
@@ -460,7 +522,9 @@ static bool pause_back() {
 	if (_pause_capture >= 0) { _pause_capture = -1; return false; }
 	if (_pause_page == PAUSE_MAIN) return true;
 	if (_pause_page == PAUSE_SAVE_CONFIRM || _pause_page == PAUSE_LOAD_CONFIRM) {
-		_pause_selection=_pause_page == PAUSE_SAVE_CONFIRM ? 0 : 1; _pause_page=PAUSE_GAME;
+		_pause_selection=_save_slot; _pause_page=PAUSE_SLOTS;
+	} else if (_pause_page == PAUSE_SLOTS) {
+		_pause_page=PAUSE_GAME;_pause_selection=_save_browser_load ? 1 : 0;
 	} else if (_pause_page == PAUSE_GAME) {
 		_pause_page=PAUSE_MAIN; _pause_selection=4;
 	} else if (_pause_page == PAUSE_DEFAULTS) {
@@ -491,17 +555,25 @@ static bool pause_back() {
 
 static bool pause_activate() {
 	_pause_notice = NULL;
-	if (_pause_page == PAUSE_GAME) {
-		if (_pause_selection == 2) return pause_back();
-		_pause_page=_pause_selection == 0 ? PAUSE_SAVE_CONFIRM : PAUSE_LOAD_CONFIRM;
+	if(_pause_page==PAUSE_GAME) {
+		if(_pause_selection==2)return pause_back();
+		_save_browser_load=_pause_selection==1;
+		for(int i=0;i<SAVE_SLOT_COUNT;++i)pause_refresh_save(i);
+		_pause_page=PAUSE_SLOTS;_pause_selection=_save_slot;return false;
+	}
+	if(_pause_page==PAUSE_SLOTS) {
+		if(_pause_selection==SAVE_SLOT_COUNT)return pause_back();
+		_save_slot=_pause_selection;
+		if(_save_browser_load && _save_slots[_save_slot].status!=SAVE_READY){_pause_notice=_save_slots[_save_slot].reason;return false;}
+		_pause_page=_save_browser_load ? PAUSE_LOAD_CONFIRM : PAUSE_SAVE_CONFIRM;
 		_pause_selection=0;return false;
 	}
-	if (_pause_page == PAUSE_SAVE_CONFIRM || _pause_page == PAUSE_LOAD_CONFIRM) {
-		if (_pause_selection == 0) return pause_back();
-		const bool load=_pause_page == PAUSE_LOAD_CONFIRM;
-		const bool success=load ? (_pause_options.prepare_load && _pause_options.prepare_load()) : (_pause_options.save_game && _pause_options.save_game());
-		if(load && success) { _pause_options.load_game=true; return true; }
-		pause_back();
+	if(_pause_page==PAUSE_SAVE_CONFIRM || _pause_page==PAUSE_LOAD_CONFIRM) {
+		if(_pause_selection==0)return pause_back();
+		const bool load=_pause_page==PAUSE_LOAD_CONFIRM;
+		const bool success=load ? (_pause_options.prepare_load && _pause_options.prepare_load(_save_slot)) : (_pause_options.save_game && _pause_options.save_game(_save_slot));
+		if(load && success){_pause_options.load_game=true;return true;}
+		pause_back();pause_refresh_save(_save_slot);
 		_pause_notice=_pause_options.save_error ? _pause_options.save_error() : "OPERACION NO DISPONIBLE";
 		return false;
 	}
@@ -776,6 +848,7 @@ static void sdl2_run_pause_menu() {
 	}
 	clear_pause_input();
 	_pause_menu_open = false;
+	SDL_DestroyTexture(_save_preview_texture);_save_preview_texture=NULL;_preview_texture_slot=-1;
 	sdl2_draw_screen(0.f, 0.f, 1.f);
 	if (resume_audio && _window_has_focus && !g_sys.input.quit) SDL_PauseAudio(0);
 }

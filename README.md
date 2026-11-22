@@ -29,7 +29,8 @@ focused on the first **Blues Brothers** game.
 | Level selection | Six stages from the pause menu, with confirmation, current-stage restart and unavailable-data detection. Starts fresh while retaining characters, life counts, assists and presentation settings. |
 | Larger views | Dynamic sprite storage replaces the fixed sprite limit; camera bounds and defeated-enemy visibility follow the current view. |
 | Persistent preferences | Presentation, volumes, controls, preferred DOS/Amiga release, assists and chosen starting lives survive restarts. Confirmed reset in Options restores defaults. |
-| Complete save state | Pause → Partida saves/restores gameplay, enemies, carried objects, edited maps, rooms, native release and zoom. Versioned format, compatibility checks and one confirmed save position; eight slots/thumbnails remain task 14. |
+| Complete save state | Pause → Partida saves/restores gameplay, enemies, carried objects, edited maps, rooms, native release and zoom. Versioned format and compatibility checks, with eight confirmed save positions. |
+| Eight save slots | Save/load browser with native scene thumbnails, level, local date, lives and explicit empty/damaged/incompatible states. Previous saves remain loadable. |
 | Regression tests | Tests cover DOS sequencer accuracy, PCM continuity, zoom, doors, defeated enemies and live presentation changes. |
 
 Audio output is 44.1 kHz. Technical tests pass, and the Windows DOS audio
@@ -37,8 +38,7 @@ adjustment has been confirmed in gameplay.
 
 ## Ideas and roadmap
 
-The next phase adds eight save
-slots with thumbnails, and a short rewind with a VHS-style visual effect.
+The next phase adds a short rewind with a VHS-style visual effect.
 Further work includes Windows packaging.
 
 **These are planned features, not features already available.** Progress,
@@ -414,12 +414,22 @@ menu, preserved health and restored controls/starting lives.
 
 ### Save and load a complete game
 
-Open **Pause → Partida → Guardar partida** or **Cargar partida**. Each operation
-asks for confirmation with **Volver** selected by default. Saving replaces the
-single current save; after saving, the menu stays paused and reports the result.
-Loading restores the saved scene and resumes without menu inputs leaking into
-gameplay. Missing, damaged or incompatible saves report an error while keeping
-the current world paused and intact.
+Open **Pause → Partida → Guardar partida** or **Cargar partida** and select one
+of **eight numbered slots**. The selected slot shows its scene thumbnail, level,
+DOS/Amiga release, local save date/time and life count (both players when playing
+together, or an infinite-lives indication). The browser distinguishes empty,
+damaged, incompatible and unreadable slots; only valid saves can be loaded.
+
+Saving asks for confirmation, explicitly naming an occupied slot before
+replacing it. Loading also asks for confirmation, with **Volver** selected by
+default. Saving keeps the menu paused and refreshes that slot's preview and
+metadata; loading restores its scene without leaking menu inputs into gameplay.
+Errors leave the current game and the previous slot file intact.
+
+Thumbnails capture the actual frozen game scene and native HUD, without the
+menu, preserving aspect ratio. Image and state are stored atomically in the same
+checksummed file. Your task-13 save remains **slot 1**; older saves still load,
+showing **Sin miniatura** until replaced with a new save.
 
 The save contains position, health/lives, inventory, checkpoints, enemies,
 projectiles/carried objects, map edits, trigger states, doors, bonus room,
@@ -432,7 +442,7 @@ and transient effects are not restored.
 
 Files are stored separately from original game data and preferences:
 
-- Windows: `%APPDATA%\pedlop01\blues-engine\saves\slot01.bbs`.
+- Windows: `%APPDATA%\pedlop01\blues-engine\saves\slot01.bbs` through `slot08.bbs`.
 - Linux/WSL: `$XDG_DATA_HOME/pedlop01/blues-engine/saves/slot01.bbs`, or
   `~/.local/share/pedlop01/blues-engine/saves/slot01.bbs` by default.
 
@@ -441,11 +451,12 @@ storage. The file format is versioned, checksummed and independent of pointer
 size. The saved release's original game files must still be supplied and match
 the captured resources. Loading can change level and DOS/Amiga mode directly.
 To load after restarting the application, start playing and open Pause → Partida.
-The eight-slot browser and thumbnails are the next separate task.
+The slots are independent; overwriting one does not alter the other seven.
 
 ```
 make build/tests/check_viewport build/tests/check_preferences
 python3 tests/check_state_launches.py
+python3 tests/check_slots_launches.py
 ```
 
 See [docs/SAVE_FORMAT.md](docs/SAVE_FORMAT.md) for the format, compatibility

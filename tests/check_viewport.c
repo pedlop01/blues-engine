@@ -1016,7 +1016,7 @@ static uint32_t state_frame_crc() {
 static void test_game_state() {
 	if(getenv("BLUES_TEST_STATE_READ")) {
 		uint8_t actual[BB_STATE_MAX_SIZE],expected[BB_STATE_MAX_SIZE],future[BB_STATE_MAX_SIZE];size_t actual_size,expected_size,future_size;
-		assert(prepare_game_load());struct bb_state saved=*_prepared_state;saved.timestamp=0;
+		assert(prepare_game_load(0));struct bb_state saved=*_prepared_state;saved.timestamp=0;
 		assert(bb_state_encode(&saved,expected,sizeof(expected),&expected_size));
 		assert(apply_prepared_game());encode_current_state(actual,&actual_size);
 		assert(actual_size==expected_size && !memcmp(actual,expected,actual_size));
@@ -1063,24 +1063,24 @@ static void test_game_state() {
 	assert(bb_state_encode(&state,bytes,sizeof(bytes),&size));
 	struct bb_state decoded;assert(bb_state_decode(&decoded,bytes,size));
 	assert(!memcmp(&state.vars,&decoded.vars,sizeof(state.vars)));
-	assert(save_current_game());
+	assert(save_current_game(0));
 	/* Reject bad headers, truncated data, future versions, checksum errors and
 	 * semantically invalid values without touching the running world. */
 	for(size_t n=0;n<size;n+=17) assert(!bb_state_decode(&decoded,bytes,n));
 	bytes[8]=99;assert(!bb_state_decode(&decoded,bytes,size));bytes[8]=1;
 	bytes[size-1]^=1;assert(!bb_state_decode(&decoded,bytes,size));bytes[size-1]^=1;
-	assert(g_sys.write_save_file(0,bytes,size-1));assert(!prepare_game_load());
+	assert(g_sys.write_save_file(0,bytes,size-1));assert(!prepare_game_load(0));
 	assert(!memcmp(&state.vars,&g_vars,sizeof(g_vars)) && !memcmp(state.map,g_res.sql,sizeof(state.map)));
 	assert(g_sys.write_save_file(0,bytes,size));
 	struct bb_state bad=state;bad.vars.level=6;assert(!bb_state_encode(&bad,roundtrip,sizeof(roundtrip),&other_size));
 	bad=state;bad.resources^=1;assert(bb_state_encode(&bad,roundtrip,sizeof(roundtrip),&other_size));
-	assert(g_sys.write_save_file(0,roundtrip,other_size));assert(!prepare_game_load());
+	assert(g_sys.write_save_file(0,roundtrip,other_size));assert(!prepare_game_load(0));
 	assert(!memcmp(&state.vars,&g_vars,sizeof(g_vars)));assert(g_sys.write_save_file(0,bytes,size));
 	/* Advance a deterministic future and compare every serialized field after
 	 * restoring and replaying the same inputs (including a zoom transition). */
 	state_trace();encode_current_state(expected,&expected_size);
 	if(getenv("BLUES_TEST_STATE_WRITE")) {assert(g_sys.write_save_file(1,expected,expected_size));g_sys.input.quit=true;puts("state: cross-process fixture and deterministic future saved");return;}
-	assert(prepare_game_load());assert(apply_prepared_game());
+	assert(prepare_game_load(0));assert(apply_prepared_game());
 	assert(state_frame_crc()==before_pixels);
 	encode_current_state(roundtrip,&other_size);
 	state.timestamp=0;assert(bb_state_encode(&state,bytes,sizeof(bytes),&size));
@@ -1093,15 +1093,82 @@ static void test_game_state() {
 	assert(switch_data_mode());
 	const char **path=state.amiga ? &g_options.amiga_datapath : &g_options.dos_datapath;
 	const char *valid_path=*path;*path="/nonexistent/blues-data";
-	const struct vars_t before=g_vars;assert(!prepare_game_load());assert(!memcmp(&before,&g_vars,sizeof(before)));*path=valid_path;
-	assert(prepare_game_load());assert(apply_prepared_game());
+	const struct vars_t before=g_vars;assert(!prepare_game_load(0));assert(!memcmp(&before,&g_vars,sizeof(before)));*path=valid_path;
+	assert(prepare_game_load(0));assert(apply_prepared_game());
 	assert(g_res.amiga_data==state.amiga && !memcmp(&state.vars,&g_vars,sizeof(g_vars)));
 	start_selected_level((state.vars.level+1)%6);load_level_data(g_vars.level);
 	g_vars.screen_tilemap_w=level_dim[g_vars.level*2];g_vars.screen_tilemap_h=level_dim[g_vars.level*2+1];init_level();g_vars.menu_level_jump=false;
-	assert(prepare_game_load());assert(apply_prepared_game());
+	assert(prepare_game_load(0));assert(apply_prepared_game());
 	encode_current_state(roundtrip,&other_size);assert(other_size==size && !memcmp(bytes,roundtrip,size));
 	g_sys.input.quit=true;
 	puts("state: portable full restore, corruption/resource rejection, deterministic replay, cross-mode/level load passed");
+}
+
+static bool fail_preview(uint8_t *rgb) {return false;}
+static void test_save_slots() {
+	const bool read=getenv("BLUES_TEST_SLOTS_READ")!=NULL;
+	if(getenv("BLUES_TEST_SLOTS_ODD_SIZE")){SDL_SetWindowSize(_window,853,533);repaint_restored_state();}
+	if(!read && getenv("BLUES_TEST_SLOTS_TWO")){g_vars.two_players_flag=true;init_level();}
+	for(int slot=0;slot<SAVE_SLOT_COUNT;++slot) {
+		if(!read) {
+			g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count=slot+2;
+			g_vars.objects[OBJECT_NUM_PLAYER1].vinyls_count=slot+11;
+			g_vars.objects[OBJECT_NUM_PLAYER2].lifes_count=20-slot;
+			g_options.cheats=CHEATS_INVULNERABLE | (slot==7 ? CHEATS_UNLIMITED_LIFES : 0);
+			g_sys.input.view_step=slot%3;*_state_view_step=slot%3;
+			update_level_view(*_state_base_w,*_state_base_h,slot%3);_state_view->elapsed=300;
+			update_assist_status();repaint_restored_state();
+			uint8_t visible[SAVE_PREVIEW_BYTES],in_menu[SAVE_PREVIEW_BYTES];
+			assert(sdl2_capture_save_preview(visible));
+			_pause_menu_open=true;_pause_page=PAUSE_GAME;_pause_selection=0;sdl2_draw_screen(0,0,1);
+			assert(sdl2_capture_save_preview(in_menu));assert(!memcmp(visible,in_menu,sizeof(visible)));
+			const struct vars_t before=g_vars;
+			assert(save_current_game(slot));assert(!memcmp(&before,&g_vars,sizeof(g_vars)));
+			_pause_menu_open=false;
+		}
+		struct sys_save_slot info;inspect_game_save(slot,&info);
+		assert(info.status==SAVE_READY && info.has_metadata && info.has_preview && info.lives[0]==slot+2 && info.infinite_lives==(slot==7));
+		assert(info.timestamp>0);
+		uint8_t *data=malloc(BB_STATE_MAX_SIZE);size_t size;assert(data);
+		assert(g_sys.read_save_file(slot,data,BB_STATE_MAX_SIZE,&size) && READ_LE_UINT32(data+8)==2);
+		const uint8_t *preview=bb_state_preview(data,size);assert(preview && !memcmp(info.preview,preview,SAVE_PREVIEW_BYTES));
+		struct bb_state decoded;assert(bb_state_decode(&decoded,data,size));
+		assert(info.level==decoded.vars.level && info.amiga==decoded.amiga && info.two_players==decoded.vars.two_players_flag);
+		if(read) {
+			assert(prepare_game_load(slot));assert(apply_prepared_game());
+			assert(g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count==slot+2 && g_vars.objects[OBJECT_NUM_PLAYER1].vinyls_count==slot+11);
+			if(g_vars.two_players_flag)assert(g_vars.objects[OBJECT_NUM_PLAYER2].lifes_count==20-slot);
+			uint8_t loaded[SAVE_PREVIEW_BYTES];assert(sdl2_capture_save_preview(loaded));assert(!memcmp(loaded,preview,sizeof(loaded)));
+		} else if(slot==0) {
+			/* Old-format saves remain loadable without a fabricated preview. */
+			uint8_t *legacy=malloc(BB_STATE_MAX_SIZE);size_t legacy_size;assert(legacy);
+			assert(bb_state_encode(&decoded,legacy,BB_STATE_MAX_SIZE,&legacy_size));assert(g_sys.write_save_file(slot,legacy,legacy_size));
+			inspect_game_save(slot,&info);assert(info.status==SAVE_READY && !info.has_preview && info.lives[0]==2);
+			assert(prepare_game_load(slot));free(_prepared_state);_prepared_state=NULL;
+			assert(g_sys.write_save_file(slot,data,size));
+			/* Corrupt image bytes and unsupported headers are separate states. */
+			data[size-9]^=1;assert(g_sys.write_save_file(slot,data,size));inspect_game_save(slot,&info);assert(info.status==SAVE_DAMAGED && !info.has_preview);data[size-9]^=1;
+			data[8]=99;assert(g_sys.write_save_file(slot,data,size));inspect_game_save(slot,&info);assert(info.status==SAVE_INCOMPATIBLE);data[8]=2;
+			const char **path=decoded.amiga ? &g_options.amiga_datapath : &g_options.dos_datapath;
+			const char *valid=*path;*path="/nonexistent/blues-data";assert(g_sys.write_save_file(slot,data,size));
+			inspect_game_save(slot,&info);assert(info.status==SAVE_INCOMPATIBLE && info.has_preview && info.has_metadata);*path=valid;
+			bool (*capture)(uint8_t *)=g_sys.capture_save_preview;g_sys.capture_save_preview=fail_preview;
+			assert(!save_current_game(slot));g_sys.capture_save_preview=capture;
+			uint8_t *retained=malloc(BB_STATE_MAX_SIZE);size_t retained_size;assert(retained);
+			assert(g_sys.read_save_file(slot,retained,BB_STATE_MAX_SIZE,&retained_size) && retained_size==size && !memcmp(retained,data,size));
+			free(retained);free(legacy);
+		}
+		free(data);
+	}
+	/* Open the production browser with all entries and their real previews. */
+	_pause_options.inspect_save=inspect_game_save;_pause_options.save_game=save_current_game;_pause_options.prepare_load=prepare_game_load;
+	_pause_options.save_error=game_save_error;
+	for(int i=0;i<SAVE_SLOT_COUNT;++i)pause_refresh_save(i);
+	_pause_menu_open=true;_pause_page=PAUSE_SLOTS;_save_browser_load=true;
+	for(int i=0;i<SAVE_SLOT_COUNT;++i){_pause_selection=i;sdl2_draw_screen(0,0,1);}
+	snapshot("eight-slots");_pause_menu_open=false;
+	g_sys.input.quit=true;
+	puts(read ? "slots: eight independent saves loaded in a fresh process with exact scene previews passed" : "slots: eight RGB previews, paused capture, metadata, legacy files, rejection states and failed capture protection passed");
 }
 
 static struct vars_t state_menu_before;
@@ -1109,13 +1176,16 @@ static uint32_t state_menu_script(uint32_t interval,void *param) {
 	assert(SDL_GetAudioStatus()!=SDL_AUDIO_PLAYING);
 	const int step=menu_timer_step++;
 	if(step==0) {
-		for(int i=0;i<4;++i) menu_tap(SDLK_DOWN);
+		for(int i=0;i<4;++i)menu_tap(SDLK_DOWN);
 		menu_tap(SDLK_RETURN);menu_tap(SDLK_DOWN);menu_tap(SDLK_RETURN);
-		menu_tap(SDLK_DOWN);menu_tap(SDLK_RETURN); /* No file: stay paused. */
+		menu_tap(SDLK_RETURN); /* Empty slot stays in the browser. */
+		push_menu_key(SDLK_ESCAPE,false);
 	} else if(step==1) {
-		menu_tap(SDLK_UP);menu_tap(SDLK_RETURN);menu_tap(SDLK_DOWN);menu_tap(SDLK_RETURN);
+		menu_tap(SDLK_UP);menu_tap(SDLK_RETURN);menu_tap(SDLK_RETURN);
+		menu_tap(SDLK_DOWN);menu_tap(SDLK_RETURN);push_menu_key(SDLK_ESCAPE,false);
 	} else {
-		menu_tap(SDLK_DOWN);menu_tap(SDLK_RETURN);menu_tap(SDLK_DOWN);push_menu_key(SDLK_RETURN,true);
+		menu_tap(SDLK_DOWN);menu_tap(SDLK_RETURN);menu_tap(SDLK_RETURN);
+		menu_tap(SDLK_DOWN);push_menu_key(SDLK_RETURN,true);
 	}
 	return menu_timer_step==3 ? 0 : interval;
 }
@@ -1148,6 +1218,7 @@ static void test_events() {
 		return;
 	}
 	g_sys.input.space = false;
+	if (getenv("BLUES_TEST_SLOTS")) {if(test_frames++>=2)test_save_slots();return;}
 	if (getenv("BLUES_TEST_STATE_MENU")) {
 		if(test_frames==2) g_sys.input.menu=true;
 		if(test_frames==3) {assert(!memcmp(&state_menu_before,&g_vars,sizeof(g_vars)));g_sys.input.quit=true;puts("state menu: rejected missing file, confirmed save/load, frozen world and clean restore passed");}
@@ -1354,6 +1425,7 @@ int main(int argc, char **argv) {
 		puts("menu: frozen game/objects/map/zoom/audio, preserved scene and clean resume through actual game loop passed");
 		return result;
 	}
+	if (getenv("BLUES_TEST_SLOTS")) return result;
 	if (getenv("BLUES_TEST_STATE_MENU")) return result;
 	if (getenv("BLUES_TEST_STATE")) return result;
 	if (getenv("BLUES_TEST_PREFS_EXPECT")) return result;

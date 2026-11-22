@@ -2,10 +2,10 @@
 #include "../sys_sdl2.c"
 struct options_t g_options;
 
-static int save_calls,load_calls;
+static int save_calls,load_calls,last_slot;
 static bool load_ready;
-static bool mock_save() {++save_calls;return true;}
-static bool mock_load() {++load_calls;return load_ready;}
+static bool mock_save(int slot) {last_slot=slot;++save_calls;return true;}
+static bool mock_load(int slot) {last_slot=slot;++load_calls;return load_ready;}
 static const char *mock_save_error() {return "PRUEBA";}
 static int audio_callbacks;
 static int volume_applies;
@@ -121,17 +121,23 @@ int main() {
  assert(!pause_activate()); pause_move(1);
  assert(pause_activate() && _pause_options.select_character);
  reset_menu();
- /* Save/load confirmation defaults to Cancel; failed loads stay paused. */
+ /* Slot browser guards empty/incompatible entries and routes the chosen slot. */
  reset_menu();_pause_options.save_game=mock_save;_pause_options.prepare_load=mock_load;
- _pause_options.save_error=mock_save_error;_pause_options.load_game=false;
+ _pause_options.save_error=mock_save_error;_pause_options.load_game=false;_save_slot=0;
  _pause_selection=4;assert(!pause_activate() && _pause_page==PAUSE_GAME);
- assert(!pause_activate() && _pause_page==PAUSE_SAVE_CONFIRM && _pause_selection==0);
- assert(!pause_activate() && save_calls==0);
- assert(!pause_activate());pause_move(1);assert(!pause_activate() && save_calls==1 && _pause_page==PAUSE_GAME);
- pause_move(1);assert(!pause_activate() && _pause_page==PAUSE_LOAD_CONFIRM);
+ assert(!pause_activate() && _pause_page==PAUSE_SLOTS && pause_item_count()==9);
+ _pause_selection=7;assert(!pause_activate() && _pause_page==PAUSE_SAVE_CONFIRM && _pause_selection==0);
+ assert(!pause_activate() && save_calls==0 && _pause_selection==7);
+ assert(!pause_activate());pause_move(1);assert(!pause_activate() && save_calls==1 && last_slot==7 && _pause_page==PAUSE_SLOTS);
+ pause_back();pause_move(1);assert(!pause_activate() && _pause_page==PAUSE_SLOTS);
+ for(int status=SAVE_EMPTY;status<=SAVE_UNREADABLE;++status) if(status!=SAVE_READY) {
+  _save_slots[7].status=status;assert(!pause_activate() && load_calls==0 && !_pause_options.load_game && _pause_page==PAUSE_SLOTS);
+ }
+ _save_slots[7].status=SAVE_READY;
+ assert(!pause_activate() && _pause_page==PAUSE_LOAD_CONFIRM);
  assert(!pause_activate() && load_calls==0);
- assert(!pause_activate());pause_move(1);assert(!pause_activate() && load_calls==1 && !_pause_options.load_game && _pause_page==PAUSE_GAME);
- load_ready=true;assert(!pause_activate());pause_move(1);assert(pause_activate() && load_calls==2 && _pause_options.load_game);
+ assert(!pause_activate());pause_move(1);assert(!pause_activate() && load_calls==1 && !_pause_options.load_game && _pause_page==PAUSE_SLOTS);
+ load_ready=true;_save_slots[7].status=SAVE_READY;assert(!pause_activate());pause_move(1);assert(pause_activate() && load_calls==2 && last_slot==7 && _pause_options.load_game);
  reset_menu();
 	/* Focus loss cannot activate a menu entry or leak a window close. */
 	reset_menu();
@@ -262,15 +268,21 @@ int main() {
 	sdl2_run_pause_menu();
 	assert(SDL_GetAudioStatus() == SDL_AUDIO_PAUSED && audio_callbacks == callbacks);
 	assert(volume_applies==3);
+	memset(_save_slots,0,sizeof(_save_slots));
+	_save_slots[0].status=SAVE_READY;_save_slots[0].has_preview=_save_slots[0].has_metadata=true;
+	_save_slots[0].level=1;_save_slots[0].lives[0]=7;_save_slots[0].timestamp=(uint64_t)time(NULL);
+	for(int i=0;i<SAVE_PREVIEW_BYTES;i+=3){_save_slots[0].preview[i]=200;_save_slots[0].preview[i+1]=40;_save_slots[0].preview[i+2]=160;}
+	_save_slots[1].status=SAVE_DAMAGED;_save_slots[2].status=SAVE_INCOMPATIBLE;_save_slots[3].status=SAVE_UNREADABLE;
+	_preview_texture_slot=-1;
 	/* The cyan frame stays centered across resize and differing aspect ratios. */
 	const int sizes[][2] = {{320,200},{640,400},{800,600},{1280,720},{853,533},{0,0}};
 	_pause_page = PAUSE_MAIN;
 	for (unsigned i = 0; i < ARRAYSIZE(sizes); ++i) {
 		if (sizes[i][0]) SDL_SetWindowSize(_window, sizes[i][0], sizes[i][1]);
 		else assert(SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN_DESKTOP) == 0);
-		for (int page = 0; page <= PAUSE_LOAD_CONFIRM+1; ++page) {
-			_pause_page = page == PAUSE_LOAD_CONFIRM+1 ? PAUSE_QUIT : (enum pause_page)page;
-			_pause_selection = page == PAUSE_LOAD_CONFIRM+1 ? 1 : 0;
+		for (int page = 0; page <= PAUSE_SLOTS+1; ++page) {
+			_pause_page = page == PAUSE_SLOTS+1 ? PAUSE_QUIT : (enum pause_page)page;
+			_pause_selection = page == PAUSE_SLOTS+1 ? 1 : 0;
 			_pause_menu_open = true;
 			sdl2_draw_screen(0,0,1);
 			_pause_menu_open = false;
@@ -281,11 +293,12 @@ int main() {
 			SDL_RenderSetLogicalSize(_renderer,0,0);
 			assert(SDL_RenderReadPixels(_renderer,NULL,SDL_PIXELFORMAT_ARGB8888,pixels,w*4)==0);
 			SDL_RenderSetLogicalSize(_renderer,_screen_w,_screen_h);
-			int x1=w, x2=0, y1=h, y2=0, gold=0, danger=0;
+			int x1=w, x2=0, y1=h, y2=0, gold=0, danger=0, preview_pixels=0;
 			for (int y=0;y<h;++y) for (int x=0;x<w;++x) {
 				const uint32_t color = pixels[y*w+x]&0xffffff;
 				if (color == 0xffd768) ++gold;
 				if (color == 0xff8477) ++danger;
+				if (color == 0xc828a0) ++preview_pixels;
 				if (color!=0x45bdd5) continue;
 				x1=MIN(x1,x); x2=MAX(x2,x); y1=MIN(y1,y); y2=MAX(y2,y);
 			}
@@ -293,7 +306,8 @@ int main() {
 			assert(x1>=0 && x2<w && y1>=0 && y2<h);
 			const int scale = MIN(w/320,h/200);
 			assert(scale >= 1 && gold > 0 && gold % (scale*scale) == 0);
-			assert((danger > 0) == (page == PAUSE_LOAD_CONFIRM+1));
+			assert((danger > 0) == (page == PAUSE_SLOTS+1 || page == PAUSE_SLOTS));
+			if(page==PAUSE_SLOTS)assert(preview_pixels==SAVE_PREVIEW_WIDTH*SAVE_PREVIEW_HEIGHT*scale*scale);
 			free(pixels);
 		}
 	}

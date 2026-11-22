@@ -162,12 +162,35 @@ bool bb_state_encode(const struct bb_state *state,uint8_t *data,size_t capacity,
 	for (int i=0;i<4;++i) for(int byte=0;byte<4;++byte) data[8+i*4+byte]=fields[i]>>(8*byte);
 	*size=c.pos;return true;
 }
+static uint32_t read_word(const uint8_t *p) {
+	uint32_t n=0;for(int i=0;i<4;++i)n|=(uint32_t)p[i]<<(i*8);return n;
+}
+static void write_word(uint8_t *p,uint32_t n) {for(int i=0;i<4;++i)p[i]=n>>(i*8);}
+static bool state_header(const uint8_t *data,size_t size,size_t *body_end) {
+	if(size<24 || size>BB_STATE_MAX_SIZE || memcmp(data,"BBSAVE\r\n",8)) return false;
+	const uint32_t version=read_word(data+8);
+	if((version!=1 && version!=2) || read_word(data+12)!=size-24 || read_word(data+16)!=bb_state_crc(data+24,size-24) || read_word(data+20)!=0x42423031) return false;
+	*body_end=size;
+	if(version==2) {
+		if(size<24+SAVE_PREVIEW_BYTES+8 || read_word(data+size-8)!=SAVE_PREVIEW_WIDTH || read_word(data+size-4)!=SAVE_PREVIEW_HEIGHT) return false;
+		*body_end-=SAVE_PREVIEW_BYTES+8;
+	}
+	return true;
+}
+bool bb_state_attach_preview(uint8_t *data,size_t capacity,size_t *size,const uint8_t *rgb) {
+	size_t body_end;
+	if(!rgb || !state_header(data,*size,&body_end) || body_end!=*size || capacity<*size+SAVE_PREVIEW_BYTES+8) return false;
+	memcpy(data+*size,rgb,SAVE_PREVIEW_BYTES);*size+=SAVE_PREVIEW_BYTES;
+	write_word(data+*size,SAVE_PREVIEW_WIDTH);write_word(data+*size+4,SAVE_PREVIEW_HEIGHT);*size+=8;
+	write_word(data+8,2);write_word(data+12,*size-24);write_word(data+16,bb_state_crc(data+24,*size-24));return true;
+}
+const uint8_t *bb_state_preview(const uint8_t *data,size_t size) {
+	size_t body_end;
+	return state_header(data,size,&body_end) && body_end<size ? data+body_end : NULL;
+}
 bool bb_state_decode(struct bb_state *state,const uint8_t *data,size_t size) {
-	if (size<24 || size>BB_STATE_MAX_SIZE || memcmp(data,"BBSAVE\r\n",8)) return false;
-	uint32_t fields[4]={0};
-	for(int i=0;i<4;++i) for(int byte=0;byte<4;++byte) fields[i]|=(uint32_t)data[8+i*4+byte]<<(8*byte);
-	if(fields[0]!=1 || fields[1]!=size-24 || fields[2]!=bb_state_crc(data+24,size-24) || fields[3]!=0x42423031) return false;
-	struct bb_state copy={0}; struct codec c={(uint8_t *)data,size,24,true,true};payload(&c,&copy);
-	if (!c.ok || c.pos!=size || !bb_state_valid(&copy)) return false;
+	size_t body_end;if(!state_header(data,size,&body_end))return false;
+	struct bb_state copy={0};struct codec c={(uint8_t *)data,body_end,24,true,true};payload(&c,&copy);
+	if(!c.ok || c.pos!=body_end || !bb_state_valid(&copy))return false;
 	*state=copy;return true;
 }

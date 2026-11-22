@@ -2,7 +2,7 @@
 #define BB_STATE_H
 #include "game.h"
 #include "resource.h"
-#define BB_STATE_MAX_SIZE 65536
+#define BB_STATE_MAX_SIZE (128*1024)
 #define BB_STATE_MAP_SIZE (640*25)
 struct view_transition { int from_w, from_h, to_w, to_h, elapsed; };
 struct bb_camera_state {
@@ -30,6 +30,8 @@ struct bb_state {
 uint32_t bb_state_crc(const uint8_t *data, size_t size);
 bool bb_state_encode(const struct bb_state *state, uint8_t *data, size_t capacity, size_t *size);
 bool bb_state_decode(struct bb_state *state, const uint8_t *data, size_t size);
+bool bb_state_attach_preview(uint8_t *data, size_t capacity, size_t *size, const uint8_t *rgb);
+const uint8_t *bb_state_preview(const uint8_t *data, size_t size);
 bool bb_state_valid(const struct bb_state *state);
 /* In-memory representation resolves only trusted static table identifiers. */
 #endif

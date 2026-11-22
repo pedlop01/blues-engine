@@ -56,13 +56,17 @@ static bool capture_game_state(struct bb_state *s) {
 	return bb_state_valid(s);
 }
 static const char *game_save_error() {return _state_error;}
-static bool save_current_game() {
+static bool save_current_game(int slot) {
 	struct bb_state *state=malloc(sizeof(*state));
 	uint8_t *data=malloc(BB_STATE_MAX_SIZE);size_t size=0;
 	bool success=state && data && capture_game_state(state) && bb_state_encode(state,data,BB_STATE_MAX_SIZE,&size);
 	_state_error="NO SE PUEDE GUARDAR ESTE ESTADO";
 	if(success) {
-		success=g_sys.write_save_file && g_sys.write_save_file(0,data,size);
+		uint8_t *rgb=malloc(SAVE_PREVIEW_BYTES);
+		success=rgb && g_sys.capture_save_preview && g_sys.capture_save_preview(rgb) && bb_state_attach_preview(data,BB_STATE_MAX_SIZE,&size,rgb);
+		free(rgb);
+		if(!success) {_state_error="NO SE PUDO CAPTURAR LA MINIATURA";free(state);free(data);return false;}
+		success=g_sys.write_save_file && g_sys.write_save_file(slot,data,size);
 		_state_error=success ? "PARTIDA GUARDADA" : "NO SE PUDO ESCRIBIR EL GUARDADO";
 	}
 	free(state);free(data);return success;
@@ -92,11 +96,11 @@ static bool state_resources_available(const struct bb_state *s) {
 	}
 	return true;
 }
-static bool prepare_game_load() {
+static bool prepare_game_load(int slot) {
 	free(_prepared_state);_prepared_state=NULL;
 	uint8_t *data=malloc(BB_STATE_MAX_SIZE);struct bb_state *state=malloc(sizeof(*state));size_t size=0;
 	_state_error="NO SE PUDO LEER EL GUARDADO";
-	bool success=data && state && g_sys.read_save_file && g_sys.read_save_file(0,data,BB_STATE_MAX_SIZE,&size);
+	bool success=data && state && g_sys.read_save_file && g_sys.read_save_file(slot,data,BB_STATE_MAX_SIZE,&size);
 	if(success) {
 		_state_error="GUARDADO DANADO O INCOMPATIBLE";
 		success=bb_state_decode(state,data,size);
@@ -105,6 +109,32 @@ static bool prepare_game_load() {
 	free(data);
 	if(success) {_prepared_state=state;_state_error="";} else free(state);
 	return success;
+}
+static void inspect_game_save(int slot,struct sys_save_slot *info) {
+	memset(info,0,sizeof(*info));
+	const int exists=g_sys.save_file_status ? g_sys.save_file_status(slot) : -1;
+	if(exists==0){info->status=SAVE_EMPTY;info->reason="SLOT VACIO";return;}
+	info->status=SAVE_UNREADABLE;info->reason="NO SE PUDO LEER EL GUARDADO";
+	if(exists<0)return;
+	uint8_t *data=malloc(BB_STATE_MAX_SIZE);struct bb_state *state=malloc(sizeof(*state));size_t size=0;
+	if(!data || !state){free(data);free(state);return;}
+	info->status=SAVE_DAMAGED;info->reason="GUARDADO DANADO";
+	if(g_sys.read_save_file && g_sys.read_save_file(slot,data,BB_STATE_MAX_SIZE,&size)) {
+		if(size>=24 && !memcmp(data,"BBSAVE\r\n",8) && ((READ_LE_UINT32(data+8)!=1 && READ_LE_UINT32(data+8)!=2) || READ_LE_UINT32(data+20)!=0x42423031)) {
+			info->status=SAVE_INCOMPATIBLE;info->reason="VERSION NO COMPATIBLE";
+		} else if(bb_state_decode(state,data,size)) {
+			info->has_metadata=true;info->level=state->vars.level;info->timestamp=state->timestamp;info->amiga=state->amiga;
+			info->two_players=state->vars.two_players_flag;info->infinite_lives=(state->cheats&CHEATS_UNLIMITED_LIFES)!=0;
+			for(int i=0;i<2;++i)info->lives[i]=state->vars.objects[OBJECT_NUM_PLAYER1+i].lifes_count;
+			const uint8_t *preview=bb_state_preview(data,size);
+			if(preview){info->has_preview=true;memcpy(info->preview,preview,SAVE_PREVIEW_BYTES);}
+			const char *previous=_state_error;
+			if(state_resources_available(state)){info->status=SAVE_READY;info->reason=NULL;}
+			else {info->status=SAVE_INCOMPATIBLE;info->reason=_state_error;}
+			_state_error=previous;
+		}
+	}
+	free(data);free(state);
 }
 static void repaint_restored_state() {
 	const struct vars_t before=g_vars;
