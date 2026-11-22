@@ -60,6 +60,15 @@ static bool handle_bound_key(int key, bool down, struct input_t *input);
 static bool handle_bound_button(int button, bool down, struct input_t *input);
 
 static int _screen_w, _screen_h;
+static SDL_Texture *_scroll_texture, *_scroll_copper_texture;
+static uint32_t *_scroll_pixels;
+static int _scroll_margin, _scroll_width, _scroll_height;
+static void sdl2_clear_scroll_background() {
+	SDL_DestroyTexture(_scroll_texture);_scroll_texture=NULL;
+	SDL_DestroyTexture(_scroll_copper_texture);_scroll_copper_texture=NULL;
+	free(_scroll_pixels);_scroll_pixels=NULL;
+	_scroll_margin=_scroll_width=_scroll_height=0;
+}
 static int _shake_dx, _shake_dy;
 static int _scroll_rate = 30;
 static double _scroll_target_x, _scroll_target_y;
@@ -112,6 +121,7 @@ static void sdl2_init() {
 }
 
 static void sdl2_fini() {
+	sdl2_clear_scroll_background();
 	SDL_DestroyTexture(_rewind_texture);_rewind_texture=NULL;
 	SDL_DestroyTexture(_save_preview_texture);_save_preview_texture=NULL;
 	SDL_DestroyTexture(_hud_texture_top);
@@ -218,6 +228,7 @@ static bool sdl2_resize_viewport(int w, int h) {
 	_screen_buffer = buffer;
 	_screen_w = w;
 	_screen_h = h;
+	_scroll_margin=0;
 	_scroll_interpolation_active = false;
 	_render_schedule_initialized = false;
 	_previous_sprites_count = 0;
@@ -418,6 +429,7 @@ static void sdl2_transition_screen(enum sys_transition_e type, bool open) {
 }
 
 static void sdl2_copy_bitmap(const uint8_t *p, int w, int h) {
+	_scroll_margin=0; /* A new frame must explicitly supply its own border. */
 	if (w != _screen_w || h != _screen_h) {
 		memset(_screen_buffer, 0, _screen_w * _screen_h * sizeof(uint32_t));
 		const int offset_x = (_screen_w - w) / 2;
@@ -458,9 +470,40 @@ static void sdl2_copy_bitmap(const uint8_t *p, int w, int h) {
 	}
 }
 
+static void sdl2_set_scroll_background(const uint8_t *pixels,int margin) {
+	if(!pixels || margin<=0){sdl2_clear_scroll_background();return;}
+	const int w=_screen_w+margin*2,h=_sprites_cliprect.h+margin*2;
+	if(w!=_scroll_width || h!=_scroll_height) {
+		sdl2_clear_scroll_background();
+		_scroll_texture=SDL_CreateTexture(_renderer,SDL_PIXELFORMAT_ARGB8888,SDL_TEXTUREACCESS_STREAMING,w,h);
+		_scroll_copper_texture=SDL_CreateTexture(_renderer,SDL_PIXELFORMAT_RGB888,SDL_TEXTUREACCESS_STREAMING,1,_screen_h);
+		_scroll_pixels=malloc((size_t)w*h*4);
+		if(!_scroll_texture || !_scroll_copper_texture || !_scroll_pixels){sdl2_clear_scroll_background();return;}
+		SDL_SetTextureBlendMode(_scroll_texture,SDL_BLENDMODE_BLEND);
+		_scroll_width=w;_scroll_height=h;
+	}
+	for(int i=0;i<w*h;++i)_scroll_pixels[i]=pixels[i]==_copper_color_key ? 0 : (0xff000000u|_screen_palette[pixels[i]]);
+	SDL_UpdateTexture(_scroll_texture,NULL,_scroll_pixels,w*4);
+	for(int y=0;y<_screen_h;++y) {
+		const int line=(y*200/_screen_h)/2;
+		_scroll_pixels[y]=_copper_color_key<0 ? 0 : (line<COPPER_BARS_H ? _copper_palette[line] : _screen_palette[_copper_color_key]);
+	}
+	SDL_UpdateTexture(_scroll_copper_texture,NULL,_scroll_pixels,4);
+	_scroll_margin=margin;
+}
+
 static void sdl2_render_background(float scroll_x, float scroll_y, int clip_x, int clip_y, int clip_w, int clip_h) {
 	SDL_Rect clip = { clip_x - _world_offset_x, clip_y - _world_offset_y, clip_w, clip_h };
 	SDL_RenderSetClipRect(_renderer, &clip);
+	if(_scroll_margin && clip_y==_sprites_cliprect.y && clip_h==_sprites_cliprect.h) {
+		const SDL_Rect src={0,clip_y,1,clip_h};
+		const SDL_FRect base={clip_x-_world_offset_x,clip_y-_world_offset_y,clip_w,clip_h};
+		SDL_RenderCopyF(_renderer,_scroll_copper_texture,&src,&base);
+		const SDL_FRect world={_shake_dx+scroll_x-_scroll_margin-_world_offset_x,
+			_shake_dy+scroll_y+_sprites_cliprect.y-_scroll_margin-_world_offset_y,_scroll_width,_scroll_height};
+		SDL_RenderCopyF(_renderer,_scroll_texture,NULL,&world);
+		return;
+	}
 	SDL_FRect dest = { _shake_dx + scroll_x - _world_offset_x, _shake_dy + scroll_y - _world_offset_y, _screen_w, _screen_h };
 	SDL_RenderCopyF(_renderer, _texture, 0, &dest);
 }
@@ -567,6 +610,9 @@ static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
 	if (_hud_width > 0) {
 		sdl2_render_background(scroll_x, scroll_y, _sprites_cliprect.x,
 			_sprites_cliprect.y, _sprites_cliprect.w, _sprites_cliprect.h);
+	} else if (_scroll_margin && !smooth_scroll) {
+		SDL_Rect all={0,0,_screen_w,_screen_h};SDL_RenderCopy(_renderer,_texture,NULL,&all);
+		sdl2_render_background(0,0,_sprites_cliprect.x,_sprites_cliprect.y,_sprites_cliprect.w,_sprites_cliprect.h);
 	} else if (!smooth_scroll) {
 		SDL_Rect r = { _shake_dx, _shake_dy, _screen_w, _screen_h };
 		SDL_RenderCopy(_renderer, _texture, 0, &r);
@@ -1221,6 +1267,7 @@ struct sys_t g_sys = {
 	.fade_in_palette = sdl2_fade_in_palette,
 	.fade_out_palette = sdl2_fade_out_palette,
 	.copy_bitmap = sdl2_copy_bitmap,
+	.set_scroll_background = sdl2_set_scroll_background,
 	.update_screen = sdl2_update_screen,
 	.shake_screen = sdl2_shake_screen,
 	.transition_screen = sdl2_transition_screen,

@@ -154,7 +154,7 @@ static void repaint_restored_state() {
 	if(!g_res.amiga_data) draw_foreground_tiles();
 	const int vinyls=g_vars.vinyls_count;
 	_state_repainting=true;draw_level_panel();_state_repainting=false;g_vars.vinyls_count=vinyls;
-	g_sys.copy_bitmap(g_res.vga,GAME_SCREEN_W,GAME_SCREEN_H);g_sys.update_screen();
+	copy_level_bitmap();g_sys.update_screen();
 	memset(g_res.vga,0,GAME_SCREEN_W*GAME_SCREEN_H);
 	g_vars=before;
 }

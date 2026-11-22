@@ -511,6 +511,34 @@ static void init_level() {
 	}
 }
 
+/* Supply real map pixels beyond the viewport so intermediate camera positions
+ * never reveal clear pixels or slide the HUD into the playfield. */
+static uint8_t *_scroll_border;
+static size_t _scroll_border_size;
+static void copy_level_bitmap() {
+	g_sys.copy_bitmap(g_res.vga,GAME_SCREEN_W,GAME_SCREEN_H);
+	if(!g_sys.set_scroll_background)return;
+	const int margin=32,w=GAME_SCREEN_W,h=TILEMAP_SCREEN_H,pitch=w+margin*2;
+	const size_t size=(size_t)pitch*(h+margin*2);
+	if(size>_scroll_border_size) {
+		uint8_t *p=realloc(_scroll_border,size);
+		if(!p){g_sys.set_scroll_background(NULL,0);return;}
+		_scroll_border=p;_scroll_border_size=size;
+	}
+	for(int y=-margin;y<h+margin;++y) {
+		uint8_t *row=_scroll_border+(y+margin)*pitch;
+		if(y>=0 && y<h)memcpy(row+margin,g_res.vga+(y+TILEMAP_OFFSET_Y)*w,w);
+		for(int x=-margin;x<w+margin;++x) {
+			if(y>=0 && y<h && x>=0 && x<w) {x=w-1;continue;}
+			const int wx=MAX(0,MIN(g_vars.screen_tilemap_w*16-1,g_vars.screen_tilemap_xorigin+x));
+			const int wy=MAX(0,MIN(1999,g_vars.screen_tilemap_yorigin+y));
+			const uint8_t tile=*lookup_sql(wx/16,wy/16);
+			row[x+margin]=g_res.tiles[g_vars.screen_tile_lut[tile&127]*16+(tile&128 ? 320 : 0)+(wy&15)*640+(wx&15)];
+		}
+	}
+	g_sys.set_scroll_background(_scroll_border,margin);
+}
+
 static void do_level_redraw_tilemap(int xpos, int ypos) {
 	const int w = (TILEMAP_SCREEN_W + (xpos & 15) + 15) / 16;
 	const int h = (TILEMAP_SCREEN_H + (ypos & 15) + 15) / 16;
@@ -1439,7 +1467,7 @@ void do_level_enter_door(struct object_t *obj) {
 			if (g_vars.two_players_flag) {
 				do_level_update_panel_2nd_player();
 			}
-			g_sys.copy_bitmap(g_res.vga, GAME_SCREEN_W, GAME_SCREEN_H);
+			copy_level_bitmap();
 			g_sys.update_screen();
 			screen_do_transition1(1);
 			obj->unk3D = 0;
@@ -2685,9 +2713,11 @@ void do_level() {
 		g_sys.set_scroll_interpolation(
 			g_vars.screen_tilemap_xorigin - prev_scroll_x,
 			g_vars.screen_tilemap_yorigin - prev_scroll_y,
-			frame_duration, !screen_transition_flag && !view_changed);
+			frame_duration, !screen_transition_flag && !view_changed &&
+			abs(g_vars.screen_tilemap_xorigin-prev_scroll_x)<=32 &&
+			abs(g_vars.screen_tilemap_yorigin-prev_scroll_y)<=32);
 
-		g_sys.copy_bitmap(g_res.vga, GAME_SCREEN_W, GAME_SCREEN_H);
+		copy_level_bitmap();
 		if (screen_transition_flag) {
 			screen_transition_flag = false;
 			screen_do_transition2();
@@ -2702,6 +2732,8 @@ void do_level() {
 
 	} while (!g_sys.input.quit && !g_vars.quit_level_flag);
 	rewind_finish();
+	if(g_sys.set_scroll_background)g_sys.set_scroll_background(NULL,0);
+	free(_scroll_border);_scroll_border=NULL;_scroll_border_size=0;
 	free(_rewind_history);_rewind_history=NULL;_rewind_count=0;
 	_state_view=NULL;
 	free(_prepared_state);_prepared_state=NULL;

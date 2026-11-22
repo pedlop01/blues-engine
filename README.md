@@ -19,6 +19,7 @@ focused on the first **Blues Brothers** game.
 | Native Windows x64 | Build from WSL with MinGW-w64, SDL2 and libmodplug. |
 | Smoother motion | Camera, characters and objects presented at 30, 60 or 120 Hz while gameplay simulation remains at 30 Hz. |
 | Camera choice | Classic following or smooth following with directional anticipation and a vertical dead zone; select with `--camera=classic` or `--camera=smooth` (default). |
+| Stable scrolling edges | A guarded map background covers intermediate camera positions; Amiga copper gradients stay fixed on screen while scenery scrolls, including at 1×/60 Hz. |
 | Dynamic framing | `-` reveals more of the map, `+` moves closer, and `0` restores the initial view; changes ease over about 300 ms. |
 | Original DOS audio | Native playback of four AdLib songs and 18 effects, read from the user's supported `1.EXE`, with Nuked OPL3 chip emulation. |
 | Live DOS / Amiga switch | `F6` changes graphics, palettes, HUD and native audio while retaining game state, map edits, rooms and framing. |
@@ -677,6 +678,22 @@ edits, room/zoom coordinates, actor rendering, PCM output from both soundtracks,
 matching player sprite/atlas dimensions after each switch, and safe rejection
 when the alternate resources are missing. It can start in
 either mode and run against each of the six levels.
+
+### Scrolling edges and Amiga copper regression
+
+```
+make build/tests/check_viewport
+python3 tests/check_scroll_launches.py
+```
+
+At 1× and 60 Hz, this checks every world pixel at the four camera boundaries and
+an interior position, in both directions and diagonally, including intermediate
+frames. All six DOS/Amiga stages and both native HUD choices are covered. The
+former renderer is also exercised to prove the fixtures detect its edge gaps,
+HUD bleed and moving copper colors. A 32-pixel map guard band supplies the scenery
+outside the current viewport; Amiga copper colors are composed at their fixed
+screen rows behind transparent background pixels. Camera jumps larger than that
+margin cut immediately instead of interpolating across disconnected views.
 
 ### Native HUD regression test
 

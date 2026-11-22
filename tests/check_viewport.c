@@ -1329,6 +1329,60 @@ static void test_rewind_events() {
 	++test_frames;
 }
 
+/* Actual map pixels at camera boundaries, including Amiga's screen-fixed
+ * copper colors. Covers intermediate 60 Hz frames, both axes and reversals. */
+static uint8_t scroll_map_pixel(int x,int y) {
+	x=MAX(0,MIN(g_vars.screen_tilemap_w*16-1,x));y=MAX(0,MIN(1999,y));
+	const uint8_t tile=*lookup_sql(x/16,y/16);
+	return g_res.tiles[g_vars.screen_tile_lut[tile&127]*16+(tile&128 ? 320 : 0)+(y&15)*640+(x&15)];
+}
+static void test_scroll_edges() {
+	assert(GAME_SCREEN_W==320 && GAME_SCREEN_H==200);
+	SDL_SetWindowSize(_window,320,200);
+	g_sys.render_clear_sprites();
+	uint32_t pixels[320*200];int mismatches_old=0,cases=0;
+	const int max_x=g_vars.screen_tilemap_w*16-320,max_y=g_vars.screen_tilemap_h-160;
+	for(int corner=0;corner<5;++corner) {
+		g_vars.screen_tilemap_xorigin=corner==4 ? 113 : ((corner&1) ? max_x : 0);
+		g_vars.screen_tilemap_yorigin=corner==4 ? 81 : ((corner&2) ? max_y : 0);
+		g_vars.screen_tilemap_xoffset=-(g_vars.screen_tilemap_xorigin&15);
+		g_vars.screen_tilemap_yoffset=-(g_vars.screen_tilemap_yorigin&15);
+		screen_clear(0);do_level_redraw_tilemap(g_vars.screen_tilemap_xorigin,g_vars.screen_tilemap_yorigin);
+		copy_level_bitmap();assert(_scroll_margin==32);
+		for(int dx=-6;dx<=6;dx+=6)for(int dy=-4;dy<=4;dy+=4) {
+			for(int phase=0;phase<=2;++phase) {
+				const int sx=dx*(2-phase)/2,sy=dy*(2-phase)/2;
+				sdl2_draw_screen(sx,sy,phase/2.f);
+				SDL_RenderSetLogicalSize(_renderer,0,0);
+				assert(SDL_RenderReadPixels(_renderer,NULL,SDL_PIXELFORMAT_ARGB8888,pixels,320*4)==0);
+				SDL_RenderSetLogicalSize(_renderer,320,200);
+				for(int y=0;y<160;++y)for(int x=0;x<320;++x) {
+					const uint8_t color=scroll_map_pixel(g_vars.screen_tilemap_xorigin+x-sx,g_vars.screen_tilemap_yorigin+y-sy);
+					const int line=((y+14)*200/GAME_SCREEN_H)/2;
+					const uint32_t expected=color==_copper_color_key && line<COPPER_BARS_H ? _copper_palette[line] : _screen_palette[color];
+					if((pixels[(y+14)*320+x]&0xffffff)!=(expected&0xffffff)) {
+						fprintf(stderr,"scroll pixel mismatch corner=%d delta=%d,%d phase=%d at=%d,%d actual=%06x expected=%06x\n",corner,dx,dy,phase,x,y,pixels[(y+14)*320+x]&0xffffff,expected&0xffffff);assert(false);
+					}
+				}
+				++cases;
+				/* Recreate the former unpadded translation to prove this scene
+				 * catches clear strips, HUD bleed and scrolling copper colors. */
+				if(corner==4 && dx==6 && dy==4 && phase==1) {
+					_scroll_margin=0;sdl2_draw_screen(sx,sy,.5f);
+					uint32_t old[320*200];SDL_RenderSetLogicalSize(_renderer,0,0);
+					assert(SDL_RenderReadPixels(_renderer,NULL,SDL_PIXELFORMAT_ARGB8888,old,320*4)==0);
+					SDL_RenderSetLogicalSize(_renderer,320,200);_scroll_margin=32;
+					for(int y=14;y<174;++y)for(int x=0;x<320;++x)mismatches_old+=(pixels[y*320+x]!=old[y*320+x]);
+					sdl2_draw_screen(sx,sy,.5f);snapshot("scroll-edges-fixed");
+				}
+			}
+		}
+	}
+	assert(mismatches_old>0);
+	printf("scroll: %d full-frame edge/diagonal/reversal samples match map pixels and fixed copper rows; former renderer fails %d pixels passed\n",cases,mismatches_old);
+	g_sys.input.quit=true;
+}
+
 static void test_events() {
 	sdl2_process_events();
 	if (_sprites_cliprect.y != TILEMAP_OFFSET_Y) {
@@ -1343,6 +1397,7 @@ static void test_events() {
 		return;
 	}
 	g_sys.input.space = false;
+	if (getenv("BLUES_TEST_SCROLL_EDGES")) {if(test_frames++>=2)test_scroll_edges();return;}
 	if (getenv("BLUES_TEST_REWIND")) {test_rewind_events();return;}
 	if (getenv("BLUES_TEST_SLOTS")) {if(test_frames++>=2)test_save_slots();return;}
 	if (getenv("BLUES_TEST_STATE_MENU")) {
@@ -1552,6 +1607,7 @@ int main(int argc, char **argv) {
 		puts("menu: frozen game/objects/map/zoom/audio, preserved scene and clean resume through actual game loop passed");
 		return result;
 	}
+	if (getenv("BLUES_TEST_SCROLL_EDGES")) return result;
 	if (getenv("BLUES_TEST_REWIND")) {assert(!_rewind_history && !_rewind_active);return result;}
 	if (getenv("BLUES_TEST_SLOTS")) return result;
 	if (getenv("BLUES_TEST_STATE_MENU")) return result;

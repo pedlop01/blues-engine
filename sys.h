@@ -89,6 +89,7 @@ struct sys_t {
 	void	(*fade_out_palette)();
 	void	(*copy_bitmap)(const uint8_t *p, int w, int h);
 	void	(*update_screen)();
+	void	(*set_scroll_background)(const uint8_t *pixels, int margin);
 	void	(*shake_screen)(int dx, int dy);
 	void	(*transition_screen)(enum sys_transition_e type, bool open);
 	void	(*process_events)();
