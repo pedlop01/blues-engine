@@ -255,6 +255,9 @@ static bool psp_resize_viewport(int w, int h) {
 	return false;
 }
 
+static void psp_set_assist_status(bool invulnerable, bool infinite_lives) {
+}
+
 static void psp_set_pause_menu_enabled(bool enabled) {
 }
 
@@ -445,6 +448,7 @@ struct sys_t g_sys = {
 	.transition_screen = psp_transition_screen,
 	.process_events = psp_process_events,
 	.set_pause_menu_enabled = psp_set_pause_menu_enabled,
+	.set_assist_status = psp_set_assist_status,
 	.run_pause_menu = psp_run_pause_menu,
 	.set_pause_options = psp_set_pause_options,
 	.get_pause_options = psp_get_pause_options,

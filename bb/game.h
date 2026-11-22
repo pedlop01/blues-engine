@@ -34,6 +34,7 @@
 #define CHEATS_NO_HIT           (1 << 0)
 #define CHEATS_UNLIMITED_LIFES  (1 << 1)
 #define CHEATS_UNLIMITED_ENERGY (1 << 2)
+#define CHEATS_INVULNERABLE (CHEATS_NO_HIT | CHEATS_UNLIMITED_ENERGY)
 
 extern struct options_t g_options;
 

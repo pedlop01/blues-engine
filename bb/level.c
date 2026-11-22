@@ -429,13 +429,9 @@ static void init_level() {
 			obj->data51 = 3;
 			obj->vinyls_count = 0;
 		} else if (obj->restart_level_flag != 0) {
-			--obj->lifes_count;
+			if (!(g_options.cheats & CHEATS_UNLIMITED_LIFES) && obj->lifes_count > 1) --obj->lifes_count;
 			obj->data51 = 3;
 			obj->vinyls_count = 0;
-		}
-		if (g_options.cheats & CHEATS_UNLIMITED_LIFES) {
-			obj->lifes_count = 3;
-			obj->data51 = 3;
 		}
 		obj->restart_level_flag = 0;
 		obj->level_complete_flag = 0;
@@ -1210,8 +1206,8 @@ void do_level_update_panel_lifes(struct object_t *obj) {
 			obj->restart_level_flag = 1;
 			g_vars.game_over_flag = 1;
 		} else {
-			if (obj->lifes_count != 1) {
-				--obj->lifes_count;
+			if (obj->lifes_count != 1 || (g_options.cheats & CHEATS_UNLIMITED_LIFES)) {
+				if (!(g_options.cheats & CHEATS_UNLIMITED_LIFES)) --obj->lifes_count;
 				obj->data51 = 3;
 				do_level_update_panel_lifes(obj);
 				if (obj->type == PLAYER_JAKE) {
@@ -1800,6 +1796,7 @@ static void do_level_handle_object_bonus_collision(struct object_t *obj, struct 
 }
 
 void do_level_player_hit(struct object_t *obj) {
+	if (g_options.cheats & CHEATS_NO_HIT) return;
 	if (obj->blinking_counter == 0) {
 		if (obj->data51 > 0 && (g_options.cheats & CHEATS_UNLIMITED_ENERGY) == 0) {
 			--obj->data51;
@@ -2240,7 +2237,7 @@ static void do_level_update_objects() {
 		}
 	} else if (g_vars.game_over_flag) {
 		g_vars.screen_scrolling_dirmask = 0;
-		if ((!g_vars.two_players_flag && g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count == 1) || (g_vars.player2_dead_flag && g_vars.player1_dead_flag)) {
+		if ((!g_vars.two_players_flag && g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count == 1 && !(g_options.cheats & CHEATS_UNLIMITED_LIFES)) || (g_vars.player2_dead_flag && g_vars.player1_dead_flag)) {
 			screen_draw_frame(g_res.spr_frames[127], 34, 160, 80, 63);
 			g_vars.objects[OBJECT_NUM_PLAYER1].unk60 = 0;
 			g_vars.objects[OBJECT_NUM_PLAYER2].unk60 = 0;
@@ -2263,7 +2260,7 @@ static void do_level_update_objects() {
 			g_vars.objects[OBJECT_NUM_PLAYER1].special_anim = 2;
 		}
 		if (g_vars.update_objects_counter > 70) {
-			if (!g_vars.two_players_flag && g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count == 1) {
+			if (!g_vars.two_players_flag && g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count == 1 && !(g_options.cheats & CHEATS_UNLIMITED_LIFES)) {
 				g_vars.play_level_flag = 0;
 			}
 			// g_vars.screen_draw_offset -= TILEMAP_OFFSET_Y * 40;
@@ -2395,6 +2392,35 @@ static bool advance_view_transition(struct view_transition *view, int duration) 
 	return resize_level_view(w, h, true);
 }
 
+static bool assist_player_active(int index) {
+	if (index == 1 && !g_vars.two_players_flag) return false;
+	if (g_vars.objects[OBJECT_NUM_PLAYER1+index].type >= 2) return false;
+	return !g_vars.two_players_flag || !(index == 0 ? g_vars.player2_dead_flag : g_vars.player1_dead_flag);
+}
+
+static void update_assist_status() {
+	g_sys.set_assist_status((g_options.cheats & CHEATS_INVULNERABLE) != 0,
+		(g_options.cheats & CHEATS_UNLIMITED_LIFES) != 0);
+}
+
+static void apply_game_assists(const struct sys_pause_options *options) {
+	const bool invulnerable = (g_options.cheats & CHEATS_INVULNERABLE) != 0;
+	if (options->invulnerable != invulnerable) {
+		g_options.cheats &= ~CHEATS_INVULNERABLE;
+		if (options->invulnerable) g_options.cheats |= CHEATS_INVULNERABLE;
+	}
+	g_options.cheats &= ~CHEATS_UNLIMITED_LIFES;
+	if (options->infinite_lives) g_options.cheats |= CHEATS_UNLIMITED_LIFES;
+	for (int i=0; i<2; ++i) if (assist_player_active(i))
+		g_vars.objects[OBJECT_NUM_PLAYER1+i].lifes_count = MAX(1,MIN(99,options->lives[i]));
+	/* Adding lives during a last-life death allows the normal retry instead
+	 * of returning to the title. It does not rewind or heal the character. */
+	if (!g_vars.two_players_flag && g_vars.game_over_flag &&
+		(options->infinite_lives || g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count > 1))
+		g_vars.objects[OBJECT_NUM_PLAYER1].restart_level_flag = 1;
+	update_assist_status();
+}
+
 void do_level() {
 	const int base_w = GAME_SCREEN_W;
 	const int base_h = GAME_SCREEN_H;
@@ -2438,6 +2464,7 @@ void do_level() {
 	g_sys.render_set_sprites_clipping_rect(0, TILEMAP_OFFSET_Y, TILEMAP_SCREEN_W, TILEMAP_SCREEN_H);
 	configure_level_hud();
 	g_sys.set_pause_menu_enabled(true);
+	update_assist_status();
 	bool screen_transition_flag = true;
 	int frame_duration_remainder = 0;
 	do {
@@ -2445,6 +2472,11 @@ void do_level() {
 		if (g_sys.input.menu && !screen_transition_flag) {
 			struct sys_pause_options options = {
 				.amiga = g_res.amiga_data,
+				.invulnerable = (g_options.cheats & CHEATS_INVULNERABLE) != 0,
+				.infinite_lives = (g_options.cheats & CHEATS_UNLIMITED_LIFES) != 0,
+				.two_players = g_vars.two_players_flag,
+				.player_alive = {assist_player_active(0),assist_player_active(1)},
+				.lives = {g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count,g_vars.objects[OBJECT_NUM_PLAYER2].lifes_count},
 				.can_switch = g_options.dos_datapath && g_options.amiga_datapath && check_data_mode(false),
 				.camera = g_options.camera_mode, .hud = g_options.hud_mode,
 				.render_rate = g_options.scroll_rate, .view_step = g_sys.input.view_step,
@@ -2455,6 +2487,7 @@ void do_level() {
 			g_sys.run_pause_menu();
 			g_sys.get_pause_options(&options);
 			if (!g_sys.input.quit) {
+				apply_game_assists(&options);
 				if (options.amiga != g_res.amiga_data) g_sys.input.switch_mode = true;
 				if (options.camera != g_options.camera_mode) _camera.valid = false;
 				g_options.camera_mode = options.camera;
@@ -2544,6 +2577,7 @@ void do_level() {
 
 	} while (!g_sys.input.quit && !g_vars.quit_level_flag);
 	g_sys.set_pause_menu_enabled(false);
+	g_sys.set_assist_status(false,false);
 	g_sys.set_scroll_interpolation(0, 0, 0, false);
 	/* Menus and inter-level screens retain the original logical resolution. */
 	resize_level_view(base_w, base_h, false);

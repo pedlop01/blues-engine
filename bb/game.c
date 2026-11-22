@@ -339,6 +339,15 @@ static void game_run() {
 		if (!g_vars.level_completed_flag) {
 			g_vars.game_over_flag = 0;
 			g_vars.play_level_flag = 1;
+			/* New runs may start at any level. Initialize stats here rather
+			 * than relying on level zero or the infinite-lives cheat. */
+			g_vars.player1_dead_flag = g_vars.player2_dead_flag = 0;
+			for (int i=OBJECT_NUM_PLAYER1; i<=OBJECT_NUM_PLAYER2; ++i) {
+				struct object_t *player=&g_vars.objects[i];
+				player->lifes_count=3; player->data51=3; player->vinyls_count=0;
+				player->restart_level_flag=player->level_complete_flag=0;
+				player->unk60=player->data5F=0;
+			}
 			if (!g_vars.play_demo_flag) {
 				g_vars.level = g_options.start_level;
 				do_select_player();

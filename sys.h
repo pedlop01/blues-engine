@@ -42,6 +42,8 @@ enum sys_transition_e {
 
 struct sys_pause_options {
 	bool amiga, can_switch;
+	bool invulnerable, infinite_lives, two_players, player_alive[2];
+	int lives[2];
 	enum camera_mode camera;
 	enum hud_mode hud;
 	int render_rate, view_step;
@@ -66,6 +68,7 @@ struct sys_t {
 	void	(*transition_screen)(enum sys_transition_e type, bool open);
 	void	(*process_events)();
 	void	(*set_pause_menu_enabled)(bool enabled);
+	void	(*set_assist_status)(bool invulnerable, bool infinite_lives);
 	void	(*run_pause_menu)();
 	void	(*set_pause_options)(const struct sys_pause_options *options);
 	void	(*get_pause_options)(struct sys_pause_options *options);

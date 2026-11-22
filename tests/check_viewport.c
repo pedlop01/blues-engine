@@ -443,6 +443,83 @@ static void test_camera() {
 }
 
 
+static void test_assists() {
+	const struct vars_t saved=g_vars;
+	const uint32_t cheats=g_options.cheats;
+	uint8_t sql[640*25]; memcpy(sql,g_res.sql,sizeof(sql));
+	struct object_t *p=&g_vars.objects[OBJECT_NUM_PLAYER1];
+	assert(p->lifes_count>=1 && p->data51>0);
+	g_options.cheats=0; p->data51=3; p->blinking_counter=0;
+	do_level_player_hit(p); assert(p->data51==2 && p->blinking_counter==75);
+	p->data51=3; p->blinking_counter=0; g_options.cheats=CHEATS_NO_HIT;
+	do_level_player_hit(p); assert(p->data51==3 && p->blinking_counter==0);
+	/* Tile hazards use the same damage protection. */
+	const uint8_t hazard[]={0,10,3,104,22};
+	p->trigger3=hazard; p->trigger3_num=1; p->special_anim=0;
+	triggers_update_tiles2(p); assert(p->data51==3 && p->special_anim==0);
+	g_options.cheats=0; p->trigger3_num=1;
+	triggers_update_tiles2(p); assert(p->data51==2 && p->special_anim==22);
+	g_vars=saved;
+	struct sys_pause_options options={.invulnerable=true,.lives={7,9}};
+	const int x=p->xpos,y=p->ypos,health=p->data51,vinyls=p->vinyls_count;
+	apply_game_assists(&options);
+	assert((g_options.cheats & CHEATS_INVULNERABLE)==CHEATS_INVULNERABLE && p->lifes_count==7);
+	assert(p->xpos==x && p->ypos==y && p->data51==health && p->vinyls_count==vinyls);
+	options.invulnerable=false; options.infinite_lives=true;
+	apply_game_assists(&options); assert(g_options.cheats==CHEATS_UNLIMITED_LIFES);
+	p->data51=3; p->blinking_counter=0;
+	do_level_player_hit(p); assert(p->data51==2); /* Infinite lives != invulnerability. */
+	for(int retry=0;retry<20;++retry) {
+		p->restart_level_flag=1; init_level();
+		assert(p->lifes_count==7 && p->data51==3);
+	}
+	g_options.cheats=0; p->restart_level_flag=1; init_level(); assert(p->lifes_count==6);
+	/* Last-life death must retry under infinity and terminate normally without it. */
+	for(int infinite=0;infinite<2;++infinite) {
+		g_vars=saved; g_vars.play_level_flag=1;
+		g_options.cheats=infinite ? CHEATS_UNLIMITED_LIFES : 0;
+		p->lifes_count=1; p->data51=1; p->blinking_counter=0;
+		do_level_player_hit(p); assert(g_vars.game_over_flag);
+		g_vars.update_objects_counter=70;
+		do_level_update_objects();
+		assert(g_vars.quit_level_flag && g_vars.play_level_flag==infinite);
+		if(infinite) { assert(p->restart_level_flag); init_level(); assert(p->lifes_count==1 && p->data51==3); }
+	}
+	/* Infinite lives do not kill or decrement either player on health depletion. */
+	g_vars=saved; g_vars.two_players_flag=1;
+	g_vars.player1_dead_flag=g_vars.player2_dead_flag=0;
+	for(int player=0;player<2;++player) {
+		struct object_t *q=&g_vars.objects[OBJECT_NUM_PLAYER1+player];
+		q->type=player; q->lifes_count=player ? 9 : 1; q->data51=1; q->blinking_counter=0;
+		g_options.cheats=CHEATS_UNLIMITED_LIFES;
+		do_level_player_hit(q);
+		assert(q->lifes_count==(player ? 9 : 1) && q->data51==3);
+	}
+	assert(!g_vars.player1_dead_flag && !g_vars.player2_dead_flag && !g_vars.game_over_flag);
+	g_options.cheats=0; p->lifes_count=2; p->data51=1; p->blinking_counter=0;
+	do_level_player_hit(p); assert(p->lifes_count==1 && p->data51==3);
+	p->data51=1; p->blinking_counter=0; do_level_player_hit(p);
+	assert(g_vars.player2_dead_flag && !assist_player_active(0));
+	options.invulnerable=false; options.infinite_lives=false; options.lives[0]=99; options.lives[1]=4;
+	apply_game_assists(&options);
+	assert(p->lifes_count==1 && g_vars.objects[OBJECT_NUM_PLAYER2].lifes_count==4);
+	/* Life pickups saturate at the original two-digit HUD range. */
+	g_vars=saved; g_options.cheats=0;
+	uint8_t *tile=lookup_sql(p->xpos16,p->ypos16); const int num=*tile;
+	const struct trigger_t trigger=g_res.triggers[num];
+	const uint8_t reward[]={0,12,0,0,0,0,0,0,0,0,1};
+	g_res.triggers[num].unk16=num; g_res.triggers[num].op_table3=reward;
+	p->lifes_count=99; triggers_update_tiles1(p); assert(p->lifes_count==99);
+	*tile=num; p->lifes_count=98; triggers_update_tiles1(p); assert(p->lifes_count==99);
+	*tile=num; g_options.cheats=CHEATS_UNLIMITED_LIFES; p->lifes_count=7;
+	triggers_update_tiles1(p); assert(p->lifes_count==7);
+	g_res.triggers[num]=trigger;
+	g_vars=saved; g_options.cheats=cheats; memcpy(g_res.sql,sql,sizeof(sql));
+	update_assist_status();
+	puts("assists: hits, hazards, independent modes, 20 retries, final life, two players and capped pickups passed");
+	g_sys.input.quit=true;
+}
+
 static int menu_timer_step, menus_tested;
 static void push_menu_key(int sym, bool down) {
 	SDL_Event ev = {0};
@@ -550,6 +627,23 @@ static void test_native_volumes() {
 	puts("native volumes: music/effect isolation and exact mute in DOS/Amiga, retained across mode change passed");
 }
 
+static int assist_health_before[2];
+static uint32_t assist_script(uint32_t interval,void *param) {
+	const int step=menu_timer_step++;
+	assert(SDL_GetAudioStatus()!=SDL_AUDIO_PLAYING);
+	if(step==0) {
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RETURN);
+		for(int i=0;i<7;++i)menu_tap(SDLK_DOWN);
+		menu_tap(SDLK_RETURN);
+		menu_tap(SDLK_RETURN); menu_tap(SDLK_DOWN); menu_tap(SDLK_RETURN);
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RIGHT); menu_tap(SDLK_RIGHT);
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RIGHT);
+	} else if(step==1) {
+		push_menu_key(SDLK_ESCAPE,false); push_menu_key(SDLK_ESCAPE,false);
+	} else {menu_tap(SDLK_UP);push_menu_key(SDLK_RETURN,true);}
+	return menu_timer_step==3 ? 0 : interval;
+}
+
 static void test_run_pause_menu() {
 	const struct vars_t before = g_vars;
 	uint8_t sql[640 * 25];
@@ -559,6 +653,7 @@ static void test_run_pause_menu() {
 	const int w = GAME_SCREEN_W, h = GAME_SCREEN_H;
 	const enum hud_mode hud = g_options.hud_mode;
 	g_sys.get_pause_options(&options_before_test);
+	for(int i=0;i<2;++i)assist_health_before[i]=g_vars.objects[OBJECT_NUM_PLAYER1+i].data51;
 	if(getenv("BLUES_TEST_VOLUMES")) {
 		struct sys_pause_options tracked=options_before_test;
 		tracked.apply_volumes=track_volume_apply; g_sys.set_pause_options(&tracked);
@@ -580,9 +675,11 @@ static void test_run_pause_menu() {
 	sdl2_draw_screen(0,0,1); snapshot("menu-pad");
 	_pause_page = PAUSE_AUDIO;
 	sdl2_draw_screen(0,0,1); snapshot("menu-audio");
+	_pause_page = PAUSE_ASSISTS;
+	sdl2_draw_screen(0,0,1); snapshot("menu-assists");
 	_pause_menu_open = false;
 	menu_timer_step = 0;
-	assert(SDL_AddTimer(60, getenv("BLUES_TEST_VOLUMES") ? volume_script : (getenv("BLUES_TEST_OPTIONS") ? options_script : menu_script), NULL));
+	assert(SDL_AddTimer(60, getenv("BLUES_TEST_ASSIST_MENU") ? assist_script : (getenv("BLUES_TEST_VOLUMES") ? volume_script : (getenv("BLUES_TEST_OPTIONS") ? options_script : menu_script)), NULL));
 	const uint32_t timestamp = SDL_GetTicks();
 	sdl2_run_pause_menu();
 	assert(SDL_GetTicks() - timestamp >= 150 && menu_timer_step == 3);
@@ -592,6 +689,12 @@ static void test_run_pause_menu() {
 	assert(g_options.hud_mode == hud && !g_sys.input.menu && !g_sys.input.space && !g_sys.input.jump && !g_sys.input.direction);
 	assert(!g_sys.input.switch_mode && !g_sys.input.switch_hud && !g_sys.input.quit);
 	assert(_blocked_keys[SDL_SCANCODE_RETURN]);
+	if(getenv("BLUES_TEST_ASSIST_MENU")) {
+		struct sys_pause_options after; g_sys.get_pause_options(&after);
+		assert(after.invulnerable != options_before_test.invulnerable && after.infinite_lives != options_before_test.infinite_lives);
+		assert(after.lives[0]==options_before_test.lives[0]+2);
+		assert(after.lives[1]==options_before_test.lives[1]+(after.player_alive[1] ? 1 : 0));
+	}
 	if(getenv("BLUES_TEST_VOLUMES")) {
 		struct sys_pause_options after; g_sys.get_pause_options(&after);
 		assert(volume_applied_paused && after.music_volume==40 && after.effects_volume==0);
@@ -649,18 +752,34 @@ static void test_events() {
 		return;
 	}
 	g_sys.input.space = false;
-	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES")) {
-		if (test_frames == 0) g_sys.input.view_step = 4;
+	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU")) {
+		if (test_frames == 0) {
+			g_sys.input.view_step = 4;
+			if(getenv("BLUES_TEST_ASSIST_TWO")) {g_vars.two_players_flag=1;init_level();}
+		}
 		if (test_frames == 2) {
 			bool paused = false;
 			handle_keyevent(SDLK_ESCAPE, false, &g_sys.input, &paused);
 		}
 		if (test_frames == 3) {
 			assert(menus_tested == 1);
-			if(getenv("BLUES_TEST_VOLUMES")) {
+			if(getenv("BLUES_TEST_ASSIST_MENU")) {
+				assert(((g_options.cheats & CHEATS_INVULNERABLE)!=0) != options_before_test.invulnerable);
+				assert(((g_options.cheats & CHEATS_UNLIMITED_LIFES)!=0) != options_before_test.infinite_lives);
+				assert(g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count==options_before_test.lives[0]+2);
+				for(int i=0;i<2;++i)if(assist_player_active(i))assert(g_vars.objects[OBJECT_NUM_PLAYER1+i].data51==assist_health_before[i]);
+				g_sys.input.switch_mode=true;
+			} else if(getenv("BLUES_TEST_VOLUMES")) {
 				assert(g_options.music_volume==40 && g_options.effects_volume==0);
 				g_sys.input.switch_mode=true;
 			} else if (!getenv("BLUES_TEST_OPTIONS")) g_sys.input.quit = true;
+		}
+		if(test_frames==4 && getenv("BLUES_TEST_ASSIST_MENU")) {
+			assert(g_res.amiga_data != options_before_test.amiga);
+			assert(_assist_invulnerable != options_before_test.invulnerable && _assist_lives != options_before_test.infinite_lives);
+			assert(g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count==options_before_test.lives[0]+2);
+			snapshot("assists-gameplay");
+			g_sys.input.quit=true;
 		}
 		if(test_frames==4 && getenv("BLUES_TEST_VOLUMES")) {
 			assert(g_options.music_volume==40 && g_options.effects_volume==0);
@@ -689,6 +808,10 @@ static void test_events() {
 		base_h = previous_h = GAME_SCREEN_H;
 		saved_window_w = window_w;
 		saved_window_h = window_h;
+		if (getenv("BLUES_TEST_ASSISTS")) {
+			test_assists();
+			return;
+		}
 		if (getenv("BLUES_TEST_HUD")) {
 			test_hud();
 			return;
@@ -787,7 +910,7 @@ static void test_events() {
 int main(int argc, char **argv) {
 	if (getenv("BLUES_TEST_MODES") || getenv("BLUES_TEST_VOLUMES")) g_sys.start_audio = capture_start_audio;
 	g_sys.process_events = test_events;
-	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES")) g_sys.run_pause_menu = test_run_pause_menu;
+	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU")) g_sys.run_pause_menu = test_run_pause_menu;
 	g_sys.sleep = no_sleep;
 	g_sys.fade_in_palette = no_fade;
 	g_sys.fade_out_palette = no_fade;
@@ -809,11 +932,12 @@ int main(int argc, char **argv) {
 		assert(_hud_width == 0); /* Disabled before menus/inter-level screens. */
 		return result;
 	}
-	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES")) {
+	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU")) {
 		assert(!_pause_menu_enabled);
 		puts("menu: frozen game/objects/map/zoom/audio, preserved scene and clean resume through actual game loop passed");
 		return result;
 	}
+	if (getenv("BLUES_TEST_ASSISTS")) return result;
 	if (getenv("BLUES_TEST_HUD_SWITCH")) return result;
 	if (getenv("BLUES_TEST_CAMERA")) return result;
 	assert(test_frames == 176 && out_frames >= 40 && closer_frames >= 40);

@@ -872,7 +872,7 @@ void triggers_update_tiles1(struct object_t *obj) {
 		obj->special_anim = p[6];
 		if (p[10] != 0) {
 			play_sound(SOUND_12);
-			++obj->lifes_count;
+			if (!(g_options.cheats & CHEATS_UNLIMITED_LIFES) && obj->lifes_count < 99) ++obj->lifes_count;
 			if (!g_vars.two_players_flag) {
 				screen_draw_number(obj->lifes_count - 1, 64, 163, 2);
 			} else if (obj->type == PLAYER_JAKE) {

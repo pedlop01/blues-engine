@@ -25,6 +25,7 @@ focused on the first **Blues Brothers** game.
 | HUD choice | Classic HUD scales with the map (default); fixed HUD keeps its display size and reserves separate bands without covering the map. `F7` switches live. Both preserve DOS/Amiga artwork and layout. |
 | In-game pause menu | `Esc`, `P` or controller Start opens a centered menu with Resume, Options, Controls and confirmed Quit. Simulation, zoom and audio pause; menu inputs are consumed before returning to play. |
 | Separate audio levels | Options → Sound provides independent 0–100% music/effect levels and mute, with short gain ramps in DOS and Amiga. |
+| Gameplay assists | Options → Assists offers invulnerability, independent infinite lives and finite counts from 1–99 per active player. Active protections are labeled in the original HUD’s empty margin. |
 | Larger views | Dynamic sprite storage replaces the fixed sprite limit; camera bounds and defeated-enemy visibility follow the current view. |
 | Regression tests | Tests cover DOS sequencer accuracy, PCM continuity, zoom, doors, defeated enemies and live presentation changes. |
 
@@ -34,7 +35,7 @@ adjustment has been confirmed in gameplay.
 ## Ideas and roadmap
 
 The next phase adds persistent preferences,
-invulnerability and life controls, level selection, eight save
+level selection, eight save
 slots with thumbnails, and a short rewind with a VHS-style visual effect.
 Further work includes Windows packaging.
 
@@ -297,6 +298,44 @@ continuity over arbitrary callback sizes, reference DOS PCM hashes, unchanged
 synthesis progression while muted, real DOS/Amiga audio, menu changes and level
 retention through resource changes. The existing DOS IRQ/register comparison
 also remains unchanged.
+
+### Gameplay assists
+
+**Options → Assists** provides invulnerability, infinite lives, and finite life
+counts for Player 1 and Player 2. Left/Right or Enter/A changes a setting;
+changes apply when you resume. Counts range from **1 to 99**, including the
+current life. Player 2 is disabled when not participating, and an already
+eliminated player is not revived by changing these settings.
+
+Invulnerability prevents damage from hits and hazardous tiles. It does not
+heal previous damage or undo a death already in progress. Infinite lives is
+independent: you can still lose health and retry, but lives are not consumed,
+even when the finite counter is one. Your finite count is retained, including
+while collecting life bonuses, so disabling infinity restores that count.
+Finite life pickups cap at 99 to stay within the original two-digit HUD range.
+
+The native DOS/Amiga HUD graphics remain intact. When enabled, **INVULNERABLE**
+and/or **VIDAS INFINITAS** appears in its empty bottom margin. This indicator
+follows the selected classic/fixed HUD scale. Settings last for this run; disk
+persistence is still task 12. A new game starts with three lives and normal
+health, including when using a nonzero `--level`.
+
+```
+BLUES_TEST_ASSISTS=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  build/tests/check_viewport --dos-datapath=../orig-games/dos \
+  --amiga-datapath=../orig-games/amiga --cheats=0 --level=0
+BLUES_TEST_ASSIST_MENU=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  build/tests/check_viewport --dos-datapath=../orig-games/dos \
+  --amiga-datapath=../orig-games/amiga --cheats=0 --level=0
+```
+
+The physics test covers ordinary/protected hits, hazardous tiles, independent
+assists, repeated retries, final-life game over/retry, two-player depletion,
+inactive-player handling and life-pickup saturation. The menu test toggles both
+assists, changes finite counts and verifies paused state plus retained settings
+after a DOS/Amiga switch. Add `BLUES_TEST_ASSIST_TWO=1` to test two active
+players, or start with `--cheats=7` to verify disabling existing protections.
+Repeat for levels 1–5 and either initial resource mode.
 
 ### Blues Brothers audio
 

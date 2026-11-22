@@ -105,8 +105,8 @@ int main() {
 	assert(pause_event(&ev) && g_sys.input.quit);
 	reset_menu();
 	/* Controls has one main-menu entry; Options ends directly at Back. */
-	_pause_page=PAUSE_OPTIONS; _pause_selection=7;
-	assert(pause_item_count()==8 && !pause_activate() && _pause_page==PAUSE_MAIN && _pause_selection==1);
+	_pause_page=PAUSE_OPTIONS; _pause_selection=8;
+	assert(pause_item_count()==9 && !pause_activate() && _pause_page==PAUSE_MAIN && _pause_selection==1);
 	_pause_selection=2; pause_activate();
 	assert(_pause_page==PAUSE_BINDINGS && pause_item_count()==5);
 	_pause_selection=2; pause_activate(); assert(_pause_page==PAUSE_CONTROLS);
@@ -139,6 +139,21 @@ int main() {
 	for(int i=0;i<15;++i)pause_adjust(-1);
 	assert(_pause_options.effects_volume==0);
 	_pause_selection=2; pause_activate(); assert(_pause_page==PAUSE_OPTIONS && _pause_selection==6);
+	_pause_page=PAUSE_OPTIONS; _pause_selection=7; pause_activate();
+	assert(_pause_page==PAUSE_ASSISTS && pause_item_count()==5);
+	_pause_options.invulnerable=false; _pause_options.infinite_lives=false;
+	_pause_options.player_alive[0]=true; _pause_options.player_alive[1]=false;
+	_pause_options.lives[0]=3; _pause_options.lives[1]=3;
+	_pause_selection=0; pause_activate(); assert(_pause_options.invulnerable && !_pause_options.infinite_lives);
+	_pause_selection=1; pause_adjust(1); assert(_pause_options.infinite_lives);
+	_pause_selection=2; pause_adjust(-1); assert(_pause_options.lives[0]==2);
+	for(int i=0;i<110;++i)pause_adjust(1);
+	assert(_pause_options.lives[0]==99);
+	for(int i=0;i<110;++i)pause_adjust(-1);
+	assert(_pause_options.lives[0]==1);
+	_pause_selection=3; pause_adjust(1); assert(_pause_options.lives[1]==3);
+	_pause_options.player_alive[1]=true; pause_adjust(1); assert(_pause_options.lives[1]==4);
+	_pause_selection=4; pause_activate(); assert(_pause_page==PAUSE_OPTIONS && _pause_selection==7);
 	/* The activation key/button release must not bind itself. */
 	_pause_page=PAUSE_KEYS; _pause_selection=BIND_ACTION;
 	ev=key(SDLK_RETURN,true); pause_event(&ev); assert(_pause_capture==BIND_ACTION);
@@ -206,9 +221,9 @@ int main() {
 	for (unsigned i = 0; i < ARRAYSIZE(sizes); ++i) {
 		if (sizes[i][0]) SDL_SetWindowSize(_window, sizes[i][0], sizes[i][1]);
 		else assert(SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN_DESKTOP) == 0);
-		for (int page = 0; page < 9; ++page) {
-			_pause_page = page == 8 ? PAUSE_QUIT : (enum pause_page)page;
-			_pause_selection = page == 8 ? 1 : 0;
+		for (int page = 0; page < 10; ++page) {
+			_pause_page = page == 9 ? PAUSE_QUIT : (enum pause_page)page;
+			_pause_selection = page == 9 ? 1 : 0;
 			_pause_menu_open = true;
 			sdl2_draw_screen(0,0,1);
 			_pause_menu_open = false;
@@ -231,7 +246,7 @@ int main() {
 			assert(x1>=0 && x2<w && y1>=0 && y2<h);
 			const int scale = MIN(w/320,h/200);
 			assert(scale >= 1 && gold > 0 && gold % (scale*scale) == 0);
-			assert((danger > 0) == (page == 8));
+			assert((danger > 0) == (page == 9));
 			free(pixels);
 		}
 	}

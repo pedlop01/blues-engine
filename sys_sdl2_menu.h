@@ -1,8 +1,9 @@
 /* SDL pause-menu implementation. Kept private to sys_sdl2.c. */
-enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD, PAUSE_AUDIO };
+enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD, PAUSE_AUDIO, PAUSE_ASSISTS };
 static enum pause_page _pause_page;
 static int _pause_selection, _pause_axis, _pause_hat;
 static bool _pause_focused;
+static bool _assist_invulnerable, _assist_lives;
 
 enum binding_action { BIND_LEFT, BIND_RIGHT, BIND_UP, BIND_DOWN, BIND_ACTION, BIND_JUMP, BIND_COUNT };
 static const int _default_keys[BIND_COUNT] = {SDLK_LEFT, SDLK_RIGHT, SDLK_UP,SDLK_DOWN,SDLK_SPACE,SDLK_LSHIFT};
@@ -45,14 +46,15 @@ static bool handle_bound_button(int button, bool down, struct input_t *input) {
 
 static bool pause_large_page() {
 	return _pause_page == PAUSE_CONTROLS || _pause_page == PAUSE_OPTIONS ||
-		_pause_page == PAUSE_BINDINGS || _pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD || _pause_page == PAUSE_AUDIO;
+		_pause_page == PAUSE_BINDINGS || _pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD || _pause_page == PAUSE_AUDIO || _pause_page == PAUSE_ASSISTS;
 }
 
 static int pause_item_count() {
 	switch (_pause_page) {
 	case PAUSE_MAIN: return 4;
 	case PAUSE_QUIT: return 2;
-	case PAUSE_OPTIONS: return 8;
+	case PAUSE_OPTIONS: return 9;
+	case PAUSE_ASSISTS: return 5;
 	case PAUSE_AUDIO: return 3;
 	case PAUSE_BINDINGS: return 5;
 	case PAUSE_KEYS: return BIND_COUNT + 1;
@@ -86,6 +88,15 @@ static const char *keyboard_binding_name(int key) {
 }
 
 static void pause_adjust(int direction) {
+	if (_pause_page == PAUSE_ASSISTS) {
+		if (_pause_selection == 0) _pause_options.invulnerable = !_pause_options.invulnerable;
+		if (_pause_selection == 1) _pause_options.infinite_lives = !_pause_options.infinite_lives;
+		if (_pause_selection == 2 || _pause_selection == 3) {
+			const int player = _pause_selection-2;
+			if (_pause_options.player_alive[player]) _pause_options.lives[player] = MAX(1,MIN(99,_pause_options.lives[player]+direction));
+		}
+		return;
+	}
 	if (_pause_page == PAUSE_AUDIO) {
 		int *value = _pause_selection == 0 ? &_pause_options.music_volume : &_pause_options.effects_volume;
 		int *last = _pause_selection == 0 ? &_last_music_volume : &_last_effects_volume;
@@ -190,12 +201,30 @@ static void pause_text(const char *text, int x, int y, int scale, bool selected)
 	pause_text_color(text, x, y, scale, selected ? PAUSE_GOLD : PAUSE_TEXT);
 }
 
+static void sdl2_set_assist_status(bool invulnerable,bool infinite_lives) {
+	_assist_invulnerable=invulnerable; _assist_lives=infinite_lives;
+}
+
+static void sdl2_draw_assist_status() {
+	if (!_pause_menu_enabled || (!_assist_invulnerable && !_assist_lives)) return;
+	const char *text = _assist_invulnerable
+		? (_assist_lives ? "INVULNERABLE / VIDAS INFINITAS" : "INVULNERABLE") : "VIDAS INFINITAS";
+	if (_hud_width > 0) {
+		SDL_RenderSetLogicalSize(_renderer,320,200);
+		pause_text_color(text,8,191,1,PAUSE_GOLD);
+		SDL_RenderSetLogicalSize(_renderer,_screen_w,_screen_h);
+	} else {
+		pause_text_color(text,(_screen_w-320)/2+8,_screen_h-9,1,PAUSE_GOLD);
+	}
+	SDL_SetRenderDrawColor(_renderer,0,0,0,255);
+}
+
 static void pause_center_text(const char *text, int y, int scale, bool selected) {
 	pause_text(text, (320 - ((int)strlen(text) * 6 - 1) * scale) / 2, y, scale, selected);
 }
 
 static void pause_row(const char *label, const char *value, int index, bool enabled) {
-	const int y = 50 + index * 14;
+	const int y = 50 + index * (_pause_page == PAUSE_OPTIONS ? 12 : 14);
 	if (index == _pause_selection) {
 		SDL_Rect rect = {25,y-3,269,12};
 		SDL_SetRenderDrawColor(_renderer,29,55,77,255);
@@ -210,7 +239,7 @@ static void pause_row(const char *label, const char *value, int index, bool enab
 
 static void pause_draw_settings() {
 	const char *title = _pause_page == PAUSE_OPTIONS ? "OPCIONES" :
-		(_pause_page == PAUSE_AUDIO ? "SONIDO" : (_pause_page == PAUSE_BINDINGS ? "CONTROLES" : (_pause_page == PAUSE_KEYS ? "TECLADO" : "MANDO")));
+		(_pause_page == PAUSE_ASSISTS ? "AYUDAS" : (_pause_page == PAUSE_AUDIO ? "SONIDO" : (_pause_page == PAUSE_BINDINGS ? "CONTROLES" : (_pause_page == PAUSE_KEYS ? "TECLADO" : "MANDO"))));
 	pause_center_text(title,26,2,true);
 	char value[24];
 	if (_pause_page == PAUSE_OPTIONS) {
@@ -224,7 +253,18 @@ static void pause_draw_settings() {
 		else strcpy(value,"NORMAL");
 		pause_row("ENCUADRE",value,5,true);
 		pause_row("SONIDO",NULL,6,true);
-		pause_row("VOLVER",NULL,7,true);
+		pause_row("AYUDAS",NULL,7,true);
+		pause_row("VOLVER",NULL,8,true);
+	} else if (_pause_page == PAUSE_ASSISTS) {
+		pause_row("INVULNERABLE",_pause_options.invulnerable ? "ACTIVADA" : "DESACTIVADA",0,true);
+		pause_row("VIDAS INFINITAS",_pause_options.infinite_lives ? "ACTIVADAS" : "DESACTIVADAS",1,true);
+		for(int i=0;i<2;++i) {
+			if (_pause_options.player_alive[i]) snprintf(value,sizeof(value),"%d",_pause_options.lives[i]);
+			else strcpy(value,i==1 && !_pause_options.two_players ? "NO PARTICIPA" : "NO ACTIVO");
+			pause_row(i==0 ? "VIDAS J1" : "VIDAS J2",value,i+2,_pause_options.player_alive[i]);
+		}
+		pause_row("VOLVER",NULL,4,true);
+		pause_center_text(_pause_options.infinite_lives ? "CUENTA FINITA CONSERVADA" : "VIDAS: INCLUYE LA VIDA ACTUAL",145,1,false);
 	} else if (_pause_page == PAUSE_AUDIO) {
 		for (int i=0;i<2;++i) {
 			const int volume = i==0 ? _pause_options.music_volume : _pause_options.effects_volume;
@@ -256,8 +296,9 @@ static void pause_draw_settings() {
 		pause_row("VOLVER",NULL,count,true);
 	}
 	const char *hint = _pause_capture >= 0 ? (_pause_page == PAUSE_PAD ? "PULSA UN BOTON - ESC CANCELA" : "PULSA UNA TECLA - ESC CANCELA") :
+		(_pause_page == PAUSE_ASSISTS ? "IZQ / DER: AJUSTAR  ENTER: CAMBIAR" :
 		(_pause_page == PAUSE_AUDIO ? "IZQ / DER: VOLUMEN  ENTER: SILENCIO" :
-		(_pause_page == PAUSE_OPTIONS ? "IZQ / DER: CAMBIAR  ENTER: ELEGIR" : "ENTER / A: REASIGNAR  ESC: VOLVER"));
+		(_pause_page == PAUSE_OPTIONS ? "IZQ / DER: CAMBIAR  ENTER: ELEGIR" : "ENTER / A: REASIGNAR  ESC: VOLVER")));
 	if (_pause_notice) hint = _pause_notice;
 	pause_center_text(hint,163,1,true);
 	pause_center_text("SE APLICA AL CONTINUAR",175,1,false);
@@ -366,7 +407,9 @@ static bool pause_back() {
 	_pause_notice = NULL;
 	if (_pause_capture >= 0) { _pause_capture = -1; return false; }
 	if (_pause_page == PAUSE_MAIN) return true;
-	if (_pause_page == PAUSE_AUDIO) {
+	if (_pause_page == PAUSE_ASSISTS) {
+		_pause_page=PAUSE_OPTIONS; _pause_selection=7;
+	} else if (_pause_page == PAUSE_AUDIO) {
 		_pause_page = PAUSE_OPTIONS; _pause_selection = 6;
 	} else if (_pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD) {
 		_pause_selection = _pause_page == PAUSE_KEYS ? 0 : 1;
@@ -389,6 +432,10 @@ static bool pause_activate() {
 		if (_pause_selection == 1) { g_sys.input.quit = true; return true; }
 		return pause_back();
 	}
+	if (_pause_page == PAUSE_ASSISTS) {
+		if (_pause_selection == 4) return pause_back();
+		pause_adjust(1); return false;
+	}
 	if (_pause_page == PAUSE_AUDIO) {
 		if (_pause_selection == 2) return pause_back();
 		int *value = _pause_selection == 0 ? &_pause_options.music_volume : &_pause_options.effects_volume;
@@ -400,6 +447,7 @@ static bool pause_activate() {
 	if (_pause_page == PAUSE_OPTIONS) {
 		if (_pause_selection < 6) pause_adjust(1);
 		else if (_pause_selection == 6) { _pause_page = PAUSE_AUDIO; _pause_selection = 0; }
+		else if (_pause_selection == 7) { _pause_page = PAUSE_ASSISTS; _pause_selection = 0; }
 		else return pause_back();
 		return false;
 	}
