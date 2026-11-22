@@ -1,8 +1,124 @@
 /* SDL pause-menu implementation. Kept private to sys_sdl2.c. */
-enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT };
+enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD };
 static enum pause_page _pause_page;
 static int _pause_selection, _pause_axis, _pause_hat;
 static bool _pause_focused;
+
+enum binding_action { BIND_LEFT, BIND_RIGHT, BIND_UP, BIND_DOWN, BIND_ACTION, BIND_JUMP, BIND_COUNT };
+static const int _default_keys[BIND_COUNT] = {SDLK_LEFT, SDLK_RIGHT, SDLK_UP,SDLK_DOWN,SDLK_SPACE,SDLK_LSHIFT};
+static int _game_keys[BIND_COUNT] = {SDLK_LEFT, SDLK_RIGHT, SDLK_UP,SDLK_DOWN,SDLK_SPACE,SDLK_LSHIFT};
+static int _edit_keys[BIND_COUNT] = {SDLK_LEFT, SDLK_RIGHT, SDLK_UP,SDLK_DOWN,SDLK_SPACE,SDLK_LSHIFT};
+static int _game_buttons[2] = {SDL_CONTROLLER_BUTTON_A,SDL_CONTROLLER_BUTTON_B};
+static int _edit_buttons[2] = {SDL_CONTROLLER_BUTTON_A,SDL_CONTROLLER_BUTTON_B};
+static struct sys_pause_options _pause_options = {.camera=CAMERA_SMOOTH,.hud=HUD_CLASSIC,.render_rate=60};
+static int _pause_capture = -1, _pause_xaxis;
+static int _capture_ignore_key = SDLK_UNKNOWN, _capture_ignore_button = -1;
+static int _capture_key_candidate = SDLK_UNKNOWN, _capture_button_candidate = -1;
+static const char *_pause_notice;
+static const char *_bind_names[] = {"IZQUIERDA","DERECHA","ARRIBA","ABAJO","ACCION","SALTAR"};
+
+static void sdl2_set_pause_options(const struct sys_pause_options *options) { _pause_options = *options; }
+static void sdl2_get_pause_options(struct sys_pause_options *options) { *options = _pause_options; }
+
+static bool handle_bound_key(int key, bool down, struct input_t *input) {
+	for (int i = 0; i < BIND_COUNT; ++i) {
+		if (key != _game_keys[i] && !(i == BIND_JUMP && _game_keys[i] == SDLK_LSHIFT && key == SDLK_RSHIFT)) continue;
+		if (i < BIND_ACTION) {
+			const int mask = 1 << i;
+			if (down) input->direction |= mask;
+			else input->direction &= ~mask;
+		} else if (i == BIND_ACTION) input->space = down;
+		else input->jump = down;
+		return true;
+	}
+	/* Default controls cease to act when reassigned; Enter remains an alias. */
+	for (int i = 0; i < BIND_COUNT; ++i) if (key == _default_keys[i]) return true;
+	return key == SDLK_RSHIFT;
+}
+
+static bool handle_bound_button(int button, bool down, struct input_t *input) {
+	if (button == _game_buttons[0]) { input->space = down; return true; }
+	if (button == _game_buttons[1]) { input->jump = down; return true; }
+	return button == SDL_CONTROLLER_BUTTON_A || button == SDL_CONTROLLER_BUTTON_B;
+}
+
+static bool pause_large_page() {
+	return _pause_page == PAUSE_CONTROLS || _pause_page == PAUSE_OPTIONS ||
+		_pause_page == PAUSE_BINDINGS || _pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD;
+}
+
+static int pause_item_count() {
+	switch (_pause_page) {
+	case PAUSE_MAIN: return 4;
+	case PAUSE_QUIT: return 2;
+	case PAUSE_OPTIONS: return 8;
+	case PAUSE_BINDINGS: return 4;
+	case PAUSE_KEYS: return BIND_COUNT + 1;
+	case PAUSE_PAD: return 3;
+	default: return 0;
+	}
+}
+
+static void uppercase_binding(char *out, size_t size, const char *name) {
+	size_t n = 0;
+	for (; name && *name && n + 1 < size; ++name) {
+		unsigned char c = *name;
+		out[n++] = c >= 'a' && c <= 'z' ? c - 'a' + 'A' : (c < 128 ? c : '?');
+	}
+	out[n] = 0;
+}
+
+static const char *keyboard_binding_name(int key) {
+	switch (key) {
+	case SDLK_LEFT: return "IZQUIERDA";
+	case SDLK_RIGHT: return "DERECHA";
+	case SDLK_UP: return "ARRIBA";
+	case SDLK_DOWN: return "ABAJO";
+	case SDLK_SPACE: return "ESPACIO";
+	case SDLK_LSHIFT: return "SHIFT IZQ";
+	case SDLK_RSHIFT: return "SHIFT DER";
+	case SDLK_LCTRL: return "CTRL IZQ";
+	case SDLK_RCTRL: return "CTRL DER";
+	default: return SDL_GetKeyName(key);
+	}
+}
+
+static void pause_adjust(int direction) {
+	if (_pause_page != PAUSE_OPTIONS) return;
+	_pause_notice = NULL;
+	switch (_pause_selection) {
+	case 0:
+		if (_pause_options.can_switch) _pause_options.amiga = !_pause_options.amiga;
+		else _pause_notice = "REQUIERE DATOS DOS Y AMIGA VALIDOS";
+		break;
+	case 1: _pause_options.camera = _pause_options.camera == CAMERA_CLASSIC ? CAMERA_SMOOTH : CAMERA_CLASSIC; break;
+	case 2: _pause_options.hud = _pause_options.hud == HUD_CLASSIC ? HUD_FIXED : HUD_CLASSIC; break;
+	case 3: {
+		const bool full = (SDL_GetWindowFlags(_window) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+		if (SDL_SetWindowFullscreen(_window, full ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP) != 0)
+			_pause_notice = "NO SE PUDO CAMBIAR LA PANTALLA";
+		break;
+	}
+	case 4: {
+		const int rates[] = {30,60,120};
+		int index = _pause_options.render_rate == 30 ? 0 : (_pause_options.render_rate == 60 ? 1 : 2);
+		_pause_options.render_rate = rates[(index + direction + 3) % 3];
+		break;
+	}
+	case 5: _pause_options.view_step = MAX(0,MIN(8,_pause_options.view_step + direction)); break;
+	}
+}
+
+static bool reserved_binding(int key) {
+	return key == SDLK_ESCAPE || key == SDLK_p || key == SDLK_RETURN || key == SDLK_F6 || key == SDLK_F7 ||
+		key == SDLK_MINUS || key == SDLK_KP_MINUS || key == SDLK_PLUS || key == SDLK_EQUALS || key == SDLK_KP_PLUS ||
+		key == SDLK_0 || key == SDLK_1 || key == SDLK_2 || key == SDLK_3 || key == SDLK_UNKNOWN;
+}
+
+static void assign_binding(int *bindings, int count, int index, int value) {
+	for (int i = 0; i < count; ++i) if (bindings[i] == value) bindings[i] = bindings[index];
+	bindings[index] = value;
+}
 
 /* A small built-in bitmap font keeps this foundation asset-independent. */
 static const struct { char c; uint8_t rows[7]; } _pause_font[] = {
@@ -26,6 +142,7 @@ static const struct { char c; uint8_t rows[7]; } _pause_font[] = {
  {'8',{14,17,17,14,17,17,14}}, {'9',{14,17,17,15,1,1,14}},
  {':',{0,4,4,0,4,4,0}}, {'/',{1,2,2,4,8,8,16}},
  {'-',{0,0,0,31,0,0,0}}, {'+',{0,4,4,31,4,4,0}},
+ {'.',{0,0,0,0,0,12,12}}, {'_', {0,0,0,0,0,0,31}},
  {'>',{16,8,4,2,4,8,16}}, {'?',{14,17,1,2,4,0,4}}
 };
 
@@ -66,6 +183,59 @@ static void pause_center_text(const char *text, int y, int scale, bool selected)
 	pause_text(text, (320 - ((int)strlen(text) * 6 - 1) * scale) / 2, y, scale, selected);
 }
 
+static void pause_row(const char *label, const char *value, int index, bool enabled) {
+	const int y = 50 + index * 14;
+	if (index == _pause_selection) {
+		SDL_Rect rect = {25,y-3,269,12};
+		SDL_SetRenderDrawColor(_renderer,29,55,77,255);
+		SDL_RenderFillRect(_renderer,&rect);
+		rect.w=2;
+		SDL_SetRenderDrawColor(_renderer,255,215,104,255);
+		SDL_RenderFillRect(_renderer,&rect);
+	}
+	pause_text_color(label,34,y,1,index == _pause_selection ? PAUSE_GOLD : PAUSE_TEXT);
+	if (value) pause_text_color(value,150,y,1,enabled ? PAUSE_CYAN : PAUSE_MUTED);
+}
+
+static void pause_draw_settings() {
+	const char *title = _pause_page == PAUSE_OPTIONS ? "OPCIONES" :
+		(_pause_page == PAUSE_BINDINGS ? "CONFIGURAR CONTROLES" : (_pause_page == PAUSE_KEYS ? "TECLADO" : "MANDO"));
+	pause_center_text(title,26,2,true);
+	char value[24];
+	if (_pause_page == PAUSE_OPTIONS) {
+		pause_row("VERSION",_pause_options.amiga ? "AMIGA" : "DOS",0,_pause_options.can_switch);
+		pause_row("CAMARA",_pause_options.camera == CAMERA_CLASSIC ? "CLASICA" : "SUAVIZADA",1,true);
+		pause_row("HUD",_pause_options.hud == HUD_CLASSIC ? "CLASICO" : "FIJO",2,true);
+		pause_row("PANTALLA",SDL_GetWindowFlags(_window)&SDL_WINDOW_FULLSCREEN_DESKTOP ? "COMPLETA" : "VENTANA",3,true);
+		snprintf(value,sizeof(value),"%d HZ",_pause_options.render_rate);
+		pause_row("FRECUENCIA",value,4,true);
+		if (_pause_options.view_step) snprintf(value,sizeof(value),"PASO %d",_pause_options.view_step);
+		else strcpy(value,"NORMAL");
+		pause_row("ENCUADRE",value,5,true);
+		pause_row("CONTROLES",NULL,6,true);
+		pause_row("VOLVER",NULL,7,true);
+	} else if (_pause_page == PAUSE_BINDINGS) {
+		pause_row("TECLADO",NULL,0,true);
+		pause_row("MANDO",NULL,1,true);
+		pause_row("RESTAURAR CONTROLES",NULL,2,true);
+		pause_row("VOLVER",NULL,3,true);
+	} else {
+		const int count = _pause_page == PAUSE_KEYS ? BIND_COUNT : 2;
+		for (int i = 0; i < count; ++i) {
+			if (_pause_capture == i) strcpy(value,"...");
+			else if (_pause_page == PAUSE_KEYS) uppercase_binding(value,sizeof(value),keyboard_binding_name(_edit_keys[i]));
+			else uppercase_binding(value,sizeof(value),SDL_GameControllerGetStringForButton(_edit_buttons[i]));
+			pause_row(_bind_names[_pause_page == PAUSE_KEYS ? i : BIND_ACTION + i],value,i,true);
+		}
+		pause_row("VOLVER",NULL,count,true);
+	}
+	const char *hint = _pause_capture >= 0 ? (_pause_page == PAUSE_PAD ? "PULSA UN BOTON - ESC CANCELA" : "PULSA UNA TECLA - ESC CANCELA") :
+		(_pause_page == PAUSE_OPTIONS ? "IZQ / DER: CAMBIAR  ENTER: ELEGIR" : "ENTER / A: REASIGNAR  ESC: VOLVER");
+	if (_pause_notice) hint = _pause_notice;
+	pause_center_text(hint,163,1,true);
+	pause_center_text("SE APLICA AL CONTINUAR",175,1,false);
+}
+
 static void sdl2_draw_pause_menu() {
 	SDL_BlendMode blend;
 	SDL_GetRenderDrawBlendMode(_renderer, &blend);
@@ -84,7 +254,7 @@ static void sdl2_draw_pause_menu() {
 		(int)(320 * scale), (int)(200 * scale)};
 	SDL_RenderSetViewport(_renderer, &viewport);
 	SDL_RenderSetScale(_renderer, scale, scale);
-	SDL_Rect box = _pause_page == PAUSE_CONTROLS
+	SDL_Rect box = pause_large_page()
 		? (SDL_Rect){12, 13, 296, 174} : (SDL_Rect){28, 31, 264, 138};
 	SDL_Rect shadow = {box.x + 4, box.y + 4, box.w, box.h};
 	SDL_SetRenderDrawColor(_renderer, 0, 0, 0, 155);
@@ -96,26 +266,26 @@ static void sdl2_draw_pause_menu() {
 	box.x += 3; box.y += 3; box.w -= 6; box.h -= 6;
 	SDL_SetRenderDrawColor(_renderer, 38, 68, 91, 255);
 	SDL_RenderDrawRect(_renderer, &box);
-	if (_pause_page == PAUSE_CONTROLS) {
+	if (_pause_page >= PAUSE_OPTIONS) {
+		pause_draw_settings();
+	} else if (_pause_page == PAUSE_CONTROLS) {
 		pause_center_text("CONTROLES", 26, 2, true);
 		SDL_SetRenderDrawColor(_renderer, 38, 68, 91, 255);
 		SDL_RenderDrawLine(_renderer, 26, 45, 293, 45);
-		const struct { const char *action, *binding; } lines[] = {
-			{"MOVER", "FLECHAS / STICK / CRUCETA"},
-			{"ACCION", "ESPACIO O ENTER / A"},
-			{"SALTAR", "SHIFT / B"},
-			{"PAUSA", "ESC O P / START"},
-			{"ZOOM", "- / + / 0"},
-			{"DOS/AMIGA", "F6"},
-			{"HUD", "F7: CLASICO / FIJO"}
-		};
-		for (unsigned i = 0; i < ARRAYSIZE(lines); ++i) {
-			pause_text_color(lines[i].action, 26, 53 + i * 14, 1, PAUSE_CYAN);
-			pause_text_color(lines[i].binding, 100, 53 + i * 14, 1, PAUSE_TEXT);
+		char binding[48];
+		for (int i = 0; i < BIND_COUNT; ++i) {
+			uppercase_binding(binding,sizeof(binding),keyboard_binding_name(_edit_keys[i]));
+			pause_text_color(_bind_names[i],26,53+i*14,1,PAUSE_CYAN);
+			pause_text_color(binding,100,53+i*14,1,PAUSE_TEXT);
 		}
-		SDL_SetRenderDrawColor(_renderer, 38, 68, 91, 255);
-		SDL_RenderDrawLine(_renderer, 26, 158, 293, 158);
-		pause_center_text("ENTER / A / ESC / B: VOLVER", 169, 1, true);
+		char a[20], b[20];
+		uppercase_binding(a,sizeof(a),SDL_GameControllerGetStringForButton(_edit_buttons[0]));
+		uppercase_binding(b,sizeof(b),SDL_GameControllerGetStringForButton(_edit_buttons[1]));
+		snprintf(binding,sizeof(binding),"%s / %s",a,b);
+		pause_text_color("MANDO",26,137,1,PAUSE_CYAN);
+		pause_text_color(binding,100,137,1,PAUSE_TEXT);
+		pause_center_text("F6 VERSION  F7 HUD  - / + / 0 ZOOM",158,1,false);
+		pause_center_text("ENTER / A / ESC / B: VOLVER",175,1,true);
 	} else {
 		pause_center_text(_pause_page == PAUSE_QUIT ? "SALIR DEL JUEGO?" : "PAUSA", 44,
 			2, true);
@@ -125,11 +295,11 @@ static void sdl2_draw_pause_menu() {
 			SDL_SetRenderDrawColor(_renderer, 38, 68, 91, 255);
 			SDL_RenderDrawLine(_renderer, 43, 65, 276, 65);
 		}
-		const char *main_items[] = {"CONTINUAR", "CONTROLES", "SALIR DEL JUEGO"};
+		const char *main_items[] = {"CONTINUAR", "OPCIONES", "CONTROLES", "SALIR DEL JUEGO"};
 		const char *quit_items[] = {"VOLVER", "SALIR"};
-		const int count = _pause_page == PAUSE_QUIT ? 2 : 3;
+		const int count = pause_item_count();
 		for (int i = 0; i < count; ++i) {
-			const int y = (_pause_page == PAUSE_QUIT ? 87 : 77) + i * 21;
+			const int y = _pause_page == PAUSE_QUIT ? 87 + i * 21 : 72 + i * 18;
 			const SDL_Color accent = _pause_page == PAUSE_QUIT && i == 1 ? PAUSE_DANGER : PAUSE_GOLD;
 			if (i == _pause_selection) {
 				SDL_Rect selected = {43, y - 5, 234, 17};
@@ -166,27 +336,60 @@ static void sdl2_set_pause_menu_enabled(bool enabled) {
 }
 
 static bool pause_back() {
+	_pause_notice = NULL;
+	if (_pause_capture >= 0) { _pause_capture = -1; return false; }
 	if (_pause_page == PAUSE_MAIN) return true;
-	_pause_selection = _pause_page == PAUSE_CONTROLS ? 1 : 2;
-	_pause_page = PAUSE_MAIN;
+	if (_pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD) {
+		_pause_selection = _pause_page == PAUSE_KEYS ? 0 : 1;
+		_pause_page = PAUSE_BINDINGS;
+	} else if (_pause_page == PAUSE_BINDINGS) {
+		_pause_page = PAUSE_OPTIONS; _pause_selection = 6;
+	} else {
+		_pause_selection = _pause_page == PAUSE_CONTROLS ? 2 : (_pause_page == PAUSE_QUIT ? 3 : 1);
+		_pause_page = PAUSE_MAIN;
+	}
 	return false;
 }
 
 static bool pause_activate() {
+	_pause_notice = NULL;
 	if (_pause_page == PAUSE_CONTROLS) return pause_back();
 	if (_pause_page == PAUSE_QUIT) {
 		if (_pause_selection == 1) { g_sys.input.quit = true; return true; }
 		return pause_back();
 	}
+	if (_pause_page == PAUSE_OPTIONS) {
+		if (_pause_selection < 6) pause_adjust(1);
+		else if (_pause_selection == 6) { _pause_page = PAUSE_BINDINGS; _pause_selection = 0; }
+		else return pause_back();
+		return false;
+	}
+	if (_pause_page == PAUSE_BINDINGS) {
+		if (_pause_selection < 2) { _pause_page = _pause_selection == 0 ? PAUSE_KEYS : PAUSE_PAD; _pause_selection = 0; }
+		else if (_pause_selection == 2) {
+			memcpy(_edit_keys,_default_keys,sizeof(_edit_keys));
+			_edit_buttons[0]=SDL_CONTROLLER_BUTTON_A; _edit_buttons[1]=SDL_CONTROLLER_BUTTON_B;
+			_pause_notice="CONTROLES RESTAURADOS";
+		} else return pause_back();
+		return false;
+	}
+	if (_pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD) {
+		if (_pause_selection == pause_item_count()-1) return pause_back();
+		_pause_capture = _pause_selection;
+		_capture_ignore_key = SDLK_UNKNOWN; _capture_ignore_button = -1;
+		_capture_key_candidate = SDLK_UNKNOWN; _capture_button_candidate = -1;
+		return false;
+	}
 	if (_pause_selection == 0) return true;
-	_pause_page = _pause_selection == 1 ? PAUSE_CONTROLS : PAUSE_QUIT;
-	_pause_selection = 0; /* Confirmation always defaults to cancel. */
+	_pause_page = _pause_selection == 1 ? PAUSE_OPTIONS : (_pause_selection == 2 ? PAUSE_CONTROLS : PAUSE_QUIT);
+	_pause_selection = 0;
 	return false;
 }
 
 static void pause_move(int direction) {
-	if (_pause_page == PAUSE_CONTROLS) return;
-	const int count = _pause_page == PAUSE_QUIT ? 2 : 3;
+	const int count = pause_item_count();
+	if (!count || _pause_capture >= 0) return;
+	_pause_notice = NULL;
 	_pause_selection = (_pause_selection + direction + count) % count;
 }
 
@@ -223,11 +426,31 @@ static bool pause_event(const SDL_Event *ev) {
 		if (code > 0 && code < SDL_NUM_SCANCODES) _blocked_keys[code] = down;
 		if (!_pause_focused) return false;
 		const int key = ev->key.keysym.sym;
+		if (_pause_capture >= 0) {
+			if (down) {
+				if (!ev->key.repeat && key != _capture_ignore_key) _capture_key_candidate = key;
+				return false;
+			}
+			if (key == _capture_ignore_key) { _capture_ignore_key = SDLK_UNKNOWN; return false; }
+			if (key == SDLK_ESCAPE) { _pause_capture = -1; _pause_notice = NULL; return false; }
+			if (_pause_page != PAUSE_KEYS || key != _capture_key_candidate) return false;
+			_capture_key_candidate = SDLK_UNKNOWN;
+			if (reserved_binding(key)) { _pause_notice = "TECLA RESERVADA"; return false; }
+			assign_binding(_edit_keys,BIND_COUNT,_pause_capture,key);
+			_pause_capture = -1; _pause_notice = NULL;
+			return false;
+		}
 		if (!down && (key == SDLK_ESCAPE || key == SDLK_p)) return pause_back();
 		if (!down) return false;
 		if (key == SDLK_UP) pause_move(-1);
 		if (key == SDLK_DOWN) pause_move(1);
-		if (!ev->key.repeat && (key == SDLK_RETURN || key == SDLK_SPACE)) return pause_activate();
+		if (key == SDLK_LEFT) pause_adjust(-1);
+		if (key == SDLK_RIGHT) pause_adjust(1);
+		if (!ev->key.repeat && (key == SDLK_RETURN || key == SDLK_SPACE)) {
+			const bool done = pause_activate();
+			if (_pause_capture >= 0) _capture_ignore_key = key;
+			return done;
+		}
 	}
 	if (ev->type == SDL_CONTROLLERBUTTONDOWN || ev->type == SDL_CONTROLLERBUTTONUP) {
 		const bool down = ev->type == SDL_CONTROLLERBUTTONDOWN;
@@ -235,9 +458,31 @@ static bool pause_event(const SDL_Event *ev) {
 		if (button >= SDL_CONTROLLER_BUTTON_MAX) return false;
 		_blocked_buttons[button] = down;
 		if (!_pause_focused) return false;
+		if (_pause_capture >= 0) {
+			if (down) {
+				if (button != _capture_ignore_button) _capture_button_candidate = button;
+				return false;
+			}
+			if (button == _capture_ignore_button) { _capture_ignore_button = -1; return false; }
+			if (button == SDL_CONTROLLER_BUTTON_START) { _pause_capture = -1; _pause_notice = NULL; return false; }
+			if (_pause_page != PAUSE_PAD || button != _capture_button_candidate) return false;
+			_capture_button_candidate = -1;
+			if (button >= SDL_CONTROLLER_BUTTON_DPAD_UP || button == SDL_CONTROLLER_BUTTON_BACK || button == SDL_CONTROLLER_BUTTON_GUIDE) {
+				_pause_notice = "BOTON RESERVADO"; return false;
+			}
+			assign_binding(_edit_buttons,2,_pause_capture,button);
+			_pause_capture = -1; _pause_notice = NULL;
+			return false;
+		}
 		if (down && button == SDL_CONTROLLER_BUTTON_DPAD_UP) pause_move(-1);
 		if (down && button == SDL_CONTROLLER_BUTTON_DPAD_DOWN) pause_move(1);
-		if (down && button == SDL_CONTROLLER_BUTTON_A) return pause_activate();
+		if (down && button == SDL_CONTROLLER_BUTTON_DPAD_LEFT) pause_adjust(-1);
+		if (down && button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) pause_adjust(1);
+		if (down && button == SDL_CONTROLLER_BUTTON_A) {
+			const bool done = pause_activate();
+			if (_pause_capture >= 0) _capture_ignore_button = button;
+			return done;
+		}
 		if ((down && button == SDL_CONTROLLER_BUTTON_B) ||
 			(!down && button == SDL_CONTROLLER_BUTTON_START)) return pause_back();
 	}
@@ -247,6 +492,11 @@ static bool pause_event(const SDL_Event *ev) {
 		const int value = controller ? ev->caxis.value : ev->jaxis.value;
 		if (controller && axis < SDL_CONTROLLER_AXIS_MAX) _blocked_axes[axis] = abs(value) > 3200;
 		if (!controller && axis < 2) _blocked_joy_axes[axis] = abs(value) > 3200;
+		if (_pause_capture < 0 && axis == (controller ? SDL_CONTROLLER_AXIS_LEFTX : 0)) {
+			const int direction = value < -16000 ? -1 : (value > 16000 ? 1 : 0);
+			if (_pause_focused && direction && direction != _pause_xaxis) pause_adjust(direction);
+			_pause_xaxis = direction;
+		}
 		if (axis == (controller ? SDL_CONTROLLER_AXIS_LEFTY : 1)) {
 			const int direction = value < -16000 ? -1 : (value > 16000 ? 1 : 0);
 			if (_pause_focused && direction && direction != _pause_axis) pause_move(direction);
@@ -255,14 +505,22 @@ static bool pause_event(const SDL_Event *ev) {
 	}
 	if (ev->type == SDL_JOYHATMOTION) {
 		_blocked_hat = ev->jhat.value != SDL_HAT_CENTERED;
-		const int direction = ev->jhat.value & SDL_HAT_UP ? -1 : (ev->jhat.value & SDL_HAT_DOWN ? 1 : 0);
-		if (_pause_focused && direction && direction != _pause_hat) pause_move(direction);
+		const int direction = ev->jhat.value & SDL_HAT_UP ? -1 : (ev->jhat.value & SDL_HAT_DOWN ? 1 :
+			(ev->jhat.value & SDL_HAT_LEFT ? -2 : (ev->jhat.value & SDL_HAT_RIGHT ? 2 : 0)));
+		if (_pause_focused && direction && direction != _pause_hat) {
+			if (abs(direction) == 1) pause_move(direction);
+			else pause_adjust(direction/2);
+		}
 		_pause_hat = direction;
 	}
 	if (ev->type == SDL_JOYBUTTONDOWN || ev->type == SDL_JOYBUTTONUP) {
 		const int button = ev->jbutton.button;
 		const bool down = ev->type == SDL_JOYBUTTONDOWN;
 		if (button < 32) _blocked_joy_buttons[button] = down;
+		if (_pause_capture >= 0) {
+			if (!down && button == 7) _pause_capture = -1;
+			return false;
+		}
 		if (!_pause_focused) return false;
 		if (down && button == 0) return pause_activate();
 		if ((down && button == 1) || (!down && button == 7)) return pause_back();
@@ -284,7 +542,11 @@ static void sdl2_run_pause_menu() {
 	remember_held_controls();
 	sdl2_set_scroll_interpolation(0, 0, 0, false);
 	_pause_page = PAUSE_MAIN;
-	_pause_selection = _pause_axis = _pause_hat = 0;
+	_pause_selection = _pause_axis = _pause_xaxis = _pause_hat = 0;
+	_pause_capture = -1; _pause_notice = NULL;
+	_capture_ignore_key = SDLK_UNKNOWN; _capture_ignore_button = -1;
+	memcpy(_edit_keys,_game_keys,sizeof(_game_keys));
+	memcpy(_edit_buttons,_game_buttons,sizeof(_game_buttons));
 	_pause_focused = _window_has_focus;
 	_pause_menu_open = true;
 	bool done = false;
@@ -297,6 +559,10 @@ static void sdl2_run_pause_menu() {
 		}
 	}
 	remember_held_controls();
+	if (!g_sys.input.quit) {
+		memcpy(_game_keys,_edit_keys,sizeof(_game_keys));
+		memcpy(_game_buttons,_edit_buttons,sizeof(_game_buttons));
+	}
 	clear_pause_input();
 	_pause_menu_open = false;
 	sdl2_draw_screen(0.f, 0.f, 1.f);

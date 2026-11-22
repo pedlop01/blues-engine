@@ -40,6 +40,13 @@ enum sys_transition_e {
 	TRANSITION_CURTAIN
 };
 
+struct sys_pause_options {
+	bool amiga, can_switch;
+	enum camera_mode camera;
+	enum hud_mode hud;
+	int render_rate, view_step;
+};
+
 struct sys_t {
 	struct input_t	input;
 	void	(*init)();
@@ -58,6 +65,8 @@ struct sys_t {
 	void	(*process_events)();
 	void	(*set_pause_menu_enabled)(bool enabled);
 	void	(*run_pause_menu)();
+	void	(*set_pause_options)(const struct sys_pause_options *options);
+	void	(*get_pause_options)(struct sys_pause_options *options);
 	void	(*sleep)(int duration);
 	uint32_t	(*get_timestamp)();
 	void	(*start_audio)(sys_audio_cb callback, void *param);

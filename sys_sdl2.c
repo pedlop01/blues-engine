@@ -48,6 +48,8 @@ static bool _blocked_buttons[SDL_CONTROLLER_BUTTON_MAX];
 static bool _blocked_axes[SDL_CONTROLLER_AXIS_MAX];
 static bool _blocked_joy_buttons[32], _blocked_joy_axes[2], _blocked_hat;
 static void sdl2_draw_pause_menu();
+static bool handle_bound_key(int key, bool down, struct input_t *input);
+static bool handle_bound_button(int button, bool down, struct input_t *input);
 
 static int _screen_w, _screen_h;
 static int _shake_dx, _shake_dy;
@@ -646,6 +648,7 @@ static void sdl2_shake_screen(int dx, int dy) {
 }
 
 static void handle_keyevent(int keysym, bool keydown, struct input_t *input, bool *paused) {
+	if (_pause_menu_enabled && handle_bound_key(keysym, keydown, input)) return;
 	switch (keysym) {
 	case SDLK_LEFT:
 		if (keydown) {
@@ -770,6 +773,7 @@ static void handle_controlleraxis(int axis, int value, struct input_t *input) {
 }
 
 static void handle_controllerbutton(int button, bool pressed, struct input_t *input, bool *paused) {
+	if (_pause_menu_enabled && handle_bound_button(button, pressed, input)) return;
 	switch (button) {
 	case SDL_CONTROLLER_BUTTON_A:
 		input->space = pressed;
@@ -1192,6 +1196,8 @@ struct sys_t g_sys = {
 	.process_events = sdl2_process_events,
 	.set_pause_menu_enabled = sdl2_set_pause_menu_enabled,
 	.run_pause_menu = sdl2_run_pause_menu,
+	.set_pause_options = sdl2_set_pause_options,
+	.get_pause_options = sdl2_get_pause_options,
 	.sleep = sdl2_sleep,
 	.get_timestamp = sdl2_get_timestamp,
 	.start_audio = sdl2_start_audio,

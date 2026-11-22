@@ -50,10 +50,11 @@ int main() {
 	reset_menu();
 	SDL_Event ev = key(SDLK_DOWN, true);
 	assert(!pause_event(&ev) && _pause_selection == 1);
+	pause_event(&ev);
 	ev = key(SDLK_RETURN, true);
 	assert(!pause_event(&ev) && _pause_page == PAUSE_CONTROLS);
 	ev = key(SDLK_ESCAPE, false);
-	assert(!pause_event(&ev) && _pause_page == PAUSE_MAIN && _pause_selection == 1);
+	assert(!pause_event(&ev) && _pause_page == PAUSE_MAIN && _pause_selection == 2);
 	ev = key(SDLK_DOWN, true); pause_event(&ev);
 	ev = key(SDLK_RETURN, true);
 	assert(!pause_event(&ev) && _pause_page == PAUSE_QUIT && _pause_selection == 0);
@@ -73,6 +74,8 @@ int main() {
 	ev.caxis.value = 0; pause_event(&ev);
 	ev.caxis.value = 24000; pause_event(&ev);
 	assert(_pause_selection == 2);
+	ev.caxis.value = 0; pause_event(&ev);
+	ev.caxis.value = 24000; pause_event(&ev);
 	ev = (SDL_Event){0}; ev.type = SDL_CONTROLLERBUTTONDOWN; ev.cbutton.button = SDL_CONTROLLER_BUTTON_A;
 	assert(!pause_event(&ev) && _pause_page == PAUSE_QUIT);
 	ev.cbutton.button = SDL_CONTROLLER_BUTTON_B;
@@ -90,10 +93,53 @@ int main() {
 	pause_event(&ev); pause_event(&ev); assert(_pause_selection == 1);
 	ev.jhat.value = SDL_HAT_CENTERED; pause_event(&ev);
 	ev = (SDL_Event){0}; ev.type = SDL_JOYBUTTONDOWN; ev.jbutton.button = 0;
-	assert(!pause_event(&ev) && _pause_page == PAUSE_CONTROLS);
+	assert(!pause_event(&ev) && _pause_page == PAUSE_OPTIONS);
 	ev.jbutton.button = 1; assert(!pause_event(&ev) && _pause_page == PAUSE_MAIN);
 	ev = (SDL_Event){0}; ev.type = SDL_QUIT;
 	assert(pause_event(&ev) && g_sys.input.quit);
+	reset_menu();
+	/* General settings are staged; missing data never permits a switch. */
+	reset_menu();
+	struct sys_pause_options options = {.camera=CAMERA_SMOOTH,.hud=HUD_CLASSIC,.render_rate=60};
+	sdl2_set_pause_options(&options);
+	_pause_page=PAUSE_OPTIONS; _pause_selection=0;
+	pause_adjust(1); assert(!_pause_options.amiga && _pause_notice);
+	_pause_options.can_switch=true; pause_adjust(1); assert(_pause_options.amiga);
+	_pause_selection=1; pause_adjust(-1); assert(_pause_options.camera==CAMERA_CLASSIC);
+	_pause_selection=2; pause_adjust(1); assert(_pause_options.hud==HUD_FIXED);
+	_pause_selection=3; pause_adjust(1); assert(SDL_GetWindowFlags(_window)&SDL_WINDOW_FULLSCREEN_DESKTOP);
+	pause_adjust(-1); assert(!(SDL_GetWindowFlags(_window)&SDL_WINDOW_FULLSCREEN_DESKTOP));
+	_pause_selection=4; pause_adjust(1); assert(_pause_options.render_rate==120);
+	pause_adjust(1); assert(_pause_options.render_rate==30);
+	_pause_selection=5; pause_adjust(-1); assert(_pause_options.view_step==0);
+	for (int i=0; i<12; ++i) pause_adjust(1);
+	assert(_pause_options.view_step==8);
+	/* The activation key/button release must not bind itself. */
+	_pause_page=PAUSE_KEYS; _pause_selection=BIND_ACTION;
+	ev=key(SDLK_RETURN,true); pause_event(&ev); assert(_pause_capture==BIND_ACTION);
+	ev=key(SDLK_RETURN,false); pause_event(&ev); assert(_pause_capture==BIND_ACTION && !_pause_notice);
+	ev=key(SDLK_SPACE,false); pause_event(&ev); assert(_pause_capture==BIND_ACTION); /* Old held key release. */
+	ev=key(SDLK_SPACE,true); ev.key.repeat=1; pause_event(&ev);
+	ev=key(SDLK_SPACE,false); pause_event(&ev); assert(_pause_capture==BIND_ACTION);
+	ev=key(SDLK_F6,true); pause_event(&ev);
+	ev=key(SDLK_F6,false); pause_event(&ev); assert(_pause_capture==BIND_ACTION && _pause_notice);
+	ev=key(SDLK_x,true); pause_event(&ev);
+	ev=key(SDLK_x,false); pause_event(&ev); assert(_pause_capture==-1 && _edit_keys[BIND_ACTION]==SDLK_x);
+	assert(_game_keys[BIND_ACTION]==SDLK_SPACE);
+	/* Duplicate keys swap, so no action loses its binding. */
+	_pause_selection=BIND_LEFT; pause_activate();
+	ev=key(SDLK_RIGHT,true); pause_event(&ev);
+	ev=key(SDLK_RIGHT,false); pause_event(&ev);
+	assert(_edit_keys[BIND_LEFT]==SDLK_RIGHT && _edit_keys[BIND_RIGHT]==SDLK_LEFT);
+	_pause_page=PAUSE_PAD; _pause_selection=1;
+	ev=(SDL_Event){0}; ev.type=SDL_CONTROLLERBUTTONDOWN; ev.cbutton.button=SDL_CONTROLLER_BUTTON_A;
+	pause_event(&ev); assert(_pause_capture==1);
+	ev.type=SDL_CONTROLLERBUTTONUP; pause_event(&ev); assert(_pause_capture==1);
+	ev.cbutton.button=SDL_CONTROLLER_BUTTON_X; ev.type=SDL_CONTROLLERBUTTONDOWN; pause_event(&ev);
+	ev.type=SDL_CONTROLLERBUTTONUP; pause_event(&ev);
+	assert(_pause_capture==-1 && _edit_buttons[1]==SDL_CONTROLLER_BUTTON_X);
+	_pause_page=PAUSE_BINDINGS; _pause_selection=2; pause_activate();
+	assert(memcmp(_edit_keys,_default_keys,sizeof(_edit_keys))==0 && _edit_buttons[1]==SDL_CONTROLLER_BUTTON_B);
 	reset_menu();
 	/* Menu-held input is suppressed until released. */
 	reset_menu();
@@ -132,9 +178,9 @@ int main() {
 	for (unsigned i = 0; i < ARRAYSIZE(sizes); ++i) {
 		if (sizes[i][0]) SDL_SetWindowSize(_window, sizes[i][0], sizes[i][1]);
 		else assert(SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN_DESKTOP) == 0);
-		for (int page = 0; page < 4; ++page) {
-			_pause_page = page == 3 ? PAUSE_QUIT : (enum pause_page)page;
-			_pause_selection = page == 3 ? 1 : 0;
+		for (int page = 0; page < 8; ++page) {
+			_pause_page = page == 7 ? PAUSE_QUIT : (enum pause_page)page;
+			_pause_selection = page == 7 ? 1 : 0;
 			_pause_menu_open = true;
 			sdl2_draw_screen(0,0,1);
 			_pause_menu_open = false;
@@ -157,7 +203,7 @@ int main() {
 			assert(x1>=0 && x2<w && y1>=0 && y2<h);
 			const int scale = MIN(w/320,h/200);
 			assert(scale >= 1 && gold > 0 && gold % (scale*scale) == 0);
-			assert((danger > 0) == (page == 3));
+			assert((danger > 0) == (page == 7));
 			free(pixels);
 		}
 	}

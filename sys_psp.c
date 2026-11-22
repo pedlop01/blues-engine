@@ -258,6 +258,12 @@ static bool psp_resize_viewport(int w, int h) {
 static void psp_set_pause_menu_enabled(bool enabled) {
 }
 
+static void psp_set_pause_options(const struct sys_pause_options *options) {
+}
+
+static void psp_get_pause_options(struct sys_pause_options *options) {
+}
+
 static void psp_run_pause_menu() {
 }
 
@@ -440,6 +446,8 @@ struct sys_t g_sys = {
 	.process_events = psp_process_events,
 	.set_pause_menu_enabled = psp_set_pause_menu_enabled,
 	.run_pause_menu = psp_run_pause_menu,
+	.set_pause_options = psp_set_pause_options,
+	.get_pause_options = psp_get_pause_options,
 	.sleep = psp_sleep,
 	.get_timestamp = psp_get_timestamp,
 	.start_audio = psp_start_audio,

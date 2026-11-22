@@ -201,11 +201,11 @@ void load_level_data(int num) {
 	screen_load_graphics(g_options.cga_colors ? g_res.cga_lut_sqv : 0, g_options.cga_colors ? g_res.cga_lut_avt : 0);
 }
 
-static bool switch_data_mode() {
+static bool check_data_mode(bool report) {
 	const bool amiga = !g_res.amiga_data;
 	const char *path = amiga ? g_options.amiga_datapath : g_options.dos_datapath;
 	if (!path) {
-		print_warning("F6 needs both --dos-datapath and --amiga-datapath");
+		if (report) print_warning("F6 needs both --dos-datapath and --amiga-datapath");
 		return false;
 	}
 	const int num = g_vars.level;
@@ -222,7 +222,7 @@ static bool switch_data_mode() {
 	};
 	for (unsigned i = 0; i < ARRAYSIZE(files); ++i) {
 		if (files[i] && *files[i] && !data_file_present(path, files[i])) {
-			print_warning("Cannot switch to %s: missing '%s'", amiga ? "Amiga" : "DOS", files[i]);
+			if (report) print_warning("Cannot switch to %s: missing '%s'", amiga ? "Amiga" : "DOS", files[i]);
 			return false;
 		}
 	}
@@ -242,9 +242,17 @@ static bool switch_data_mode() {
 	if (dos_fp) fclose(dos_fp);
 	if (amiga_fp) fclose(amiga_fp);
 	if (!compatible) {
-		print_warning("Cannot switch modes: incompatible level resources");
+		if (report) print_warning("Cannot switch modes: incompatible level resources");
 		return false;
 	}
+	return true;
+}
+
+static bool switch_data_mode() {
+	if (!check_data_mode(true)) return false;
+	const bool amiga = !g_res.amiga_data;
+	const char *path = amiga ? g_options.amiga_datapath : g_options.dos_datapath;
+	const int num = g_vars.level;
 	/* F6 selects the complete native presentation, including audio, even if
 	 * --sound was used to choose the initial soundtrack explicitly. */
 	g_options.sound_mode = SOUND_AUTO;
@@ -2435,7 +2443,30 @@ void do_level() {
 	do {
 		update_input();
 		if (g_sys.input.menu && !screen_transition_flag) {
+			struct sys_pause_options options = {
+				.amiga = g_res.amiga_data,
+				.can_switch = g_options.dos_datapath && g_options.amiga_datapath && check_data_mode(false),
+				.camera = g_options.camera_mode, .hud = g_options.hud_mode,
+				.render_rate = g_options.scroll_rate, .view_step = g_sys.input.view_step
+			};
+			g_sys.set_pause_options(&options);
 			g_sys.run_pause_menu();
+			g_sys.get_pause_options(&options);
+			if (!g_sys.input.quit) {
+				if (options.amiga != g_res.amiga_data) g_sys.input.switch_mode = true;
+				if (options.camera != g_options.camera_mode) _camera.valid = false;
+				g_options.camera_mode = options.camera;
+				g_options.scroll_rate = options.render_rate;
+				g_sys.set_scroll_render_rate(options.render_rate);
+				g_sys.input.view_step = options.view_step;
+				if (options.hud != g_options.hud_mode) {
+					g_options.hud_mode = options.hud;
+					configure_level_hud();
+					view.elapsed = 300;
+					update_level_view(base_w, base_h, options.view_step);
+					_camera.valid = false;
+				}
+			}
 			continue; /* No simulation or zoom time elapses while paused. */
 		}
 		if (g_sys.input.quit) break;

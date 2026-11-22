@@ -23,7 +23,7 @@ focused on the first **Blues Brothers** game.
 | Original DOS audio | Native playback of four AdLib songs and 18 effects, read from the user's supported `1.EXE`, with Nuked OPL3 chip emulation. |
 | Live DOS / Amiga switch | `F6` changes graphics, palettes, HUD and native audio while retaining game state, map edits, rooms and framing. |
 | HUD choice | Classic HUD scales with the map (default); fixed HUD keeps its display size and reserves separate bands without covering the map. `F7` switches live. Both preserve DOS/Amiga artwork and layout. |
-| In-game pause menu | `Esc`, `P` or controller Start opens a centered menu with Resume, Controls and confirmed Quit. Simulation, zoom and audio pause; menu inputs are consumed before returning to play. |
+| In-game pause menu | `Esc`, `P` or controller Start opens a centered menu with Resume, Options, Controls and confirmed Quit. Simulation, zoom and audio pause; menu inputs are consumed before returning to play. |
 | Larger views | Dynamic sprite storage replaces the fixed sprite limit; camera bounds and defeated-enemy visibility follow the current view. |
 | Regression tests | Tests cover DOS sequencer accuracy, PCM continuity, zoom, doors, defeated enemies and live presentation changes. |
 
@@ -32,8 +32,8 @@ adjustment has been confirmed in gameplay.
 
 ## Ideas and roadmap
 
-The next phase adds settings to the pause menu, configurable
-controls and volumes, invulnerability and life controls, level selection, eight save
+The next phase adds music/effect volumes, persistent preferences,
+invulnerability and life controls, level selection, eight save
 slots with thumbnails, and a short rewind with a VHS-style visual effect.
 Further work includes Windows packaging.
 
@@ -136,7 +136,7 @@ the reserved bands, so zoom retains the map's aspect ratio. If level bounds or
 custom view dimensions change that ratio, the world is fitted with margins.
 Press **F7** in a level to alternate between the two modes, including while
 zooming. The selected mode is retained across DOS/Amiga switches and levels;
-selection in the future options menu is tracked in task 08.
+selection is also available under Options in the pause menu.
 Both modes preserve each release's bars, digits, portraits, icons and layout,
 including two-player indicators.
 Menus keep their original resolution; the chosen framing is reapplied when
@@ -156,7 +156,7 @@ camera, and doors and viewport changes reset the following history.
 `--camera=classic` restores the previous camera behavior. `--dosscroll` selects
 the classic camera's DOS scrolling variant (a later `--camera` overrides the
 camera selection). Both cameras retain the selected presentation frequency.
-The planned in-game options menu will expose the classic/smooth selector.
+Options in the pause menu also exposes the classic/smooth selector.
 
 Camera regression tests cover all six levels with the supplied assets:
 
@@ -205,8 +205,8 @@ fits at least 320x200, keeping glyph strokes uniform at fractional window sizes;
 smaller outputs fit the dialog proportionally. Its size is independent of map
 zoom, and it stays centered in windowed and fullscreen modes.
 
-The menu foundation (task 06) is validated. This visual polish is tracked in
-07, and configurable options such as camera/HUD selection are tracked in 08.
+The menu foundation and visual polish (tasks 06–07) are validated. General
+settings are implemented in task 08.
 The existing F6/F7 and zoom shortcuts remain available during gameplay.
 
 ```
@@ -222,6 +222,48 @@ joystick events, focus changes, held input, audio pause/resume and centered
 layout at several window sizes. The game integration test opens the actual
 modal menu during zoom, spends time in its Controls page, and checks that game
 state, objects, map and viewport remain unchanged before resuming.
+
+### General options and controls
+
+Open **Options** from the pause menu. Up/Down selects a row; Left/Right changes
+its value, and Enter/A also cycles a setting. The page provides DOS/Amiga,
+classic/smooth camera, classic/fixed HUD, window/fullscreen mode, 30/60/120 Hz
+presentation and all nine framing positions (normal plus eight steps out).
+DOS/Amiga selection requires both compatible resource directories; unavailable
+switches remain disabled with an explanation.
+
+Changes are prepared while the simulation and audio remain paused, then applied
+when you return to **Resume**. Fullscreen toggles immediately for preview.
+Changing resource mode retains the existing F6 behavior, including restarting
+the current track in the other release's native arrangement. FPS changes affect
+presentation; simulation still runs at 30 Hz.
+
+**Options → Controls** offers keyboard and SDL game-controller configuration,
+plus a restore-defaults action. Select an action and press Enter/A, then release
+the new key or button. Esc cancels capture; controller Start also cancels button
+capture. The six keyboard actions are movement in four directions, action and
+jump; controller action/jump buttons can be reassigned, while movement keeps its
+stick/D-pad controls. Assigning an already-used control swaps the two bindings.
+Enter remains an additional gameplay action key, and right Shift aliases left
+Shift when the default jump binding is used.
+
+Menu navigation remains on arrows, Enter/Space, Esc/P and controller A/B/Start
+regardless of gameplay bindings. Menu/presentation shortcuts and player-select
+digits are reserved during keyboard capture. Controls shows the prepared
+bindings, and held capture/confirmation inputs are consumed on resume.
+Settings and bindings remain active through levels during this run; saving
+preferences across launches is task 12.
+
+```
+BLUES_TEST_OPTIONS=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  build/tests/check_viewport --dos-datapath=../orig-games/dos \
+  --amiga-datapath=../orig-games/amiga --cheats=7 --level=0
+```
+
+This exercises the real menu, prepares every setting, reassigns keyboard and
+controller actions, checks that the world stays frozen in the menu, and verifies
+that the settings are applied after resuming. Repeat across levels, initial
+resource releases and HUD modes for the full matrix.
 
 ### Blues Brothers audio
 

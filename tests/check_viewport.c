@@ -456,15 +456,49 @@ static uint32_t menu_script(uint32_t interval, void *param) {
 	const int step = menu_timer_step++;
 	if (step == 0) {
 		push_menu_key(SDLK_DOWN, true); push_menu_key(SDLK_DOWN, false);
+		push_menu_key(SDLK_DOWN, true); push_menu_key(SDLK_DOWN, false);
 		push_menu_key(SDLK_RETURN, true); push_menu_key(SDLK_RETURN, false);
 	} else if (step == 1) {
 		push_menu_key(SDLK_ESCAPE, false);
 	} else {
 		push_menu_key(SDLK_UP, true); push_menu_key(SDLK_UP, false);
+		push_menu_key(SDLK_UP, true); push_menu_key(SDLK_UP, false);
 		push_menu_key(SDLK_RETURN, true);
 	}
 	return menu_timer_step == 3 ? 0 : interval;
 }
+static struct sys_pause_options options_before_test;
+static void menu_tap(int sym) { push_menu_key(sym,true); push_menu_key(sym,false); }
+static void menu_button(int button, bool down) {
+	SDL_Event ev={0}; ev.type=down ? SDL_CONTROLLERBUTTONDOWN : SDL_CONTROLLERBUTTONUP;
+	ev.cbutton.button=button; assert(SDL_PushEvent(&ev)==1);
+}
+static uint32_t options_script(uint32_t interval, void *param) {
+	assert(SDL_GetAudioStatus()!=SDL_AUDIO_PLAYING);
+	const int step=menu_timer_step++;
+	if (step==0) {
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RETURN); /* Options. */
+		menu_tap(SDLK_RIGHT); /* Version. */
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RIGHT); /* Camera. */
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RIGHT); /* HUD. */
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RIGHT); menu_tap(SDLK_LEFT); /* Fullscreen round trip. */
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RIGHT); /* Rate. */
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RIGHT); /* View. */
+	} else if (step==1) {
+		menu_tap(SDLK_DOWN); menu_tap(SDLK_RETURN); menu_tap(SDLK_RETURN); /* Keyboard. */
+		for(int i=0;i<4;++i) menu_tap(SDLK_DOWN);
+		menu_tap(SDLK_RETURN); menu_tap(SDLK_x); /* Capture action key. */
+		push_menu_key(SDLK_ESCAPE,false); menu_tap(SDLK_DOWN); menu_tap(SDLK_RETURN); /* Pad. */
+		menu_tap(SDLK_DOWN);
+		menu_button(SDL_CONTROLLER_BUTTON_A,true); menu_button(SDL_CONTROLLER_BUTTON_A,false);
+		menu_button(SDL_CONTROLLER_BUTTON_X,true); menu_button(SDL_CONTROLLER_BUTTON_X,false);
+		push_menu_key(SDLK_ESCAPE,false); push_menu_key(SDLK_ESCAPE,false); push_menu_key(SDLK_ESCAPE,false);
+	} else {
+		menu_tap(SDLK_UP); push_menu_key(SDLK_RETURN,true);
+	}
+	return menu_timer_step==3 ? 0 : interval;
+}
+
 static void test_run_pause_menu() {
 	const struct vars_t before = g_vars;
 	uint8_t sql[640 * 25];
@@ -473,6 +507,7 @@ static void test_run_pause_menu() {
 	assert(sprite_count > 0);
 	const int w = GAME_SCREEN_W, h = GAME_SCREEN_H;
 	const enum hud_mode hud = g_options.hud_mode;
+	g_sys.get_pause_options(&options_before_test);
 	/* Capture actual game frames for visual review without changing state. */
 	sdl2_set_scroll_interpolation(0, 0, 0, false);
 	_pause_menu_open = true;
@@ -482,9 +517,15 @@ static void test_run_pause_menu() {
 	sdl2_draw_screen(0, 0, 1); snapshot("menu-controls");
 	_pause_page = PAUSE_QUIT;
 	sdl2_draw_screen(0, 0, 1); snapshot("menu-quit");
+	_pause_page = PAUSE_OPTIONS; _pause_selection=0;
+	sdl2_draw_screen(0,0,1); snapshot("menu-options");
+	_pause_page = PAUSE_KEYS;
+	sdl2_draw_screen(0,0,1); snapshot("menu-keys");
+	_pause_page = PAUSE_PAD;
+	sdl2_draw_screen(0,0,1); snapshot("menu-pad");
 	_pause_menu_open = false;
 	menu_timer_step = 0;
-	assert(SDL_AddTimer(60, menu_script, NULL));
+	assert(SDL_AddTimer(60, getenv("BLUES_TEST_OPTIONS") ? options_script : menu_script, NULL));
 	const uint32_t timestamp = SDL_GetTicks();
 	sdl2_run_pause_menu();
 	assert(SDL_GetTicks() - timestamp >= 150 && menu_timer_step == 3);
@@ -494,6 +535,19 @@ static void test_run_pause_menu() {
 	assert(g_options.hud_mode == hud && !g_sys.input.menu && !g_sys.input.space && !g_sys.input.jump && !g_sys.input.direction);
 	assert(!g_sys.input.switch_mode && !g_sys.input.switch_hud && !g_sys.input.quit);
 	assert(_blocked_keys[SDL_SCANCODE_RETURN]);
+	if (getenv("BLUES_TEST_OPTIONS")) {
+		struct sys_pause_options after; g_sys.get_pause_options(&after);
+		assert(after.amiga != options_before_test.amiga && after.camera != options_before_test.camera);
+		assert(after.hud != options_before_test.hud && after.view_step == options_before_test.view_step+1);
+		assert(after.render_rate != options_before_test.render_rate);
+		assert(_game_keys[BIND_ACTION] == SDLK_x && _game_buttons[1] == SDL_CONTROLLER_BUTTON_X);
+		bool paused=false;
+		handle_keyevent(SDLK_SPACE,true,&g_sys.input,&paused); assert(!g_sys.input.space);
+		handle_keyevent(SDLK_x,true,&g_sys.input,&paused); assert(g_sys.input.space);
+		handle_keyevent(SDLK_x,false,&g_sys.input,&paused);
+		handle_controllerbutton(SDL_CONTROLLER_BUTTON_X,true,&g_sys.input,&paused); assert(g_sys.input.jump);
+		handle_controllerbutton(SDL_CONTROLLER_BUTTON_X,false,&g_sys.input,&paused);
+	}
 	push_menu_key(SDLK_RETURN, false);
 	++menus_tested;
 }
@@ -533,7 +587,7 @@ static void test_events() {
 		return;
 	}
 	g_sys.input.space = false;
-	if (getenv("BLUES_TEST_MENU")) {
+	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS")) {
 		if (test_frames == 0) g_sys.input.view_step = 4;
 		if (test_frames == 2) {
 			bool paused = false;
@@ -541,7 +595,15 @@ static void test_events() {
 		}
 		if (test_frames == 3) {
 			assert(menus_tested == 1);
-			g_sys.input.quit = true;
+			if (!getenv("BLUES_TEST_OPTIONS")) g_sys.input.quit = true;
+		}
+		if (test_frames == 4 && getenv("BLUES_TEST_OPTIONS")) {
+			assert(g_res.amiga_data != options_before_test.amiga);
+			assert(g_options.camera_mode != options_before_test.camera && g_options.hud_mode != options_before_test.hud);
+			assert(g_options.scroll_rate != options_before_test.render_rate && _scroll_rate == g_options.scroll_rate);
+			assert(g_sys.input.view_step == options_before_test.view_step+1);
+			assert((_hud_width > 0) == (g_options.hud_mode == HUD_FIXED));
+			g_sys.input.quit=true;
 		}
 		++test_frames;
 		return;
@@ -655,7 +717,7 @@ static void test_events() {
 int main(int argc, char **argv) {
 	if (getenv("BLUES_TEST_MODES")) g_sys.start_audio = capture_start_audio;
 	g_sys.process_events = test_events;
-	if (getenv("BLUES_TEST_MENU")) g_sys.run_pause_menu = test_run_pause_menu;
+	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS")) g_sys.run_pause_menu = test_run_pause_menu;
 	g_sys.sleep = no_sleep;
 	g_sys.fade_in_palette = no_fade;
 	g_sys.fade_out_palette = no_fade;
@@ -677,7 +739,7 @@ int main(int argc, char **argv) {
 		assert(_hud_width == 0); /* Disabled before menus/inter-level screens. */
 		return result;
 	}
-	if (getenv("BLUES_TEST_MENU")) {
+	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS")) {
 		assert(!_pause_menu_enabled);
 		puts("menu: frozen game/objects/map/zoom/audio, preserved scene and clean resume through actual game loop passed");
 		return result;
