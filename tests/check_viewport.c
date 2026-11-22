@@ -520,6 +520,84 @@ static void test_assists() {
 	g_sys.input.quit=true;
 }
 
+static void traversal_tick() {
+	g_sys.begin_sprite_frame(); screen_clear_sprites(0);
+	do_level_update_scrolling2(); do_level_update_objects();
+	++g_vars.level_loop_counter;
+}
+static void traversal_player_only() {
+	for(int i=0;i<MAX_OBJECTS;++i) if(i!=OBJECT_NUM_PLAYER1) {
+		g_vars.objects[i].type=100; g_vars.objects[i].visible_flag=0;
+	}
+	g_vars.inp_key_space=g_vars.inp_key_jump=g_vars.inp_key_up=g_vars.inp_key_down=0;
+	g_vars.inp_key_left=g_vars.inp_key_right=0;
+}
+static void test_traversal() {
+	const struct vars_t initial=g_vars;
+	uint8_t sql[640*25]; memcpy(sql,g_res.sql,sizeof(sql));
+	const int base_w=GAME_SCREEN_W,base_h=GAME_SCREEN_H;
+	int ladders=0,pipe_cases=0;
+	for(int x=1;x<127;++x)for(int start=1;start<g_vars.screen_tilemap_h/16-1;++start) {
+		if(triggers_get_tile_type(x,start)!=7 || triggers_get_tile_type(x,start-1)==7)continue;
+		int end=start;while(end+1<g_vars.screen_tilemap_h/16 && triggers_get_tile_type(x,end+1)==7)++end;
+		if(end-start+1<6)continue;
+		for(int mode=0;mode<2;++mode)for(int velocity=-48;velocity<=48;velocity+=48) {
+			g_vars=initial;memcpy(g_res.sql,sql,sizeof(sql));traversal_player_only();
+			g_options.jump_button=mode!=0;
+			struct object_t *p=&g_vars.objects[OBJECT_NUM_PLAYER1];
+			p->xpos=x*16+8;p->ypos=((start+end)/2)*16+8;
+			p->xpos16=p->xpos/16;p->ypos16=p->ypos/16;
+			p->xvelocity=velocity;p->yvelocity=0;p->unk1C=p->unk2F=0;p->special_anim=0;p->sprite_type=2;
+			const int original_y=p->ypos;
+			g_vars.inp_key_down=1;
+			for(int t=0;t<12;++t){traversal_tick();assert(p->xpos==x*16 && p->xvelocity==0 && p->direction_ud==2);}
+			assert(p->ypos==original_y+24);
+			g_vars.inp_key_down=0;g_vars.inp_key_up=1;
+			for(int t=0;t<12;++t){traversal_tick();assert(p->xpos==x*16 && p->direction_ud==1);}
+			assert(p->ypos==original_y);
+			g_vars.inp_key_up=0;
+			for(int t=0;t<12;++t)traversal_tick();
+			assert(p->ypos==original_y && p->xpos==x*16 && p->yvelocity==0);
+		}
+		++ladders;
+	}
+	if(g_vars.level==1) {
+		assert(ladders>=3);
+		for(int velocity=-48;velocity<=48;velocity+=48) {
+			g_vars=initial;memcpy(g_res.sql,sql,sizeof(sql));traversal_player_only();
+			struct object_t *ladder=&g_vars.objects[OBJECT_NUM_PLAYER1];
+			ladder->xpos=31*16+8;ladder->ypos=30*16-1;ladder->xpos16=31;ladder->ypos16=29;
+			ladder->floor_ypos16=29;ladder->xvelocity=velocity;ladder->yvelocity=ladder->unk1C=ladder->unk2F=0;
+			ladder->sprite_type=1;ladder->special_anim=0;g_vars.inp_key_down=1;
+			for(int t=0;t<48;++t)traversal_tick();
+			assert(ladder->ypos>34*16 && ladder->xpos==31*16); /* Enter from the cap and hold Down across its platform. */
+		}
+		for(int camera=0;camera<2;++camera)for(int step=0;step<=8;step+=4)for(int protected=0;protected<2;++protected) {
+			resize_level_view(base_w,base_h,false);
+			g_vars=initial;memcpy(g_res.sql,sql,sizeof(sql));traversal_player_only();
+			g_options.camera_mode=camera;g_options.cheats=protected ? CHEATS_INVULNERABLE : 0;
+			struct object_t *p=&g_vars.objects[OBJECT_NUM_PLAYER1];
+			p->xpos=38*16;p->ypos=8*16;p->xpos16=38;p->ypos16=8;
+			p->xvelocity=p->yvelocity=p->special_anim=0;
+			update_level_view(base_w,base_h,step);
+			assert(g_res.triggers[*lookup_sql(38,8)].op_func==3);
+			p->data5F=0;level_call_trigger_func(p,0);assert(p->xpos==38*16);
+			p->ypos=8*16;p->ypos16=8;
+			p->data5F=2;g_vars.found_music_instrument_flag=true;
+			level_call_trigger_func(p,0);assert(p->xpos==101*16 && p->ypos==70*16 && g_vars.switch_player_scrolling_flag);
+			for(int t=0;t<140;++t)traversal_tick();
+			assert(!g_vars.switch_player_scrolling_flag && p->special_anim==0 && !g_vars.game_over_flag);
+			const int before=p->xpos;
+			g_vars.inp_key_left=1;
+			for(int t=0;t<20;++t)traversal_tick();
+			assert(p->xpos<before && p->special_anim==0);
+			++pipe_cases;
+		}
+	}
+	printf("traversal: %d ladder runs (up/down/idle, incoming inertia, both jump mappings); %d pipe recoveries (camera, zoom, immunity) passed\n",ladders,pipe_cases);
+	g_sys.input.quit=true;
+}
+
 static int menu_timer_step, menus_tested;
 static void push_menu_key(int sym, bool down) {
 	SDL_Event ev = {0};
@@ -808,6 +886,7 @@ static void test_events() {
 		base_h = previous_h = GAME_SCREEN_H;
 		saved_window_w = window_w;
 		saved_window_h = window_h;
+		if (getenv("BLUES_TEST_TRAVERSAL")) {test_traversal();return;}
 		if (getenv("BLUES_TEST_ASSISTS")) {
 			test_assists();
 			return;
@@ -937,6 +1016,7 @@ int main(int argc, char **argv) {
 		puts("menu: frozen game/objects/map/zoom/audio, preserved scene and clean resume through actual game loop passed");
 		return result;
 	}
+	if (getenv("BLUES_TEST_TRAVERSAL")) return result;
 	if (getenv("BLUES_TEST_ASSISTS")) return result;
 	if (getenv("BLUES_TEST_HUD_SWITCH")) return result;
 	if (getenv("BLUES_TEST_CAMERA")) return result;

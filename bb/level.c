@@ -22,6 +22,11 @@ static struct {
 	int origin_x, origin_y, width, height, player;
 } _camera;
 
+/* Unlike integer MIN/MAX, this retains subpixel progress near the target. */
+static double clamp_camera_value(double value,double low,double high) {
+	return value < low ? low : (value > high ? high : value);
+}
+
 /* Simulation-rate follow; the renderer supplies the intermediate frames. */
 static void update_smooth_camera() {
 	const int player = g_vars.player2_scrolling_flag ? OBJECT_NUM_PLAYER2 : OBJECT_NUM_PLAYER1;
@@ -39,25 +44,27 @@ static void update_smooth_camera() {
 		_camera.lead = 0;
 	}
 	/* Retain anticipation when stopping, then ease it across a reversal. */
-	if (obj->xvelocity != 0) {
+	if (g_vars.switch_player_scrolling_flag) {
+		_camera.lead=0; /* Script/player handoff must actually recenter. */
+	} else if (obj->xvelocity != 0) {
 		const double lead = MIN(w / 5, 96) * (obj->xvelocity > 0 ? 1 : -1);
 		_camera.lead += (lead - _camera.lead) / 8.;
 	}
-	const double target_x = MAX(0, MIN(obj->xpos - w / 2 + _camera.lead,
-		g_vars.screen_tilemap_w * 16 - w));
+	const double target_x = clamp_camera_value(obj->xpos-w/2+_camera.lead,0,
+		g_vars.screen_tilemap_w*16-w);
 	/* A vertical dead zone avoids following every small jump or step. */
 	double target_y = _camera.y;
 	const double screen_y = obj->ypos - _camera.y;
 	if (screen_y < h / 2) target_y = obj->ypos - h / 2;
 	else if (screen_y > h * 3 / 4) target_y = obj->ypos - h * 3 / 4;
-	target_y = MAX(0, MIN(target_y, g_vars.screen_tilemap_h - h));
+	target_y = clamp_camera_value(target_y,0,g_vars.screen_tilemap_h-h);
 	_camera.x += (target_x - _camera.x) / 6.;
 	_camera.y += (target_y - _camera.y) / 6.;
 	/* Catch fast falls before the player leaves the visible area. */
-	_camera.x = MAX(obj->xpos - w + 24, MIN(_camera.x, obj->xpos - 24));
-	_camera.y = MAX(obj->ypos - h + 12, MIN(_camera.y, obj->ypos - 24));
-	_camera.x = MAX(0, MIN(_camera.x, g_vars.screen_tilemap_w * 16 - w));
-	_camera.y = MAX(0, MIN(_camera.y, g_vars.screen_tilemap_h - h));
+	_camera.x = clamp_camera_value(_camera.x,obj->xpos-w+24,obj->xpos-24);
+	_camera.y = clamp_camera_value(_camera.y,obj->ypos-h+12,obj->ypos-24);
+	_camera.x = clamp_camera_value(_camera.x,0,g_vars.screen_tilemap_w*16-w);
+	_camera.y = clamp_camera_value(_camera.y,0,g_vars.screen_tilemap_h-h);
 	g_vars.screen_tilemap_xorigin = (int)(_camera.x + .5);
 	g_vars.screen_tilemap_yorigin = (int)(_camera.y + .5);
 	_camera.origin_x = g_vars.screen_tilemap_xorigin;
@@ -66,6 +73,10 @@ static void update_smooth_camera() {
 	_camera.height = h;
 	_camera.player = player;
 	_camera.valid = true;
+	if (g_vars.switch_player_scrolling_flag && abs(g_vars.screen_tilemap_xorigin-(int)(target_x+.5))<=1) {
+		g_vars.switch_player_scrolling_flag=0;
+		g_vars.screen_scrolling_dirmask &= ~3;
+	}
 }
 static uint8_t _level_base_sql[640 * 25];
 
@@ -523,6 +534,8 @@ static void do_level_update_scrolling2() {
 		update_smooth_camera();
 	} else {
 		_camera.valid = false;
+		const bool recentering = g_vars.switch_player_scrolling_flag;
+		const int old_x = g_vars.screen_tilemap_xorigin;
 		if (g_vars.screen_scrolling_dirmask & 2) {
 			if (g_vars.screen_tilemap_w * 16 - TILEMAP_SCREEN_W > g_vars.screen_tilemap_xorigin) {
 				g_vars.screen_tilemap_xorigin += 16;
@@ -574,6 +587,15 @@ static void do_level_update_scrolling2() {
 				if (g_vars.screen_tilemap_yorigin < 0) {
 					g_vars.screen_tilemap_yorigin = 0;
 				}
+			}
+		}
+		if (recentering) {
+			const struct object_t *follow = &g_vars.objects[g_vars.player2_scrolling_flag ? OBJECT_NUM_PLAYER2 : OBJECT_NUM_PLAYER1];
+			const int target = MAX(0,MIN(follow->xpos-TILEMAP_SCREEN_W/2,g_vars.screen_tilemap_w*16-TILEMAP_SCREEN_W));
+			g_vars.screen_tilemap_xorigin = old_x + MAX(-16,MIN(16,target-old_x));
+			if (g_vars.screen_tilemap_xorigin == target) {
+				g_vars.switch_player_scrolling_flag=0;
+				g_vars.screen_scrolling_dirmask &= ~3;
 			}
 		}
 	}
@@ -1440,7 +1462,10 @@ static void do_level_update_input(struct object_t *obj) {
 		obj->direction_lr |= OBJECT_DIRECTION_LEFT;
 	}
 	_si = triggers_get_tile_type(obj->xpos16, obj->ypos16);
-	if ((g_options.jump_button ? g_vars.inp_key_jump : g_vars.inp_key_up) && !g_vars.inp_key_space) {
+	const bool climbing = _si==6 || _si==7 || obj->sprite_type==2 || obj->sprite_type==3;
+	if (g_options.jump_button && g_vars.inp_key_up && climbing && !g_vars.inp_key_jump && !g_vars.inp_key_space) {
+		obj->direction_ud=OBJECT_DIRECTION_UP;
+	} else if ((g_options.jump_button ? g_vars.inp_key_jump : g_vars.inp_key_up) && !g_vars.inp_key_space) {
 		obj->direction_ud = OBJECT_DIRECTION_UP;
 		if ((g_options.jump_button ? !g_vars.inp_key_jump_prev : !g_vars.inp_key_up_prev) && obj->sprite_type != 0) {
 			obj->yfriction = 0;
@@ -1463,12 +1488,18 @@ static void do_level_update_input(struct object_t *obj) {
 		}
 	} else if (g_vars.inp_key_down) {
 		obj->direction_ud = 2;
-		if (!g_vars.inp_key_down_prev) {
+		if (!g_vars.inp_key_down_prev || _si==7 || obj->sprite_type==2 ||
+			triggers_get_tile_type(obj->xpos16,obj->ypos16+1)==7) {
 			obj->unk2B = 1;
 		}
 	} else {
 		obj->direction_ud = 0;
 	}
+	/* Vertical ladder input, including its platform cap, must not retain
+	 * walking momentum after the horizontal key has been released. */
+	if (obj->direction_lr==0 && (climbing ||
+		(g_vars.inp_key_down && triggers_get_tile_type(obj->xpos16,obj->ypos16+1)==7)))
+		obj->xvelocity=obj->xacc=0;
 	g_vars.inp_key_up_prev = g_vars.inp_key_up;
 	g_vars.inp_key_down_prev = g_vars.inp_key_down;
 	g_vars.inp_key_jump_prev = g_vars.inp_key_jump;
@@ -1509,20 +1540,11 @@ static void do_level_update_scrolling(struct object_t *obj) {
 		return;
 	}
 	if (g_vars.switch_player_scrolling_flag) {
-		if (obj->screen_xpos > (TILEMAP_SCREEN_W - 144)) {
-			g_vars.screen_scrolling_dirmask |= 2;
-		}
-		if (obj->screen_xpos < 144) {
-			g_vars.screen_scrolling_dirmask |= 1;
-		}
-		if ((g_vars.screen_scrolling_dirmask & 2) != 0 && obj->screen_xpos < TILEMAP_SCREEN_W / 2) {
-			g_vars.screen_scrolling_dirmask &= ~2;
-			g_vars.switch_player_scrolling_flag = 0;
-		}
-		if ((g_vars.screen_scrolling_dirmask & 1) != 0 && obj->screen_xpos > TILEMAP_SCREEN_W / 2) {
-			g_vars.screen_scrolling_dirmask &= ~1;
-			g_vars.switch_player_scrolling_flag = 0;
-		}
+		const int target = MAX(0,MIN(obj->xpos-TILEMAP_SCREEN_W/2,g_vars.screen_tilemap_w*16-TILEMAP_SCREEN_W));
+		g_vars.screen_scrolling_dirmask &= ~3;
+		if (target > g_vars.screen_tilemap_xorigin) g_vars.screen_scrolling_dirmask |= 2;
+		else if (target < g_vars.screen_tilemap_xorigin) g_vars.screen_scrolling_dirmask |= 1;
+		else g_vars.switch_player_scrolling_flag=0;
 	} else {
 		int _si = (obj->xvelocity >> 3) + obj->unk1C;
 		if (obj->screen_xpos > (TILEMAP_SCREEN_W - TILEMAP_SCROLL_W) && (g_vars.screen_tilemap_w * 16 - TILEMAP_SCREEN_W) > g_vars.screen_tilemap_xorigin) {
@@ -1707,6 +1729,7 @@ static void do_level_fixup_object_unkA(struct object_t *obj) {
 			obj->yvelocity = 0;
 		}
 	} else if (_si == 7) {
+		if (obj->type<2 && obj->direction_lr==0) obj->xvelocity=obj->xacc=0;
 		if (obj->direction_ud != 0 && obj->unk2E != 0) {
 			obj->xpos = (obj->xpos + 7) & ~15;
 			obj->screen_xpos = obj->xpos - g_vars.screen_tilemap_xorigin;
@@ -1722,6 +1745,8 @@ static void do_level_fixup_object_unkA(struct object_t *obj) {
 			}
 		} else if (obj->direction_ud == 2) {
 			obj->yvelocity = 2;
+		} else if (obj->type<2) {
+			obj->yvelocity=0;
 		}
 	} else {
 		if (_si == 11 || _si == 12) {
@@ -1989,7 +2014,7 @@ static void do_level_fixup_object_xpos16(struct object_t *obj) {
 		if (obj->type != 2) {
 			if ((obj->tile0_flags & 1) != 0) {
 				obj->moving_direction ^= 1;
-				if (obj->sprite_type == 2) {
+				if (obj->sprite_type == 2 && obj->type>2) {
 					obj->direction_ud = 1;
 				}
 				if (obj->xvelocity > 0) {
@@ -2027,7 +2052,7 @@ static void do_level_fixup_object_xpos16(struct object_t *obj) {
 		if (obj->type != 2) {
 			if ((obj->tile0_flags & 2) != 0) {
 				obj->moving_direction ^= 1;
-				if (obj->sprite_type == 2) {
+				if (obj->sprite_type == 2 && obj->type>2) {
 					obj->direction_ud = 1;
 				}
 				if (obj->xvelocity < 0) {

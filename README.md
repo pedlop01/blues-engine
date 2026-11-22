@@ -337,6 +337,34 @@ after a DOS/Amiga switch. Add `BLUES_TEST_ASSIST_TWO=1` to test two active
 players, or start with `--cheats=7` to verify disabling existing protections.
 Repeat for levels 1–5 and either initial resource mode.
 
+### Ladders and warehouse tube recovery
+
+With the default separate jump control, Up/Down climbs ladders and Shift remains
+the jump action. Releasing horizontal input stops walking momentum on a ladder,
+and releasing vertical input stops climbing. Holding Down enters ladder caps
+and continues through their one-way platform sections, without requiring a
+new press at each platform. Horizontal wall probes no longer override a
+player's requested climbing direction; enemy climbing behavior is retained.
+
+The warehouse's instrument-gated tube uses the original scripted teleport and
+camera recentering. Both camera modes now finish recentering at the bounded
+target, including zoomed-out views, so the landing animation stops being
+reapplied and control returns normally. Smooth camera positions retain
+fractional progress instead of stalling short of the target.
+
+```
+BLUES_TEST_TRAVERSAL=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  build/tests/check_viewport --dos-datapath=../orig-games/dos \
+  --amiga-datapath=../orig-games/amiga --cheats=7 --level=1
+```
+
+This exercises the real warehouse ladders with incoming left/right momentum,
+Up/Down/idle and both jump mappings, the ladder's platform crossing, and idle
+recovery after the tube with both cameras, normal/wide framing and immunity
+on/off. It checks the instrument gate and that movement works after recovery.
+Repeat for levels 0–5 to exercise other long ladders, and for either resource
+release and HUD mode.
+
 ### Blues Brothers audio
 
 `--sound=dos` plays the original DOS AdLib music and effects through a software
