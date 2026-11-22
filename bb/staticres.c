@@ -1867,3 +1867,37 @@ const uint8_t spr71da_amiga[] = {
 	0x80,0x00,0x00,0x00,0x00,0x61,0x00,0x00,0x00,0x00,0x00,0x3e,0x00,0x00,0x00,0x00,
 	0x00,0x22,0x00,0xa0
 };
+
+const int bb_animframes_count = sizeof(animframes_059d)/sizeof(animframes_059d[0]);
+const uint16_t level_tilesdata_1e8c_sizes[] = {
+	sizeof(level_tiledata_1bc0),sizeof(level_tiledata_1bd2),sizeof(level_tiledata_1be4),sizeof(level_tiledata_1bec),
+	sizeof(level_tiledata_1bf4),sizeof(level_tiledata_1c06),sizeof(level_tiledata_1c18),sizeof(level_tiledata_1c1e),
+	sizeof(level_tiledata_1c30),sizeof(level_tiledata_1c42),sizeof(level_tiledata_1c5e),sizeof(level_tiledata_1c7a),
+	sizeof(level_tiledata_1c98),sizeof(level_tiledata_1cb6),sizeof(level_tiledata_1cba),sizeof(level_tiledata_1cbe),
+	sizeof(level_tiledata_1cc2),sizeof(level_tiledata_1cc6),sizeof(level_tiledata_1cca),sizeof(level_tiledata_1cce),
+	sizeof(level_tiledata_1cd4),sizeof(level_tiledata_1cd9),sizeof(level_tiledata_1cde),sizeof(level_tiledata_1ce4),
+	sizeof(level_tiledata_1cea),sizeof(level_tiledata_1cef),sizeof(level_tiledata_1cf4),sizeof(level_tiledata_1cf9),
+	sizeof(level_tiledata_1cfe),sizeof(level_tiledata_1d1c),sizeof(level_tiledata_1d21),sizeof(level_tiledata_1d26),
+	sizeof(level_tiledata_1d2b),sizeof(level_tiledata_1d30),sizeof(level_tiledata_1d35),sizeof(level_tiledata_1d3a),
+	sizeof(level_tiledata_1d3f),sizeof(level_tiledata_1d44),sizeof(level_tiledata_1d49),sizeof(level_tiledata_1d4e),
+	sizeof(level_tiledata_1d53),sizeof(level_tiledata_1d58),sizeof(level_tiledata_1d5d),sizeof(level_tiledata_1d62),
+	sizeof(level_tiledata_1d67),sizeof(level_tiledata_1d6c),sizeof(level_tiledata_1d71),sizeof(level_tiledata_1d76),
+	sizeof(level_tiledata_1d7b),sizeof(level_tiledata_1d91),sizeof(level_tiledata_1dab),sizeof(level_tiledata_1db7),
+	sizeof(level_tiledata_1dbb),sizeof(level_tiledata_1d02),sizeof(level_tiledata_1d14),sizeof(level_tiledata_1d18),
+	sizeof(level_tiledata_1dfb),sizeof(level_tiledata_1dbf),sizeof(level_tiledata_1dc7),sizeof(level_tiledata_1dcf),
+	sizeof(level_tiledata_1de5),sizeof(level_tiledata_1e39),sizeof(level_tiledata_1e3e),sizeof(level_tiledata_1e00),
+	sizeof(level_tiledata_1e05),sizeof(level_tiledata_1e43),sizeof(level_tiledata_1e0f),sizeof(level_tiledata_1b54),
+	sizeof(level_tiledata_1b82),sizeof(level_tiledata_1be8),sizeof(level_tiledata_1e0a),sizeof(level_tiledata_1e14),
+	sizeof(level_tiledata_1e19),sizeof(level_tiledata_1e21),sizeof(level_tiledata_1e29),sizeof(level_tiledata_1e31),
+	sizeof(level_tiledata_1e48),sizeof(level_tiledata_1e4c),sizeof(level_tiledata_1e50),sizeof(level_tiledata_1e54),
+	sizeof(level_tiledata_1e5c),sizeof(level_tiledata_1e64),sizeof(level_tiledata_1e6c),sizeof(level_tiledata_1e74),
+	sizeof(level_tiledata_1e7c),sizeof(level_tiledata_1e84),
+};
+const uint16_t level_tilesdata_1fe8_sizes[] = {
+	sizeof(level_tiledata_1afc),sizeof(level_tiledata_1b03),sizeof(level_tiledata_1b1f),sizeof(level_tiledata_1b25),
+	sizeof(level_tiledata_1b2b),sizeof(level_tiledata_1b31),sizeof(level_tiledata_1b38),sizeof(level_tiledata_1b3f),
+	sizeof(level_tiledata_1b46),sizeof(level_tiledata_1b4d),sizeof(level_tiledata_1b54),sizeof(level_tiledata_1b82),
+	sizeof(level_tiledata_1bb0),sizeof(level_tiledata_1bb8),sizeof(level_tiledata_1b11),sizeof(level_tiledata_1b18),
+	sizeof(level_tiledata_1b0a),
+};
+

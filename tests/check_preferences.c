@@ -90,6 +90,16 @@ int main() {
 	char invalid[256]; snprintf(invalid,sizeof(invalid),"%s/missing/preferences.ini",directory);
 	SDL_setenv("BLUES_CONFIG_FILE",invalid,1); sdl2_save_preferences();
 	assert(access(path,F_OK)==0);
+	/* Save slots use the same UTF-8 and atomic replacement path. */
+	SDL_setenv("BLUES_SAVE_DIR",directory,1);
+	const uint8_t original[]={1,2,3},replacement[]={9,8,7,6};uint8_t loaded[16];size_t loaded_size;
+	assert(sdl2_write_save_file(0,original,sizeof(original)));
+	assert(!sdl2_write_save_file(-1,original,sizeof(original)) && !sdl2_write_save_file(8,original,sizeof(original)));
+	snprintf(blocked,sizeof(blocked),"%s/slot01.bbs.tmp.%lu",directory,(unsigned long)getpid());
+	assert(mkdir(blocked,0700)==0);assert(!sdl2_write_save_file(0,replacement,sizeof(replacement)));
+	assert(sdl2_read_save_file(0,loaded,sizeof(loaded),&loaded_size) && loaded_size==sizeof(original) && !memcmp(loaded,original,loaded_size));
+	assert(!sdl2_read_save_file(0,loaded,1,&loaded_size));assert(rmdir(blocked)==0);
+	char slot_path[320];snprintf(slot_path,sizeof(slot_path),"%s/slot01.bbs",directory);remove(slot_path);
 	sdl2_fini(); remove(path); rmdir(directory);
 	puts("preferences: pre-SDL load, round trip, validation, future versions, atomic save failure and confirmed reset passed");
 	return 0;

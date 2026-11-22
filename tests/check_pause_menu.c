@@ -2,6 +2,11 @@
 #include "../sys_sdl2.c"
 struct options_t g_options;
 
+static int save_calls,load_calls;
+static bool load_ready;
+static bool mock_save() {++save_calls;return true;}
+static bool mock_load() {++load_calls;return load_ready;}
+static const char *mock_save_error() {return "PRUEBA";}
 static int audio_callbacks;
 static int volume_applies;
 static void test_apply_volumes(int music,int effects) {
@@ -62,7 +67,7 @@ int main() {
 	assert(!pause_event(&ev) && _pause_page == PAUSE_BINDINGS);
 	ev = key(SDLK_ESCAPE, false);
 	assert(!pause_event(&ev) && _pause_page == PAUSE_MAIN && _pause_selection == 2);
-	ev = key(SDLK_DOWN, true); pause_event(&ev); pause_event(&ev); pause_event(&ev);
+	ev = key(SDLK_DOWN, true); pause_event(&ev); pause_event(&ev); pause_event(&ev); pause_event(&ev);
 	ev = key(SDLK_RETURN, true);
 	assert(!pause_event(&ev) && _pause_page == PAUSE_QUIT && _pause_selection == 0);
 	ev.key.repeat = 1;
@@ -81,6 +86,8 @@ int main() {
 	ev.caxis.value = 0; pause_event(&ev);
 	ev.caxis.value = 24000; pause_event(&ev);
 	assert(_pause_selection == 2);
+	ev.caxis.value = 0; pause_event(&ev);
+	ev.caxis.value = 24000; pause_event(&ev);
 	ev.caxis.value = 0; pause_event(&ev);
 	ev.caxis.value = 24000; pause_event(&ev);
 	ev.caxis.value = 0; pause_event(&ev);
@@ -108,11 +115,23 @@ int main() {
  }
  reset_menu();
  reset_menu(); _pause_options.select_character=false;
- _pause_selection=4;
+ _pause_selection=5;
  assert(!pause_activate() && _pause_page==PAUSE_CHARACTER_CONFIRM && _pause_selection==0);
- assert(!pause_activate() && _pause_page==PAUSE_MAIN && _pause_selection==4 && !_pause_options.select_character);
+ assert(!pause_activate() && _pause_page==PAUSE_MAIN && _pause_selection==5 && !_pause_options.select_character);
  assert(!pause_activate()); pause_move(1);
  assert(pause_activate() && _pause_options.select_character);
+ reset_menu();
+ /* Save/load confirmation defaults to Cancel; failed loads stay paused. */
+ reset_menu();_pause_options.save_game=mock_save;_pause_options.prepare_load=mock_load;
+ _pause_options.save_error=mock_save_error;_pause_options.load_game=false;
+ _pause_selection=4;assert(!pause_activate() && _pause_page==PAUSE_GAME);
+ assert(!pause_activate() && _pause_page==PAUSE_SAVE_CONFIRM && _pause_selection==0);
+ assert(!pause_activate() && save_calls==0);
+ assert(!pause_activate());pause_move(1);assert(!pause_activate() && save_calls==1 && _pause_page==PAUSE_GAME);
+ pause_move(1);assert(!pause_activate() && _pause_page==PAUSE_LOAD_CONFIRM);
+ assert(!pause_activate() && load_calls==0);
+ assert(!pause_activate());pause_move(1);assert(!pause_activate() && load_calls==1 && !_pause_options.load_game && _pause_page==PAUSE_GAME);
+ load_ready=true;assert(!pause_activate());pause_move(1);assert(pause_activate() && load_calls==2 && _pause_options.load_game);
  reset_menu();
 	/* Focus loss cannot activate a menu entry or leak a window close. */
 	reset_menu();
@@ -249,9 +268,9 @@ int main() {
 	for (unsigned i = 0; i < ARRAYSIZE(sizes); ++i) {
 		if (sizes[i][0]) SDL_SetWindowSize(_window, sizes[i][0], sizes[i][1]);
 		else assert(SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN_DESKTOP) == 0);
-		for (int page = 0; page < 14; ++page) {
-			_pause_page = page == 13 ? PAUSE_QUIT : (enum pause_page)page;
-			_pause_selection = page == 13 ? 1 : 0;
+		for (int page = 0; page <= PAUSE_LOAD_CONFIRM+1; ++page) {
+			_pause_page = page == PAUSE_LOAD_CONFIRM+1 ? PAUSE_QUIT : (enum pause_page)page;
+			_pause_selection = page == PAUSE_LOAD_CONFIRM+1 ? 1 : 0;
 			_pause_menu_open = true;
 			sdl2_draw_screen(0,0,1);
 			_pause_menu_open = false;
@@ -274,7 +293,7 @@ int main() {
 			assert(x1>=0 && x2<w && y1>=0 && y2<h);
 			const int scale = MIN(w/320,h/200);
 			assert(scale >= 1 && gold > 0 && gold % (scale*scale) == 0);
-			assert((danger > 0) == (page == 13));
+			assert((danger > 0) == (page == PAUSE_LOAD_CONFIRM+1));
 			free(pixels);
 		}
 	}

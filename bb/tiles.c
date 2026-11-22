@@ -574,7 +574,6 @@ static void trigger_func_op39(struct object_t *obj) {
 }
 
 static void trigger_func_op40(struct object_t *obj) {
-	static int counter = 0;
 	g_vars.music_num = 0;
 	if (obj->yvelocity > 0 && obj->unk2B == 0) {
 		obj->yvelocity = 0;
@@ -591,17 +590,17 @@ static void trigger_func_op40(struct object_t *obj) {
 	}
 	obj->unk2F = 0;
 	obj->special_anim = 21;
-	if (counter == 0) {
+	if (g_vars.ending_counter == 0) {
 		play_music(g_vars.music_num);
 	}
-	if (counter == 400) {
+	if (g_vars.ending_counter == 400) {
 		if (!g_vars.two_players_flag) {
 			g_vars.level_completed_flag = 1;
 		} else if (g_vars.objects[OBJECT_NUM_PLAYER1].level_complete_flag != 0 && g_vars.objects[OBJECT_NUM_PLAYER2].level_complete_flag != 0) {
 			g_vars.level_completed_flag = 1;
 		}
 	}
-	++counter;
+	++g_vars.ending_counter;
 }
 
 void level_call_trigger_func(struct object_t *obj, int y) {

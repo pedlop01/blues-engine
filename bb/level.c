@@ -6,6 +6,7 @@
 #include "sys.h"
 #include "util.h"
 #include "mixer.h"
+#include "state.h"
 
 static void configure_level_hud() {
 	if (g_options.hud_mode == HUD_FIXED) g_sys.set_hud_layout(320, 200, 14, 26);
@@ -15,12 +16,10 @@ static void configure_level_hud() {
 static bool resize_level_view(int w, int h, bool anchor_player);
 static void level_view_size(int base_w, int base_h, int step, int *width, int *height);
 static int _level_base_w, _level_base_h;
-static bool _view_camera_cut;
-static struct {
-	bool valid;
-	double x, y, lead;
-	int origin_x, origin_y, width, height, player;
-} _camera;
+static bool _view_camera_cut, _state_repainting;
+static uint32_t _loaded_resources_signature;
+static bool state_resource_hash(int level,bool amiga,bool demo,uint32_t *result);
+static struct bb_camera_state _camera;
 
 /* Unlike integer MIN/MAX, this retains subpixel progress near the target. */
 static double clamp_camera_value(double value,double low,double high) {
@@ -197,6 +196,8 @@ void load_level_data(int num) {
 		load_avt(_levels[num].avt, g_res.avt_sqv, 0, g_options.cga_colors ? _levels[num].cga_dither_avt : -1);
 		load_sqv(_levels[num].sqv, g_res.tmp, SPRITES_COUNT, g_options.cga_colors ? _levels[num].cga_dither_ck : -1);
 	}
+	_loaded_resources_signature=0;
+	state_resource_hash(num,g_res.amiga_data,g_res.dos_demo,&_loaded_resources_signature);
 	memcpy(_level_base_sql, g_res.sql, sizeof(_level_base_sql));
 	memcpy(g_vars.level_xpos, _levels[num].xpos, MAX_OBJECTS * sizeof(int16_t));
 	memcpy(g_vars.level_ypos, _levels[num].ypos, MAX_OBJECTS * sizeof(int16_t));
@@ -340,6 +341,7 @@ static bool switch_data_mode() {
 }
 
 static void init_level() {
+	g_vars.ending_counter = 0;
 	static const uint16_t restart_xpos[] = { 720, 720, 912, 912, 336, 352, 288, 304, 960, 976,  64,  80 };
 	static const uint16_t restart_ypos[] = { 496, 496, 752, 752, 816, 816, 304, 304, 592, 592, 352, 352 };
 	if (g_vars.play_demo_flag) {
@@ -1264,7 +1266,7 @@ void do_level_update_panel_lifes(struct object_t *obj) {
 			screen_draw_frame(g_res.spr_frames[101 + data[obj->data51]], 12, 16, 248, 161);
 		}
 	}
-	if (obj->data51 == 0) { // health
+	if (obj->data51 == 0 && !_state_repainting) { // health
 		if (!g_vars.two_players_flag) {
 			obj->restart_level_flag = 1;
 			g_vars.game_over_flag = 1;
@@ -1372,8 +1374,8 @@ static void draw_level_panel() {
 	} else {
 		screen_draw_frame(g_res.spr_frames[123], 12, 320, 0, -12);
 		screen_draw_frame(g_res.spr_frames[124], 12, 320, 0, 161);
-		screen_draw_frame(g_res.spr_frames[115], 12, 16, 8, 161);
-		screen_draw_frame(g_res.spr_frames[117], 12, 16, 176, 161);
+		screen_draw_frame(g_res.spr_frames[g_vars.player2_dead_flag ? 116 : 115], 12, 16, 8, 161);
+		screen_draw_frame(g_res.spr_frames[g_vars.player1_dead_flag ? 118 : 117], 12, 16, 176, 161);
 		do_level_update_panel_lifes(obj39);
 		do_level_update_panel_lifes(obj40);
 		screen_draw_number(obj39->vinyls_count, 112, 163, 2);
@@ -2437,10 +2439,6 @@ static bool update_level_view(int base_w, int base_h, int step) {
 	return resize_level_view(w, h, true);
 }
 
-struct view_transition {
-	int from_w, from_h, to_w, to_h, elapsed;
-};
-
 static void start_view_transition(struct view_transition *view, int base_w, int base_h, int step) {
 	/* Retarget from the current view, including when the key is reversed
 	 * midway through a transition. Never jump to the previous destination. */
@@ -2498,11 +2496,14 @@ static void apply_game_assists(const struct sys_pause_options *options) {
 	update_assist_status();
 }
 
+#include "level_state.h"
+
 void do_level() {
 	g_vars.requested_level = -1;
 	g_vars.requested_character = false;
-	const int base_w = GAME_SCREEN_W;
-	const int base_h = GAME_SCREEN_H;
+	_state_load_reopen=false;
+	int base_w = GAME_SCREEN_W;
+	int base_h = GAME_SCREEN_H;
 	_level_base_w = base_w;
 	_level_base_h = base_h;
 	_view_camera_cut = false;
@@ -2547,6 +2548,8 @@ void do_level() {
 	update_assist_status();
 	bool screen_transition_flag = true;
 	int frame_duration_remainder = 0;
+	_state_view=&view;_state_view_step=&view_step;_state_frame_remainder=&frame_duration_remainder;
+	_state_base_w=&base_w;_state_base_h=&base_h;_state_initial_transition=&screen_transition_flag;
 	do {
 		update_input();
 		if (g_sys.input.menu && !screen_transition_flag) {
@@ -2562,14 +2565,21 @@ void do_level() {
 				.camera = g_options.camera_mode, .hud = g_options.hud_mode,
 				.render_rate = g_options.scroll_rate, .view_step = g_sys.input.view_step,
 				.music_volume = g_options.music_volume, .effects_volume = g_options.effects_volume,
-				.apply_volumes = g_mix.set_volumes
+				.apply_volumes = g_mix.set_volumes,
+				.save_game = save_current_game, .prepare_load = prepare_game_load, .save_error = game_save_error,
+				.load_notice = _state_load_reopen ? game_save_error() : NULL
 			};
 			for (int i=0;i<MAX_LEVELS;++i) {
 				for (int mode=0;mode<2;++mode) options.available_levels[mode][i]=level_available(i,mode);
 			}
+			_state_load_reopen=false;
 			g_sys.set_pause_options(&options);
 			g_sys.run_pause_menu();
 			g_sys.get_pause_options(&options);
+			if (!g_sys.input.quit && options.load_game) {
+				if (!apply_prepared_game()) {_state_load_reopen=true;g_sys.input.menu=true;}
+				continue;
+			}
 			if (!g_sys.input.quit) {
 				apply_game_assists(&options);
 				if (options.amiga != g_res.amiga_data) g_sys.input.switch_mode = true;
@@ -2676,6 +2686,8 @@ void do_level() {
 		g_sys.sleep(diff < 10 ? 10 : diff);
 
 	} while (!g_sys.input.quit && !g_vars.quit_level_flag);
+	_state_view=NULL;
+	free(_prepared_state);_prepared_state=NULL;
 	g_sys.set_pause_menu_enabled(false);
 	g_sys.set_assist_status(false,false);
 	g_sys.set_scroll_interpolation(0, 0, 0, false);

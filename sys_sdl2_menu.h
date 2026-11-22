@@ -1,5 +1,5 @@
 /* SDL pause-menu implementation. Kept private to sys_sdl2.c. */
-enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD, PAUSE_AUDIO, PAUSE_ASSISTS, PAUSE_LEVELS, PAUSE_LEVEL_CONFIRM, PAUSE_CHARACTER_CONFIRM, PAUSE_DEFAULTS };
+enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD, PAUSE_AUDIO, PAUSE_ASSISTS, PAUSE_LEVELS, PAUSE_LEVEL_CONFIRM, PAUSE_CHARACTER_CONFIRM, PAUSE_DEFAULTS, PAUSE_GAME, PAUSE_SAVE_CONFIRM, PAUSE_LOAD_CONFIRM };
 static int _selected_level;
 static const char *_level_names[] = {"1 CENTRO COMERCIAL","2 ALMACEN","3 PRISION","4 ALCANTARILLAS","5 CIUDAD","6 CONCIERTO"};
 static enum pause_page _pause_page;
@@ -47,13 +47,15 @@ static bool handle_bound_button(int button, bool down, struct input_t *input) {
 }
 
 static bool pause_large_page() {
-	return _pause_page == PAUSE_CONTROLS || _pause_page == PAUSE_OPTIONS ||
+	return _pause_page == PAUSE_MAIN || _pause_page == PAUSE_GAME || _pause_page == PAUSE_SAVE_CONFIRM || _pause_page == PAUSE_LOAD_CONFIRM || _pause_page == PAUSE_CONTROLS || _pause_page == PAUSE_OPTIONS ||
 		_pause_page == PAUSE_BINDINGS || _pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD || _pause_page == PAUSE_AUDIO || _pause_page == PAUSE_ASSISTS || _pause_page == PAUSE_LEVELS || _pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM || _pause_page == PAUSE_DEFAULTS;
 }
 
 static int pause_item_count() {
 	switch (_pause_page) {
-	case PAUSE_MAIN: return 6;
+	case PAUSE_MAIN: return 7;
+	case PAUSE_GAME: return 3;
+	case PAUSE_SAVE_CONFIRM: case PAUSE_LOAD_CONFIRM: return 2;
 	case PAUSE_LEVELS: return 7;
 	case PAUSE_LEVEL_CONFIRM: case PAUSE_CHARACTER_CONFIRM: return 2;
 	case PAUSE_QUIT: return 2;
@@ -230,7 +232,7 @@ static void pause_center_text(const char *text, int y, int scale, bool selected)
 
 static void pause_row(const char *label, const char *value, int index, bool enabled) {
 	const int y = 50 + index * (_pause_page == PAUSE_OPTIONS ? 11 : 14);
-	const bool selected = index == _pause_selection + ((_pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM || _pause_page == PAUSE_DEFAULTS) ? 4 : 0);
+	const bool selected = index == _pause_selection + ((_pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM || _pause_page == PAUSE_DEFAULTS || _pause_page == PAUSE_SAVE_CONFIRM || _pause_page == PAUSE_LOAD_CONFIRM) ? 4 : 0);
 	if (selected) {
 		SDL_Rect rect = {25,y-3,269,12};
 		SDL_SetRenderDrawColor(_renderer,29,55,77,255);
@@ -244,6 +246,26 @@ static void pause_row(const char *label, const char *value, int index, bool enab
 }
 
 static void pause_draw_settings() {
+	if (_pause_page == PAUSE_GAME) {
+		pause_center_text("PARTIDA",26,2,true);
+		pause_row("GUARDAR PARTIDA",NULL,0,_pause_options.save_game!=NULL);
+		pause_row("CARGAR PARTIDA",NULL,1,_pause_options.prepare_load!=NULL);
+		pause_row("VOLVER",NULL,2,true);
+		pause_center_text("GUARDADO UNICO",115,1,false);
+		pause_center_text("NIVEL, OBJETOS Y HABITACION",131,1,false);
+		pause_center_text(_pause_notice ? _pause_notice : "ENTER / A: ELEGIR  ESC: VOLVER",163,1,true);
+		return;
+	}
+	if (_pause_page == PAUSE_SAVE_CONFIRM || _pause_page == PAUSE_LOAD_CONFIRM) {
+		const bool load=_pause_page == PAUSE_LOAD_CONFIRM;
+		pause_center_text(load ? "CARGAR PARTIDA?" : "GUARDAR PARTIDA?",26,2,true);
+		pause_center_text(load ? "SE PERDERA EL PROGRESO ACTUAL" : "REEMPLAZARA EL GUARDADO ANTERIOR",65,1,false);
+		pause_row("VOLVER",NULL,4,true);
+		pause_row(load ? "CARGAR" : "GUARDAR",NULL,5,true);
+		pause_center_text("ENTER / A: ELEGIR  ESC: VOLVER",163,1,true);
+		return;
+	}
+
 	if (_pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM || _pause_page == PAUSE_DEFAULTS) {
 		const bool character = _pause_page == PAUSE_CHARACTER_CONFIRM;
 		pause_center_text(_pause_page == PAUSE_DEFAULTS ? "RESTAURAR AJUSTES?" : (character ? "ELEGIR PERSONAJE?" : "INICIAR NIVEL?"),26,2,true);
@@ -385,19 +407,19 @@ static void sdl2_draw_pause_menu() {
 		pause_center_text("F6 VERSION  F7 HUD  - / + / 0 ZOOM",158,1,false);
 		pause_center_text("ENTER / A / ESC / B: VOLVER",175,1,true);
 	} else {
-		pause_center_text(_pause_page == PAUSE_QUIT ? "SALIR DEL JUEGO?" : "PAUSA", 44,
+		pause_center_text(_pause_page == PAUSE_QUIT ? "SALIR DEL JUEGO?" : "PAUSA", _pause_page == PAUSE_QUIT ? 44 : 26,
 			2, true);
 		if (_pause_page == PAUSE_QUIT) {
 			pause_center_text("CONFIRMA PARA SALIR", 65, 1, false);
 		} else {
 			SDL_SetRenderDrawColor(_renderer, 38, 68, 91, 255);
-			SDL_RenderDrawLine(_renderer, 43, 65, 276, 65);
+			SDL_RenderDrawLine(_renderer, 43, 47, 276, 47);
 		}
-		const char *main_items[] = {"CONTINUAR", "OPCIONES", "CONTROLES", "SELECCIONAR NIVEL", "ELEGIR PERSONAJE", "SALIR DEL JUEGO"};
+		const char *main_items[] = {"CONTINUAR", "OPCIONES", "CONTROLES", "SELECCIONAR NIVEL", "PARTIDA", "ELEGIR PERSONAJE", "SALIR DEL JUEGO"};
 		const char *quit_items[] = {"VOLVER", "SALIR"};
 		const int count = pause_item_count();
 		for (int i = 0; i < count; ++i) {
-			const int y = _pause_page == PAUSE_QUIT ? 87 + i * 21 : 70 + i * 13;
+			const int y = _pause_page == PAUSE_QUIT ? 87 + i * 21 : 56 + i * 14;
 			const SDL_Color accent = _pause_page == PAUSE_QUIT && i == 1 ? PAUSE_DANGER : PAUSE_GOLD;
 			if (i == _pause_selection) {
 				SDL_Rect selected = {43, y - (_pause_page == PAUSE_QUIT ? 5 : 3), 234, _pause_page == PAUSE_QUIT ? 17 : 12};
@@ -411,8 +433,8 @@ static void sdl2_draw_pause_menu() {
 			pause_text_color(_pause_page == PAUSE_QUIT ? quit_items[i] : main_items[i], 69, y, 1,
 				i == _pause_selection ? accent : PAUSE_TEXT);
 		}
-		pause_text_color("FLECHAS / STICK   ENTER / A", 85, 145, 1, PAUSE_MUTED);
-		pause_text_color("ESC / P / START: VOLVER", 94, 156, 1, PAUSE_MUTED);
+		pause_text_color("FLECHAS / STICK   ENTER / A", 85, _pause_page == PAUSE_QUIT ? 145 : 163, 1, PAUSE_MUTED);
+		pause_text_color("ESC / P / START: VOLVER", 94, _pause_page == PAUSE_QUIT ? 156 : 175, 1, PAUSE_MUTED);
 	}
 	SDL_RenderSetScale(_renderer, 1.f, 1.f);
 	SDL_RenderSetViewport(_renderer, NULL);
@@ -437,10 +459,14 @@ static bool pause_back() {
 	_pause_notice = NULL;
 	if (_pause_capture >= 0) { _pause_capture = -1; return false; }
 	if (_pause_page == PAUSE_MAIN) return true;
-	if (_pause_page == PAUSE_DEFAULTS) {
+	if (_pause_page == PAUSE_SAVE_CONFIRM || _pause_page == PAUSE_LOAD_CONFIRM) {
+		_pause_selection=_pause_page == PAUSE_SAVE_CONFIRM ? 0 : 1; _pause_page=PAUSE_GAME;
+	} else if (_pause_page == PAUSE_GAME) {
+		_pause_page=PAUSE_MAIN; _pause_selection=4;
+	} else if (_pause_page == PAUSE_DEFAULTS) {
 		_pause_page=PAUSE_OPTIONS; _pause_selection=8;
 	} else if (_pause_page == PAUSE_CHARACTER_CONFIRM) {
-		_pause_page=PAUSE_MAIN; _pause_selection=4;
+		_pause_page=PAUSE_MAIN; _pause_selection=5;
 	} else if (_pause_page == PAUSE_LEVEL_CONFIRM) {
 		_pause_page=PAUSE_LEVELS; _pause_selection=_selected_level;
 	} else if (_pause_page == PAUSE_LEVELS) {
@@ -457,7 +483,7 @@ static bool pause_back() {
 	} else if (_pause_page == PAUSE_BINDINGS) {
 		_pause_page = PAUSE_MAIN; _pause_selection = 2;
 	} else {
-		_pause_selection = _pause_page == PAUSE_CONTROLS ? 2 : (_pause_page == PAUSE_QUIT ? 5 : 1);
+		_pause_selection = _pause_page == PAUSE_CONTROLS ? 2 : (_pause_page == PAUSE_QUIT ? 6 : 1);
 		_pause_page = PAUSE_MAIN;
 	}
 	return false;
@@ -465,6 +491,21 @@ static bool pause_back() {
 
 static bool pause_activate() {
 	_pause_notice = NULL;
+	if (_pause_page == PAUSE_GAME) {
+		if (_pause_selection == 2) return pause_back();
+		_pause_page=_pause_selection == 0 ? PAUSE_SAVE_CONFIRM : PAUSE_LOAD_CONFIRM;
+		_pause_selection=0;return false;
+	}
+	if (_pause_page == PAUSE_SAVE_CONFIRM || _pause_page == PAUSE_LOAD_CONFIRM) {
+		if (_pause_selection == 0) return pause_back();
+		const bool load=_pause_page == PAUSE_LOAD_CONFIRM;
+		const bool success=load ? (_pause_options.prepare_load && _pause_options.prepare_load()) : (_pause_options.save_game && _pause_options.save_game());
+		if(load && success) { _pause_options.load_game=true; return true; }
+		pause_back();
+		_pause_notice=_pause_options.save_error ? _pause_options.save_error() : "OPERACION NO DISPONIBLE";
+		return false;
+	}
+
 	if (_pause_page == PAUSE_DEFAULTS) {
 		if (_pause_selection == 0) return pause_back();
 		_pause_options.camera=CAMERA_SMOOTH; _pause_options.hud=HUD_CLASSIC;
@@ -544,7 +585,8 @@ static bool pause_activate() {
 	}
 	if (_pause_selection == 0) return true;
 	if (_pause_selection == 3) { _pause_page=PAUSE_LEVELS; _pause_selection=_pause_options.current_level; return false; }
-	if (_pause_selection == 4) { _pause_page=PAUSE_CHARACTER_CONFIRM; _pause_selection=0; return false; }
+	if (_pause_selection == 4) { _pause_page=PAUSE_GAME; _pause_selection=0; return false; }
+	if (_pause_selection == 5) { _pause_page=PAUSE_CHARACTER_CONFIRM; _pause_selection=0; return false; }
 	_pause_page = _pause_selection == 1 ? PAUSE_OPTIONS : (_pause_selection == 2 ? PAUSE_BINDINGS : PAUSE_QUIT);
 	_pause_selection = 0;
 	return false;
@@ -707,7 +749,8 @@ static void sdl2_run_pause_menu() {
 	sdl2_set_scroll_interpolation(0, 0, 0, false);
 	_pause_page = PAUSE_MAIN;
 	_pause_selection = _pause_axis = _pause_xaxis = _pause_hat = 0;
-	_pause_capture = -1; _pause_notice = NULL;
+	_pause_capture = -1; _pause_notice = _pause_options.load_notice;
+	if (_pause_notice) _pause_page=PAUSE_GAME;
 	if (_pause_options.music_volume > 0) _last_music_volume = _pause_options.music_volume;
 	if (_pause_options.effects_volume > 0) _last_effects_volume = _pause_options.effects_volume;
 	_capture_ignore_key = SDLK_UNKNOWN; _capture_ignore_button = -1;

@@ -920,7 +920,7 @@ static void test_level_menu() {
  if (getenv("BLUES_TEST_CHARACTER")) {
   expected_level=g_vars.level;
   character_choice=levels_started%3; character_events=0; choosing_character=true;
-  _pause_page=PAUSE_MAIN; _pause_selection=4;
+  _pause_page=PAUSE_MAIN; _pause_selection=5;
   sdl2_draw_pause_menu(); snapshot("pause-main");
   assert(!pause_activate() && _pause_page==PAUSE_CHARACTER_CONFIRM && _pause_selection==0);
   sdl2_draw_pause_menu(); snapshot("character-confirm");
@@ -993,6 +993,147 @@ static void test_preferences_loaded() {
 	puts("preferences: separate launch restored effective options, controls, mode and initial lives passed");
 }
 
+static void encode_current_state(uint8_t *data,size_t *size) {
+	struct bb_state state;assert(capture_game_state(&state));state.timestamp=0;
+	assert(bb_state_encode(&state,data,BB_STATE_MAX_SIZE,size));
+}
+static void state_trace() {
+	for(int tick=0;tick<12;++tick) {
+		g_vars.inp_key_left=tick<5;g_vars.inp_key_right=tick>=8;
+		g_vars.inp_key_up=g_vars.inp_key_down=g_vars.inp_key_jump=g_vars.inp_key_space=0;
+		advance_view_transition(_state_view,33);
+		traversal_tick();
+	}
+}
+static uint32_t state_frame_crc() {
+	int w,h;assert(SDL_GetRendererOutputSize(_renderer,&w,&h)==0);
+	uint32_t *pixels=malloc((size_t)w*h*4);assert(pixels);
+	SDL_RenderSetLogicalSize(_renderer,0,0);
+	assert(SDL_RenderReadPixels(_renderer,NULL,SDL_PIXELFORMAT_ARGB8888,pixels,w*4)==0);
+	SDL_RenderSetLogicalSize(_renderer,_screen_w,_screen_h);
+	const uint32_t crc=bb_state_crc((const uint8_t *)pixels,(size_t)w*h*4);free(pixels);return crc;
+}
+static void test_game_state() {
+	if(getenv("BLUES_TEST_STATE_READ")) {
+		uint8_t actual[BB_STATE_MAX_SIZE],expected[BB_STATE_MAX_SIZE],future[BB_STATE_MAX_SIZE];size_t actual_size,expected_size,future_size;
+		assert(prepare_game_load());struct bb_state saved=*_prepared_state;saved.timestamp=0;
+		assert(bb_state_encode(&saved,expected,sizeof(expected),&expected_size));
+		assert(apply_prepared_game());encode_current_state(actual,&actual_size);
+		assert(actual_size==expected_size && !memcmp(actual,expected,actual_size));
+		assert(g_sys.read_save_file(1,future,sizeof(future),&future_size));
+		state_trace();encode_current_state(actual,&actual_size);
+		assert(actual_size==future_size && !memcmp(actual,future,actual_size));
+		g_sys.input.quit=true;puts("state: separate process restored static references and reproduced identical future passed");return;
+	}
+	if(getenv("BLUES_TEST_STATE_TWO")) {g_vars.two_players_flag=true;init_level();}
+	struct object_t *p=&g_vars.objects[OBJECT_NUM_PLAYER1];
+	if(getenv("BLUES_TEST_STATE_ROOM")) {
+		bool entered=false;
+		for(int i=0;i<MAX_DOORS && !entered;++i) if(g_vars.doors[i].dst_y16*16>g_vars.screen_tilemap_h) {
+			p->xpos=p->xpos16*16; p->xpos16=g_vars.doors[i].src_x16;p->ypos16=g_vars.doors[i].src_y16;
+			p->xpos=p->xpos16*16;p->ypos=p->ypos16*16;
+			do_level_enter_door(p);assert(camera_in_room());entered=true;
+		}
+		if(g_vars.level!=5) assert(entered);
+	} else {
+		g_sys.input.view_step=4;*_state_view_step=4;
+		start_view_transition(_state_view,*_state_base_w,*_state_base_h,4);
+		advance_view_transition(_state_view,100);
+	}
+	p=&g_vars.objects[OBJECT_NUM_PLAYER1];
+	p->lifes_count=7;p->data51=2;p->vinyls_count=37;p->unk60=1;
+	p->data5F=g_vars.level<5 ? g_vars.level+1 : 0;
+	g_vars.found_music_instrument_flag=p->data5F!=0;g_vars.ending_counter=123;
+	p->grab_state=1;p->grab_type=OBJECT_GRAB_CRATE;
+	struct object_t *crate=&g_vars.objects[37];
+	crate->type=2;crate->animframes_ptr=animframes_059d+58;crate->grab_type=0;crate->visible_flag=1;
+	crate->xpos=p->xpos+8;crate->ypos=p->ypos-24;crate->xpos16=crate->xpos/16;crate->ypos16=crate->ypos/16;
+	crate->anim_frame=crate->animframes_ptr[0][1];
+	g_res.sql[100]^=1;g_res.triggers[5].unk16=7;
+	for(int i=0;i<MAX_TRIGGERS;++i) if(g_res.triggers[i].op_table3) {p->trigger3=g_res.triggers[i].op_table3;break;}
+	if(getenv("BLUES_TEST_STATE_DEAD")) {
+		struct object_t *p2=&g_vars.objects[OBJECT_NUM_PLAYER2];
+		p2->data51=0;p2->lifes_count=1;p2->special_anim=16;g_vars.player1_dead_flag=true;
+		g_options.cheats &= ~CHEATS_UNLIMITED_LIFES;
+	}
+	update_assist_status();g_sys.set_scroll_interpolation(0,0,0,false);repaint_restored_state();
+	const uint32_t before_pixels=state_frame_crc();
+	struct bb_state state;assert(capture_game_state(&state));
+	uint8_t bytes[BB_STATE_MAX_SIZE],roundtrip[BB_STATE_MAX_SIZE],expected[BB_STATE_MAX_SIZE];size_t size,other_size,expected_size;
+	assert(bb_state_encode(&state,bytes,sizeof(bytes),&size));
+	struct bb_state decoded;assert(bb_state_decode(&decoded,bytes,size));
+	assert(!memcmp(&state.vars,&decoded.vars,sizeof(state.vars)));
+	assert(save_current_game());
+	/* Reject bad headers, truncated data, future versions, checksum errors and
+	 * semantically invalid values without touching the running world. */
+	for(size_t n=0;n<size;n+=17) assert(!bb_state_decode(&decoded,bytes,n));
+	bytes[8]=99;assert(!bb_state_decode(&decoded,bytes,size));bytes[8]=1;
+	bytes[size-1]^=1;assert(!bb_state_decode(&decoded,bytes,size));bytes[size-1]^=1;
+	assert(g_sys.write_save_file(0,bytes,size-1));assert(!prepare_game_load());
+	assert(!memcmp(&state.vars,&g_vars,sizeof(g_vars)) && !memcmp(state.map,g_res.sql,sizeof(state.map)));
+	assert(g_sys.write_save_file(0,bytes,size));
+	struct bb_state bad=state;bad.vars.level=6;assert(!bb_state_encode(&bad,roundtrip,sizeof(roundtrip),&other_size));
+	bad=state;bad.resources^=1;assert(bb_state_encode(&bad,roundtrip,sizeof(roundtrip),&other_size));
+	assert(g_sys.write_save_file(0,roundtrip,other_size));assert(!prepare_game_load());
+	assert(!memcmp(&state.vars,&g_vars,sizeof(g_vars)));assert(g_sys.write_save_file(0,bytes,size));
+	/* Advance a deterministic future and compare every serialized field after
+	 * restoring and replaying the same inputs (including a zoom transition). */
+	state_trace();encode_current_state(expected,&expected_size);
+	if(getenv("BLUES_TEST_STATE_WRITE")) {assert(g_sys.write_save_file(1,expected,expected_size));g_sys.input.quit=true;puts("state: cross-process fixture and deterministic future saved");return;}
+	assert(prepare_game_load());assert(apply_prepared_game());
+	assert(state_frame_crc()==before_pixels);
+	encode_current_state(roundtrip,&other_size);
+	state.timestamp=0;assert(bb_state_encode(&state,bytes,sizeof(bytes),&size));
+
+	assert(size==other_size && !memcmp(bytes,roundtrip,size));
+	snapshot("restored-save");
+	state_trace();encode_current_state(roundtrip,&other_size);
+	assert(other_size==expected_size && !memcmp(expected,roundtrip,other_size));
+	/* Reload from another native release, then from another level. */
+	assert(switch_data_mode());
+	const char **path=state.amiga ? &g_options.amiga_datapath : &g_options.dos_datapath;
+	const char *valid_path=*path;*path="/nonexistent/blues-data";
+	const struct vars_t before=g_vars;assert(!prepare_game_load());assert(!memcmp(&before,&g_vars,sizeof(before)));*path=valid_path;
+	assert(prepare_game_load());assert(apply_prepared_game());
+	assert(g_res.amiga_data==state.amiga && !memcmp(&state.vars,&g_vars,sizeof(g_vars)));
+	start_selected_level((state.vars.level+1)%6);load_level_data(g_vars.level);
+	g_vars.screen_tilemap_w=level_dim[g_vars.level*2];g_vars.screen_tilemap_h=level_dim[g_vars.level*2+1];init_level();g_vars.menu_level_jump=false;
+	assert(prepare_game_load());assert(apply_prepared_game());
+	encode_current_state(roundtrip,&other_size);assert(other_size==size && !memcmp(bytes,roundtrip,size));
+	g_sys.input.quit=true;
+	puts("state: portable full restore, corruption/resource rejection, deterministic replay, cross-mode/level load passed");
+}
+
+static struct vars_t state_menu_before;
+static uint32_t state_menu_script(uint32_t interval,void *param) {
+	assert(SDL_GetAudioStatus()!=SDL_AUDIO_PLAYING);
+	const int step=menu_timer_step++;
+	if(step==0) {
+		for(int i=0;i<4;++i) menu_tap(SDLK_DOWN);
+		menu_tap(SDLK_RETURN);menu_tap(SDLK_DOWN);menu_tap(SDLK_RETURN);
+		menu_tap(SDLK_DOWN);menu_tap(SDLK_RETURN); /* No file: stay paused. */
+	} else if(step==1) {
+		menu_tap(SDLK_UP);menu_tap(SDLK_RETURN);menu_tap(SDLK_DOWN);menu_tap(SDLK_RETURN);
+	} else {
+		menu_tap(SDLK_DOWN);menu_tap(SDLK_RETURN);menu_tap(SDLK_DOWN);push_menu_key(SDLK_RETURN,true);
+	}
+	return menu_timer_step==3 ? 0 : interval;
+}
+static void test_state_menu() {
+	state_menu_before=g_vars;menu_timer_step=0;
+	_pause_menu_open=true;
+	_pause_page=PAUSE_MAIN;_pause_selection=4;sdl2_draw_screen(0,0,1);snapshot("state-main");
+	_pause_page=PAUSE_GAME;_pause_selection=0;sdl2_draw_screen(0,0,1);snapshot("state-menu");
+	_pause_page=PAUSE_SAVE_CONFIRM;_pause_selection=0;sdl2_draw_screen(0,0,1);snapshot("state-save-confirm");
+	_pause_page=PAUSE_LOAD_CONFIRM;_pause_selection=0;sdl2_draw_screen(0,0,1);snapshot("state-load-confirm");
+	_pause_menu_open=false;
+	assert(SDL_AddTimer(60,state_menu_script,NULL));
+	sdl2_run_pause_menu();
+	assert(menu_timer_step==3 && _pause_options.load_game && _prepared_state);
+	assert(!memcmp(&state_menu_before,&g_vars,sizeof(g_vars)));
+	assert(!g_sys.input.direction && !g_sys.input.space && !g_sys.input.jump);
+}
+
 static void test_events() {
 	sdl2_process_events();
 	if (_sprites_cliprect.y != TILEMAP_OFFSET_Y) {
@@ -1007,6 +1148,12 @@ static void test_events() {
 		return;
 	}
 	g_sys.input.space = false;
+	if (getenv("BLUES_TEST_STATE_MENU")) {
+		if(test_frames==2) g_sys.input.menu=true;
+		if(test_frames==3) {assert(!memcmp(&state_menu_before,&g_vars,sizeof(g_vars)));g_sys.input.quit=true;puts("state menu: rejected missing file, confirmed save/load, frozen world and clean restore passed");}
+		++test_frames;return;
+	}
+	if (getenv("BLUES_TEST_STATE")) {if(test_frames++>=2)test_game_state();return;}
 	if (getenv("BLUES_TEST_PREFS_EXPECT")) {test_preferences_loaded();return;}
 	if (getenv("BLUES_TEST_LEVELS")) {test_level_events();return;}
 	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU") || getenv("BLUES_TEST_RESET_PREFS")) {
@@ -1175,8 +1322,10 @@ static void test_events() {
 
 int main(int argc, char **argv) {
 	if (!SDL_getenv("BLUES_CONFIG_FILE")) SDL_setenv("BLUES_CONFIG_FILE","",1);
+	if (!SDL_getenv("BLUES_SAVE_DIR")) SDL_setenv("BLUES_SAVE_DIR","",1);
 	if (getenv("BLUES_TEST_MODES") || getenv("BLUES_TEST_VOLUMES")) g_sys.start_audio = capture_start_audio;
 	g_sys.process_events = test_events;
+	if (getenv("BLUES_TEST_STATE_MENU")) g_sys.run_pause_menu=test_state_menu;
 	if (getenv("BLUES_TEST_LEVELS")) g_sys.run_pause_menu=test_level_menu;
 	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU") || getenv("BLUES_TEST_RESET_PREFS")) g_sys.run_pause_menu = test_run_pause_menu;
 	g_sys.sleep = no_sleep;
@@ -1205,6 +1354,8 @@ int main(int argc, char **argv) {
 		puts("menu: frozen game/objects/map/zoom/audio, preserved scene and clean resume through actual game loop passed");
 		return result;
 	}
+	if (getenv("BLUES_TEST_STATE_MENU")) return result;
+	if (getenv("BLUES_TEST_STATE")) return result;
 	if (getenv("BLUES_TEST_PREFS_EXPECT")) return result;
 	if (getenv("BLUES_TEST_LEVELS")) {assert(levels_started==7);return result;}
 	if (getenv("BLUES_TEST_TRAVERSAL")) return result;

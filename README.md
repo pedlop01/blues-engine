@@ -29,6 +29,7 @@ focused on the first **Blues Brothers** game.
 | Level selection | Six stages from the pause menu, with confirmation, current-stage restart and unavailable-data detection. Starts fresh while retaining characters, life counts, assists and presentation settings. |
 | Larger views | Dynamic sprite storage replaces the fixed sprite limit; camera bounds and defeated-enemy visibility follow the current view. |
 | Persistent preferences | Presentation, volumes, controls, preferred DOS/Amiga release, assists and chosen starting lives survive restarts. Confirmed reset in Options restores defaults. |
+| Complete save state | Pause → Partida saves/restores gameplay, enemies, carried objects, edited maps, rooms, native release and zoom. Versioned format, compatibility checks and one confirmed save position; eight slots/thumbnails remain task 14. |
 | Regression tests | Tests cover DOS sequencer accuracy, PCM continuity, zoom, doors, defeated enemies and live presentation changes. |
 
 Audio output is 44.1 kHz. Technical tests pass, and the Windows DOS audio
@@ -394,7 +395,7 @@ release is kept. Select Continue to apply the prepared changes.
 Explicit command-line settings override loaded preferences. A saved Amiga
 preference is used when both data paths are supplied; `--datapath` explicitly
 chooses the initial data set, and a missing secondary path falls back to the
-provided release. Progress remains the separate save-state task.
+provided release. Game progress uses the separate save files described below.
 
 The text format is versioned. Invalid values are ignored, duplicate/reserved
 bindings are rejected, and unknown keys are tolerated. A newer format is left
@@ -410,6 +411,45 @@ python3 tests/check_preferences_launches.py
 Tests cover independent game-process launches, CLI precedence, Unicode paths
 and bindings, bad/truncated values, future formats, failed writes, the real reset
 menu, preserved health and restored controls/starting lives.
+
+### Save and load a complete game
+
+Open **Pause → Partida → Guardar partida** or **Cargar partida**. Each operation
+asks for confirmation with **Volver** selected by default. Saving replaces the
+single current save; after saving, the menu stays paused and reports the result.
+Loading restores the saved scene and resumes without menu inputs leaking into
+gameplay. Missing, damaged or incompatible saves report an error while keeping
+the current world paused and intact.
+
+The save contains position, health/lives, inventory, checkpoints, enemies,
+projectiles/carried objects, map edits, trigger states, doors, bonus room,
+character/one-two-player state, eliminated players, native DOS/Amiga graphics,
+HUD/camera, camera smoothing and in-progress zoom. Pending options apply on
+Continue; saving captures the currently paused world. Your current controls,
+fullscreen, render rate, audio volumes and preferred initial life counts remain
+preferences. The saved music track restarts on load; exact audio playback phase
+and transient effects are not restored.
+
+Files are stored separately from original game data and preferences:
+
+- Windows: `%APPDATA%\pedlop01\blues-engine\saves\slot01.bbs`.
+- Linux/WSL: `$XDG_DATA_HOME/pedlop01/blues-engine/saves/slot01.bbs`, or
+  `~/.local/share/pedlop01/blues-engine/saves/slot01.bbs` by default.
+
+`BLUES_SAVE_DIR` can select an existing folder; an empty value disables save
+storage. The file format is versioned, checksummed and independent of pointer
+size. The saved release's original game files must still be supplied and match
+the captured resources. Loading can change level and DOS/Amiga mode directly.
+To load after restarting the application, start playing and open Pause → Partida.
+The eight-slot browser and thumbnails are the next separate task.
+
+```
+make build/tests/check_viewport build/tests/check_preferences
+python3 tests/check_state_launches.py
+```
+
+See [docs/SAVE_FORMAT.md](docs/SAVE_FORMAT.md) for the format, compatibility
+rules and complete snapshot boundary.
 
 ### Return to character selection
 

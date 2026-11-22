@@ -987,6 +987,7 @@ static int handle_event(const SDL_Event *ev, bool *paused) {
 
 #include "sys_sdl2_menu.h"
 #include "sys_sdl2_preferences.h"
+#include "sys_sdl2_saves.h"
 
 static void sdl2_process_events() {
 	bool paused = false;
@@ -1187,6 +1188,8 @@ struct sys_t g_sys = {
 	.init = sdl2_init,
 	.load_preferences = sdl2_load_preferences,
 	.save_preferences = sdl2_save_preferences,
+	.read_save_file = sdl2_read_save_file,
+	.write_save_file = sdl2_write_save_file,
 	.fini = sdl2_fini,
 	.set_screen_size = sdl2_set_screen_size,
 	.set_screen_palette = sdl2_set_screen_palette,

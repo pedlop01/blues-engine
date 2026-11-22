@@ -14,7 +14,7 @@ $(error Set MODPLUG_ROOT to the libmodplug MinGW installation directory)
 endif
 endif
 
-BB_SRCS := bb/decode.c bb/game.c bb/level.c bb/objects.c bb/resource.c bb/screen.c bb/sound.c bb/staticres.c bb/tiles.c bb/unpack.c
+BB_SRCS := bb/decode.c bb/game.c bb/level.c bb/objects.c bb/state.c bb/resource.c bb/screen.c bb/sound.c bb/staticres.c bb/tiles.c bb/unpack.c
 
 BB_OBJS := $(patsubst %.c,$(WIN_BUILD_DIR)/%.o,$(BB_SRCS))
 APP_OBJS := $(addprefix $(WIN_BUILD_DIR)/,main.o mixer.o dos_audio.o third_party/nuked-opl3/opl3.o sys_sdl2.o util.o)

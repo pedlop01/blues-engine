@@ -172,6 +172,7 @@ struct vars_t {
 	uint16_t level_loop_counter;
 	int triggers_counter;
 	int update_objects_counter;
+	int ending_counter;
 };
 
 extern struct vars_t g_vars;

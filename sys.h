@@ -44,7 +44,11 @@ struct sys_pause_options {
 	bool amiga, can_switch;
 	bool invulnerable, infinite_lives, two_players, player_alive[2];
 	int lives[2];
-	bool select_character, reset_defaults;
+	bool select_character, reset_defaults, load_game;
+	bool (*save_game)();
+	bool (*prepare_load)();
+	const char *(*save_error)();
+	const char *load_notice;
 	int current_level, requested_level; /* -1 means continue. */
 	bool available_levels[2][6]; /* DOS, Amiga; six stages each. */
 	enum camera_mode camera;
@@ -59,6 +63,8 @@ struct sys_t {
 	void	(*init)();
 	void	(*load_preferences)();
 	void	(*save_preferences)();
+	bool	(*read_save_file)(int slot, uint8_t *data, size_t capacity, size_t *size);
+	bool	(*write_save_file)(int slot, const uint8_t *data, size_t size);
 	void	(*fini)();
 	void	(*set_screen_size)(int w, int h, const char *caption, int scale, const char *filter, bool fullscreen);
 	void	(*set_screen_palette)(const uint8_t *colors, int offset, int count, int depth);

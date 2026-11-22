@@ -4,7 +4,7 @@ SDL_LIBS   := `sdl2-config --libs`
 
 MODPLUG_LIBS ?= -lmodplug
 
-BB := decode.c game.c level.c objects.c resource.c screen.c sound.c staticres.c tiles.c unpack.c
+BB := decode.c game.c level.c objects.c state.c resource.c screen.c sound.c staticres.c tiles.c unpack.c
 JA := game.c level.c resource.c screen.c sound.c staticres.c unpack.c
 P2 := bosses.c game.c level.c monsters.c resource.c screen.c sound.c staticres.c unpack.c
 
