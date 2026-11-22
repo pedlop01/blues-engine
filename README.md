@@ -19,6 +19,7 @@ focused on the first **Blues Brothers** game.
 | Native Windows x64 | Build from WSL with MinGW-w64, SDL2 and libmodplug. |
 | Smoother motion | Camera, characters and objects presented at 30, 60 or 120 Hz while gameplay simulation remains at 30 Hz. |
 | Camera choice | Classic following or smooth following with directional anticipation and a vertical dead zone; select with `--camera=classic` or `--camera=smooth` (default). |
+| Native Amiga layering | Original `.m` masks put scenery in front of actors while preserving holes and opaque black. Copper gradients fill the whole playfield; native props retain their four color planes and level palette. |
 | Stable scrolling edges | A guarded map background covers intermediate camera positions; Amiga copper gradients stay fixed on screen while scenery scrolls, including at 1×/60 Hz. |
 | Dynamic framing | `-` reveals more of the map, `+` moves closer, and `0` restores the initial view; changes ease over about 300 ms. |
 | Original DOS audio | Native playback of four AdLib songs and 18 effects, read from the user's supported `1.EXE`, with Nuked OPL3 chip emulation. |
@@ -678,6 +679,30 @@ edits, room/zoom coordinates, actor rendering, PCM output from both soundtracks,
 matching player sprite/atlas dimensions after each switch, and safe rejection
 when the alternate resources are missing. It can start in
 either mode and run against each of the six levels.
+
+### Amiga foreground, background and lift graphics
+
+```
+make build/tests/check_viewport
+python3 tests/check_amiga_layers.py
+```
+
+Native `.m` files contain 16×16 foreground masks. The masks are copied before
+the temporary resource buffer is reused, combined with each tile's native colors,
+and drawn after actors. Transparent holes and opaque black stay distinct; masked
+copper-color pixels retain their live gradient color. Foreground drawing uses
+the current SQL animation frame and includes the same scroll guard band as the
+background. The copper gradient spans the playfield from its top to its bottom,
+rather than ending early above the lower HUD.
+
+Player graphics use three bitplanes and colors 16–23; common `objet` graphics use
+four bitplanes and the level palette. The tests compare all foreground mask pixels,
+holes, black, copper rows, native prop colors, level sprite flips and alternating
+lift frames. They also compare 400 incremental tile edits with a full redraw at a
+non-aligned camera origin: moving lifts and their shafts must update in viewport
+coordinates, while the SQL map retains world coordinates. Tests run in all six
+Amiga stages and both HUD modes. With `BLUES_VIEW_TEST_OUTPUT` pointing to an
+existing directory, before/after actor occlusion captures are also available.
 
 ### Scrolling edges and Amiga copper regression
 

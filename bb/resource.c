@@ -328,10 +328,13 @@ void load_img(const char *filename, int screen_w, int dither_pattern) {
 }
 
 void load_m(const char *filename) {
+	g_res.amiga_mask_count=0;
 	if (!filename || !*filename) return;
 	const int filesize = read_file(filename, g_res.tmp, 0);
 	const int count = READ_BE_UINT16(g_res.tmp);
-	assert(filesize == 2 + count * 32);
+	assert(count<=MAX_AVT && filesize == 2 + count * 32);
+	memcpy(g_res.amiga_masks,g_res.tmp+2,count*32);
+	g_res.amiga_mask_count=count;
 }
 
 static int load_spr_helper(int offset, const uint8_t *ptr, uint16_t (*read16)(const uint8_t *), int depth) {

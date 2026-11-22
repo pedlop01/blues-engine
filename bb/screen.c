@@ -240,7 +240,7 @@ static void decode_graphics(int spr_type, int start, int end, const uint8_t *dit
 	uint8_t *data = (uint8_t *)calloc(MAX_SPRITESHEET_W * MAX_SPRITESHEET_H, 1);
 	if (data) {
 		const uint8_t color_key = dither_lut ? 0x20 : 0;
-		const int depth = g_res.amiga_data && (start == 0) ? 3 : 4;
+
 		int current_x = 0;
 		int max_w = 0;
 		int current_y = 0;
@@ -267,7 +267,14 @@ static void decode_graphics(int spr_type, int start, int end, const uint8_t *dit
 					max_h = h;
 				}
 			}
-			decode_spr(ptr, w, w, h, depth, data, MAX_SPRITESHEET_W, current_x, current_y, g_res.amiga_data);
+			const bool amiga_player=g_res.amiga_data && i<101;
+			decode_spr(ptr, w, w, h, amiga_player ? 3 : 4, data, MAX_SPRITESHEET_W, current_x, current_y, g_res.amiga_data);
+			/* The objet file has four planes and uses level colors. Only the
+			 * 101 player frames use three planes and the upper sprite palette. */
+			if(amiga_player)for(int yy=0;yy<h;++yy)for(int xx=0;xx<w;++xx) {
+				uint8_t *pixel=data+(current_y+yy)*MAX_SPRITESHEET_W+current_x+xx;
+				if(*pixel)*pixel|=16;
+			}
 			if (dither_lut) {
 				dither_graphics(data + current_y * MAX_SPRITESHEET_W + current_x, MAX_SPRITESHEET_W, w, h, dither_lut, color_key);
 			}
@@ -281,19 +288,36 @@ static void decode_graphics(int spr_type, int start, int end, const uint8_t *dit
 				max_h = h;
 			}
 		}
-		if (g_res.amiga_data && start == 0) {
-			for (int i = 0; i < MAX_SPRITESHEET_W * MAX_SPRITESHEET_H; ++i) {
-				if (data[i] != 0) {
-					data[i] |= 16;
-				}
-			}
-		}
+
 		assert(max_w <= MAX_SPRITESHEET_W);
 		assert(current_y + max_h <= MAX_SPRITESHEET_H);
 		g_sys.render_unload_sprites(spr_type);
 		g_sys.render_load_sprites(spr_type, end - start, r, data, MAX_SPRITESHEET_W, current_y + max_h, color_key, false);
 		free(data);
 	}
+}
+
+static void load_amiga_foreground() {
+	/* .m files are one-bit occlusion masks indexed by each trigger's foreground
+	 * index. Set bits retain the original tile color, including opaque black. */
+	struct sys_rect_t r[256];
+	uint8_t *pixels=malloc(256*256);if(!pixels)return;
+	memset(pixels,0x20,256*256);
+	for(int tile=0;tile<256;++tile) {
+		r[tile]=(struct sys_rect_t){(tile%16)*16,(tile/16)*16,16,16};
+		const int mask=g_res.triggers[tile].foreground_tile_num;
+		if(mask>=g_res.amiga_mask_count)continue;
+		const int index=tile&127;
+		const uint8_t *src=g_res.tiles+((index/20)*640+(index%20))*16+(tile&128 ? 320 : 0);
+		for(int y=0;y<16;++y) {
+			const uint16_t bits=READ_BE_UINT16(g_res.amiga_masks[mask]+y*2);
+			for(int x=0;x<16;++x)if(bits&(0x8000u>>x))
+				pixels[(r[tile].y+y)*256+r[tile].x+x]=src[y*640+x];
+		}
+	}
+	g_sys.render_unload_sprites(RENDER_SPR_FG);
+	g_sys.render_load_sprites(RENDER_SPR_FG,256,r,pixels,256,256,0x20,false);
+	free(pixels);
 }
 
 void screen_load_graphics(const uint8_t *dither_lut_sqv, const uint8_t *dither_lut_avt) {
@@ -313,10 +337,10 @@ void screen_load_graphics(const uint8_t *dither_lut_sqv, const uint8_t *dither_l
 		struct sys_rect_t r[MAX_SPR_FRAMES];
 		static const int FG_TILE_W = 16;
 		static const int FG_TILE_H = 16;
-		if (g_res.avt_count == 0) {
+		if (!g_res.amiga_data && g_res.avt_count == 0) {
 			g_sys.render_unload_sprites(RENDER_SPR_FG);
 		}
-		uint8_t *data = g_res.avt_count > 0 ? (uint8_t *)malloc(g_res.avt_count * FG_TILE_W * FG_TILE_H) : 0;
+		uint8_t *data = !g_res.amiga_data && g_res.avt_count > 0 ? (uint8_t *)malloc(g_res.avt_count * FG_TILE_W * FG_TILE_H) : 0;
 		if (data) {
 			const int pitch = g_res.avt_count * FG_TILE_W;
 			for (int i = 0; i < g_res.avt_count; ++i) {
@@ -348,6 +372,7 @@ void screen_load_graphics(const uint8_t *dither_lut_sqv, const uint8_t *dither_l
 				const int x = ((i - 128) % W) + W;
 				decode_amiga_blk(g_res.vga + i * 16 * 8, g_res.tiles + (y * 640 + x) * 16, 640);
 			}
+			load_amiga_foreground();
 		}
 	}
 }

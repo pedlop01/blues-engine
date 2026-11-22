@@ -151,7 +151,7 @@ static void repaint_restored_state() {
 		else screen_add_game_sprite1(o->screen_xpos,o->screen_ypos+1,o->anim_frame);
 	}
 	g_sys.set_sprite_owner(-1);
-	if(!g_res.amiga_data) draw_foreground_tiles();
+	draw_foreground_tiles();
 	const int vinyls=g_vars.vinyls_count;
 	_state_repainting=true;draw_level_panel();_state_repainting=false;g_vars.vinyls_count=vinyls;
 	copy_level_bitmap();g_sys.update_screen();

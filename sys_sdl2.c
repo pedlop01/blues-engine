@@ -11,6 +11,7 @@ static const int FADE_STEPS = 16;
 
 struct spritesheet_t {
 	int count;
+	uint32_t *color_usage;
 	SDL_Rect *r;
 	SDL_Surface *surface;
 	SDL_Texture *texture;
@@ -485,7 +486,7 @@ static void sdl2_set_scroll_background(const uint8_t *pixels,int margin) {
 	for(int i=0;i<w*h;++i)_scroll_pixels[i]=pixels[i]==_copper_color_key ? 0 : (0xff000000u|_screen_palette[pixels[i]]);
 	SDL_UpdateTexture(_scroll_texture,NULL,_scroll_pixels,w*4);
 	for(int y=0;y<_screen_h;++y) {
-		const int line=(y*200/_screen_h)/2;
+		const int line=MAX(0,MIN(COPPER_BARS_H-1,(y-_sprites_cliprect.y)*COPPER_BARS_H/MAX(1,_sprites_cliprect.h)));
 		_scroll_pixels[y]=_copper_color_key<0 ? 0 : (line<COPPER_BARS_H ? _copper_palette[line] : _screen_palette[_copper_color_key]);
 	}
 	SDL_UpdateTexture(_scroll_copper_texture,NULL,_scroll_pixels,4);
@@ -603,6 +604,29 @@ static void sdl2_end_scene() {
 	_world_offset_x = _world_offset_y = 0;
 }
 
+/* Masked foreground pixels still use the live Amiga color register: a
+ * copper-key pixel must hide an actor with the gradient, not a flat color. */
+static void sdl2_foreground_copper(const struct sprite_t *spr,float scroll_x,float scroll_y,float progress) {
+	const struct spritesheet_t *sheet=&_spritesheets[spr->sheet];
+	if(spr->sheet!=RENDER_SPR_FG || !sheet->surface || _copper_color_key<0 || _copper_color_key>=32 ||
+		!sheet->color_usage || !(sheet->color_usage[spr->num]&(1u<<_copper_color_key)))return;
+	const SDL_Rect *source=&sheet->r[spr->num];
+	SDL_FRect dest=sdl2_sprite_rect(spr,scroll_x,scroll_y,progress);
+	dest.x-=_world_offset_x;dest.y-=_world_offset_y;
+	Uint8 r,g,b,a;SDL_GetRenderDrawColor(_renderer,&r,&g,&b,&a);
+	for(int y=0;y<source->h;++y) {
+		const uint8_t *row=(const uint8_t *)sheet->surface->pixels+(source->y+y)*sheet->surface->pitch+source->x;
+		for(int x=0;x<source->w;++x)if(row[x]==_copper_color_key) {
+			const int line=MAX(0,MIN(COPPER_BARS_H-1,(int)((dest.y+_world_offset_y+y-_sprites_cliprect.y)*COPPER_BARS_H/MAX(1,_sprites_cliprect.h))));
+			const uint32_t color=_copper_palette[line];
+			SDL_SetRenderDrawColor(_renderer,(color>>16)&255,(color>>8)&255,color&255,255);
+			const SDL_FRect pixel={dest.x+(spr->xflip ? source->w-1-x : x),dest.y+y,1,1};
+			SDL_RenderFillRectF(_renderer,&pixel);
+		}
+	}
+	SDL_SetRenderDrawColor(_renderer,r,g,b,a);
+}
+
 static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
 	const bool rewind_scene = sdl2_begin_rewind_scene();
 	const bool smooth_scroll = scroll_x != 0.f || scroll_y != 0.f;
@@ -658,6 +682,7 @@ static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
 				SDL_RenderCopyExF(_renderer, sheet->texture, &sheet->r[spr->num], &r, 0., 0, SDL_FLIP_HORIZONTAL);
 			}
 		}
+		sdl2_foreground_copper(spr,scroll_x,scroll_y,progress);
 	}
 	SDL_RenderSetClipRect(_renderer, 0);
 	sdl2_end_scene();
@@ -1138,6 +1163,14 @@ static void render_load_sprites(int spr_type, int count, const struct sys_rect_t
 	assert(spr_type < ARRAYSIZE(_spritesheets));
 	struct spritesheet_t *sheet = &_spritesheets[spr_type];
 	sheet->count = count;
+	sheet->color_usage=NULL;
+	if(spr_type==RENDER_SPR_FG && color_key==0x20) {
+		sheet->color_usage=calloc(count,sizeof(*sheet->color_usage));
+		if(sheet->color_usage)for(int i=0;i<count;++i)for(int y=0;y<r[i].h;++y)for(int x=0;x<r[i].w;++x) {
+			const uint8_t color=data[(r[i].y+y)*w+r[i].x+x];
+			if(color<32)sheet->color_usage[i]|=1u<<color;
+		}
+	}
 	sheet->r = (SDL_Rect *)malloc(count * sizeof(SDL_Rect));
 	for (int i = 0; i < count; ++i) {
 		SDL_Rect *rect = &sheet->r[i];
@@ -1155,7 +1188,7 @@ static void render_load_sprites(int spr_type, int count, const struct sys_rect_t
 	}
 	SDL_UnlockSurface(surface);
 	sheet->texture = SDL_CreateTextureFromSurface(_renderer, surface);
-	if (update_pal) { /* update texture on palette change */
+	if (update_pal || (spr_type==RENDER_SPR_FG && color_key==0x20)) { /* retain native mask indices / update palette */
 		sheet->surface = surface;
 	} else  {
 		SDL_FreeSurface(surface);
@@ -1166,6 +1199,7 @@ static void render_unload_sprites(int spr_type) {
 	/* A replacement atlas may belong to a different DOS/Amiga release. */
 	_previous_sprites_count = 0;
 	struct spritesheet_t *sheet = &_spritesheets[spr_type];
+	free(sheet->color_usage);sheet->color_usage=NULL;
 	free(sheet->r);
 	if (sheet->surface) {
 		SDL_FreeSurface(sheet->surface);

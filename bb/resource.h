@@ -35,6 +35,8 @@ struct resource_data_t {
 	uint8_t *avt_sqv;
 	uint8_t *tmp;
 	int avt_count;
+	int amiga_mask_count;
+	uint8_t amiga_masks[MAX_AVT][32];
 	const uint8_t *avt[MAX_AVT];
 	int spr_count;
 	int common_spr_count;

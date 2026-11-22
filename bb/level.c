@@ -1120,7 +1120,8 @@ static void do_level_add_sprite3(struct object_t *obj) {
 void do_level_update_tile(int x, int y, int num) {
 	uint8_t *ptr = lookup_sql(x, y);
 	*ptr = num;
-	screen_draw_tile(g_vars.screen_tile_lut[num & 0x7F], num & 0x80, x, y);
+	screen_draw_tile(g_vars.screen_tile_lut[num & 0x7F], num & 0x80,
+		x-(g_vars.screen_tilemap_xorigin>>4),y-(g_vars.screen_tilemap_yorigin>>4));
 }
 
 static void do_level_reset_tiles(struct object_t *obj, int dy) {
@@ -2379,23 +2380,19 @@ static void draw_foreground_tiles() {
 	int y = g_vars.screen_tilemap_yorigin >> 4;
 	const int rows = (TILEMAP_SCREEN_H + (g_vars.screen_tilemap_yorigin & 15) + 15) / 16;
 	const int columns = (TILEMAP_SCREEN_W + (g_vars.screen_tilemap_xorigin & 15) + 15) / 16;
-	for (int j = 0; j < rows; ++j) {
-		const uint8_t *ptr = lookup_sql(x, y);
-		for (int i = 0; i < columns; ++i) {
-			uint8_t num = *ptr++;
-			const uint8_t *data = g_res.triggers[num].op_table2;
-			if (data) {
-				const int current = data[0];
-				num = data[current + 1];
-			}
+	/* Match the SQL tile actually drawn this tick, not the next animation
+	 * frame. Include the same 32-pixel guard band as the background. */
+	for (int j = -2; j < rows+2; ++j) {
+		for (int i = -2; i < columns+2; ++i) {
+			if(x+i<0 || x+i>=g_vars.screen_tilemap_w || y+j<0 || y+j>=125)continue;
+			const uint8_t num=*lookup_sql(x+i,y+j);
 			const int avt_num = g_res.triggers[num].foreground_tile_num;
-			if (avt_num != 255) {
+			if (avt_num != 255 && (!g_res.amiga_data || avt_num<g_res.amiga_mask_count)) {
 				const int tile_y = g_vars.screen_tilemap_yoffset + j * 16 + TILEMAP_OFFSET_Y;
 				const int tile_x = g_vars.screen_tilemap_xoffset + i * 16;
-				g_sys.render_add_sprite(RENDER_SPR_FG, avt_num, tile_x, tile_y, 0);
+				g_sys.render_add_sprite(RENDER_SPR_FG, g_res.amiga_data ? num : avt_num, tile_x, tile_y, 0);
 			}
 		}
-		++y;
 	}
 }
 
@@ -2705,9 +2702,7 @@ void do_level() {
 			_view_camera_cut = false;
 			_camera.valid = false;
 		}
-		if (!g_res.amiga_data) {
-			draw_foreground_tiles();
-		}
+		draw_foreground_tiles();
 		++g_vars.level_loop_counter;
 		draw_level_panel();
 		g_sys.set_scroll_interpolation(

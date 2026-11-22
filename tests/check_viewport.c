@@ -1358,7 +1358,7 @@ static void test_scroll_edges() {
 				SDL_RenderSetLogicalSize(_renderer,320,200);
 				for(int y=0;y<160;++y)for(int x=0;x<320;++x) {
 					const uint8_t color=scroll_map_pixel(g_vars.screen_tilemap_xorigin+x-sx,g_vars.screen_tilemap_yorigin+y-sy);
-					const int line=((y+14)*200/GAME_SCREEN_H)/2;
+					const int line=y*COPPER_BARS_H/160;
 					const uint32_t expected=color==_copper_color_key && line<COPPER_BARS_H ? _copper_palette[line] : _screen_palette[color];
 					if((pixels[(y+14)*320+x]&0xffffff)!=(expected&0xffffff)) {
 						fprintf(stderr,"scroll pixel mismatch corner=%d delta=%d,%d phase=%d at=%d,%d actual=%06x expected=%06x\n",corner,dx,dy,phase,x,y,pixels[(y+14)*320+x]&0xffffff,expected&0xffffff);assert(false);
@@ -1383,6 +1383,129 @@ static void test_scroll_edges() {
 	g_sys.input.quit=true;
 }
 
+static uint8_t native_sprite_pixel(int frame,int x,int y) {
+	const uint8_t *src=g_res.spr_frames[frame];
+	const int w=READ_LE_UINT16(src-2),h=READ_LE_UINT16(src-4),plane=w*h/8;
+	uint8_t color=0;
+	for(int b=0;b<4;++b)if(src[b*plane+y*w/8+x/8]&(0x80u>>(x&7)))color|=1<<b;
+	return color;
+}
+static void read_native_test_pixels(uint32_t *pixels) {
+	SDL_RenderSetLogicalSize(_renderer,0,0);
+	assert(SDL_RenderReadPixels(_renderer,NULL,SDL_PIXELFORMAT_ARGB8888,pixels,320*4)==0);
+	SDL_RenderSetLogicalSize(_renderer,320,200);
+}
+static void test_world_tile_redraw() {
+	uint8_t before[320*200],expected[320*200],map[BB_STATE_MAP_SIZE];
+	memcpy(map,g_res.sql,sizeof(map));
+	g_vars.screen_tilemap_xorigin=77;g_vars.screen_tilemap_yorigin=93;
+	g_vars.screen_tilemap_xoffset=-(77&15);g_vars.screen_tilemap_yoffset=-(93&15);
+	screen_clear(0);do_level_redraw_tilemap(77,93);memcpy(before,g_res.vga,sizeof(before));
+	/* A lift changes cable/shaft tiles at world coordinates while the camera
+	 * moves. Incremental paint must be identical to a complete map redraw. */
+	for(int ty=3;ty<19;++ty)for(int tx=2;tx<27;++tx) {
+		memcpy(g_res.sql,map,sizeof(map));memcpy(g_res.vga,before,sizeof(before));
+		const int tile=(*lookup_sql(tx,ty)+37)&255;
+		do_level_update_tile(tx,ty,tile);memcpy(expected,g_res.vga,sizeof(expected));
+		memcpy(g_res.vga,before,sizeof(before));do_level_redraw_tilemap(77,93);
+		assert(!memcmp(expected,g_res.vga,sizeof(expected)));
+	}
+	memcpy(g_res.sql,map,sizeof(map));
+	puts("tiles: 400 on/offscreen lift edits match full redraw with a non-aligned moving camera passed");
+}
+
+static void snapshot_amiga_occlusion() {
+	if(!getenv("BLUES_VIEW_TEST_OUTPUT"))return;
+	struct bb_state before;assert(capture_game_state(&before));
+	for(int y=8;y<g_vars.screen_tilemap_h/16-8;++y)for(int x=10;x<110;++x) {
+		const int tile=*lookup_sql(x,y),mask=g_res.triggers[tile].foreground_tile_num;
+		if(mask>=g_res.amiga_mask_count)continue;
+		bool solid=true;for(int i=0;i<32;++i)solid&=g_res.amiga_masks[mask][i]==255;
+		if(!solid)continue;
+		for(int i=0;i<MAX_OBJECTS;++i)g_vars.objects[i].visible_flag=false;
+		struct object_t *p=&g_vars.objects[OBJECT_NUM_PLAYER1];p->visible_flag=true;
+		p->xpos=x*16+8;p->ypos=y*16+24;p->anim_frame=0;
+		g_vars.screen_tilemap_xorigin=MAX(0,p->xpos-160);g_vars.screen_tilemap_yorigin=MAX(0,p->ypos-96);
+		g_vars.screen_tilemap_xoffset=-(g_vars.screen_tilemap_xorigin&15);g_vars.screen_tilemap_yoffset=-(g_vars.screen_tilemap_yorigin&15);
+		p->screen_xpos=p->xpos-g_vars.screen_tilemap_xorigin;p->screen_ypos=p->ypos-g_vars.screen_tilemap_yorigin;
+		repaint_restored_state();snapshot("amiga-occlusion-fixed");
+		int keep=0;for(int i=0;i<_sprites_count;++i)if(_sprites[i].sheet!=RENDER_SPR_FG)_sprites[keep++]=_sprites[i];
+		_sprites_count=keep;sdl2_draw_screen(0,0,1);snapshot("amiga-occlusion-before");
+		restore_timeline_state(&before);repaint_restored_state();return;
+	}
+}
+static void test_amiga_layers() {
+	assert(g_res.amiga_data);
+
+	SDL_SetWindowSize(_window,320,200);
+	g_sys.set_scroll_interpolation(0,0,0,false);
+	snapshot_amiga_occlusion();
+	uint8_t canvas[320*200];memset(canvas,24,sizeof(canvas));
+	uint32_t pixels[320*200];int checked=0,opaque=0,holes=0;
+	/* Every native .m entry is rendered over a visible marker behind it,
+	 * retaining solid black and preserving unmasked holes pixel-for-pixel. */
+	for(int tile=0;tile<256;++tile) {
+		const int mask=g_res.triggers[tile].foreground_tile_num;
+		if(mask>=g_res.amiga_mask_count)continue;
+		g_sys.render_clear_sprites();g_sys.copy_bitmap(canvas,320,200);
+		g_sys.render_add_sprite(RENDER_SPR_FG,tile,64,64,0);sdl2_draw_screen(0,0,1);
+		read_native_test_pixels(pixels);
+		for(int y=0;y<16;++y)for(int x=0;x<16;++x) {
+			const bool covered=(g_res.amiga_masks[mask][y*2+x/8]&(0x80u>>(x&7)))!=0;
+			const int index=tile&127;
+			const uint8_t color=covered ? g_res.tiles[((index/20)*640+index%20)*16+(tile&128 ? 320 : 0)+y*640+x] : 24;
+			const uint32_t expected=covered && color==_copper_color_key ? _copper_palette[(64+y-14)*80/160] : _screen_palette[color];
+			assert((pixels[(64+y)*320+64+x]&0xffffff)==(expected&0xffffff));
+			opaque+=covered;holes+=!covered;
+		}
+		++checked;
+	}
+	if(g_res.amiga_mask_count)assert(checked && opaque);
+	/* The bottom of the playfield must use the last copper row, rather than
+	 * abruptly reverting to the palette key fourteen lines above the HUD. */
+	if(_copper_color_key>=0) {
+		memset(g_res.vga,_copper_color_key,GAME_SCREEN_W*GAME_SCREEN_H);
+		g_sys.render_clear_sprites();copy_level_bitmap();sdl2_draw_screen(0,0,1);
+		read_native_test_pixels(pixels);
+		for(int y=0;y<160;++y)assert((pixels[(14+y)*320+100]&0xffffff)==(_copper_palette[y*80/160]&0xffffff));
+	}
+	/* Native lift/level sprite frames must not borrow pixels from adjacent
+	 * atlas entries, including flips and alternating frames at 60 Hz. */
+	g_sys.copy_bitmap(canvas,320,200);
+	for(int tick=0;tick<8;++tick) {
+		const int frame=SPRITES_COUNT+(tick&1),flip=(tick>>1)&1;
+		const uint8_t *src=g_res.spr_frames[frame];
+		const int w=READ_LE_UINT16(src-2),h=READ_LE_UINT16(src-4);
+		g_sys.begin_sprite_frame();g_sys.render_clear_sprites();
+		/* Only the shopping-centre frames are alternating lift frames with
+		 * a shared footprint; other levels start with unrelated NPC frames. */
+		g_sys.set_sprite_owner(g_vars.level==0 ? 500 : 500+tick);
+		g_sys.render_add_sprite(RENDER_SPR_LEVEL,frame-SPRITES_COUNT,50,60,flip);
+		g_sys.set_sprite_owner(-1);g_sys.set_scroll_interpolation(0,0,33,true);
+		sdl2_draw_screen(0,0,.5f);read_native_test_pixels(pixels);
+		for(int y=0;y<h;++y)for(int x=0;x<w;++x) {
+			const uint8_t color=native_sprite_pixel(frame,flip ? w-1-x : x,y);
+			assert((pixels[(60+y)*320+50+x]&0xffffff)==(_screen_palette[color ? color : 24]&0xffffff));
+		}
+	}
+	/* Common props/lift effects come from objet (four planes / level colors),
+	 * unlike player frames (three planes / colors 16..23). */
+	g_sys.set_scroll_interpolation(0,0,0,false);
+	for(int frame=101;frame<115;++frame) {
+		const uint8_t *src=g_res.spr_frames[frame];
+		const int w=READ_LE_UINT16(src-2),h=READ_LE_UINT16(src-4);
+		g_sys.render_clear_sprites();g_sys.render_add_sprite(RENDER_SPR_GAME,frame,50,60,0);
+		sdl2_draw_screen(0,0,1);read_native_test_pixels(pixels);
+		for(int y=0;y<h;++y)for(int x=0;x<w;++x) {
+			const uint8_t color=native_sprite_pixel(frame,x,y);
+			assert((pixels[(60+y)*320+50+x]&0xffffff)==(_screen_palette[color ? color : 24]&0xffffff));
+		}
+	}
+
+	printf("Amiga: %d foreground tiles (%d opaque / %d hole pixels), complete copper height, native prop palettes and alternating lift frames passed\n",checked,opaque,holes);
+	g_sys.input.quit=true;
+}
+
 static void test_events() {
 	sdl2_process_events();
 	if (_sprites_cliprect.y != TILEMAP_OFFSET_Y) {
@@ -1397,6 +1520,7 @@ static void test_events() {
 		return;
 	}
 	g_sys.input.space = false;
+	if (getenv("BLUES_TEST_AMIGA_LAYERS")) {if(test_frames++>=2){test_world_tile_redraw();test_amiga_layers();}return;}
 	if (getenv("BLUES_TEST_SCROLL_EDGES")) {if(test_frames++>=2)test_scroll_edges();return;}
 	if (getenv("BLUES_TEST_REWIND")) {test_rewind_events();return;}
 	if (getenv("BLUES_TEST_SLOTS")) {if(test_frames++>=2)test_save_slots();return;}
@@ -1607,6 +1731,7 @@ int main(int argc, char **argv) {
 		puts("menu: frozen game/objects/map/zoom/audio, preserved scene and clean resume through actual game loop passed");
 		return result;
 	}
+	if (getenv("BLUES_TEST_AMIGA_LAYERS")) return result;
 	if (getenv("BLUES_TEST_SCROLL_EDGES")) return result;
 	if (getenv("BLUES_TEST_REWIND")) {assert(!_rewind_history && !_rewind_active);return result;}
 	if (getenv("BLUES_TEST_SLOTS")) return result;
