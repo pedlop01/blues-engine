@@ -2105,6 +2105,11 @@ static void do_level_update_objects() {
 				obj->special_anim = 1;
 			}
 			obj->floor_ypos16 = obj->ypos16;
+			/* Stable instance key, independent of animation frame or draw
+			 * order. Reusing a slot for another type/projectile snaps it. */
+			const int owner = i | (obj->type << 8) |
+				(obj->type == 2 ? obj->grab_type << 16 : 0);
+			g_sys.set_sprite_owner(owner);
 			if (obj->type != 2) {
 				if (obj->special_anim != 0) {
 					do_level_add_sprite3(obj);
@@ -2114,6 +2119,7 @@ static void do_level_update_objects() {
 			} else {
 				do_level_add_sprite2(obj);
 			}
+			g_sys.set_sprite_owner(-1);
 		}
 	}
 	if (g_vars.triggers_counter != 0) {
@@ -2356,6 +2362,7 @@ void do_level() {
 	bool screen_transition_flag = true;
 	int frame_duration_remainder = 0;
 	do {
+		g_sys.begin_sprite_frame();
 		screen_clear_sprites(0);
 		const uint32_t timestamp = g_sys.get_timestamp();
 		frame_duration_remainder += 1000 % 30;

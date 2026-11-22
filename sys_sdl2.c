@@ -23,10 +23,17 @@ struct sprite_t {
 	int num;
 	int x, y;
 	bool xflip;
+	int owner, part;
+	float anchor_x, anchor_y;
+	float previous_anchor_x, previous_anchor_y;
+	bool interpolate;
 };
 
 static struct sprite_t *_sprites;
 static int _sprites_count, _sprites_capacity;
+static struct sprite_t *_previous_sprites;
+static int _previous_sprites_count, _previous_sprites_capacity;
+static int _sprite_owner = -1, _sprite_part;
 static SDL_Rect _sprites_cliprect;
 
 static int _screen_w, _screen_h;
@@ -105,6 +112,9 @@ static void sdl2_fini() {
 	free(_sprites);
 	_sprites = 0;
 	_sprites_count = _sprites_capacity = 0;
+	free(_previous_sprites);
+	_previous_sprites = 0;
+	_previous_sprites_count = _previous_sprites_capacity = 0;
 	if (_controller) {
 		SDL_GameControllerClose(_controller);
 		_controller = 0;
@@ -180,12 +190,14 @@ static bool sdl2_resize_viewport(int w, int h) {
 	_screen_h = h;
 	_scroll_interpolation_active = false;
 	_render_schedule_initialized = false;
+	_previous_sprites_count = 0;
 	return true;
 }
 
 static void sdl2_set_scroll_render_rate(int rate) {
 	_scroll_rate = rate;
 	_render_schedule_initialized = false;
+	_previous_sprites_count = 0;
 }
 
 static void sdl2_set_scroll_interpolation(int dx, int dy, int simulation_period, bool enabled) {
@@ -210,6 +222,7 @@ static void sdl2_set_scroll_interpolation(int dx, int dy, int simulation_period,
 		}
 	} else {
 		_render_schedule_initialized = false;
+		_previous_sprites_count = 0;
 	}
 	_scroll_interpolation_active = active;
 }
@@ -400,7 +413,23 @@ static void sdl2_render_background(float scroll_x, float scroll_y, int clip_x, i
 	SDL_RenderCopyF(_renderer, _texture, 0, &dest);
 }
 
-static void sdl2_draw_screen(float scroll_x, float scroll_y) {
+static SDL_FRect sdl2_sprite_rect(const struct sprite_t *spr, float scroll_x, float scroll_y, float progress) {
+	const SDL_Rect *frame = &_spritesheets[spr->sheet].r[spr->num];
+	SDL_FRect r = { spr->x + _shake_dx, spr->y + _shake_dy, frame->w, frame->h };
+	if (_scroll_interpolation_active && spr->interpolate) {
+		/* Anchors are screen positions from their respective simulation
+		 * frames: their delta already includes camera motion. Do not add
+		 * scroll_x/y again. Keep the current animation's foot/center anchor. */
+		r.x += (spr->previous_anchor_x - spr->anchor_x) * (1.f - progress);
+		r.y += (spr->previous_anchor_y - spr->anchor_y) * (1.f - progress);
+	} else {
+		r.x += scroll_x;
+		r.y += scroll_y;
+	}
+	return r;
+}
+
+static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
 	const bool smooth_scroll = scroll_x != 0.f || scroll_y != 0.f;
 	SDL_RenderClear(_renderer);
 	if (!smooth_scroll) {
@@ -427,7 +456,8 @@ static void sdl2_draw_screen(float scroll_x, float scroll_y) {
 		if (spr->num >= sheet->count) {
 			continue;
 		}
-		if (!smooth_scroll) {
+		const bool smooth_actor = _scroll_interpolation_active && spr->interpolate;
+		if (!smooth_scroll && !smooth_actor) {
 			SDL_Rect r = { spr->x + _shake_dx, spr->y + _shake_dy,
 				sheet->r[spr->num].w, sheet->r[spr->num].h };
 			if (!spr->xflip) {
@@ -436,8 +466,7 @@ static void sdl2_draw_screen(float scroll_x, float scroll_y) {
 				SDL_RenderCopyEx(_renderer, sheet->texture, &sheet->r[spr->num], &r, 0., 0, SDL_FLIP_HORIZONTAL);
 			}
 		} else {
-			SDL_FRect r = { spr->x + _shake_dx + scroll_x, spr->y + _shake_dy + scroll_y,
-				sheet->r[spr->num].w, sheet->r[spr->num].h };
+			SDL_FRect r = sdl2_sprite_rect(spr, scroll_x, scroll_y, progress);
 			if (!spr->xflip) {
 				SDL_RenderCopyF(_renderer, sheet->texture, &sheet->r[spr->num], &r);
 			} else {
@@ -459,12 +488,12 @@ static void sdl2_present_at(uint64_t timestamp) {
 	const double display_y = _scroll_previous_y + (_scroll_target_y - _scroll_previous_y) * progress;
 	sdl2_draw_screen(
 		(float)(_scroll_target_x - display_x),
-		(float)(_scroll_target_y - display_y));
+		(float)(_scroll_target_y - display_y), (float)progress);
 }
 
 static void sdl2_update_screen() {
 	if (!_scroll_interpolation_active) {
-		sdl2_draw_screen(0.f, 0.f);
+		sdl2_draw_screen(0.f, 0.f, 1.f);
 		return;
 	}
 	const uint64_t now = SDL_GetPerformanceCounter();
@@ -878,6 +907,8 @@ static void render_load_sprites(int spr_type, int count, const struct sys_rect_t
 }
 
 static void render_unload_sprites(int spr_type) {
+	/* A replacement atlas may belong to a different DOS/Amiga release. */
+	_previous_sprites_count = 0;
 	struct spritesheet_t *sheet = &_spritesheets[spr_type];
 	free(sheet->r);
 	if (sheet->surface) {
@@ -908,11 +939,49 @@ static void render_add_sprite(int spr_type, int frame, int x, int y, int xflip) 
 	spr->x = x;
 	spr->y = y;
 	spr->xflip = xflip;
+	spr->owner = _sprite_owner;
+	spr->part = _sprite_part++;
+	spr->interpolate = false;
+	spr->anchor_x = x;
+	spr->anchor_y = y;
+	const struct spritesheet_t *sheet = &_spritesheets[spr_type];
+	if (frame >= 0 && frame < sheet->count) {
+		spr->anchor_x += sheet->r[frame].w / 2.f;
+		spr->anchor_y += sheet->r[frame].h;
+	}
+	if (spr->owner >= 0) {
+		for (int i = 0; i < _previous_sprites_count; ++i) {
+			const struct sprite_t *previous = &_previous_sprites[i];
+			if (previous->owner == spr->owner && previous->part == spr->part && previous->sheet == spr->sheet) {
+				spr->previous_anchor_x = previous->anchor_x;
+				spr->previous_anchor_y = previous->anchor_y;
+				spr->interpolate = true;
+				break;
+			}
+		}
+	}
 	++_sprites_count;
+}
+
+static void sdl2_begin_sprite_frame() {
+	if (_sprites_count > _previous_sprites_capacity) {
+		struct sprite_t *sprites = realloc(_previous_sprites, (size_t)_sprites_count * sizeof(*sprites));
+		if (!sprites) print_error("Failed to allocate sprite interpolation history");
+		_previous_sprites = sprites;
+		_previous_sprites_capacity = _sprites_count;
+	}
+	if (_sprites_count) memcpy(_previous_sprites, _sprites, (size_t)_sprites_count * sizeof(*_sprites));
+	_previous_sprites_count = _sprites_count;
+}
+
+static void sdl2_set_sprite_owner(int owner) {
+	_sprite_owner = owner;
+	_sprite_part = 0;
 }
 
 static void render_clear_sprites() {
 	_sprites_count = 0;
+	sdl2_set_sprite_owner(-1);
 }
 
 static void render_set_sprites_clipping_rect(int x, int y, int w, int h) {
@@ -955,4 +1024,6 @@ struct sys_t g_sys = {
 	.set_scroll_interpolation = sdl2_set_scroll_interpolation,
 	.set_scroll_render_rate = sdl2_set_scroll_render_rate,
 	.resize_viewport = sdl2_resize_viewport,
+	.begin_sprite_frame = sdl2_begin_sprite_frame,
+	.set_sprite_owner = sdl2_set_sprite_owner,
 };

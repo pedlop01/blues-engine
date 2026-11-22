@@ -17,7 +17,7 @@ focused on the first **Blues Brothers** game.
 | Feature | Current implementation |
 |---|---|
 | Native Windows x64 | Build from WSL with MinGW-w64, SDL2 and libmodplug. |
-| Smoother camera | Camera presentation at 30, 60 or 120 Hz while gameplay simulation remains at 30 Hz. |
+| Smoother motion | Camera, characters and objects presented at 30, 60 or 120 Hz while gameplay simulation remains at 30 Hz. |
 | Dynamic framing | `-` reveals more of the map, `+` moves closer, and `0` restores the initial view; changes ease over about 300 ms. |
 | Original DOS audio | Native playback of four AdLib songs and 18 effects, read from the user's supported `1.EXE`, with Nuked OPL3 chip emulation. |
 | Live DOS / Amiga switch | `F6` changes graphics, palettes, HUD and native audio while retaining game state, map edits, rooms and framing. |
@@ -32,8 +32,7 @@ adjustment has been confirmed in gameplay.
 The next phase includes a centered in-game options menu, configurable controls
 and volumes, invulnerability and life controls, level selection, eight save
 slots with thumbnails, and a short rewind with a VHS-style visual effect.
-Further work includes actor interpolation, camera/HUD polish and Windows
-packaging.
+Further work includes camera/HUD polish and Windows packaging.
 
 **These are planned features, not features already available.** Progress,
 dependencies and completion criteria are tracked in [PLAN.md](PLAN.md).
@@ -132,7 +131,20 @@ Bonus rooms use their original fixed 320x200 framing because they are separate
 scenes stored below the main map. Leaving a room restores the selected outdoor
 framing. Door transitions cancel any active zoom/scroll interpolation.
 
-`--scrollrate=60` (default) keeps the game simulation at 30 Hz and presents camera motion at 60 Hz. On a 120 Hz display, each presented frame can be shown for exactly two refreshes; `--scrollrate=120` targets every refresh.
+`--scrollrate=60` (default) keeps the game simulation at 30 Hz and presents camera, character and object motion at 60 Hz. On a 120 Hz display, each presented frame can be shown for exactly two refreshes; `--scrollrate=120` targets every refresh.
+
+Actor interpolation tracks object slots independently of drawing order and uses
+the center of their feet as an anchor when animation dimensions change. Doors,
+resource switches and zoom changes discard interpolation across incompatible
+views. Physics, collisions and animation timing retain their original 30 Hz
+updates. Use `--scrollrate=30` for the original presentation cadence.
+
+The renderer placement regression test needs no game assets:
+
+```
+make build/tests/check_sprite_interpolation
+build/tests/check_sprite_interpolation
+```
 
 ### Blues Brothers audio
 

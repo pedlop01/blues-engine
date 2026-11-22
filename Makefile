@@ -49,8 +49,14 @@ build/tests/check_viewport: tests/check_viewport.c bb/level.c sys_sdl2.c main.c 
 	mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DBLUES_ONLY $(LDFLAGS) -o $@ tests/check_viewport.c $(VIEW_TEST_OBJS) $(SDL_LIBS) $(MODPLUG_LIBS)
 
+build/tests/check_sprite_interpolation: tests/check_sprite_interpolation.c sys_sdl2.c util.o
+	mkdir -p $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_sprite_interpolation.c util.o $(SDL_LIBS)
+
 clean:
 	$(RM) $(OBJS) $(DEPS) $(APP_OBJS) $(APP_OBJS:.o=.d) $(GAME_OBJS) blues
-	$(RM) build/tests/check_viewport build/tests/check_viewport.d
+	$(RM) build/tests/check_viewport build/tests/check_viewport.d build/tests/check_sprite_interpolation build/tests/check_sprite_interpolation.d
 
 -include $(DEPS) main.d mixer.d dos_audio.d sys_sdl2.d util.d third_party/nuked-opl3/opl3.d build/tests/check_viewport.d
+
+-include build/tests/check_sprite_interpolation.d
