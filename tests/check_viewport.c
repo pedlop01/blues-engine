@@ -443,6 +443,61 @@ static void test_camera() {
 }
 
 
+static int menu_timer_step, menus_tested;
+static void push_menu_key(int sym, bool down) {
+	SDL_Event ev = {0};
+	ev.type = down ? SDL_KEYDOWN : SDL_KEYUP;
+	ev.key.keysym.sym = sym;
+	ev.key.keysym.scancode = SDL_GetScancodeFromKey(sym);
+	assert(SDL_PushEvent(&ev) == 1);
+}
+static uint32_t menu_script(uint32_t interval, void *param) {
+	assert(SDL_GetAudioStatus() != SDL_AUDIO_PLAYING);
+	const int step = menu_timer_step++;
+	if (step == 0) {
+		push_menu_key(SDLK_DOWN, true); push_menu_key(SDLK_DOWN, false);
+		push_menu_key(SDLK_RETURN, true); push_menu_key(SDLK_RETURN, false);
+	} else if (step == 1) {
+		push_menu_key(SDLK_ESCAPE, false);
+	} else {
+		push_menu_key(SDLK_UP, true); push_menu_key(SDLK_UP, false);
+		push_menu_key(SDLK_RETURN, true);
+	}
+	return menu_timer_step == 3 ? 0 : interval;
+}
+static void test_run_pause_menu() {
+	const struct vars_t before = g_vars;
+	uint8_t sql[640 * 25];
+	memcpy(sql, g_res.sql, sizeof(sql));
+	const int sprite_count = _sprites_count;
+	assert(sprite_count > 0);
+	const int w = GAME_SCREEN_W, h = GAME_SCREEN_H;
+	const enum hud_mode hud = g_options.hud_mode;
+	/* Capture actual game frames for visual review without changing state. */
+	sdl2_set_scroll_interpolation(0, 0, 0, false);
+	_pause_menu_open = true;
+	_pause_page = PAUSE_MAIN; _pause_selection = 0;
+	sdl2_draw_screen(0, 0, 1); snapshot("menu-pause");
+	_pause_page = PAUSE_CONTROLS;
+	sdl2_draw_screen(0, 0, 1); snapshot("menu-controls");
+	_pause_page = PAUSE_QUIT;
+	sdl2_draw_screen(0, 0, 1); snapshot("menu-quit");
+	_pause_menu_open = false;
+	menu_timer_step = 0;
+	assert(SDL_AddTimer(60, menu_script, NULL));
+	const uint32_t timestamp = SDL_GetTicks();
+	sdl2_run_pause_menu();
+	assert(SDL_GetTicks() - timestamp >= 150 && menu_timer_step == 3);
+	assert(memcmp(&before, &g_vars, sizeof(before)) == 0);
+	assert(memcmp(sql, g_res.sql, sizeof(sql)) == 0);
+	assert(_sprites_count == sprite_count && GAME_SCREEN_W == w && GAME_SCREEN_H == h);
+	assert(g_options.hud_mode == hud && !g_sys.input.menu && !g_sys.input.space && !g_sys.input.jump && !g_sys.input.direction);
+	assert(!g_sys.input.switch_mode && !g_sys.input.switch_hud && !g_sys.input.quit);
+	assert(_blocked_keys[SDL_SCANCODE_RETURN]);
+	push_menu_key(SDLK_RETURN, false);
+	++menus_tested;
+}
+
 static void test_hud_switch_events() {
 	static enum hud_mode initial;
 	if (!test_frames) {
@@ -478,6 +533,19 @@ static void test_events() {
 		return;
 	}
 	g_sys.input.space = false;
+	if (getenv("BLUES_TEST_MENU")) {
+		if (test_frames == 0) g_sys.input.view_step = 4;
+		if (test_frames == 2) {
+			bool paused = false;
+			handle_keyevent(SDLK_ESCAPE, false, &g_sys.input, &paused);
+		}
+		if (test_frames == 3) {
+			assert(menus_tested == 1);
+			g_sys.input.quit = true;
+		}
+		++test_frames;
+		return;
+	}
 	if (getenv("BLUES_TEST_HUD_SWITCH")) {
 		test_hud_switch_events();
 		return;
@@ -587,6 +655,7 @@ static void test_events() {
 int main(int argc, char **argv) {
 	if (getenv("BLUES_TEST_MODES")) g_sys.start_audio = capture_start_audio;
 	g_sys.process_events = test_events;
+	if (getenv("BLUES_TEST_MENU")) g_sys.run_pause_menu = test_run_pause_menu;
 	g_sys.sleep = no_sleep;
 	g_sys.fade_in_palette = no_fade;
 	g_sys.fade_out_palette = no_fade;
@@ -606,6 +675,11 @@ int main(int argc, char **argv) {
 	}
 	if (getenv("BLUES_TEST_HUD")) {
 		assert(_hud_width == 0); /* Disabled before menus/inter-level screens. */
+		return result;
+	}
+	if (getenv("BLUES_TEST_MENU")) {
+		assert(!_pause_menu_enabled);
+		puts("menu: frozen game/objects/map/zoom/audio, preserved scene and clean resume through actual game loop passed");
 		return result;
 	}
 	if (getenv("BLUES_TEST_HUD_SWITCH")) return result;

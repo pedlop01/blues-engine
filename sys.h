@@ -25,6 +25,7 @@ struct input_t {
 	int view_step; /* 0 = initial framing; higher values reveal more map. */
 	bool switch_mode;
 	bool switch_hud;
+	bool menu;
 };
 
 typedef void (*sys_audio_cb)(void *, uint8_t *data, int len);
@@ -55,6 +56,8 @@ struct sys_t {
 	void	(*shake_screen)(int dx, int dy);
 	void	(*transition_screen)(enum sys_transition_e type, bool open);
 	void	(*process_events)();
+	void	(*set_pause_menu_enabled)(bool enabled);
+	void	(*run_pause_menu)();
 	void	(*sleep)(int duration);
 	uint32_t	(*get_timestamp)();
 	void	(*start_audio)(sys_audio_cb callback, void *param);

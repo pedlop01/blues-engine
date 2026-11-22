@@ -255,6 +255,12 @@ static bool psp_resize_viewport(int w, int h) {
 	return false;
 }
 
+static void psp_set_pause_menu_enabled(bool enabled) {
+}
+
+static void psp_run_pause_menu() {
+}
+
 static void psp_set_hud_layout(int width, int height, int top, int bottom) {
 }
 
@@ -432,6 +438,8 @@ struct sys_t g_sys = {
 	.shake_screen = psp_shake_screen,
 	.transition_screen = psp_transition_screen,
 	.process_events = psp_process_events,
+	.set_pause_menu_enabled = psp_set_pause_menu_enabled,
+	.run_pause_menu = psp_run_pause_menu,
 	.sleep = psp_sleep,
 	.get_timestamp = psp_get_timestamp,
 	.start_audio = psp_start_audio,

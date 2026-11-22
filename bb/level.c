@@ -2429,11 +2429,16 @@ void do_level() {
 	g_vars.found_music_instrument_flag = 0;
 	g_sys.render_set_sprites_clipping_rect(0, TILEMAP_OFFSET_Y, TILEMAP_SCREEN_W, TILEMAP_SCREEN_H);
 	configure_level_hud();
+	g_sys.set_pause_menu_enabled(true);
 	bool screen_transition_flag = true;
 	int frame_duration_remainder = 0;
 	do {
-		g_sys.begin_sprite_frame();
-		screen_clear_sprites(0);
+		update_input();
+		if (g_sys.input.menu && !screen_transition_flag) {
+			g_sys.run_pause_menu();
+			continue; /* No simulation or zoom time elapses while paused. */
+		}
+		if (g_sys.input.quit) break;
 		const uint32_t timestamp = g_sys.get_timestamp();
 		frame_duration_remainder += 1000 % 30;
 		int frame_duration = 1000 / 30;
@@ -2441,7 +2446,8 @@ void do_level() {
 			++frame_duration;
 			frame_duration_remainder -= 30;
 		}
-		update_input();
+		g_sys.begin_sprite_frame();
+		screen_clear_sprites(0);
 		bool view_changed = false;
 		if (g_sys.input.switch_mode) {
 			g_sys.input.switch_mode = false;
@@ -2502,6 +2508,7 @@ void do_level() {
 		g_sys.sleep(diff < 10 ? 10 : diff);
 
 	} while (!g_sys.input.quit && !g_vars.quit_level_flag);
+	g_sys.set_pause_menu_enabled(false);
 	g_sys.set_scroll_interpolation(0, 0, 0, false);
 	/* Menus and inter-level screens retain the original logical resolution. */
 	resize_level_view(base_w, base_h, false);

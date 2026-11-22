@@ -23,6 +23,7 @@ focused on the first **Blues Brothers** game.
 | Original DOS audio | Native playback of four AdLib songs and 18 effects, read from the user's supported `1.EXE`, with Nuked OPL3 chip emulation. |
 | Live DOS / Amiga switch | `F6` changes graphics, palettes, HUD and native audio while retaining game state, map edits, rooms and framing. |
 | HUD choice | Classic HUD scales with the map (default); fixed HUD keeps its display size and reserves separate bands without covering the map. `F7` switches live. Both preserve DOS/Amiga artwork and layout. |
+| In-game pause menu | `Esc`, `P` or controller Start opens a centered menu with Resume, Controls and confirmed Quit. Simulation, zoom and audio pause; menu inputs are consumed before returning to play. |
 | Larger views | Dynamic sprite storage replaces the fixed sprite limit; camera bounds and defeated-enemy visibility follow the current view. |
 | Regression tests | Tests cover DOS sequencer accuracy, PCM continuity, zoom, doors, defeated enemies and live presentation changes. |
 
@@ -31,8 +32,8 @@ adjustment has been confirmed in gameplay.
 
 ## Ideas and roadmap
 
-The next phase includes a centered in-game options menu, configurable controls
-and volumes, invulnerability and life controls, level selection, eight save
+The next phase adds visual polish and settings to the pause menu, configurable
+controls and volumes, invulnerability and life controls, level selection, eight save
 slots with thumbnails, and a short rewind with a VHS-style visual effect.
 Further work includes Windows packaging.
 
@@ -180,6 +181,40 @@ The renderer placement regression test needs no game assets:
 make build/tests/check_sprite_interpolation
 build/tests/check_sprite_interpolation
 ```
+
+### In-game pause menu
+
+During a Blues Brothers level, release **Esc** or **P**, or controller **Start**,
+to open the centered pause menu. Use Up/Down, the controller D-pad or left stick
+to navigate, and Enter/Space or controller A to select. Esc/P/Start closes the
+main pause menu; controller B goes back or resumes. The Controls page lists
+the current game shortcuts. Quit opens a confirmation that defaults to cancel.
+Closing the window still exits directly. Outside levels, Esc retains its
+original exit behavior.
+
+The menu freezes the current scene, simulation, camera/zoom transition and audio.
+It redraws correctly after resizing the window and works with either DOS/Amiga
+resources, HUD mode and presentation rate. Held menu controls must be released
+before they can act in gameplay, preventing accidental movement, jumps or
+resource/HUD switches on resume.
+
+This is the functional menu foundation (task 06). Visual polish is tracked in
+07, and configurable options such as camera/HUD selection are tracked in 08.
+The existing F6/F7 and zoom shortcuts remain available during gameplay.
+
+```
+make build/tests/check_pause_menu build/tests/check_viewport
+build/tests/check_pause_menu
+BLUES_TEST_MENU=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  build/tests/check_viewport --dos-datapath=../orig-games/dos \
+  --amiga-datapath=../orig-games/amiga --cheats=7 --level=0
+```
+
+The asset-free test exercises menu navigation, quit confirmation, controller and
+joystick events, focus changes, held input, audio pause/resume and centered
+layout at several window sizes. The game integration test opens the actual
+modal menu during zoom, spends time in its Controls page, and checks that game
+state, objects, map and viewport remain unchanged before resuming.
 
 ### Blues Brothers audio
 

@@ -41,6 +41,13 @@ static void sdl2_draw_hud();
 static void sdl2_begin_scene();
 static void sdl2_end_scene();
 static int _world_offset_x, _world_offset_y;
+static bool _pause_menu_enabled, _pause_menu_open;
+static bool _window_has_focus = true;
+static bool _blocked_keys[SDL_NUM_SCANCODES];
+static bool _blocked_buttons[SDL_CONTROLLER_BUTTON_MAX];
+static bool _blocked_axes[SDL_CONTROLLER_AXIS_MAX];
+static bool _blocked_joy_buttons[32], _blocked_joy_axes[2], _blocked_hat;
+static void sdl2_draw_pause_menu();
 
 static int _screen_w, _screen_h;
 static int _shake_dx, _shake_dy;
@@ -594,6 +601,7 @@ static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
 	}
 	SDL_RenderSetClipRect(_renderer, 0);
 	sdl2_end_scene();
+	if (_pause_menu_open) sdl2_draw_pause_menu();
 
 	SDL_RenderPresent(_renderer);
 }
@@ -676,6 +684,10 @@ static void handle_keyevent(int keysym, bool keydown, struct input_t *input, boo
 		input->jump = keydown;
 		break;
 	case SDLK_ESCAPE:
+		if (_pause_menu_enabled) {
+			if (!keydown) input->menu = true;
+			break;
+		}
 		if (keydown) {
 			g_sys.input.quit = true;
 		}
@@ -714,6 +726,10 @@ static void handle_keyevent(int keysym, bool keydown, struct input_t *input, boo
 		if (!keydown) input->switch_mode = true;
 		break;
 	case SDLK_p:
+		if (_pause_menu_enabled) {
+			if (!keydown) input->menu = true;
+			break;
+		}
 		if (!keydown) {
 			*paused = !*paused;
 		}
@@ -762,6 +778,10 @@ static void handle_controllerbutton(int button, bool pressed, struct input_t *in
 		input->jump = pressed;
 		break;
 	case SDL_CONTROLLER_BUTTON_START:
+		if (_pause_menu_enabled) {
+			if (!pressed) input->menu = true;
+			break;
+		}
 		if (!pressed) {
 			*paused = !*paused;
 		}
@@ -856,13 +876,21 @@ static int handle_event(const SDL_Event *ev, bool *paused) {
 		case SDL_WINDOWEVENT_FOCUS_GAINED:
 		case SDL_WINDOWEVENT_FOCUS_LOST:
 			*paused = (ev->window.event == SDL_WINDOWEVENT_FOCUS_LOST);
+			_window_has_focus = !*paused;
 			break;
 		}
 		break;
 	case SDL_KEYUP:
+		if (ev->key.keysym.scancode > SDL_SCANCODE_UNKNOWN && _blocked_keys[ev->key.keysym.scancode]) {
+			_blocked_keys[ev->key.keysym.scancode] = false;
+			break;
+		}
 		handle_keyevent(ev->key.keysym.sym, 0, &g_sys.input, paused);
 		break;
 	case SDL_KEYDOWN:
+		if (ev->key.keysym.scancode > SDL_SCANCODE_UNKNOWN && _blocked_keys[ev->key.keysym.scancode]) break;
+		if (ev->key.repeat && (ev->key.keysym.sym == SDLK_RETURN || ev->key.keysym.sym == SDLK_SPACE ||
+			ev->key.keysym.sym == SDLK_LSHIFT || ev->key.keysym.sym == SDLK_RSHIFT)) break;
 		handle_keyevent(ev->key.keysym.sym, 1, &g_sys.input, paused);
 		break;
 	case SDL_CONTROLLERDEVICEADDED:
@@ -881,36 +909,65 @@ static int handle_event(const SDL_Event *ev, bool *paused) {
 		}
 		break;
 	case SDL_CONTROLLERBUTTONUP:
+		if (ev->cbutton.button >= SDL_CONTROLLER_BUTTON_MAX) break;
+		if (_blocked_buttons[ev->cbutton.button]) {
+			_blocked_buttons[ev->cbutton.button] = false;
+			break;
+		}
 		if (_controller) {
 			handle_controllerbutton(ev->cbutton.button, 0, &g_sys.input, paused);
 		}
 		break;
 	case SDL_CONTROLLERBUTTONDOWN:
+		if (ev->cbutton.button >= SDL_CONTROLLER_BUTTON_MAX) break;
+		if (_blocked_buttons[ev->cbutton.button]) break;
 		if (_controller) {
 			handle_controllerbutton(ev->cbutton.button, 1, &g_sys.input, paused);
 		}
 		break;
 	case SDL_CONTROLLERAXISMOTION:
+		if (ev->caxis.axis >= SDL_CONTROLLER_AXIS_MAX) break;
+		if (_blocked_axes[ev->caxis.axis]) {
+			if (abs(ev->caxis.value) <= 3200) _blocked_axes[ev->caxis.axis] = false;
+			break;
+		}
 		if (_controller) {
 			handle_controlleraxis(ev->caxis.axis, ev->caxis.value, &g_sys.input);
 		}
 		break;
 	case SDL_JOYHATMOTION:
+		if (_blocked_hat) {
+			if (ev->jhat.value == SDL_HAT_CENTERED) _blocked_hat = false;
+			break;
+		}
 		if (_joystick) {
 			handle_joystickhatmotion(ev->jhat.value, &g_sys.input);
 		}
 		break;
 	case SDL_JOYAXISMOTION:
+		if (ev->jaxis.axis < 2 && _blocked_joy_axes[ev->jaxis.axis]) {
+			if (abs(ev->jaxis.value) <= 3200) _blocked_joy_axes[ev->jaxis.axis] = false;
+			break;
+		}
 		if (_joystick) {
 			handle_joystickaxismotion(ev->jaxis.axis, ev->jaxis.value, &g_sys.input);
 		}
 		break;
 	case SDL_JOYBUTTONUP:
+		if (ev->jbutton.button < 32 && _blocked_joy_buttons[ev->jbutton.button]) {
+			_blocked_joy_buttons[ev->jbutton.button] = false;
+			break;
+		}
+		if (_pause_menu_enabled && ev->jbutton.button == 7 && _joystick) {
+			g_sys.input.menu = true;
+			break;
+		}
 		if (_joystick) {
 			handle_joystickbutton(ev->jbutton.button, 0, &g_sys.input);
 		}
 		break;
 	case SDL_JOYBUTTONDOWN:
+		if (ev->jbutton.button < 32 && _blocked_joy_buttons[ev->jbutton.button]) break;
 		if (_joystick) {
 			handle_joystickbutton(ev->jbutton.button, 1, &g_sys.input);
 		}
@@ -921,6 +978,8 @@ static int handle_event(const SDL_Event *ev, bool *paused) {
 	return 0;
 }
 
+#include "sys_sdl2_menu.h"
+
 static void sdl2_process_events() {
 	bool paused = false;
 	while (1) {
@@ -928,14 +987,14 @@ static void sdl2_process_events() {
 		while (SDL_PollEvent(&ev)) {
 			const bool prev = paused;
 			handle_event(&ev, &paused);
-			if (g_sys.input.quit) {
+			if (g_sys.input.quit || g_sys.input.menu) {
 				break;
 			}
 			if (prev != paused) {
 				SDL_PauseAudio(paused);
 			}
 		}
-		if (!paused) {
+		if (!paused || g_sys.input.quit || g_sys.input.menu) {
 			break;
 		}
 		SDL_Delay(100);
@@ -1131,6 +1190,8 @@ struct sys_t g_sys = {
 	.shake_screen = sdl2_shake_screen,
 	.transition_screen = sdl2_transition_screen,
 	.process_events = sdl2_process_events,
+	.set_pause_menu_enabled = sdl2_set_pause_menu_enabled,
+	.run_pause_menu = sdl2_run_pause_menu,
 	.sleep = sdl2_sleep,
 	.get_timestamp = sdl2_get_timestamp,
 	.start_audio = sdl2_start_audio,

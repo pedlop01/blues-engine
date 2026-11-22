@@ -53,10 +53,17 @@ build/tests/check_sprite_interpolation: tests/check_sprite_interpolation.c sys_s
 	mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_sprite_interpolation.c util.o $(SDL_LIBS)
 
+build/tests/check_pause_menu: tests/check_pause_menu.c sys_sdl2.c sys_sdl2_menu.h util.o
+	mkdir -p $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_pause_menu.c util.o $(SDL_LIBS)
+
 clean:
 	$(RM) $(OBJS) $(DEPS) $(APP_OBJS) $(APP_OBJS:.o=.d) $(GAME_OBJS) blues
+	$(RM) build/tests/check_pause_menu build/tests/check_pause_menu.d
 	$(RM) build/tests/check_viewport build/tests/check_viewport.d build/tests/check_sprite_interpolation build/tests/check_sprite_interpolation.d
 
 -include $(DEPS) main.d mixer.d dos_audio.d sys_sdl2.d util.d third_party/nuked-opl3/opl3.d build/tests/check_viewport.d
 
 -include build/tests/check_sprite_interpolation.d
+
+-include build/tests/check_pause_menu.d
