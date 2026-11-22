@@ -44,6 +44,7 @@ struct sys_pause_options {
 	bool amiga, can_switch;
 	bool invulnerable, infinite_lives, two_players, player_alive[2];
 	int lives[2];
+	bool select_character;
 	int current_level, requested_level; /* -1 means continue. */
 	bool available_levels[2][6]; /* DOS, Amiga; six stages each. */
 	enum camera_mode camera;

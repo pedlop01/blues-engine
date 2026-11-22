@@ -23,7 +23,7 @@ focused on the first **Blues Brothers** game.
 | Original DOS audio | Native playback of four AdLib songs and 18 effects, read from the user's supported `1.EXE`, with Nuked OPL3 chip emulation. |
 | Live DOS / Amiga switch | `F6` changes graphics, palettes, HUD and native audio while retaining game state, map edits, rooms and framing. |
 | HUD choice | Classic HUD scales with the map (default); fixed HUD keeps its display size and reserves separate bands without covering the map. `F7` switches live. Both preserve DOS/Amiga artwork and layout. |
-| In-game pause menu | `Esc`, `P` or controller Start opens a centered menu with Resume, Options, Controls, Level Selection and confirmed Quit. Simulation, zoom and audio pause; menu inputs are consumed before returning to play. |
+| In-game pause menu | `Esc`, `P` or controller Start opens a centered menu with Resume, Options, Controls, Level Selection, Character Selection and confirmed Quit. Simulation, zoom and audio pause; menu inputs are consumed before returning to play. |
 | Separate audio levels | Options → Sound provides independent 0–100% music/effect levels and mute, with short gain ramps in DOS and Amiga. |
 | Gameplay assists | Options → Assists offers invulnerability, independent infinite lives and finite counts from 1–99 per active player. Active protections are labeled in the original HUD’s empty margin. |
 | Level selection | Six stages from the pause menu, with confirmation, current-stage restart and unavailable-data detection. Starts fresh while retaining characters, life counts, assists and presentation settings. |
@@ -364,7 +364,28 @@ restart, checking fresh world state and retained settings. Add
 selection, and `BLUES_TEST_LEVEL_TWO=1` for two players. The pause-menu unit test
 also covers cancellation, disabled entries, default confirmation and layout.
 
+### Return to character selection
+
+**Pause → Elegir personaje** opens the original character screen after a
+confirmation (Cancel selected by default). Choose Jake, Elwood or two players;
+the current level restarts from its entrance, retaining finite life counts,
+assists, DOS/Amiga mode, controls, volumes and presentation preferences.
+Inventory, damage, checkpoints, enemies and map changes are reset. A returning
+eliminated player receives at least one life. Cancelling keeps the game intact.
+
+Add `BLUES_TEST_CHARACTER=1` to `BLUES_TEST_LEVELS=1` above to test repeated
+returns through the actual character screen, selecting Jake, Elwood and two
+players before verifying the newly initialized stage.
+
 ### Ladders and warehouse tube recovery
+
+Ladder alignment keeps vertical input in the tile actually entered. Entry
+positions 9–15 previously rounded into the next column, potentially dropping
+the player onto the warehouse conveyor. Residual conveyor acceleration is
+cleared on ladders. Regression tests cover all 16 entry offsets and both signs
+of conveyor impulse, along with ascent/descent, idle, jump mappings and the
+warehouse pipe.
+
 
 With the default separate jump control, Up/Down climbs ladders and Shift remains
 the jump action. Releasing horizontal input stops walking momentum on a ladder,

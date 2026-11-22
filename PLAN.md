@@ -7,9 +7,9 @@ refieren a cada tarea; no representan una estimación del tiempo restante.
 
 ## Estado general
 
-- Tareas completadas: **10 de 18**.
-- Completadas: **01–10**.
-- En validación: **11**.
+- Tareas completadas: **11 de 18**.
+- Completadas: **01–11**.
+- En validación: corrección adicional de escaleras y vuelta a selección de personaje.
 - Las demás tareas están pendientes de implementación.
 
 ## Base disponible
@@ -43,7 +43,7 @@ confirmado por el usuario: el audio DOS funciona correctamente en Windows.
 | 08 | Integrar opciones generales | DOS/Amiga, cámara clásica o suavizada, HUD clásico o fijo, pantalla completa, frecuencia de presentación, encuadre y configuración de controles accesibles desde el menú. | 06, 07 | Completada: ajustes y navegación simplificada validados por el usuario. Persistencia entre ejecuciones prevista en 12. | 100 % |
 | 09 | Añadir controles de volumen | Ajustes independientes para música y efectos, incluido silencio, aplicados sin reiniciar el juego ni producir chasquidos. | 02, 06 | Completada: pruebas técnicas superadas y niveles/silencio validados al escuchar por el usuario. Persistencia entre ejecuciones prevista en 12. | 100 % |
 | 10 | Añadir ayudas de juego | Activar/desactivar invulnerabilidad, aumentar o reducir vidas y elegir vidas infinitas desde el menú. Mostrar con claridad qué ayudas están activas. | 06 | Completada: ayudas, escaleras y recuperación tras el tubo verificadas técnicamente y validadas por el usuario. | 100 % |
-| 11 | Añadir selector de nivel | Elegir cualquiera de los seis niveles e iniciarlo con un estado coherente, conservando preferencias y modo gráfico. | 06 | Integrada y probada: seis niveles, reinicio del actual, confirmación y control de archivos disponibles; estado nuevo con preferencias y modo conservados. Pendiente de validación al jugar. | 75 % |
+| 11 | Añadir selector de nivel | Elegir cualquiera de los seis niveles e iniciarlo con un estado coherente, conservando preferencias y modo gráfico. | 06 | Completada: selector de seis niveles validado por el usuario. Añadida vuelta a la selección original de personaje con reinicio del nivel actual y preferencias conservadas; ampliación pendiente de validar al jugar. | 100 % |
 | 12 | Recordar preferencias | Guardar opciones y controles entre ejecuciones; permitir restaurar valores predeterminados y tolerar configuraciones inválidas. | 08, 09, 10 | Pendiente | 0 % |
 | 13 | Implementar guardado completo | Guardar y restaurar posición, vidas, inventario, enemigos, objetos, cambios del mapa, habitación, versión gráfica y encuadre. Formato versionado y validación de archivos. | 01 | Pendiente | 0 % |
 | 14 | Crear ocho slots de guardado | Ocho posiciones con miniatura del estado guardado, nivel, fecha y vidas. Guardar, cargar y sobrescribir; distinguir slots vacíos o incompatibles. | 06, 07, 13 | Pendiente | 0 % |
@@ -142,3 +142,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-22 | 17 | Pruebas de recorrido añadidas sobre recursos reales: escaleras de los seis niveles y tubo del almacén con ambas cámaras, encuadres, ayudas activadas/desactivadas y HUD clásico/fijo en DOS/Amiga. Regresiones de cámara, puertas, ayudas, modos y zoom superadas; compilaciones Linux/Windows y AddressSanitizer verificados. | Continuar validación de jugabilidad tras la prueba del usuario. |
 | 2026-11-22 | 10, 11 | El usuario valida las correcciones y cierra 10 al 100 %. Selector de seis niveles añadido al menú principal, con confirmación y niveles sin datos deshabilitados. Reinicia mapa, enemigos, inventario, daño y puntos de retorno; conserva personajes, vidas, ayudas, versión y preferencias. | Validar selección y reinicio al jugar para cerrar 11. |
 | 2026-11-22 | 11 | Pruebas superadas de seis destinos y reinicio del actual en DOS/Amiga, dos jugadores y cambio de versión preparado en el menú. Verificados estado limpio, conservación de ajustes, cancelación, archivos ausentes y distribución visual. Regresiones de pausa, opciones, ayudas, escaleras/tubo y HUD superadas; AddressSanitizer y compilaciones Linux/Windows verificados. | Confirmar el selector al jugar. |
+| 2026-11-22 | 11, 17 | El usuario valida el selector de nivel. Corregida la entrada por la mitad derecha de la escalera, que redondeaba a la columna contigua y podía acabar en la cinta del almacén; se elimina el impulso residual de cinta al escalar. Añadida opción Elegir personaje con confirmación y reinicio limpio del nivel actual conservando ajustes y vidas. | Validar escaleras y selección de personaje al jugar. |
+| 2026-11-22 | 11, 17 | Pruebas ampliadas de escaleras superadas en los seis niveles DOS/Amiga: 16 desplazamientos de entrada y tres impulsos de cinta por escalera; 144 combinaciones en el almacén, además de subida/bajada/parada y tubo. Selección original de Jake, Elwood y dos jugadores verificada en ciclos repetidos, con modo DOS/Amiga preparado en el menú. Navegación, cancelación, distribución visual, regresiones, AddressSanitizer y compilaciones Linux/Windows superados. | Confirmación al jugar de ambos cambios. |

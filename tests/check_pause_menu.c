@@ -61,7 +61,7 @@ int main() {
 	assert(!pause_event(&ev) && _pause_page == PAUSE_BINDINGS);
 	ev = key(SDLK_ESCAPE, false);
 	assert(!pause_event(&ev) && _pause_page == PAUSE_MAIN && _pause_selection == 2);
-	ev = key(SDLK_DOWN, true); pause_event(&ev); pause_event(&ev);
+	ev = key(SDLK_DOWN, true); pause_event(&ev); pause_event(&ev); pause_event(&ev);
 	ev = key(SDLK_RETURN, true);
 	assert(!pause_event(&ev) && _pause_page == PAUSE_QUIT && _pause_selection == 0);
 	ev.key.repeat = 1;
@@ -80,6 +80,8 @@ int main() {
 	ev.caxis.value = 0; pause_event(&ev);
 	ev.caxis.value = 24000; pause_event(&ev);
 	assert(_pause_selection == 2);
+	ev.caxis.value = 0; pause_event(&ev);
+	ev.caxis.value = 24000; pause_event(&ev);
 	ev.caxis.value = 0; pause_event(&ev);
 	ev.caxis.value = 24000; pause_event(&ev);
 	ev.caxis.value = 0; pause_event(&ev);
@@ -103,6 +105,13 @@ int main() {
   assert(!pause_activate() && _pause_page==PAUSE_LEVEL_CONFIRM);
   pause_move(1); assert(pause_activate() && _pause_options.requested_level==level);
  }
+ reset_menu();
+ reset_menu(); _pause_options.select_character=false;
+ _pause_selection=4;
+ assert(!pause_activate() && _pause_page==PAUSE_CHARACTER_CONFIRM && _pause_selection==0);
+ assert(!pause_activate() && _pause_page==PAUSE_MAIN && _pause_selection==4 && !_pause_options.select_character);
+ assert(!pause_activate()); pause_move(1);
+ assert(pause_activate() && _pause_options.select_character);
  reset_menu();
 	/* Focus loss cannot activate a menu entry or leak a window close. */
 	reset_menu();
@@ -239,9 +248,9 @@ int main() {
 	for (unsigned i = 0; i < ARRAYSIZE(sizes); ++i) {
 		if (sizes[i][0]) SDL_SetWindowSize(_window, sizes[i][0], sizes[i][1]);
 		else assert(SDL_SetWindowFullscreen(_window, SDL_WINDOW_FULLSCREEN_DESKTOP) == 0);
-		for (int page = 0; page < 12; ++page) {
-			_pause_page = page == 11 ? PAUSE_QUIT : (enum pause_page)page;
-			_pause_selection = page == 11 ? 1 : 0;
+		for (int page = 0; page < 13; ++page) {
+			_pause_page = page == 12 ? PAUSE_QUIT : (enum pause_page)page;
+			_pause_selection = page == 12 ? 1 : 0;
 			_pause_menu_open = true;
 			sdl2_draw_screen(0,0,1);
 			_pause_menu_open = false;
@@ -264,7 +273,7 @@ int main() {
 			assert(x1>=0 && x2<w && y1>=0 && y2<h);
 			const int scale = MIN(w/320,h/200);
 			assert(scale >= 1 && gold > 0 && gold % (scale*scale) == 0);
-			assert((danger > 0) == (page == 11));
+			assert((danger > 0) == (page == 12));
 			free(pixels);
 		}
 	}

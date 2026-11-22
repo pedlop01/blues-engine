@@ -1753,6 +1753,7 @@ static void do_level_fixup_object_unkA(struct object_t *obj) {
 		obj->sprite_type = 0;
 	}
 	if (_si == 6) {
+		if (obj->type < 2) obj->unk2F = 0;
 		obj->yfriction = 0;
 		obj->sprite_type = 3;
 		if (obj->direction_ud == 1) {
@@ -1767,9 +1768,14 @@ static void do_level_fixup_object_unkA(struct object_t *obj) {
 			obj->yvelocity = 0;
 		}
 	} else if (_si == 7) {
-		if (obj->type<2 && obj->direction_lr==0) obj->xvelocity=obj->xacc=0;
+		if (obj->type < 2) {
+			obj->unk2F = 0; /* A conveyor impulse must not follow onto a ladder. */
+			if (obj->direction_lr == 0) obj->xvelocity = obj->xacc = 0;
+		}
 		if (obj->direction_ud != 0 && obj->unk2E != 0) {
-			obj->xpos = (obj->xpos + 7) & ~15;
+			/* Keep players on the ladder tile they actually entered. Nearest
+			 * grid rounding sends offsets 9..15 into the next column. */
+			obj->xpos = obj->type < 2 && obj->direction_lr == 0 ? obj->xpos & ~15 : (obj->xpos + 7) & ~15;
 			obj->screen_xpos = obj->xpos - g_vars.screen_tilemap_xorigin;
 			obj->xpos16 = obj->xpos >> 4;
 		}
@@ -2486,6 +2492,7 @@ static void apply_game_assists(const struct sys_pause_options *options) {
 
 void do_level() {
 	g_vars.requested_level = -1;
+	g_vars.requested_character = false;
 	const int base_w = GAME_SCREEN_W;
 	const int base_h = GAME_SCREEN_H;
 	_level_base_w = base_w;
@@ -2572,6 +2579,7 @@ void do_level() {
 					update_level_view(base_w, base_h, options.view_step);
 					_camera.valid = false;
 				}
+				if (options.select_character) options.requested_level = g_vars.level;
 				if (options.requested_level >= 0 && level_available(options.requested_level,options.amiga)) {
 					/* Apply a staged version change while the old world is still valid. */
 					if (options.amiga != g_res.amiga_data && !switch_data_mode()) {
@@ -2580,6 +2588,7 @@ void do_level() {
 					}
 					g_sys.input.switch_mode = false;
 					g_vars.requested_level = options.requested_level;
+					g_vars.requested_character = options.select_character;
 					g_vars.quit_level_flag = true;
 					break;
 				}

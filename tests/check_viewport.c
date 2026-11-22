@@ -536,11 +536,31 @@ static void test_traversal() {
 	const struct vars_t initial=g_vars;
 	uint8_t sql[640*25]; memcpy(sql,g_res.sql,sizeof(sql));
 	const int base_w=GAME_SCREEN_W,base_h=GAME_SCREEN_H;
-	int ladders=0,pipe_cases=0;
+	int ladders=0,pipe_cases=0,entries=0;
 	for(int x=1;x<127;++x)for(int start=1;start<g_vars.screen_tilemap_h/16-1;++start) {
 		if(triggers_get_tile_type(x,start)!=7 || triggers_get_tile_type(x,start-1)==7)continue;
 		int end=start;while(end+1<g_vars.screen_tilemap_h/16 && triggers_get_tile_type(x,end+1)==7)++end;
 		if(end-start+1<6)continue;
+        /* Every entry offset, including the right half that used to snap
+         * into the next column, and residual conveyor acceleration. */
+        for (int offset=0;offset<16;++offset) for (int force=-3;force<=3;force+=3) {
+            g_vars=initial;memcpy(g_res.sql,sql,sizeof(sql));traversal_player_only();
+            struct object_t *p=&g_vars.objects[OBJECT_NUM_PLAYER1];
+            p->xpos=x*16+offset;p->ypos=end*16+8;p->xpos16=p->xpos/16;p->ypos16=p->ypos/16;
+            p->floor_ypos16=p->ypos16;p->xvelocity=p->yvelocity=p->unk1C=0;
+            p->unk2F=force;p->special_anim=0;p->sprite_type=2;
+            g_vars.inp_key_up=1;
+            int highest=p->ypos;
+            for (int t=0;t<(end-start+1)*8;++t) {
+                const bool on_ladder=triggers_get_tile_type(p->xpos16,p->ypos16)==7;
+                traversal_tick();
+                if (on_ladder) assert(p->xpos==x*16 && p->xvelocity==0 && p->unk2F==0);
+                highest=MIN(highest,p->ypos);
+            }
+            assert(highest <= end*16-16);
+            if (initial.level==1) assert(highest <= (start+1)*16);
+            ++entries;
+        }
 		for(int mode=0;mode<2;++mode)for(int velocity=-48;velocity<=48;velocity+=48) {
 			g_vars=initial;memcpy(g_res.sql,sql,sizeof(sql));traversal_player_only();
 			g_options.jump_button=mode!=0;
@@ -594,7 +614,7 @@ static void test_traversal() {
 			++pipe_cases;
 		}
 	}
-	printf("traversal: %d ladder runs (up/down/idle, incoming inertia, both jump mappings); %d pipe recoveries (camera, zoom, immunity) passed\n",ladders,pipe_cases);
+	printf("traversal: %d ladders, %d entry offsets/conveyor impulses; up/down/idle, both jump mappings; %d pipe recoveries passed\n",ladders,entries,pipe_cases);
 	g_sys.input.quit=true;
 }
 
@@ -825,7 +845,8 @@ static void test_hud_switch_events() {
 
 /* Exercise the real outer game loop, not just the menu or init helper. */
 static int levels_started, level_frames, expected_level=-1;
-static bool expected_amiga;
+static bool expected_amiga, choosing_character;
+static int character_choice, character_events;
 static void test_level_menu() {
  assert(_pause_options.current_level==g_vars.level);
  for (int i=0;i<MAX_LEVELS;++i) assert(_pause_options.available_levels[g_res.amiga_data][i]);
@@ -851,6 +872,17 @@ static void test_level_menu() {
  if (getenv("BLUES_TEST_LEVEL_MODE")) _pause_options.amiga=!g_res.amiga_data;
  expected_amiga=_pause_options.amiga;
  expected_level=MIN(5,levels_started);
+ if (getenv("BLUES_TEST_CHARACTER")) {
+  expected_level=g_vars.level;
+  character_choice=levels_started%3; character_events=0; choosing_character=true;
+  _pause_page=PAUSE_MAIN; _pause_selection=4;
+  sdl2_draw_pause_menu(); snapshot("pause-main");
+  assert(!pause_activate() && _pause_page==PAUSE_CHARACTER_CONFIRM && _pause_selection==0);
+  sdl2_draw_pause_menu(); snapshot("character-confirm");
+  _pause_selection=1; assert(pause_activate() && _pause_options.select_character);
+  ++levels_started; level_frames=0;
+  return;
+ }
  _pause_page=PAUSE_MAIN; _pause_selection=3;
  assert(!pause_activate() && _pause_page==PAUSE_LEVELS);
  sdl2_draw_pause_menu(); snapshot("level-selector");
@@ -866,6 +898,11 @@ static void test_level_events() {
   const struct object_t *player=&g_vars.objects[OBJECT_NUM_PLAYER1];
   assert(g_vars.level==expected_level && g_res.amiga_data==expected_amiga);
   assert(player->lifes_count==17 && player->data51==3 && player->vinyls_count==0);
+  if (getenv("BLUES_TEST_CHARACTER")) {
+   assert(g_vars.two_players_flag==(character_choice==2));
+   assert(player->type==(character_choice==1 ? PLAYER_ELWOOD : PLAYER_JAKE));
+   assert(g_vars.objects[OBJECT_NUM_PLAYER2].type==(character_choice==2 ? PLAYER_ELWOOD : 100));
+  }
   assert(!player->unk60 && !player->special_anim && !player->scrolling_lock_flag);
   assert(!g_vars.found_music_instrument_flag && !g_vars.switch_player_scrolling_flag);
   assert(!g_vars.game_over_flag && !g_vars.player1_dead_flag && !g_vars.player2_dead_flag);
@@ -881,7 +918,7 @@ static void test_level_events() {
   assert(g_options.scroll_rate==120 && g_sys.input.view_step==4);
   assert(g_options.music_volume==40 && g_options.effects_volume==30);
   assert((g_options.cheats & (CHEATS_INVULNERABLE|CHEATS_UNLIMITED_LIFES))==(CHEATS_INVULNERABLE|CHEATS_UNLIMITED_LIFES));
-  if (levels_started==7) { g_sys.input.quit=true; puts("levels: six destinations, same-level restart, fresh world and retained preferences passed"); return; }
+  if (levels_started==7) { g_sys.input.quit=true; puts(getenv("BLUES_TEST_CHARACTER") ? "characters: Jake/Elwood/two players, fresh stage and retained settings passed" : "levels: six destinations, same-level restart, fresh world and retained preferences passed"); return; }
  }
  if (level_frames==2) g_sys.input.menu=true;
  ++level_frames;
@@ -890,6 +927,13 @@ static void test_level_events() {
 static void test_events() {
 	sdl2_process_events();
 	if (_sprites_cliprect.y != TILEMAP_OFFSET_Y) {
+        if (choosing_character) {
+            g_sys.input.direction=((character_events==0 && character_choice!=0) || (character_events==1 && character_choice==2)) ? INPUT_DIRECTION_RIGHT : 0;
+            g_sys.input.space=character_events >= (character_choice==2 ? 2 : 1);
+            ++character_events;
+            if (g_sys.input.space) choosing_character=false;
+            return;
+        }
 		g_sys.input.space = true; /* Skip title, character choice and intermission. */
 		return;
 	}

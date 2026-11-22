@@ -362,7 +362,18 @@ static void game_run() {
 			}
 			load_level_data(g_vars.level);
 			do_level();
-			if (!g_sys.input.quit && g_vars.requested_level >= 0) start_selected_level(g_vars.requested_level);
+			if (!g_sys.input.quit && g_vars.requested_level >= 0) {
+				const bool select_character = g_vars.requested_character;
+				start_selected_level(g_vars.requested_level);
+				if (select_character) {
+					play_music(0);
+					do_select_player();
+					/* The selection button must not also grab/jump in the level. */
+					g_sys.input.space = g_sys.input.jump = false;
+					g_sys.input.direction = 0;
+					screen_unk5();
+				}
+			}
 			if (g_res.dos_demo && g_vars.level > 0) {
 				do_demo_screens();
 				return;

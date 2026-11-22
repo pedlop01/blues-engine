@@ -1,5 +1,5 @@
 /* SDL pause-menu implementation. Kept private to sys_sdl2.c. */
-enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD, PAUSE_AUDIO, PAUSE_ASSISTS, PAUSE_LEVELS, PAUSE_LEVEL_CONFIRM };
+enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD, PAUSE_AUDIO, PAUSE_ASSISTS, PAUSE_LEVELS, PAUSE_LEVEL_CONFIRM, PAUSE_CHARACTER_CONFIRM };
 static int _selected_level;
 static const char *_level_names[] = {"1 CENTRO COMERCIAL","2 ALMACEN","3 PRISION","4 ALCANTARILLAS","5 CIUDAD","6 CONCIERTO"};
 static enum pause_page _pause_page;
@@ -48,14 +48,14 @@ static bool handle_bound_button(int button, bool down, struct input_t *input) {
 
 static bool pause_large_page() {
 	return _pause_page == PAUSE_CONTROLS || _pause_page == PAUSE_OPTIONS ||
-		_pause_page == PAUSE_BINDINGS || _pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD || _pause_page == PAUSE_AUDIO || _pause_page == PAUSE_ASSISTS || _pause_page == PAUSE_LEVELS || _pause_page == PAUSE_LEVEL_CONFIRM;
+		_pause_page == PAUSE_BINDINGS || _pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD || _pause_page == PAUSE_AUDIO || _pause_page == PAUSE_ASSISTS || _pause_page == PAUSE_LEVELS || _pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM;
 }
 
 static int pause_item_count() {
 	switch (_pause_page) {
-	case PAUSE_MAIN: return 5;
+	case PAUSE_MAIN: return 6;
 	case PAUSE_LEVELS: return 7;
-	case PAUSE_LEVEL_CONFIRM: return 2;
+	case PAUSE_LEVEL_CONFIRM: case PAUSE_CHARACTER_CONFIRM: return 2;
 	case PAUSE_QUIT: return 2;
 	case PAUSE_OPTIONS: return 9;
 	case PAUSE_ASSISTS: return 5;
@@ -229,7 +229,7 @@ static void pause_center_text(const char *text, int y, int scale, bool selected)
 
 static void pause_row(const char *label, const char *value, int index, bool enabled) {
 	const int y = 50 + index * (_pause_page == PAUSE_OPTIONS ? 12 : 14);
-	const bool selected = index == _pause_selection + (_pause_page == PAUSE_LEVEL_CONFIRM ? 4 : 0);
+	const bool selected = index == _pause_selection + ((_pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM) ? 4 : 0);
 	if (selected) {
 		SDL_Rect rect = {25,y-3,269,12};
 		SDL_SetRenderDrawColor(_renderer,29,55,77,255);
@@ -243,9 +243,10 @@ static void pause_row(const char *label, const char *value, int index, bool enab
 }
 
 static void pause_draw_settings() {
-	if (_pause_page == PAUSE_LEVEL_CONFIRM) {
-		pause_center_text("INICIAR NIVEL?",26,2,true);
-		pause_center_text(_level_names[_selected_level],60,1,true);
+	if (_pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM) {
+		const bool character = _pause_page == PAUSE_CHARACTER_CONFIRM;
+		pause_center_text(character ? "ELEGIR PERSONAJE?" : "INICIAR NIVEL?",26,2,true);
+		pause_center_text(character ? "REINICIARAS EL NIVEL ACTUAL" : _level_names[_selected_level],60,1,true);
 		pause_center_text("SE PERDERA EL PROGRESO ACTUAL",82,1,false);
 		pause_row("VOLVER",NULL,4,true);
 		pause_row("INICIAR",NULL,5,true);
@@ -390,17 +391,17 @@ static void sdl2_draw_pause_menu() {
 			SDL_SetRenderDrawColor(_renderer, 38, 68, 91, 255);
 			SDL_RenderDrawLine(_renderer, 43, 65, 276, 65);
 		}
-		const char *main_items[] = {"CONTINUAR", "OPCIONES", "CONTROLES", "SELECCIONAR NIVEL", "SALIR DEL JUEGO"};
+		const char *main_items[] = {"CONTINUAR", "OPCIONES", "CONTROLES", "SELECCIONAR NIVEL", "ELEGIR PERSONAJE", "SALIR DEL JUEGO"};
 		const char *quit_items[] = {"VOLVER", "SALIR"};
 		const int count = pause_item_count();
 		for (int i = 0; i < count; ++i) {
-			const int y = _pause_page == PAUSE_QUIT ? 87 + i * 21 : 72 + i * 15;
+			const int y = _pause_page == PAUSE_QUIT ? 87 + i * 21 : 70 + i * 13;
 			const SDL_Color accent = _pause_page == PAUSE_QUIT && i == 1 ? PAUSE_DANGER : PAUSE_GOLD;
 			if (i == _pause_selection) {
-				SDL_Rect selected = {43, y - 5, 234, _pause_page == PAUSE_QUIT ? 17 : 14};
+				SDL_Rect selected = {43, y - (_pause_page == PAUSE_QUIT ? 5 : 3), 234, _pause_page == PAUSE_QUIT ? 17 : 12};
 				SDL_SetRenderDrawColor(_renderer, 29, 55, 77, 255);
 				SDL_RenderFillRect(_renderer, &selected);
-				SDL_Rect stripe = {43, y - 5, 2, _pause_page == PAUSE_QUIT ? 17 : 14};
+				SDL_Rect stripe = {43, y - (_pause_page == PAUSE_QUIT ? 5 : 3), 2, _pause_page == PAUSE_QUIT ? 17 : 12};
 				SDL_SetRenderDrawColor(_renderer, accent.r, accent.g, accent.b, 255);
 				SDL_RenderFillRect(_renderer, &stripe);
 				pause_text_color(">", 51, y, 1, accent);
@@ -434,7 +435,9 @@ static bool pause_back() {
 	_pause_notice = NULL;
 	if (_pause_capture >= 0) { _pause_capture = -1; return false; }
 	if (_pause_page == PAUSE_MAIN) return true;
-	if (_pause_page == PAUSE_LEVEL_CONFIRM) {
+	if (_pause_page == PAUSE_CHARACTER_CONFIRM) {
+		_pause_page=PAUSE_MAIN; _pause_selection=4;
+	} else if (_pause_page == PAUSE_LEVEL_CONFIRM) {
 		_pause_page=PAUSE_LEVELS; _pause_selection=_selected_level;
 	} else if (_pause_page == PAUSE_LEVELS) {
 		_pause_page=PAUSE_MAIN; _pause_selection=3;
@@ -450,7 +453,7 @@ static bool pause_back() {
 	} else if (_pause_page == PAUSE_BINDINGS) {
 		_pause_page = PAUSE_MAIN; _pause_selection = 2;
 	} else {
-		_pause_selection = _pause_page == PAUSE_CONTROLS ? 2 : (_pause_page == PAUSE_QUIT ? 4 : 1);
+		_pause_selection = _pause_page == PAUSE_CONTROLS ? 2 : (_pause_page == PAUSE_QUIT ? 5 : 1);
 		_pause_page = PAUSE_MAIN;
 	}
 	return false;
@@ -458,6 +461,11 @@ static bool pause_back() {
 
 static bool pause_activate() {
 	_pause_notice = NULL;
+	if (_pause_page == PAUSE_CHARACTER_CONFIRM) {
+		if (_pause_selection == 0) return pause_back();
+		_pause_options.select_character = true;
+		return true;
+	}
 	if (_pause_page == PAUSE_LEVEL_CONFIRM) {
 		if (_pause_selection == 0) return pause_back();
 		_pause_options.requested_level=_selected_level;
@@ -513,6 +521,7 @@ static bool pause_activate() {
 	}
 	if (_pause_selection == 0) return true;
 	if (_pause_selection == 3) { _pause_page=PAUSE_LEVELS; _pause_selection=_pause_options.current_level; return false; }
+	if (_pause_selection == 4) { _pause_page=PAUSE_CHARACTER_CONFIRM; _pause_selection=0; return false; }
 	_pause_page = _pause_selection == 1 ? PAUSE_OPTIONS : (_pause_selection == 2 ? PAUSE_BINDINGS : PAUSE_QUIT);
 	_pause_selection = 0;
 	return false;

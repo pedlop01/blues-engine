@@ -135,6 +135,7 @@ struct vars_t {
 	int start_level;
 	int requested_level;
 	bool menu_level_jump;
+	bool requested_character;
 	int16_t level_xpos[MAX_OBJECTS];
 	int16_t level_ypos[MAX_OBJECTS];
 	int screen_tilemap_w, screen_tilemap_h;
