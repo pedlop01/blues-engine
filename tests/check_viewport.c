@@ -485,16 +485,17 @@ static uint32_t options_script(uint32_t interval, void *param) {
 		menu_tap(SDLK_DOWN); menu_tap(SDLK_RIGHT); /* Rate. */
 		menu_tap(SDLK_DOWN); menu_tap(SDLK_RIGHT); /* View. */
 	} else if (step==1) {
-		menu_tap(SDLK_DOWN); menu_tap(SDLK_RETURN); menu_tap(SDLK_RETURN); /* Keyboard. */
+		push_menu_key(SDLK_ESCAPE,false); menu_tap(SDLK_DOWN);
+		menu_tap(SDLK_RETURN); menu_tap(SDLK_RETURN); /* Main Controls -> Keyboard. */
 		for(int i=0;i<4;++i) menu_tap(SDLK_DOWN);
 		menu_tap(SDLK_RETURN); menu_tap(SDLK_x); /* Capture action key. */
 		push_menu_key(SDLK_ESCAPE,false); menu_tap(SDLK_DOWN); menu_tap(SDLK_RETURN); /* Pad. */
 		menu_tap(SDLK_DOWN);
 		menu_button(SDL_CONTROLLER_BUTTON_A,true); menu_button(SDL_CONTROLLER_BUTTON_A,false);
 		menu_button(SDL_CONTROLLER_BUTTON_X,true); menu_button(SDL_CONTROLLER_BUTTON_X,false);
-		push_menu_key(SDLK_ESCAPE,false); push_menu_key(SDLK_ESCAPE,false); push_menu_key(SDLK_ESCAPE,false);
+		push_menu_key(SDLK_ESCAPE,false); push_menu_key(SDLK_ESCAPE,false);
 	} else {
-		menu_tap(SDLK_UP); push_menu_key(SDLK_RETURN,true);
+		menu_tap(SDLK_UP); menu_tap(SDLK_UP); push_menu_key(SDLK_RETURN,true);
 	}
 	return menu_timer_step==3 ? 0 : interval;
 }

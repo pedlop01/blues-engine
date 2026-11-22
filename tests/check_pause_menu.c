@@ -52,7 +52,7 @@ int main() {
 	assert(!pause_event(&ev) && _pause_selection == 1);
 	pause_event(&ev);
 	ev = key(SDLK_RETURN, true);
-	assert(!pause_event(&ev) && _pause_page == PAUSE_CONTROLS);
+	assert(!pause_event(&ev) && _pause_page == PAUSE_BINDINGS);
 	ev = key(SDLK_ESCAPE, false);
 	assert(!pause_event(&ev) && _pause_page == PAUSE_MAIN && _pause_selection == 2);
 	ev = key(SDLK_DOWN, true); pause_event(&ev);
@@ -98,6 +98,14 @@ int main() {
 	ev = (SDL_Event){0}; ev.type = SDL_QUIT;
 	assert(pause_event(&ev) && g_sys.input.quit);
 	reset_menu();
+	/* Controls has one main-menu entry; Options ends directly at Back. */
+	_pause_page=PAUSE_OPTIONS; _pause_selection=6;
+	assert(pause_item_count()==7 && !pause_activate() && _pause_page==PAUSE_MAIN && _pause_selection==1);
+	_pause_selection=2; pause_activate();
+	assert(_pause_page==PAUSE_BINDINGS && pause_item_count()==5);
+	_pause_selection=2; pause_activate(); assert(_pause_page==PAUSE_CONTROLS);
+	pause_back(); assert(_pause_page==PAUSE_BINDINGS && _pause_selection==2);
+	pause_back(); assert(_pause_page==PAUSE_MAIN && _pause_selection==2);
 	/* General settings are staged; missing data never permits a switch. */
 	reset_menu();
 	struct sys_pause_options options = {.camera=CAMERA_SMOOTH,.hud=HUD_CLASSIC,.render_rate=60};
@@ -138,7 +146,7 @@ int main() {
 	ev.cbutton.button=SDL_CONTROLLER_BUTTON_X; ev.type=SDL_CONTROLLERBUTTONDOWN; pause_event(&ev);
 	ev.type=SDL_CONTROLLERBUTTONUP; pause_event(&ev);
 	assert(_pause_capture==-1 && _edit_buttons[1]==SDL_CONTROLLER_BUTTON_X);
-	_pause_page=PAUSE_BINDINGS; _pause_selection=2; pause_activate();
+	_pause_page=PAUSE_BINDINGS; _pause_selection=3; pause_activate();
 	assert(memcmp(_edit_keys,_default_keys,sizeof(_edit_keys))==0 && _edit_buttons[1]==SDL_CONTROLLER_BUTTON_B);
 	reset_menu();
 	/* Menu-held input is suppressed until released. */

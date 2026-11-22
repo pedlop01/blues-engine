@@ -187,8 +187,8 @@ build/tests/check_sprite_interpolation
 During a Blues Brothers level, release **Esc** or **P**, or controller **Start**,
 to open the centered pause menu. Use Up/Down, the controller D-pad or left stick
 to navigate, and Enter/Space or controller A to select. Esc/P/Start closes the
-main pause menu; controller B goes back or resumes. The Controls page lists
-the current game shortcuts. Quit opens a confirmation that defaults to cancel.
+main pause menu; controller B goes back or resumes. Controls groups keyboard/controller configuration, a binding summary and
+restore-defaults in one place. Quit opens a confirmation that defaults to cancel.
 Closing the window still exits directly. Outside levels, Esc retains its
 original exit behavior.
 
@@ -238,7 +238,7 @@ Changing resource mode retains the existing F6 behavior, including restarting
 the current track in the other release's native arrangement. FPS changes affect
 presentation; simulation still runs at 30 Hz.
 
-**Options → Controls** offers keyboard and SDL game-controller configuration,
+**Controls** in the main pause menu offers keyboard and SDL game-controller configuration,
 plus a restore-defaults action. Select an action and press Enter/A, then release
 the new key or button. Esc cancels capture; controller Start also cancels button
 capture. The six keyboard actions are movement in four directions, action and

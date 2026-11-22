@@ -51,8 +51,8 @@ static int pause_item_count() {
 	switch (_pause_page) {
 	case PAUSE_MAIN: return 4;
 	case PAUSE_QUIT: return 2;
-	case PAUSE_OPTIONS: return 8;
-	case PAUSE_BINDINGS: return 4;
+	case PAUSE_OPTIONS: return 7;
+	case PAUSE_BINDINGS: return 5;
 	case PAUSE_KEYS: return BIND_COUNT + 1;
 	case PAUSE_PAD: return 3;
 	default: return 0;
@@ -199,7 +199,7 @@ static void pause_row(const char *label, const char *value, int index, bool enab
 
 static void pause_draw_settings() {
 	const char *title = _pause_page == PAUSE_OPTIONS ? "OPCIONES" :
-		(_pause_page == PAUSE_BINDINGS ? "CONFIGURAR CONTROLES" : (_pause_page == PAUSE_KEYS ? "TECLADO" : "MANDO"));
+		(_pause_page == PAUSE_BINDINGS ? "CONTROLES" : (_pause_page == PAUSE_KEYS ? "TECLADO" : "MANDO"));
 	pause_center_text(title,26,2,true);
 	char value[24];
 	if (_pause_page == PAUSE_OPTIONS) {
@@ -212,13 +212,13 @@ static void pause_draw_settings() {
 		if (_pause_options.view_step) snprintf(value,sizeof(value),"PASO %d",_pause_options.view_step);
 		else strcpy(value,"NORMAL");
 		pause_row("ENCUADRE",value,5,true);
-		pause_row("CONTROLES",NULL,6,true);
-		pause_row("VOLVER",NULL,7,true);
+		pause_row("VOLVER",NULL,6,true);
 	} else if (_pause_page == PAUSE_BINDINGS) {
 		pause_row("TECLADO",NULL,0,true);
 		pause_row("MANDO",NULL,1,true);
-		pause_row("RESTAURAR CONTROLES",NULL,2,true);
-		pause_row("VOLVER",NULL,3,true);
+		pause_row("VER ASIGNACIONES",NULL,2,true);
+		pause_row("RESTAURAR CONTROLES",NULL,3,true);
+		pause_row("VOLVER",NULL,4,true);
 	} else {
 		const int count = _pause_page == PAUSE_KEYS ? BIND_COUNT : 2;
 		for (int i = 0; i < count; ++i) {
@@ -342,8 +342,10 @@ static bool pause_back() {
 	if (_pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD) {
 		_pause_selection = _pause_page == PAUSE_KEYS ? 0 : 1;
 		_pause_page = PAUSE_BINDINGS;
+	} else if (_pause_page == PAUSE_CONTROLS) {
+		_pause_page = PAUSE_BINDINGS; _pause_selection = 2;
 	} else if (_pause_page == PAUSE_BINDINGS) {
-		_pause_page = PAUSE_OPTIONS; _pause_selection = 6;
+		_pause_page = PAUSE_MAIN; _pause_selection = 2;
 	} else {
 		_pause_selection = _pause_page == PAUSE_CONTROLS ? 2 : (_pause_page == PAUSE_QUIT ? 3 : 1);
 		_pause_page = PAUSE_MAIN;
@@ -360,13 +362,13 @@ static bool pause_activate() {
 	}
 	if (_pause_page == PAUSE_OPTIONS) {
 		if (_pause_selection < 6) pause_adjust(1);
-		else if (_pause_selection == 6) { _pause_page = PAUSE_BINDINGS; _pause_selection = 0; }
 		else return pause_back();
 		return false;
 	}
 	if (_pause_page == PAUSE_BINDINGS) {
 		if (_pause_selection < 2) { _pause_page = _pause_selection == 0 ? PAUSE_KEYS : PAUSE_PAD; _pause_selection = 0; }
-		else if (_pause_selection == 2) {
+		else if (_pause_selection == 2) { _pause_page = PAUSE_CONTROLS; _pause_selection = 0; }
+		else if (_pause_selection == 3) {
 			memcpy(_edit_keys,_default_keys,sizeof(_edit_keys));
 			_edit_buttons[0]=SDL_CONTROLLER_BUTTON_A; _edit_buttons[1]=SDL_CONTROLLER_BUTTON_B;
 			_pause_notice="CONTROLES RESTAURADOS";
@@ -381,7 +383,7 @@ static bool pause_activate() {
 		return false;
 	}
 	if (_pause_selection == 0) return true;
-	_pause_page = _pause_selection == 1 ? PAUSE_OPTIONS : (_pause_selection == 2 ? PAUSE_CONTROLS : PAUSE_QUIT);
+	_pause_page = _pause_selection == 1 ? PAUSE_OPTIONS : (_pause_selection == 2 ? PAUSE_BINDINGS : PAUSE_QUIT);
 	_pause_selection = 0;
 	return false;
 }
