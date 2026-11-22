@@ -158,6 +158,21 @@ static void repaint_restored_state() {
 	memset(g_res.vga,0,GAME_SCREEN_W*GAME_SCREEN_H);
 	g_vars=before;
 }
+static void restore_timeline_state(const struct bb_state *s) {
+	g_vars=s->vars;memcpy(g_res.sql,s->map,sizeof(s->map));memcpy(g_res.triggers,s->triggers,sizeof(s->triggers));
+	memcpy(level_data,s->level_types,sizeof(s->level_types));memcpy(level_obj_w,s->object_widths,sizeof(s->object_widths));memcpy(level_obj_h,s->object_heights,sizeof(s->object_heights));
+	for(int i=0;i<103;++i) (i<86 ? level_tilesdata_1e8c[i] : level_tilesdata_1fe8[i-86])[0]=s->animation_counters[i];
+	_camera=s->camera;_view_camera_cut=s->camera_cut;*_state_view=s->view;
+	*_state_view_step=s->view_step;*_state_frame_remainder=s->frame_remainder;
+	*_state_base_w=_level_base_w=s->base_width;*_state_base_h=_level_base_h=s->base_height;
+	*_state_initial_transition=false;
+	g_sys.input.view_step=s->input_view_step;
+	g_options.camera_mode=s->camera_mode;g_options.hud_mode=s->hud_mode;g_options.cheats=s->cheats;
+	configure_level_hud();
+	g_sys.render_set_sprites_clipping_rect(0,TILEMAP_OFFSET_Y,TILEMAP_SCREEN_W,TILEMAP_SCREEN_H);
+	g_sys.set_scroll_interpolation(0,0,0,false);
+	update_assist_status();
+}
 static bool apply_prepared_game() {
 	const struct bb_state *s=_prepared_state;
 	if(!s || !_state_view || !state_resources_available(s)) return false;
@@ -171,20 +186,14 @@ static bool apply_prepared_game() {
 	g_vars=s->vars;
 	res_init(s->amiga ? g_options.amiga_datapath : g_options.dos_datapath,MAX(64000,s->width*s->height));
 	sound_init();load_common_graphics();g_mix.init();load_level_data(s->vars.level);
-	g_vars=s->vars;memcpy(g_res.sql,s->map,sizeof(s->map));memcpy(g_res.triggers,s->triggers,sizeof(s->triggers));
-	memcpy(level_data,s->level_types,sizeof(s->level_types));memcpy(level_obj_w,s->object_widths,sizeof(s->object_widths));memcpy(level_obj_h,s->object_heights,sizeof(s->object_heights));
-	for(int i=0;i<103;++i) (i<86 ? level_tilesdata_1e8c[i] : level_tilesdata_1fe8[i-86])[0]=s->animation_counters[i];
-	_camera=s->camera;_view_camera_cut=s->camera_cut;*_state_view=s->view;
-	*_state_view_step=s->view_step;*_state_frame_remainder=s->frame_remainder;
-	*_state_base_w=_level_base_w=s->base_width;*_state_base_h=_level_base_h=s->base_height;
-	*_state_initial_transition=false;
-	g_sys.input.direction=0;g_sys.input.space=g_sys.input.jump=g_sys.input.menu=g_sys.input.switch_mode=g_sys.input.switch_hud=false;
+	restore_timeline_state(s);
+	g_sys.input.direction=0;g_sys.input.space=g_sys.input.jump=g_sys.input.menu=g_sys.input.switch_mode=g_sys.input.switch_hud=g_sys.input.rewind=false;
 	g_sys.input.view_step=s->input_view_step;
-	configure_level_hud();g_sys.render_set_sprites_clipping_rect(0,TILEMAP_OFFSET_Y,TILEMAP_SCREEN_W,TILEMAP_SCREEN_H);
 	g_sys.set_copper_bars(s->copper ? _copper_data+g_vars.level*18 : NULL);
-	g_sys.set_scroll_render_rate(g_options.scroll_rate);g_sys.set_scroll_interpolation(0,0,0,false);
-	update_assist_status();play_music(g_vars.music_num);
+	g_sys.set_scroll_render_rate(g_options.scroll_rate);
+	play_music(g_vars.music_num);
 	repaint_restored_state();
+	rewind_clear();
 	free(_prepared_state);_prepared_state=NULL;
 	if(g_sys.save_preferences) g_sys.save_preferences();
 	return true;

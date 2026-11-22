@@ -7,9 +7,9 @@ refieren a cada tarea; no representan una estimación del tiempo restante.
 
 ## Estado general
 
-- Tareas completadas: **13 de 18**.
-- Completadas: **01–13**.
-- En validación: **14**.
+- Tareas completadas: **16 de 18**.
+- Completadas: **01–16**.
+- Pendientes: **17–18**.
 - Corrección de escaleras validada por el usuario.
 - Las demás tareas están pendientes de implementación.
 
@@ -47,9 +47,9 @@ confirmado por el usuario: el audio DOS funciona correctamente en Windows.
 | 11 | Añadir selector de nivel | Elegir cualquiera de los seis niveles e iniciarlo con un estado coherente, conservando preferencias y modo gráfico. | 06 | Completada: selector de seis niveles validado por el usuario. Añadida vuelta a la selección original de personaje con reinicio del nivel actual y preferencias conservadas; ampliación pendiente de validar al jugar. | 100 % |
 | 12 | Recordar preferencias | Guardar opciones y controles entre ejecuciones; permitir restaurar valores predeterminados y tolerar configuraciones inválidas. | 08, 09, 10 | Completada: persistencia y restauración de opciones y controles verificadas técnicamente y validadas por el usuario. | 100 % |
 | 13 | Implementar guardado completo | Guardar y restaurar posición, vidas, inventario, enemigos, objetos, cambios del mapa, habitación, versión gráfica y encuadre. Formato versionado y validación de archivos. | 01 | Completada: guardado completo y restauración validados por el usuario. Formato portable, CRC y compatibilidad de recursos; base utilizada por los slots de 14. | 100 % |
-| 14 | Crear ocho slots de guardado | Ocho posiciones con miniatura del estado guardado, nivel, fecha y vidas. Guardar, cargar y sobrescribir; distinguir slots vacíos o incompatibles. | 06, 07, 13 | Integrada y probada: ocho slots con miniatura real, nivel/modo, fecha y vidas; confirmaciones, estados diferenciados y guardados antiguos conservados. Pendiente de validación al jugar. | 75 % |
-| 15 | Implementar el rebobinado | Mantener un historial acotado de unos segundos y mostrar la acción marcha atrás mientras se restauran estados completos. Al soltar, continuar desde ese punto sin duplicar objetos ni conservar un futuro inválido. | 13 | Pendiente | 0 % |
-| 16 | Crear el efecto VHS | Durante el rebobinado, añadir bandas de ruido, distorsión y una indicación visual, manteniendo reconocible la acción que retrocede. El efecto desaparece al volver al juego normal. | 15 | Pendiente | 0 % |
+| 14 | Crear ocho slots de guardado | Ocho posiciones con miniatura del estado guardado, nivel, fecha y vidas. Guardar, cargar y sobrescribir; distinguir slots vacíos o incompatibles. | 06, 07, 13 | Completada: navegador, miniaturas, metadatos y guardados anteriores verificados técnicamente y validados por el usuario al jugar. | 100 % |
+| 15 | Implementar el rebobinado | Mantener un historial acotado de unos segundos y mostrar la acción marcha atrás mientras se restauran estados completos. Al soltar, continuar desde ese punto sin duplicar objetos ni conservar un futuro inválido. | 13 | Completada: historial de ocho segundos, R/LB a 2×, estados completos y descarte del futuro. Verificados en el bucle real del juego, los seis niveles y ambas versiones, con AddressSanitizer. | 100 % |
+| 16 | Crear el efecto VHS | Durante el rebobinado, añadir bandas de ruido, distorsión y una indicación visual, manteniendo reconocible la acción que retrocede. El efecto desaparece al volver al juego normal. | 15 | Completada: ruido, scanlines, bandas de tracking, distorsión e indicador de tiempo. Encuadre y HUD DOS/Amiga comprobados por píxeles; capturas revisadas y efecto eliminado por completo al continuar. | 100 % |
 | 17 | Revisar fidelidad y regresiones | Recorrer los seis niveles y comprobar saltos, escaleras, enemigos, puertas, DOS/Amiga, ayudas, guardados y rebobinado. Mantener pruebas reproducibles para los errores encontrados. | Validación continua; cierre tras 03–16 | Pendiente de la campaña ampliada | 0 % |
 | 18 | Preparar la distribución Windows | Paquete con ejecutable y dependencias, lanzador para seleccionar ambas carpetas de datos e instrucciones breves. Verificarlo desde una carpeta nueva. | 01, 12, 14, 16, 17 | Pendiente | 0 % |
 
@@ -86,13 +86,7 @@ La tarea 17 acompaña cada etapa; no se aplaza toda la validación hasta el fina
 
 - Tecla para abrir el menú y asignación de mando. Mantener los controles actuales
   de cambio de versión y encuadre salvo decisión expresa.
-- Duración del historial de rebobinado y su control: mantener pulsado o activar
-  un modo. Propuesta inicial para evaluar: **5–10 segundos**.
-- Tratamiento del audio durante el rebobinado: silencio o efecto de cinta,
-  evitando cortes al volver al juego normal.
 - Estilo y fuente definitivos del menú, con una licencia adecuada para distribuirlos.
-- Política al cambiar de nivel o cargar una partida: reiniciar el historial de
-  rebobinado es la propuesta inicial para evitar mezclar partidas y niveles.
 
 ## Ubicación del proyecto
 
@@ -152,3 +146,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-22 | 13, 17 | Pruebas de guardado superadas en seis niveles DOS/Amiga, habitaciones, objetos transportados, dos jugadores y jugador eliminado. Verificados igualdad del estado y de píxeles tras restaurar, repetición determinista, cargas desde otros niveles/modos/procesos, encuadre base distinto, zoom en curso y cámara clásica/suavizada. Rechazados archivos truncados/corruptos/futuros y recursos ausentes/incompatibles; guardado anterior conservado ante fallo de escritura. Menú y regresiones de ayudas, escaleras, HUD, modos, audio y preferencias superados; AddressSanitizer y compilaciones Linux/Windows verificados. | Confirmar guardar/avanzar/cargar y cerrar/abrir/cargar en Windows. La música reinicia la pista guardada. |
 | 2026-11-22 | 13, 14 | El usuario valida 13, cerrada al 100 %. Añadido navegador de ocho slots con miniatura de la escena sin menú, nivel, versión, fecha local y vidas. Sobrescritura/carga con confirmación; vacíos, dañados, incompatibles y errores de lectura diferenciados. Imagen y estado en un único archivo con CRC y escritura atómica; guardados v1 conservados como slots sin miniatura. | Validar el navegador y varios slots en Windows. |
 | 2026-11-22 | 14 | Ocho archivos independientes verificados en DOS/Amiga, ambos HUD, dos jugadores, ventana de tamaño irregular y procesos nuevos. Las miniaturas coinciden exactamente con la escena restaurada y excluyen el menú. Comprobados guardados v1, metadatos, estados incompatibles/corruptos y protección del archivo anterior ante fallo de captura. Menú, preferencias, regresiones de guardado completo, AddressSanitizer y compilaciones Linux/Windows superados. | Validar selección, sobrescritura y carga de varios slots en Windows. |
+| 2026-11-22 | 14, 15, 16 | El usuario valida los ocho slots y cierra 14 al 100 %. Autoriza completar 15 y 16 sin intervención: ocho segundos en RAM, R/LB mantenido a velocidad 2×, descarte del futuro y efecto VHS. Audio silenciado al rebobinar y pista reiniciada al continuar; historial reiniciado al cargar o cambiar de nivel/versión. | Terminar matriz de regresiones, revisión visual y compilaciones antes de publicar. |
+| 2026-11-22 | 15, 16, 17 | Rebobinado y VHS completados con validación autónoma autorizada. Matriz de los seis niveles DOS/Amiga, ambas cámaras/HUD, 30/60/120 Hz, habitaciones, zoom, dos jugadores y ventana irregular superada. Comparados estados completos, agotamiento circular, descarte del futuro y repetición determinista; verificados reinicios de historial, silencio, R/LB, pausa/salida durante rebobinado, encuadre antes de distorsión y desaparición completa del efecto. Capturas DOS/Amiga revisadas; AddressSanitizer, guardados/slots/preferencias y compilaciones Linux/Windows superados. | Ninguna para 15–16. Continúan pendientes la campaña final 17 y la distribución 18. |

@@ -1204,6 +1204,131 @@ static void test_state_menu() {
 	assert(!g_sys.input.direction && !g_sys.input.space && !g_sys.input.jump);
 }
 
+static void assert_timeline_matches(const struct bb_state *expected) {
+	struct bb_state actual;assert(capture_game_state(&actual));
+	struct bb_state copy=*expected;actual.timestamp=copy.timestamp=0;
+	assert(!memcmp(&actual,&copy,sizeof(copy)));
+}
+static void test_rewind_history() {
+	if(getenv("BLUES_TEST_REWIND_ODD_SIZE"))SDL_SetWindowSize(_window,853,533);
+	if(getenv("BLUES_TEST_REWIND_TWO")){g_vars.two_players_flag=true;init_level();}
+	struct bb_state *reference=calloc(300,sizeof(*reference));assert(reference);
+	rewind_clear();
+	for(int tick=0;tick<300;++tick) {
+		g_vars.inp_key_left=(tick%40)<20;g_vars.inp_key_right=!g_vars.inp_key_left;
+		g_vars.inp_key_up=g_vars.inp_key_down=g_vars.inp_key_jump=g_vars.inp_key_space=false;
+		if(tick==40 || tick==140) {
+			g_sys.input.view_step=tick==40 ? 4 : 0;*_state_view_step=g_sys.input.view_step;
+			start_view_transition(_state_view,*_state_base_w,*_state_base_h,g_sys.input.view_step);
+		}
+		advance_view_transition(_state_view,33);traversal_tick();
+		/* Persistent edits and inventory must follow the timeline as well. */
+		g_res.sql[100]=(tick&1);g_res.triggers[5].unk16=tick%8;
+		g_vars.objects[OBJECT_NUM_PLAYER1].vinyls_count=tick%40;
+		g_vars.objects[OBJECT_NUM_PLAYER1].lifes_count=1+tick%9;
+		if(tick==220 && getenv("BLUES_TEST_REWIND_ROOM")) {
+			bool entered=false;
+			struct object_t *p=&g_vars.objects[OBJECT_NUM_PLAYER1];
+			for(int i=0;i<MAX_DOORS && !entered;++i)if(g_vars.doors[i].dst_y16*16>g_vars.screen_tilemap_h) {
+				p->xpos16=g_vars.doors[i].src_x16;p->ypos16=g_vars.doors[i].src_y16;
+				p->xpos=p->xpos16*16;p->ypos=p->ypos16*16;
+				do_level_enter_door(p);assert(camera_in_room());entered=true;
+			}
+			assert(entered);
+		}
+		assert(capture_game_state(&reference[tick]));rewind_record();
+		assert(_rewind_count==MIN(tick+1,REWIND_CAPACITY));
+	}
+	int frame=299;
+	while(_rewind_count>1) {
+		frame-=MIN(2,_rewind_count-1);rewind_step();
+		assert(_rewind_running && _rewind_active && SDL_GetAudioStatus()!=SDL_AUDIO_PLAYING);
+		assert_timeline_matches(&reference[frame]);
+		assert(SDL_GetRenderTarget(_renderer)==NULL);
+		if(frame==219 || frame==59) {
+			/* Offscreen capture must preserve full framing and native HUD. */
+			_rewind_active=false;sdl2_draw_screen(0,0,1);const uint32_t full=state_frame_crc();
+			_rewind_active=true;sdl2_draw_screen(0,0,1);assert(_rewind_texture);
+			assert(SDL_SetRenderTarget(_renderer,_rewind_texture)==0);
+			assert(full==state_frame_crc());
+			SDL_SetRenderTarget(_renderer,NULL);SDL_RenderSetLogicalSize(_renderer,0,0);
+			SDL_RenderSetLogicalSize(_renderer,_screen_w,_screen_h);sdl2_draw_screen(0,0,1);
+			if(frame==219)snapshot("rewind-vhs");
+		}
+	}
+	assert(frame==59 && _rewind_count==1);
+	for(int i=0;i<3;++i) {rewind_step();assert_timeline_matches(&reference[59]);}
+	/* VHS changes pixels only, and returning to normal restores the image. */
+	const uint32_t vhs=state_frame_crc();snapshot("rewind-oldest");
+	rewind_finish();assert(!_rewind_active && !_rewind_running);
+	repaint_restored_state();const uint32_t clean=state_frame_crc();snapshot("rewind-clean");
+	assert(clean!=vhs);repaint_restored_state();assert(clean==state_frame_crc());
+	assert_timeline_matches(&reference[59]);
+	/* A new future starts at the rewound state, not the discarded frame 299. */
+	uint8_t future[BB_STATE_MAX_SIZE],repeated[BB_STATE_MAX_SIZE];size_t nf,nr;
+	state_trace();encode_current_state(future,&nf);rewind_record();assert(_rewind_count==2);
+	rewind_step();assert_timeline_matches(&reference[59]);rewind_finish();
+	state_trace();encode_current_state(repeated,&nr);assert(nf==nr && !memcmp(future,repeated,nf));
+	/* Changing resource/settings context never crosses into an older world. */
+	g_options.cheats^=CHEATS_INVULNERABLE;rewind_record();assert(_rewind_count==1);
+	g_options.cheats^=CHEATS_INVULNERABLE;rewind_record();assert(_rewind_count==1);
+	rewind_clear();rewind_step();assert(!_rewind_active && !_rewind_running);
+	rewind_record();assert(_rewind_count==1);
+	assert(switch_data_mode());rewind_record();assert(_rewind_count==1);
+	assert(switch_data_mode());rewind_record();assert(_rewind_count==1);
+	_prepared_state=malloc(sizeof(*_prepared_state));assert(_prepared_state);
+	assert(capture_game_state(_prepared_state));assert(apply_prepared_game());
+	assert(_rewind_count==0); /* Disk-load path also discards history. */
+	free(reference);
+	g_sys.input.view_step=0;
+	puts("rewind: bounded eight-second timeline, exact full-state restore, rooms/zoom, discarded future, deterministic replay and clean VHS removal passed");
+}
+static uint32_t rewind_close_menu(uint32_t interval,void *context) {
+	assert(!_rewind_active && SDL_GetAudioStatus()!=SDL_AUDIO_PLAYING);
+	push_menu_key(SDLK_RETURN,true);return 0;
+}
+static void test_rewind_pause_menu() {
+	assert(!_rewind_active && !_rewind_running);
+	const struct vars_t before=g_vars;
+	assert(SDL_AddTimer(30,rewind_close_menu,NULL));
+	sdl2_run_pause_menu();
+	assert(!memcmp(&before,&g_vars,sizeof(before)) && !_pause_menu_open);
+}
+static int rewind_expected_counter;
+static void test_rewind_events() {
+	bool paused=false;
+	if(test_frames==2)test_rewind_history();
+	if(test_frames==20 || test_frames==24 || test_frames==28 || test_frames==30) {
+		assert(_rewind_count>3);
+		rewind_expected_counter=_rewind_history[(_rewind_head+REWIND_CAPACITY-3)%REWIND_CAPACITY].vars.level_loop_counter;
+		if(test_frames!=24)handle_keyevent(SDLK_r,true,&g_sys.input,&paused);
+		else handle_controllerbutton(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,true,&g_sys.input,&paused);
+	}
+	if(test_frames==21 || test_frames==25) {
+		assert(_rewind_active && g_vars.level_loop_counter==rewind_expected_counter);
+		if(test_frames==21)handle_keyevent(SDLK_r,false,&g_sys.input,&paused);
+		else handle_controllerbutton(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,false,&g_sys.input,&paused);
+	}
+	if(test_frames==22 || test_frames==26) {
+		assert(!_rewind_active && !g_sys.input.direction && !g_sys.input.space && !g_sys.input.jump);
+		assert(g_vars.level_loop_counter==rewind_expected_counter);
+	}
+	if(test_frames==27) {
+		assert(g_vars.level_loop_counter==rewind_expected_counter+1);
+	}
+	if(test_frames==29) {
+		assert(_rewind_active && g_vars.level_loop_counter==rewind_expected_counter);
+		g_sys.input.menu=true; /* Opening pause while still holding rewind. */
+	}
+	if(test_frames==30)assert(!_pause_menu_open);
+	if(test_frames==31) {
+		assert(_rewind_active && g_vars.level_loop_counter==rewind_expected_counter);
+		g_sys.input.quit=true;
+		puts("rewind: actual game loop R/LB hold/release, paused audio, forward resume, pause and quit while rewinding passed");
+	}
+	++test_frames;
+}
+
 static void test_events() {
 	sdl2_process_events();
 	if (_sprites_cliprect.y != TILEMAP_OFFSET_Y) {
@@ -1218,6 +1343,7 @@ static void test_events() {
 		return;
 	}
 	g_sys.input.space = false;
+	if (getenv("BLUES_TEST_REWIND")) {test_rewind_events();return;}
 	if (getenv("BLUES_TEST_SLOTS")) {if(test_frames++>=2)test_save_slots();return;}
 	if (getenv("BLUES_TEST_STATE_MENU")) {
 		if(test_frames==2) g_sys.input.menu=true;
@@ -1396,6 +1522,7 @@ int main(int argc, char **argv) {
 	if (!SDL_getenv("BLUES_SAVE_DIR")) SDL_setenv("BLUES_SAVE_DIR","",1);
 	if (getenv("BLUES_TEST_MODES") || getenv("BLUES_TEST_VOLUMES")) g_sys.start_audio = capture_start_audio;
 	g_sys.process_events = test_events;
+	if (getenv("BLUES_TEST_REWIND")) g_sys.run_pause_menu=test_rewind_pause_menu;
 	if (getenv("BLUES_TEST_STATE_MENU")) g_sys.run_pause_menu=test_state_menu;
 	if (getenv("BLUES_TEST_LEVELS")) g_sys.run_pause_menu=test_level_menu;
 	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU") || getenv("BLUES_TEST_RESET_PREFS")) g_sys.run_pause_menu = test_run_pause_menu;
@@ -1425,6 +1552,7 @@ int main(int argc, char **argv) {
 		puts("menu: frozen game/objects/map/zoom/audio, preserved scene and clean resume through actual game loop passed");
 		return result;
 	}
+	if (getenv("BLUES_TEST_REWIND")) {assert(!_rewind_history && !_rewind_active);return result;}
 	if (getenv("BLUES_TEST_SLOTS")) return result;
 	if (getenv("BLUES_TEST_STATE_MENU")) return result;
 	if (getenv("BLUES_TEST_STATE")) return result;

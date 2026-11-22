@@ -42,6 +42,12 @@ static void sdl2_begin_scene();
 static void sdl2_end_scene();
 static int _world_offset_x, _world_offset_y;
 static bool _pause_menu_enabled, _pause_menu_open;
+static bool _rewind_active, _rewind_key, _rewind_button;
+static int _rewind_frames;
+static SDL_Texture *_rewind_texture;
+static bool sdl2_begin_rewind_scene();
+static void sdl2_draw_rewind(bool captured);
+static void sdl2_set_rewind(bool active, int frames);
 static bool _window_has_focus = true;
 static bool _blocked_keys[SDL_NUM_SCANCODES];
 static bool _blocked_buttons[SDL_CONTROLLER_BUTTON_MAX];
@@ -106,6 +112,7 @@ static void sdl2_init() {
 }
 
 static void sdl2_fini() {
+	SDL_DestroyTexture(_rewind_texture);_rewind_texture=NULL;
 	SDL_DestroyTexture(_save_preview_texture);_save_preview_texture=NULL;
 	SDL_DestroyTexture(_hud_texture_top);
 	SDL_DestroyTexture(_hud_texture_bottom);
@@ -554,6 +561,7 @@ static void sdl2_end_scene() {
 }
 
 static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
+	const bool rewind_scene = sdl2_begin_rewind_scene();
 	const bool smooth_scroll = scroll_x != 0.f || scroll_y != 0.f;
 	sdl2_begin_scene();
 	if (_hud_width > 0) {
@@ -608,6 +616,7 @@ static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
 	SDL_RenderSetClipRect(_renderer, 0);
 	sdl2_end_scene();
 	sdl2_draw_assist_status();
+	sdl2_draw_rewind(rewind_scene);
 	if (_pause_menu_open) sdl2_draw_pause_menu();
 
 	if (!_save_preview_capture) SDL_RenderPresent(_renderer);
@@ -653,6 +662,9 @@ static void sdl2_shake_screen(int dx, int dy) {
 }
 
 static void handle_keyevent(int keysym, bool keydown, struct input_t *input, bool *paused) {
+	if (_pause_menu_enabled && keysym == SDLK_r) {
+		_rewind_key=keydown;input->rewind=_rewind_key || _rewind_button;return;
+	}
 	if (_pause_menu_enabled && handle_bound_key(keysym, keydown, input)) return;
 	switch (keysym) {
 	case SDLK_LEFT:
@@ -778,6 +790,9 @@ static void handle_controlleraxis(int axis, int value, struct input_t *input) {
 }
 
 static void handle_controllerbutton(int button, bool pressed, struct input_t *input, bool *paused) {
+	if (_pause_menu_enabled && button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER) {
+		_rewind_button=pressed;input->rewind=_rewind_key || _rewind_button;return;
+	}
 	if (_pause_menu_enabled && handle_bound_button(button, pressed, input)) return;
 	switch (button) {
 	case SDL_CONTROLLER_BUTTON_A:
@@ -886,6 +901,7 @@ static int handle_event(const SDL_Event *ev, bool *paused) {
 		case SDL_WINDOWEVENT_FOCUS_LOST:
 			*paused = (ev->window.event == SDL_WINDOWEVENT_FOCUS_LOST);
 			_window_has_focus = !*paused;
+			if (*paused) {_rewind_key=_rewind_button=false;g_sys.input.rewind=false;}
 			break;
 		}
 		break;
@@ -915,6 +931,7 @@ static int handle_event(const SDL_Event *ev, bool *paused) {
 			fprintf(stdout, "Removed controller '%s'\n", SDL_GameControllerName(_controller));
 			SDL_GameControllerClose(_controller);
 			_controller = 0;
+			_rewind_button=false;g_sys.input.rewind=_rewind_key;
 		}
 		break;
 	case SDL_CONTROLLERBUTTONUP:
@@ -989,6 +1006,7 @@ static int handle_event(const SDL_Event *ev, bool *paused) {
 
 #include "sys_sdl2_menu.h"
 #include "sys_sdl2_preferences.h"
+#include "sys_sdl2_rewind.h"
 #include "sys_sdl2_saves.h"
 
 static void sdl2_process_events() {
@@ -1002,7 +1020,7 @@ static void sdl2_process_events() {
 				break;
 			}
 			if (prev != paused) {
-				SDL_PauseAudio(paused);
+				SDL_PauseAudio(paused || _rewind_active);
 			}
 		}
 		if (!paused || g_sys.input.quit || g_sys.input.menu) {
@@ -1211,6 +1229,7 @@ struct sys_t g_sys = {
 	.set_assist_status = sdl2_set_assist_status,
 	.run_pause_menu = sdl2_run_pause_menu,
 	.set_pause_options = sdl2_set_pause_options,
+	.set_rewind = sdl2_set_rewind,
 	.get_pause_options = sdl2_get_pause_options,
 	.sleep = sdl2_sleep,
 	.get_timestamp = sdl2_get_timestamp,

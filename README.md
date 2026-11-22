@@ -31,6 +31,7 @@ focused on the first **Blues Brothers** game.
 | Persistent preferences | Presentation, volumes, controls, preferred DOS/Amiga release, assists and chosen starting lives survive restarts. Confirmed reset in Options restores defaults. |
 | Complete save state | Pause → Partida saves/restores gameplay, enemies, carried objects, edited maps, rooms, native release and zoom. Versioned format and compatibility checks, with eight confirmed save positions. |
 | Eight save slots | Save/load browser with native scene thumbnails, level, local date, lives and explicit empty/damaged/incompatible states. Previous saves remain loadable. |
+| Rewind and VHS | Hold `R` or controller `LB` to rewind up to eight seconds at 2× speed, with tape tracking/noise and a remaining-history indicator. Release to continue from the restored state. |
 | Regression tests | Tests cover DOS sequencer accuracy, PCM continuity, zoom, doors, defeated enemies and live presentation changes. |
 
 Audio output is 44.1 kHz. Technical tests pass, and the Windows DOS audio
@@ -38,8 +39,7 @@ adjustment has been confirmed in gameplay.
 
 ## Ideas and roadmap
 
-The next phase adds a short rewind with a VHS-style visual effect.
-Further work includes Windows packaging.
+The remaining work covers the expanded regression campaign and Windows packaging.
 
 **These are planned features, not features already available.** Progress,
 dependencies and completion criteria are tracked in [PLAN.md](PLAN.md).
@@ -253,7 +253,7 @@ Shift when the default jump binding is used.
 
 Menu navigation remains on arrows, Enter/Space, Esc/P and controller A/B/Start
 regardless of gameplay bindings. Menu/presentation shortcuts and player-select
-digits are reserved during keyboard capture. Controls shows the prepared
+digits and `R` are reserved during keyboard capture; `LB` is reserved on the controller. Controls shows the prepared
 bindings, and held capture/confirmation inputs are consumed on resume.
 Settings and bindings remain active through levels and across launches; see
 Persistent preferences below.
@@ -461,6 +461,40 @@ python3 tests/check_slots_launches.py
 
 See [docs/SAVE_FORMAT.md](docs/SAVE_FORMAT.md) for the format, compatibility
 rules and complete snapshot boundary.
+
+### Rewind with a VHS effect
+
+Hold **R** or **LB (left shoulder)** on an SDL game controller to travel backwards
+through the last **eight seconds** of the current level, at **2× speed**. Release
+the control to continue from the displayed point. At the oldest available state,
+the picture holds until release. The future you abandoned is discarded.
+
+The timeline restores both players, lives/health, inventory and carried objects,
+enemies, edited tiles, triggers, rooms, camera and zoom transitions. It is a
+bounded RAM buffer and does not write save slots. Loading a game, changing level
+or characters, switching DOS/Amiga, or changing camera/HUD/assists starts a fresh
+history. Simply pausing, changing volume or visiting a room preserves it. History
+is not retained after closing the game.
+
+While rewinding, audio is silent and a VHS overlay shows scanlines, moving
+tracking bands, displaced strips, noise and the available seconds. Native HUD
+artwork and the full map framing are preserved. On release the overlay disappears,
+old sound effects are discarded and the restored state's music track restarts;
+exact audio playback position is not rewound. Held gameplay controls must be
+released before they act again. Pause and Quit also work during rewind.
+
+```
+make build/tests/check_viewport build/tests/check_pause_menu
+build/tests/check_pause_menu
+python3 tests/check_rewind_launches.py
+```
+
+The regression matrix runs the real game loop with R/LB events and checks all six
+DOS/Amiga levels, both HUD/camera choices, 30/60/120 Hz, bonus rooms, zoom, two
+players and irregular window sizes. It compares complete restored states,
+deterministic replay, timeline wraparound, discarded futures, reset boundaries,
+scene framing before distortion and clean pixels after removing the effect.
+See [docs/REWIND.md](docs/REWIND.md) for implementation details.
 
 ### Return to character selection
 

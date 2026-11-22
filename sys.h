@@ -26,6 +26,7 @@ struct input_t {
 	bool switch_mode;
 	bool switch_hud;
 	bool menu;
+	bool rewind;
 };
 
 typedef void (*sys_audio_cb)(void *, uint8_t *data, int len);
@@ -92,6 +93,7 @@ struct sys_t {
 	void	(*transition_screen)(enum sys_transition_e type, bool open);
 	void	(*process_events)();
 	void	(*set_pause_menu_enabled)(bool enabled);
+	void	(*set_rewind)(bool active, int frames);
 	void	(*set_assist_status)(bool invulnerable, bool infinite_lives);
 	void	(*run_pause_menu)();
 	void	(*set_pause_options)(const struct sys_pause_options *options);

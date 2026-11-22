@@ -2496,12 +2496,15 @@ static void apply_game_assists(const struct sys_pause_options *options) {
 	update_assist_status();
 }
 
+static void rewind_clear();
 #include "level_state.h"
+#include "level_rewind.h"
 
 void do_level() {
 	g_vars.requested_level = -1;
 	g_vars.requested_character = false;
 	_state_load_reopen=false;
+	rewind_init();
 	int base_w = GAME_SCREEN_W;
 	int base_h = GAME_SCREEN_H;
 	_level_base_w = base_w;
@@ -2552,6 +2555,10 @@ void do_level() {
 	_state_base_w=&base_w;_state_base_h=&base_h;_state_initial_transition=&screen_transition_flag;
 	do {
 		update_input();
+		if (_rewind_running && (!g_sys.input.rewind || g_sys.input.menu || g_sys.input.quit)) {
+			rewind_finish();
+			if (!g_sys.input.menu && !g_sys.input.quit) continue;
+		}
 		if (g_sys.input.menu && !screen_transition_flag) {
 			struct sys_pause_options options = {
 				.amiga = g_res.amiga_data,
@@ -2615,6 +2622,13 @@ void do_level() {
 			continue; /* No simulation or zoom time elapses while paused. */
 		}
 		if (g_sys.input.quit) break;
+		if (g_sys.input.rewind && _rewind_count && !screen_transition_flag) {
+			const uint32_t start=g_sys.get_timestamp();
+			rewind_step();
+			const int delay=33-(int)(g_sys.get_timestamp()-start);
+			g_sys.sleep(MAX(1,delay));
+			continue;
+		}
 		const uint32_t timestamp = g_sys.get_timestamp();
 		frame_duration_remainder += 1000 % 30;
 		int frame_duration = 1000 / 30;
@@ -2682,10 +2696,13 @@ void do_level() {
 		}
 		memset(g_res.vga, 0, GAME_SCREEN_W * GAME_SCREEN_H);
 
+		rewind_record();
 		const int diff = (timestamp + frame_duration) - g_sys.get_timestamp();
 		g_sys.sleep(diff < 10 ? 10 : diff);
 
 	} while (!g_sys.input.quit && !g_vars.quit_level_flag);
+	rewind_finish();
+	free(_rewind_history);_rewind_history=NULL;_rewind_count=0;
 	_state_view=NULL;
 	free(_prepared_state);_prepared_state=NULL;
 	g_sys.set_pause_menu_enabled(false);

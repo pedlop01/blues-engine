@@ -81,7 +81,7 @@ static bool preferences_keys_valid(const int *keys) {
 
 static bool preferences_button_valid(int button) {
 	return button >= 0 && button < SDL_CONTROLLER_BUTTON_DPAD_UP &&
-		button != SDL_CONTROLLER_BUTTON_BACK && button != SDL_CONTROLLER_BUTTON_GUIDE && button != SDL_CONTROLLER_BUTTON_START;
+		button != SDL_CONTROLLER_BUTTON_LEFTSHOULDER && button != SDL_CONTROLLER_BUTTON_BACK && button != SDL_CONTROLLER_BUTTON_GUIDE && button != SDL_CONTROLLER_BUTTON_START;
 }
 
 static void sdl2_load_preferences() {

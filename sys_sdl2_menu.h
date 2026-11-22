@@ -144,7 +144,7 @@ static void pause_adjust(int direction) {
 }
 
 static bool reserved_binding(int key) {
-	return key == SDLK_ESCAPE || key == SDLK_p || key == SDLK_RETURN || key == SDLK_F6 || key == SDLK_F7 ||
+	return key == SDLK_ESCAPE || key == SDLK_p || key == SDLK_r || key == SDLK_RETURN || key == SDLK_F6 || key == SDLK_F7 ||
 		key == SDLK_MINUS || key == SDLK_KP_MINUS || key == SDLK_PLUS || key == SDLK_EQUALS || key == SDLK_KP_PLUS ||
 		key == SDLK_0 || key == SDLK_1 || key == SDLK_2 || key == SDLK_3 || key == SDLK_UNKNOWN;
 }
@@ -466,7 +466,8 @@ static void sdl2_draw_pause_menu() {
 		snprintf(binding,sizeof(binding),"%s / %s",a,b);
 		pause_text_color("MANDO",26,137,1,PAUSE_CYAN);
 		pause_text_color(binding,100,137,1,PAUSE_TEXT);
-		pause_center_text("F6 VERSION  F7 HUD  - / + / 0 ZOOM",158,1,false);
+		pause_center_text("F6 VERSION  F7 HUD  - / + / 0 ZOOM",153,1,false);
+		pause_center_text("MANTENER R / LB: REBOBINAR",164,1,false);
 		pause_center_text("ENTER / A / ESC / B: VOLVER",175,1,true);
 	} else {
 		pause_center_text(_pause_page == PAUSE_QUIT ? "SALIR DEL JUEGO?" : "PAUSA", _pause_page == PAUSE_QUIT ? 44 : 26,
@@ -506,6 +507,7 @@ static void sdl2_draw_pause_menu() {
 }
 
 static void clear_pause_input() {
+	g_sys.input.rewind=false;_rewind_key=_rewind_button=false;
 	g_sys.input.direction = 0;
 	g_sys.input.space = g_sys.input.jump = false;
 	g_sys.input.digit1 = g_sys.input.digit2 = g_sys.input.digit3 = false;
@@ -742,6 +744,7 @@ static bool pause_event(const SDL_Event *ev) {
 				return false;
 			}
 			if (button == _capture_ignore_button) { _capture_ignore_button = -1; return false; }
+			if (button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER) { _pause_notice="BOTON RESERVADO";return false; }
 			if (button == SDL_CONTROLLER_BUTTON_START) { _pause_capture = -1; _pause_notice = NULL; return false; }
 			if (_pause_page != PAUSE_PAD || button != _capture_button_candidate) return false;
 			_capture_button_candidate = -1;

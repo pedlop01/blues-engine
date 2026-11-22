@@ -52,6 +52,11 @@ int main() {
 	sdl2_set_screen_size(320, 200, "Pause test", 2, "nearest", false);
 	sdl2_set_pause_menu_enabled(true);
 	bool paused = false;
+	assert(reserved_binding(SDLK_r));
+	handle_keyevent(SDLK_r,true,&g_sys.input,&paused);assert(g_sys.input.rewind);
+	handle_controllerbutton(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,true,&g_sys.input,&paused);
+	handle_keyevent(SDLK_r,false,&g_sys.input,&paused);assert(g_sys.input.rewind);
+	handle_controllerbutton(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,false,&g_sys.input,&paused);assert(!g_sys.input.rewind);
 	handle_keyevent(SDLK_ESCAPE, true, &g_sys.input, &paused);
 	assert(!g_sys.input.quit && !g_sys.input.menu);
 	handle_keyevent(SDLK_ESCAPE, false, &g_sys.input, &paused);
@@ -214,6 +219,7 @@ int main() {
 	ev=key(SDLK_SPACE,false); pause_event(&ev); assert(_pause_capture==BIND_ACTION); /* Old held key release. */
 	ev=key(SDLK_SPACE,true); ev.key.repeat=1; pause_event(&ev);
 	ev=key(SDLK_SPACE,false); pause_event(&ev); assert(_pause_capture==BIND_ACTION);
+	ev=key(SDLK_r,true);pause_event(&ev);ev=key(SDLK_r,false);pause_event(&ev);assert(_pause_capture==BIND_ACTION);
 	ev=key(SDLK_F6,true); pause_event(&ev);
 	ev=key(SDLK_F6,false); pause_event(&ev); assert(_pause_capture==BIND_ACTION && _pause_notice);
 	ev=key(SDLK_x,true); pause_event(&ev);
@@ -228,6 +234,8 @@ int main() {
 	ev=(SDL_Event){0}; ev.type=SDL_CONTROLLERBUTTONDOWN; ev.cbutton.button=SDL_CONTROLLER_BUTTON_A;
 	pause_event(&ev); assert(_pause_capture==1);
 	ev.type=SDL_CONTROLLERBUTTONUP; pause_event(&ev); assert(_pause_capture==1);
+	ev.cbutton.button=SDL_CONTROLLER_BUTTON_LEFTSHOULDER;ev.type=SDL_CONTROLLERBUTTONDOWN;pause_event(&ev);
+	ev.type=SDL_CONTROLLERBUTTONUP;pause_event(&ev);assert(_pause_capture==1 && _pause_notice);
 	ev.cbutton.button=SDL_CONTROLLER_BUTTON_X; ev.type=SDL_CONTROLLERBUTTONDOWN; pause_event(&ev);
 	ev.type=SDL_CONTROLLERBUTTONUP; pause_event(&ev);
 	assert(_pause_capture==-1 && _edit_buttons[1]==SDL_CONTROLLER_BUTTON_X);
