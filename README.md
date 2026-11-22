@@ -379,12 +379,14 @@ players before verifying the newly initialized stage.
 
 ### Ladders and warehouse tube recovery
 
-Ladder alignment keeps vertical input in the tile actually entered. Entry
-positions 9–15 previously rounded into the next column, potentially dropping
-the player onto the warehouse conveyor. Residual conveyor acceleration is
-cleared on ladders. Regression tests cover all 16 entry offsets and both signs
-of conveyor impulse, along with ascent/descent, idle, jump mappings and the
-warehouse pipe.
+Player ladder input preserves the exact horizontal position, including the
+first frame of Up/Down. Player coordinates represent the sprite centre;
+snapping them to a tile edge caused the visible leftward jump. Only NPCs retain
+the original grid alignment. Residual conveyor acceleration is cleared on
+ladders. Regression tests use actual keyboard input across all 16 entry offsets
+on short and long ladders, and also cover conveyor impulses, ascent/descent,
+idle, jump mappings and the warehouse pipe. The first-frame position check
+fails against the previous implementation and passes with this correction.
 
 
 With the default separate jump control, Up/Down climbs ladders and Shift remains

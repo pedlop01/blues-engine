@@ -1772,10 +1772,11 @@ static void do_level_fixup_object_unkA(struct object_t *obj) {
 			obj->unk2F = 0; /* A conveyor impulse must not follow onto a ladder. */
 			if (obj->direction_lr == 0) obj->xvelocity = obj->xacc = 0;
 		}
-		if (obj->direction_ud != 0 && obj->unk2E != 0) {
-			/* Keep players on the ladder tile they actually entered. Nearest
-			 * grid rounding sends offsets 9..15 into the next column. */
-			obj->xpos = obj->type < 2 && obj->direction_lr == 0 ? obj->xpos & ~15 : (obj->xpos + 7) & ~15;
+		/* Player x is the sprite centre, not a tile edge. Up/Down must
+		 * preserve it; grid snapping makes a centred player jump left.
+		 * NPCs retain the original alignment used by their movement. */
+		if (obj->type >= 2 && obj->direction_ud != 0 && obj->unk2E != 0) {
+			obj->xpos = (obj->xpos + 7) & ~15;
 			obj->screen_xpos = obj->xpos - g_vars.screen_tilemap_xorigin;
 			obj->xpos16 = obj->xpos >> 4;
 		}

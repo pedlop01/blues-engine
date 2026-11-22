@@ -537,10 +537,40 @@ static void test_traversal() {
 	uint8_t sql[640*25]; memcpy(sql,g_res.sql,sizeof(sql));
 	const int base_w=GAME_SCREEN_W,base_h=GAME_SCREEN_H;
 	int ladders=0,pipe_cases=0,entries=0;
+
 	for(int x=1;x<127;++x)for(int start=1;start<g_vars.screen_tilemap_h/16-1;++start) {
 		if(triggers_get_tile_type(x,start)!=7 || triggers_get_tile_type(x,start-1)==7)continue;
 		int end=start;while(end+1<g_vars.screen_tilemap_h/16 && triggers_get_tile_type(x,end+1)==7)++end;
-		if(end-start+1<6)continue;
+        /* Up/Down must never move the player sideways, including the very
+         * first frame. Check short ladders as well as long shafts, using the
+         * real keyboard-to-game-input path rather than setting direction_ud. */
+        for (int offset=0;offset<16;++offset) for (int direction=0;direction<2;++direction) {
+            g_vars=initial;memcpy(g_res.sql,sql,sizeof(sql));traversal_player_only();
+            struct object_t *p=&g_vars.objects[OBJECT_NUM_PLAYER1];
+            const int original_x=x*16+offset;
+            p->xpos=original_x;p->ypos=(direction ? start : end)*16+8;
+            p->xpos16=p->xpos/16;p->ypos16=p->ypos/16;p->floor_ypos16=p->ypos16;
+            p->xvelocity=p->yvelocity=p->unk1C=p->unk2F=0;
+            p->special_anim=0;p->sprite_type=2;
+            bool paused=false;
+            clear_pause_input();
+            const int key=direction ? SDLK_DOWN : SDLK_UP;
+            handle_keyevent(key,true,&g_sys.input,&paused);
+            for (int tick=0;tick<8;++tick) {
+                void (*process_events)()=g_sys.process_events;
+                g_sys.process_events=sdl2_process_events;
+                update_input();
+                g_sys.process_events=process_events;
+                assert(!g_vars.inp_key_left && !g_vars.inp_key_right);
+                const bool on_ladder=triggers_get_tile_type(p->xpos16,p->ypos16)==7;
+                traversal_tick();
+                if (on_ladder) assert(p->xpos==original_x);
+            }
+            handle_keyevent(key,false,&g_sys.input,&paused);
+            clear_pause_input();
+            ++entries;
+        }
+        if(end-start+1<6)continue;
         /* Every entry offset, including the right half that used to snap
          * into the next column, and residual conveyor acceleration. */
         for (int offset=0;offset<16;++offset) for (int force=-3;force<=3;force+=3) {
@@ -554,7 +584,7 @@ static void test_traversal() {
             for (int t=0;t<(end-start+1)*8;++t) {
                 const bool on_ladder=triggers_get_tile_type(p->xpos16,p->ypos16)==7;
                 traversal_tick();
-                if (on_ladder) assert(p->xpos==x*16 && p->xvelocity==0 && p->unk2F==0);
+                if (on_ladder) assert(p->xpos==x*16+offset && p->xvelocity==0 && p->unk2F==0);
                 highest=MIN(highest,p->ypos);
             }
             assert(highest <= end*16-16);
@@ -570,14 +600,14 @@ static void test_traversal() {
 			p->xvelocity=velocity;p->yvelocity=0;p->unk1C=p->unk2F=0;p->special_anim=0;p->sprite_type=2;
 			const int original_y=p->ypos;
 			g_vars.inp_key_down=1;
-			for(int t=0;t<12;++t){traversal_tick();assert(p->xpos==x*16 && p->xvelocity==0 && p->direction_ud==2);}
+			for(int t=0;t<12;++t){traversal_tick();assert(p->xpos==x*16+8 && p->xvelocity==0 && p->direction_ud==2);}
 			assert(p->ypos==original_y+24);
 			g_vars.inp_key_down=0;g_vars.inp_key_up=1;
-			for(int t=0;t<12;++t){traversal_tick();assert(p->xpos==x*16 && p->direction_ud==1);}
+			for(int t=0;t<12;++t){traversal_tick();assert(p->xpos==x*16+8 && p->direction_ud==1);}
 			assert(p->ypos==original_y);
 			g_vars.inp_key_up=0;
 			for(int t=0;t<12;++t)traversal_tick();
-			assert(p->ypos==original_y && p->xpos==x*16 && p->yvelocity==0);
+			assert(p->ypos==original_y && p->xpos==x*16+8 && p->yvelocity==0);
 		}
 		++ladders;
 	}
@@ -590,7 +620,7 @@ static void test_traversal() {
 			ladder->floor_ypos16=29;ladder->xvelocity=velocity;ladder->yvelocity=ladder->unk1C=ladder->unk2F=0;
 			ladder->sprite_type=1;ladder->special_anim=0;g_vars.inp_key_down=1;
 			for(int t=0;t<48;++t)traversal_tick();
-			assert(ladder->ypos>34*16 && ladder->xpos==31*16); /* Enter from the cap and hold Down across its platform. */
+			assert(ladder->ypos>34*16 && ladder->xpos==31*16+8); /* Enter from the cap and hold Down across its platform. */
 		}
 		for(int camera=0;camera<2;++camera)for(int step=0;step<=8;step+=4)for(int protected=0;protected<2;++protected) {
 			resize_level_view(base_w,base_h,false);
