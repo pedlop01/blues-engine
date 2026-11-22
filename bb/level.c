@@ -212,6 +212,43 @@ void load_level_data(int num) {
 	screen_load_graphics(g_options.cga_colors ? g_res.cga_lut_sqv : 0, g_options.cga_colors ? g_res.cga_lut_avt : 0);
 }
 
+/* Check before abandoning a running level; absent data stays selectable only
+ * as a disabled row. Concert supports the same paired-data fallback as loading. */
+static bool level_available(int num, bool amiga) {
+	if (num < 0 || num >= MAX_LEVELS || (!amiga && g_res.dos_demo && num != 0)) return false;
+	const char *path = amiga ? g_options.amiga_datapath : g_options.dos_datapath;
+	const bool fallback = amiga && num == 5 && !data_file_present(path,_levels_amiga[num].bin);
+	const char *files[] = {
+		amiga ? _levels_amiga[num].blk : (g_res.dos_demo ? "demomag.ck1" : _levels[num].ck1),
+		amiga ? _levels_amiga[num].tbl : (g_res.dos_demo ? "demomag.ck2" : _levels[num].ck2),
+		amiga ? (fallback ? "concert.tbl" : _levels_amiga[num].bin) : _levels[num].bin,
+		amiga ? _levels_amiga[num].ennemi : _levels[num].sqv,
+		amiga ? _levels_amiga[num].m : _levels[num].avt,
+		amiga ? NULL : (g_res.dos_demo ? "demomag.sql" : _levels[num].sql)
+	};
+	for (unsigned i=0;i<ARRAYSIZE(files);++i)
+		if (files[i] && *files[i] && !data_file_present(path,files[i])) return false;
+	return !fallback || data_file_present(g_options.dos_datapath,"concert.sql");
+}
+
+void start_selected_level(int level) {
+	const int player = g_vars.player;
+	const bool two_players = g_vars.two_players_flag;
+	int lives[2];
+	for (int i=0;i<2;++i) lives[i]=MAX(1,MIN(99,g_vars.objects[OBJECT_NUM_PLAYER1+i].lifes_count));
+	/* Drop active effects and restart even when consecutive levels share music. */
+	g_mix.fini(); sound_fini(); sound_init(); g_mix.init();
+	memset(&g_vars,0,sizeof(g_vars));
+	g_vars.level=level; g_vars.player=player; g_vars.two_players_flag=two_players;
+	g_vars.play_level_flag=true; g_vars.music_num=-1;
+	g_vars.requested_level=-1; g_vars.menu_level_jump=true;
+	g_options.start_xpos16=g_options.start_ypos16=-1;
+	for (int i=0;i<2;++i) {
+		g_vars.objects[OBJECT_NUM_PLAYER1+i].lifes_count=lives[i];
+		g_vars.objects[OBJECT_NUM_PLAYER1+i].data51=3;
+	}
+}
+
 static bool check_data_mode(bool report) {
 	const bool amiga = !g_res.amiga_data;
 	const char *path = amiga ? g_options.amiga_datapath : g_options.dos_datapath;
@@ -433,7 +470,8 @@ static void init_level() {
 		obj->trigger3 = 0;
 		obj->unk50 = 0;
 		// obj->unk4E = 0;
-		if (obj->restart_level_flag == 0 && obj->level_complete_flag == 0 && (g_vars.level == 0 || g_vars.play_demo_flag)) {
+		const bool preserve_lives = g_vars.menu_level_jump && i >= OBJECT_NUM_PLAYER1 && i <= OBJECT_NUM_PLAYER2;
+		if (!preserve_lives && obj->restart_level_flag == 0 && obj->level_complete_flag == 0 && (g_vars.level == 0 || g_vars.play_demo_flag)) {
 			g_vars.player1_dead_flag = 0;
 			g_vars.player2_scrolling_flag = 0;
 			obj->lifes_count = 3;
@@ -2447,6 +2485,7 @@ static void apply_game_assists(const struct sys_pause_options *options) {
 }
 
 void do_level() {
+	g_vars.requested_level = -1;
 	const int base_w = GAME_SCREEN_W;
 	const int base_h = GAME_SCREEN_H;
 	_level_base_w = base_w;
@@ -2469,6 +2508,7 @@ void do_level() {
 	}
 	g_vars.switch_player_scrolling_flag = 0;
 	init_level();
+	g_vars.menu_level_jump = false;
 	g_vars.screen_tilemap_xorigin = MAX(0, MIN(g_vars.screen_tilemap_xorigin,
 		g_vars.screen_tilemap_w * 16 - TILEMAP_SCREEN_W));
 	g_vars.screen_tilemap_yorigin = MAX(0, MIN(g_vars.screen_tilemap_yorigin,
@@ -2497,6 +2537,7 @@ void do_level() {
 		if (g_sys.input.menu && !screen_transition_flag) {
 			struct sys_pause_options options = {
 				.amiga = g_res.amiga_data,
+				.current_level = g_vars.level, .requested_level = -1,
 				.invulnerable = (g_options.cheats & CHEATS_INVULNERABLE) != 0,
 				.infinite_lives = (g_options.cheats & CHEATS_UNLIMITED_LIFES) != 0,
 				.two_players = g_vars.two_players_flag,
@@ -2508,6 +2549,9 @@ void do_level() {
 				.music_volume = g_options.music_volume, .effects_volume = g_options.effects_volume,
 				.apply_volumes = g_mix.set_volumes
 			};
+			for (int i=0;i<MAX_LEVELS;++i) {
+				for (int mode=0;mode<2;++mode) options.available_levels[mode][i]=level_available(i,mode);
+			}
 			g_sys.set_pause_options(&options);
 			g_sys.run_pause_menu();
 			g_sys.get_pause_options(&options);
@@ -2527,6 +2571,17 @@ void do_level() {
 					view.elapsed = 300;
 					update_level_view(base_w, base_h, options.view_step);
 					_camera.valid = false;
+				}
+				if (options.requested_level >= 0 && level_available(options.requested_level,options.amiga)) {
+					/* Apply a staged version change while the old world is still valid. */
+					if (options.amiga != g_res.amiga_data && !switch_data_mode()) {
+						g_sys.input.switch_mode = false;
+						continue;
+					}
+					g_sys.input.switch_mode = false;
+					g_vars.requested_level = options.requested_level;
+					g_vars.quit_level_flag = true;
+					break;
 				}
 			}
 			continue; /* No simulation or zoom time elapses while paused. */

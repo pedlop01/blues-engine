@@ -1,5 +1,7 @@
 /* SDL pause-menu implementation. Kept private to sys_sdl2.c. */
-enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD, PAUSE_AUDIO, PAUSE_ASSISTS };
+enum pause_page { PAUSE_MAIN, PAUSE_CONTROLS, PAUSE_QUIT, PAUSE_OPTIONS, PAUSE_BINDINGS, PAUSE_KEYS, PAUSE_PAD, PAUSE_AUDIO, PAUSE_ASSISTS, PAUSE_LEVELS, PAUSE_LEVEL_CONFIRM };
+static int _selected_level;
+static const char *_level_names[] = {"1 CENTRO COMERCIAL","2 ALMACEN","3 PRISION","4 ALCANTARILLAS","5 CIUDAD","6 CONCIERTO"};
 static enum pause_page _pause_page;
 static int _pause_selection, _pause_axis, _pause_hat;
 static bool _pause_focused;
@@ -46,12 +48,14 @@ static bool handle_bound_button(int button, bool down, struct input_t *input) {
 
 static bool pause_large_page() {
 	return _pause_page == PAUSE_CONTROLS || _pause_page == PAUSE_OPTIONS ||
-		_pause_page == PAUSE_BINDINGS || _pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD || _pause_page == PAUSE_AUDIO || _pause_page == PAUSE_ASSISTS;
+		_pause_page == PAUSE_BINDINGS || _pause_page == PAUSE_KEYS || _pause_page == PAUSE_PAD || _pause_page == PAUSE_AUDIO || _pause_page == PAUSE_ASSISTS || _pause_page == PAUSE_LEVELS || _pause_page == PAUSE_LEVEL_CONFIRM;
 }
 
 static int pause_item_count() {
 	switch (_pause_page) {
-	case PAUSE_MAIN: return 4;
+	case PAUSE_MAIN: return 5;
+	case PAUSE_LEVELS: return 7;
+	case PAUSE_LEVEL_CONFIRM: return 2;
 	case PAUSE_QUIT: return 2;
 	case PAUSE_OPTIONS: return 9;
 	case PAUSE_ASSISTS: return 5;
@@ -225,7 +229,8 @@ static void pause_center_text(const char *text, int y, int scale, bool selected)
 
 static void pause_row(const char *label, const char *value, int index, bool enabled) {
 	const int y = 50 + index * (_pause_page == PAUSE_OPTIONS ? 12 : 14);
-	if (index == _pause_selection) {
+	const bool selected = index == _pause_selection + (_pause_page == PAUSE_LEVEL_CONFIRM ? 4 : 0);
+	if (selected) {
 		SDL_Rect rect = {25,y-3,269,12};
 		SDL_SetRenderDrawColor(_renderer,29,55,77,255);
 		SDL_RenderFillRect(_renderer,&rect);
@@ -233,11 +238,33 @@ static void pause_row(const char *label, const char *value, int index, bool enab
 		SDL_SetRenderDrawColor(_renderer,255,215,104,255);
 		SDL_RenderFillRect(_renderer,&rect);
 	}
-	pause_text_color(label,34,y,1,index == _pause_selection ? PAUSE_GOLD : PAUSE_TEXT);
-	if (value) pause_text_color(value,150,y,1,enabled ? PAUSE_CYAN : PAUSE_MUTED);
+	pause_text_color(label,34,y,1,selected ? PAUSE_GOLD : PAUSE_TEXT);
+	if (value) pause_text_color(value,_pause_page == PAUSE_LEVELS ? 220 : 150,y,1,enabled ? PAUSE_CYAN : PAUSE_MUTED);
 }
 
 static void pause_draw_settings() {
+	if (_pause_page == PAUSE_LEVEL_CONFIRM) {
+		pause_center_text("INICIAR NIVEL?",26,2,true);
+		pause_center_text(_level_names[_selected_level],60,1,true);
+		pause_center_text("SE PERDERA EL PROGRESO ACTUAL",82,1,false);
+		pause_row("VOLVER",NULL,4,true);
+		pause_row("INICIAR",NULL,5,true);
+		pause_center_text("ENTER / A: ELEGIR  ESC: VOLVER",163,1,true);
+		return;
+	}
+	if (_pause_page == PAUSE_LEVELS) {
+		pause_center_text("SELECCIONAR NIVEL",26,2,true);
+		for (int i=0;i<6;++i) {
+			const bool available = _pause_options.available_levels[_pause_options.amiga][i];
+			const char *status = !available ? "SIN DATOS" : (i == _pause_options.current_level ? "ACTUAL" : NULL);
+			pause_row(_level_names[i],status,i,available);
+		}
+		pause_row("VOLVER",NULL,6,true);
+		pause_center_text(_pause_notice ? _pause_notice : "ENTER / A: ELEGIR  ESC: VOLVER",163,1,true);
+		pause_center_text("INICIO DESDE EL PRINCIPIO",175,1,false);
+		return;
+	}
+
 	const char *title = _pause_page == PAUSE_OPTIONS ? "OPCIONES" :
 		(_pause_page == PAUSE_ASSISTS ? "AYUDAS" : (_pause_page == PAUSE_AUDIO ? "SONIDO" : (_pause_page == PAUSE_BINDINGS ? "CONTROLES" : (_pause_page == PAUSE_KEYS ? "TECLADO" : "MANDO"))));
 	pause_center_text(title,26,2,true);
@@ -363,17 +390,17 @@ static void sdl2_draw_pause_menu() {
 			SDL_SetRenderDrawColor(_renderer, 38, 68, 91, 255);
 			SDL_RenderDrawLine(_renderer, 43, 65, 276, 65);
 		}
-		const char *main_items[] = {"CONTINUAR", "OPCIONES", "CONTROLES", "SALIR DEL JUEGO"};
+		const char *main_items[] = {"CONTINUAR", "OPCIONES", "CONTROLES", "SELECCIONAR NIVEL", "SALIR DEL JUEGO"};
 		const char *quit_items[] = {"VOLVER", "SALIR"};
 		const int count = pause_item_count();
 		for (int i = 0; i < count; ++i) {
-			const int y = _pause_page == PAUSE_QUIT ? 87 + i * 21 : 72 + i * 18;
+			const int y = _pause_page == PAUSE_QUIT ? 87 + i * 21 : 72 + i * 15;
 			const SDL_Color accent = _pause_page == PAUSE_QUIT && i == 1 ? PAUSE_DANGER : PAUSE_GOLD;
 			if (i == _pause_selection) {
-				SDL_Rect selected = {43, y - 5, 234, 17};
+				SDL_Rect selected = {43, y - 5, 234, _pause_page == PAUSE_QUIT ? 17 : 14};
 				SDL_SetRenderDrawColor(_renderer, 29, 55, 77, 255);
 				SDL_RenderFillRect(_renderer, &selected);
-				SDL_Rect stripe = {43, y - 5, 2, 17};
+				SDL_Rect stripe = {43, y - 5, 2, _pause_page == PAUSE_QUIT ? 17 : 14};
 				SDL_SetRenderDrawColor(_renderer, accent.r, accent.g, accent.b, 255);
 				SDL_RenderFillRect(_renderer, &stripe);
 				pause_text_color(">", 51, y, 1, accent);
@@ -407,7 +434,11 @@ static bool pause_back() {
 	_pause_notice = NULL;
 	if (_pause_capture >= 0) { _pause_capture = -1; return false; }
 	if (_pause_page == PAUSE_MAIN) return true;
-	if (_pause_page == PAUSE_ASSISTS) {
+	if (_pause_page == PAUSE_LEVEL_CONFIRM) {
+		_pause_page=PAUSE_LEVELS; _pause_selection=_selected_level;
+	} else if (_pause_page == PAUSE_LEVELS) {
+		_pause_page=PAUSE_MAIN; _pause_selection=3;
+	} else if (_pause_page == PAUSE_ASSISTS) {
 		_pause_page=PAUSE_OPTIONS; _pause_selection=7;
 	} else if (_pause_page == PAUSE_AUDIO) {
 		_pause_page = PAUSE_OPTIONS; _pause_selection = 6;
@@ -419,7 +450,7 @@ static bool pause_back() {
 	} else if (_pause_page == PAUSE_BINDINGS) {
 		_pause_page = PAUSE_MAIN; _pause_selection = 2;
 	} else {
-		_pause_selection = _pause_page == PAUSE_CONTROLS ? 2 : (_pause_page == PAUSE_QUIT ? 3 : 1);
+		_pause_selection = _pause_page == PAUSE_CONTROLS ? 2 : (_pause_page == PAUSE_QUIT ? 4 : 1);
 		_pause_page = PAUSE_MAIN;
 	}
 	return false;
@@ -427,6 +458,18 @@ static bool pause_back() {
 
 static bool pause_activate() {
 	_pause_notice = NULL;
+	if (_pause_page == PAUSE_LEVEL_CONFIRM) {
+		if (_pause_selection == 0) return pause_back();
+		_pause_options.requested_level=_selected_level;
+		return true;
+	}
+	if (_pause_page == PAUSE_LEVELS) {
+		if (_pause_selection == 6) return pause_back();
+		if (!_pause_options.available_levels[_pause_options.amiga][_pause_selection]) { _pause_notice="FALTAN ARCHIVOS DE ESTE NIVEL"; return false; }
+		_selected_level=_pause_selection; _pause_page=PAUSE_LEVEL_CONFIRM; _pause_selection=0;
+		return false;
+	}
+
 	if (_pause_page == PAUSE_CONTROLS) return pause_back();
 	if (_pause_page == PAUSE_QUIT) {
 		if (_pause_selection == 1) { g_sys.input.quit = true; return true; }
@@ -469,6 +512,7 @@ static bool pause_activate() {
 		return false;
 	}
 	if (_pause_selection == 0) return true;
+	if (_pause_selection == 3) { _pause_page=PAUSE_LEVELS; _pause_selection=_pause_options.current_level; return false; }
 	_pause_page = _pause_selection == 1 ? PAUSE_OPTIONS : (_pause_selection == 2 ? PAUSE_BINDINGS : PAUSE_QUIT);
 	_pause_selection = 0;
 	return false;

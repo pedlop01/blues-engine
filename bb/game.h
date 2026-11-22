@@ -133,6 +133,8 @@ struct vars_t {
 	int level;
 	int player;
 	int start_level;
+	int requested_level;
+	bool menu_level_jump;
 	int16_t level_xpos[MAX_OBJECTS];
 	int16_t level_ypos[MAX_OBJECTS];
 	int screen_tilemap_w, screen_tilemap_h;
@@ -215,6 +217,7 @@ extern void	do_level_player_hit(struct object_t *);
 extern void	do_level_drop_grabbed_object(struct object_t *);
 extern void	do_level_update_projectile(struct object_t *obj);
 extern void	do_level();
+extern void	start_selected_level(int level);
 
 /* objects.c */
 extern void	level_call_object_func(struct object_t *);

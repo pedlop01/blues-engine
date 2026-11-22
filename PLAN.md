@@ -7,9 +7,9 @@ refieren a cada tarea; no representan una estimación del tiempo restante.
 
 ## Estado general
 
-- Tareas completadas: **9 de 18**.
-- Completadas: **01–09**.
-- En validación: **10**.
+- Tareas completadas: **10 de 18**.
+- Completadas: **01–10**.
+- En validación: **11**.
 - Las demás tareas están pendientes de implementación.
 
 ## Base disponible
@@ -42,8 +42,8 @@ confirmado por el usuario: el audio DOS funciona correctamente en Windows.
 | 07 | Diseñar el aspecto del menú | Fuente retro legible, colores que resalten la selección y distribución correcta en ventana, pantalla completa y distintos encuadres. | 06 | Completada: aspecto validado por el usuario y pruebas de tipografía, selección y distribución superadas en ventana y pantalla completa. | 100 % |
 | 08 | Integrar opciones generales | DOS/Amiga, cámara clásica o suavizada, HUD clásico o fijo, pantalla completa, frecuencia de presentación, encuadre y configuración de controles accesibles desde el menú. | 06, 07 | Completada: ajustes y navegación simplificada validados por el usuario. Persistencia entre ejecuciones prevista en 12. | 100 % |
 | 09 | Añadir controles de volumen | Ajustes independientes para música y efectos, incluido silencio, aplicados sin reiniciar el juego ni producir chasquidos. | 02, 06 | Completada: pruebas técnicas superadas y niveles/silencio validados al escuchar por el usuario. Persistencia entre ejecuciones prevista en 12. | 100 % |
-| 10 | Añadir ayudas de juego | Activar/desactivar invulnerabilidad, aumentar o reducir vidas y elegir vidas infinitas desde el menú. Mostrar con claridad qué ayudas están activas. | 06 | Integrada y probada: invulnerabilidad, vidas infinitas independientes y contadores 1–99 por jugador activo; indicación en el margen vacío del HUD original. Pendiente de validación al jugar; persistencia prevista en 12. | 75 % |
-| 11 | Añadir selector de nivel | Elegir cualquiera de los seis niveles e iniciarlo con un estado coherente, conservando preferencias y modo gráfico. | 06 | Pendiente | 0 % |
+| 10 | Añadir ayudas de juego | Activar/desactivar invulnerabilidad, aumentar o reducir vidas y elegir vidas infinitas desde el menú. Mostrar con claridad qué ayudas están activas. | 06 | Completada: ayudas, escaleras y recuperación tras el tubo verificadas técnicamente y validadas por el usuario. | 100 % |
+| 11 | Añadir selector de nivel | Elegir cualquiera de los seis niveles e iniciarlo con un estado coherente, conservando preferencias y modo gráfico. | 06 | Integrada y probada: seis niveles, reinicio del actual, confirmación y control de archivos disponibles; estado nuevo con preferencias y modo conservados. Pendiente de validación al jugar. | 75 % |
 | 12 | Recordar preferencias | Guardar opciones y controles entre ejecuciones; permitir restaurar valores predeterminados y tolerar configuraciones inválidas. | 08, 09, 10 | Pendiente | 0 % |
 | 13 | Implementar guardado completo | Guardar y restaurar posición, vidas, inventario, enemigos, objetos, cambios del mapa, habitación, versión gráfica y encuadre. Formato versionado y validación de archivos. | 01 | Pendiente | 0 % |
 | 14 | Crear ocho slots de guardado | Ocho posiciones con miniatura del estado guardado, nivel, fecha y vidas. Guardar, cargar y sobrescribir; distinguir slots vacíos o incompatibles. | 06, 07, 13 | Pendiente | 0 % |
@@ -140,3 +140,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-22 | 10 | Opciones → Ayudas implementado, con estado visible en el margen del HUD y aplicación al continuar. Corregida la antigua mezcla entre vidas infinitas, energía y contador fijo de tres vidas. Verificados golpes, peligros, reintentos, última vida, dos jugadores y límite de 99; menú probado en ambos modos y seis niveles. Compilaciones Linux/Windows y AddressSanitizer superados. | Validar las ayudas al jugar antes de cerrar al 100 %. |
 | 2026-11-22 | 10, 17 | Durante la validación del nivel 2 se detectan deriva lateral en escaleras, bajada bloqueada en plataformas y estado de golpe persistente tras el tubo. Corregidos controles de subida con salto separado, inercia y parada vertical, respeto de la dirección del jugador y descenso mantenido. Corregido el recentrado que se detenía a cinco píxeles y no liberaba el estado de golpe. | Validar de nuevo las escaleras y el tubo del almacén al jugar. |
 | 2026-11-22 | 17 | Pruebas de recorrido añadidas sobre recursos reales: escaleras de los seis niveles y tubo del almacén con ambas cámaras, encuadres, ayudas activadas/desactivadas y HUD clásico/fijo en DOS/Amiga. Regresiones de cámara, puertas, ayudas, modos y zoom superadas; compilaciones Linux/Windows y AddressSanitizer verificados. | Continuar validación de jugabilidad tras la prueba del usuario. |
+| 2026-11-22 | 10, 11 | El usuario valida las correcciones y cierra 10 al 100 %. Selector de seis niveles añadido al menú principal, con confirmación y niveles sin datos deshabilitados. Reinicia mapa, enemigos, inventario, daño y puntos de retorno; conserva personajes, vidas, ayudas, versión y preferencias. | Validar selección y reinicio al jugar para cerrar 11. |
+| 2026-11-22 | 11 | Pruebas superadas de seis destinos y reinicio del actual en DOS/Amiga, dos jugadores y cambio de versión preparado en el menú. Verificados estado limpio, conservación de ajustes, cancelación, archivos ausentes y distribución visual. Regresiones de pausa, opciones, ayudas, escaleras/tubo y HUD superadas; AddressSanitizer y compilaciones Linux/Windows verificados. | Confirmar el selector al jugar. |

@@ -23,9 +23,10 @@ focused on the first **Blues Brothers** game.
 | Original DOS audio | Native playback of four AdLib songs and 18 effects, read from the user's supported `1.EXE`, with Nuked OPL3 chip emulation. |
 | Live DOS / Amiga switch | `F6` changes graphics, palettes, HUD and native audio while retaining game state, map edits, rooms and framing. |
 | HUD choice | Classic HUD scales with the map (default); fixed HUD keeps its display size and reserves separate bands without covering the map. `F7` switches live. Both preserve DOS/Amiga artwork and layout. |
-| In-game pause menu | `Esc`, `P` or controller Start opens a centered menu with Resume, Options, Controls and confirmed Quit. Simulation, zoom and audio pause; menu inputs are consumed before returning to play. |
+| In-game pause menu | `Esc`, `P` or controller Start opens a centered menu with Resume, Options, Controls, Level Selection and confirmed Quit. Simulation, zoom and audio pause; menu inputs are consumed before returning to play. |
 | Separate audio levels | Options → Sound provides independent 0–100% music/effect levels and mute, with short gain ramps in DOS and Amiga. |
 | Gameplay assists | Options → Assists offers invulnerability, independent infinite lives and finite counts from 1–99 per active player. Active protections are labeled in the original HUD’s empty margin. |
+| Level selection | Six stages from the pause menu, with confirmation, current-stage restart and unavailable-data detection. Starts fresh while retaining characters, life counts, assists and presentation settings. |
 | Larger views | Dynamic sprite storage replaces the fixed sprite limit; camera bounds and defeated-enemy visibility follow the current view. |
 | Regression tests | Tests cover DOS sequencer accuracy, PCM continuity, zoom, doors, defeated enemies and live presentation changes. |
 
@@ -34,8 +35,7 @@ adjustment has been confirmed in gameplay.
 
 ## Ideas and roadmap
 
-The next phase adds persistent preferences,
-level selection, eight save
+The next phase adds persistent preferences, eight save
 slots with thumbnails, and a short rewind with a VHS-style visual effect.
 Further work includes Windows packaging.
 
@@ -336,6 +336,33 @@ assists, changes finite counts and verifies paused state plus retained settings
 after a DOS/Amiga switch. Add `BLUES_TEST_ASSIST_TWO=1` to test two active
 players, or start with `--cheats=7` to verify disabling existing protections.
 Repeat for levels 1–5 and either initial resource mode.
+
+### Level selection
+
+Open the pause menu and choose **Seleccionar nivel**. Choose any of the six
+stages, then confirm **Iniciar**; **Volver** is selected by default. Choosing
+the current stage restarts it. Stages with missing files are disabled, and a
+DOS demo only offers its first stage. Amiga Concert supports the paired DOS
+map fallback used by the normal loader.
+
+A confirmed selection starts at the stage entrance with initial health, a fresh
+map, enemies, inventory and checkpoints. Characters, one/two-player mode,
+finite life counts (at least one), assists, DOS/Amiga mode, camera, HUD, zoom,
+render rate, volumes and control bindings are retained. Both players rejoin in
+two-player mode. Starting a stage discards the current stage's progress; merely
+browsing or cancelling does not change the world.
+
+```
+BLUES_TEST_LEVELS=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  build/tests/check_viewport --dos-datapath=../orig-games/dos \
+  --amiga-datapath=../orig-games/amiga --level=1
+```
+
+The test drives the actual level loop through six destinations and a same-level
+restart, checking fresh world state and retained settings. Add
+`BLUES_TEST_LEVEL_MODE=1` to alternate the staged DOS/Amiga setting at each
+selection, and `BLUES_TEST_LEVEL_TWO=1` for two players. The pause-menu unit test
+also covers cancellation, disabled entries, default confirmation and layout.
 
 ### Ladders and warehouse tube recovery
 

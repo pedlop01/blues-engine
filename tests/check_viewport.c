@@ -823,6 +823,70 @@ static void test_hud_switch_events() {
 	++test_frames;
 }
 
+/* Exercise the real outer game loop, not just the menu or init helper. */
+static int levels_started, level_frames, expected_level=-1;
+static bool expected_amiga;
+static void test_level_menu() {
+ assert(_pause_options.current_level==g_vars.level);
+ for (int i=0;i<MAX_LEVELS;++i) assert(_pause_options.available_levels[g_res.amiga_data][i]);
+ const char *path=g_options.amiga_datapath;
+ g_options.amiga_datapath="/nonexistent/blues-data";
+ assert(!level_available(0,true)); g_options.amiga_datapath=path;
+ struct object_t *player=&g_vars.objects[OBJECT_NUM_PLAYER1];
+ player->lifes_count=17; player->data51=1; player->vinyls_count=35;
+ player->unk60=1; player->special_anim=18; player->scrolling_lock_flag=1;
+ g_vars.found_music_instrument_flag=true;
+ g_vars.switch_player_scrolling_flag=true;
+ g_res.sql[100]^=1;
+ g_res.triggers[5].unk16=99;
+ _pause_options.lives[0]=17;
+ _pause_options.invulnerable=true;
+ _pause_options.infinite_lives=true;
+ _pause_options.camera=CAMERA_CLASSIC;
+ _pause_options.hud=HUD_FIXED;
+ _pause_options.render_rate=120;
+ _pause_options.view_step=4;
+ _pause_options.music_volume=40; _pause_options.effects_volume=30;
+ _pause_options.apply_volumes(40,30);
+ if (getenv("BLUES_TEST_LEVEL_MODE")) _pause_options.amiga=!g_res.amiga_data;
+ expected_amiga=_pause_options.amiga;
+ expected_level=MIN(5,levels_started);
+ _pause_page=PAUSE_MAIN; _pause_selection=3;
+ assert(!pause_activate() && _pause_page==PAUSE_LEVELS);
+ sdl2_draw_pause_menu(); snapshot("level-selector");
+ _pause_selection=expected_level;
+ assert(!pause_activate() && _pause_page==PAUSE_LEVEL_CONFIRM && _pause_selection==0);
+ sdl2_draw_pause_menu(); snapshot("level-confirm");
+ _pause_selection=1; assert(pause_activate());
+ ++levels_started; level_frames=0;
+}
+static void test_level_events() {
+ if (level_frames==0 && expected_level<0 && getenv("BLUES_TEST_LEVEL_TWO")) {g_vars.two_players_flag=true;init_level();}
+ if (level_frames==0 && expected_level>=0) {
+  const struct object_t *player=&g_vars.objects[OBJECT_NUM_PLAYER1];
+  assert(g_vars.level==expected_level && g_res.amiga_data==expected_amiga);
+  assert(player->lifes_count==17 && player->data51==3 && player->vinyls_count==0);
+  assert(!player->unk60 && !player->special_anim && !player->scrolling_lock_flag);
+  assert(!g_vars.found_music_instrument_flag && !g_vars.switch_player_scrolling_flag);
+  assert(!g_vars.game_over_flag && !g_vars.player1_dead_flag && !g_vars.player2_dead_flag);
+  assert(!g_vars.level_loop_counter && g_res.triggers[5].unk16==5);
+  if (getenv("BLUES_TEST_LEVEL_TWO")) {
+   assert(g_vars.two_players_flag && g_vars.objects[OBJECT_NUM_PLAYER2].type==PLAYER_ELWOOD);
+   assert(g_vars.objects[OBJECT_NUM_PLAYER2].data51==3);
+  }
+  assert(memcmp(g_res.sql,_level_base_sql,sizeof(_level_base_sql))==0);
+  assert(player->xpos==g_vars.level_xpos[OBJECT_NUM_PLAYER1]);
+  assert(player->ypos==g_vars.level_ypos[OBJECT_NUM_PLAYER1]);
+  assert(g_options.camera_mode==CAMERA_CLASSIC && g_options.hud_mode==HUD_FIXED);
+  assert(g_options.scroll_rate==120 && g_sys.input.view_step==4);
+  assert(g_options.music_volume==40 && g_options.effects_volume==30);
+  assert((g_options.cheats & (CHEATS_INVULNERABLE|CHEATS_UNLIMITED_LIFES))==(CHEATS_INVULNERABLE|CHEATS_UNLIMITED_LIFES));
+  if (levels_started==7) { g_sys.input.quit=true; puts("levels: six destinations, same-level restart, fresh world and retained preferences passed"); return; }
+ }
+ if (level_frames==2) g_sys.input.menu=true;
+ ++level_frames;
+}
+
 static void test_events() {
 	sdl2_process_events();
 	if (_sprites_cliprect.y != TILEMAP_OFFSET_Y) {
@@ -830,6 +894,7 @@ static void test_events() {
 		return;
 	}
 	g_sys.input.space = false;
+	if (getenv("BLUES_TEST_LEVELS")) {test_level_events();return;}
 	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU")) {
 		if (test_frames == 0) {
 			g_sys.input.view_step = 4;
@@ -989,6 +1054,7 @@ static void test_events() {
 int main(int argc, char **argv) {
 	if (getenv("BLUES_TEST_MODES") || getenv("BLUES_TEST_VOLUMES")) g_sys.start_audio = capture_start_audio;
 	g_sys.process_events = test_events;
+	if (getenv("BLUES_TEST_LEVELS")) g_sys.run_pause_menu=test_level_menu;
 	if (getenv("BLUES_TEST_MENU") || getenv("BLUES_TEST_OPTIONS") || getenv("BLUES_TEST_VOLUMES") || getenv("BLUES_TEST_ASSIST_MENU")) g_sys.run_pause_menu = test_run_pause_menu;
 	g_sys.sleep = no_sleep;
 	g_sys.fade_in_palette = no_fade;
@@ -1016,6 +1082,7 @@ int main(int argc, char **argv) {
 		puts("menu: frozen game/objects/map/zoom/audio, preserved scene and clean resume through actual game loop passed");
 		return result;
 	}
+	if (getenv("BLUES_TEST_LEVELS")) {assert(levels_started==7);return result;}
 	if (getenv("BLUES_TEST_TRAVERSAL")) return result;
 	if (getenv("BLUES_TEST_ASSISTS")) return result;
 	if (getenv("BLUES_TEST_HUD_SWITCH")) return result;
