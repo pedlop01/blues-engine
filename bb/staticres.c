@@ -1900,4 +1900,3 @@ const uint16_t level_tilesdata_1fe8_sizes[] = {
 	sizeof(level_tiledata_1bb0),sizeof(level_tiledata_1bb8),sizeof(level_tiledata_1b11),sizeof(level_tiledata_1b18),
 	sizeof(level_tiledata_1b0a),
 };
-
