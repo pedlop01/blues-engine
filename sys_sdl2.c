@@ -38,6 +38,9 @@ static SDL_Rect _sprites_cliprect;
 static int _hud_width, _hud_height, _hud_top, _hud_bottom;
 static SDL_Texture *_hud_texture_top, *_hud_texture_bottom;
 static void sdl2_draw_hud();
+static void sdl2_begin_scene();
+static void sdl2_end_scene();
+static int _world_offset_x, _world_offset_y;
 
 static int _screen_w, _screen_h;
 static int _shake_dx, _shake_dy;
@@ -326,10 +329,19 @@ static void fade_palette_helper(int in) {
 			alpha = 255 - alpha;
 		}
 		SDL_SetRenderDrawColor(_renderer, 0, 0, 0, alpha);
-		SDL_RenderClear(_renderer);
-		SDL_RenderCopy(_renderer, _texture, 0, 0);
-		sdl2_draw_hud();
-		SDL_RenderFillRect(_renderer, &r);
+		if (_hud_width > 0) {
+			sdl2_begin_scene();
+			SDL_Rect dst = { -_world_offset_x, -_world_offset_y, _screen_w, _screen_h };
+			SDL_RenderCopy(_renderer, _texture, NULL, &dst);
+			sdl2_end_scene();
+			SDL_RenderSetLogicalSize(_renderer, 0, 0);
+			SDL_RenderFillRect(_renderer, NULL);
+			SDL_RenderSetLogicalSize(_renderer, _screen_w, _screen_h);
+		} else {
+			SDL_RenderClear(_renderer);
+			SDL_RenderCopy(_renderer, _texture, 0, 0);
+			SDL_RenderFillRect(_renderer, &r);
+		}
 		SDL_RenderPresent(_renderer);
 		SDL_Delay(30);
 	}
@@ -374,9 +386,12 @@ static void sdl2_transition_screen(enum sys_transition_e type, bool open) {
 				r.h = _screen_h - r.y;
 			}
 		}
-		SDL_RenderClear(_renderer);
-		SDL_RenderCopy(_renderer, _texture, &r, &r);
-		sdl2_draw_hud();
+		sdl2_begin_scene();
+		SDL_Rect dst = r;
+		dst.x -= _world_offset_x;
+		dst.y -= _world_offset_y;
+		SDL_RenderCopy(_renderer, _texture, &r, &dst);
+		sdl2_end_scene();
 		SDL_RenderPresent(_renderer);
 		SDL_Delay(30);
 	} while (r.x > 0 && (type == TRANSITION_CURTAIN || r.y > 0));
@@ -424,9 +439,9 @@ static void sdl2_copy_bitmap(const uint8_t *p, int w, int h) {
 }
 
 static void sdl2_render_background(float scroll_x, float scroll_y, int clip_x, int clip_y, int clip_w, int clip_h) {
-	SDL_Rect clip = { clip_x, clip_y, clip_w, clip_h };
+	SDL_Rect clip = { clip_x - _world_offset_x, clip_y - _world_offset_y, clip_w, clip_h };
 	SDL_RenderSetClipRect(_renderer, &clip);
-	SDL_FRect dest = { _shake_dx + scroll_x, _shake_dy + scroll_y, _screen_w, _screen_h };
+	SDL_FRect dest = { _shake_dx + scroll_x - _world_offset_x, _shake_dy + scroll_y - _world_offset_y, _screen_w, _screen_h };
 	SDL_RenderCopyF(_renderer, _texture, 0, &dest);
 }
 
@@ -485,10 +500,53 @@ static void sdl2_draw_hud() {
 	SDL_RenderSetLogicalSize(_renderer, _screen_w, _screen_h);
 }
 
+/* Fit the complete map view between the native HUD bands. Drawing the HUD
+ * over the world used to hide its edges and broke zoom framing. */
+static void sdl2_begin_scene() {
+	_world_offset_x = _world_offset_y = 0;
+	if (_hud_width <= 0) {
+		SDL_RenderClear(_renderer);
+		return;
+	}
+	int w, h;
+	SDL_GetRendererOutputSize(_renderer, &w, &h);
+	const float sx = (float)w / _hud_width, sy = (float)h / _hud_height;
+	const float hud_scale = sx < sy ? sx : sy;
+	const float available_w = _hud_width * hud_scale;
+	const float available_h = (_hud_height - _hud_top - _hud_bottom) * hud_scale;
+	const float world_sx = available_w / _sprites_cliprect.w;
+	const float world_sy = available_h / _sprites_cliprect.h;
+	const float scale = world_sx < world_sy ? world_sx : world_sy;
+	SDL_Rect viewport = {
+		(int)((w - _sprites_cliprect.w * scale) / 2.f + .5f),
+		(int)((h - _hud_height * hud_scale) / 2.f + _hud_top * hud_scale +
+			(available_h - _sprites_cliprect.h * scale) / 2.f + .5f),
+		(int)(_sprites_cliprect.w * scale + .5f),
+		(int)(_sprites_cliprect.h * scale + .5f)
+	};
+	SDL_RenderSetLogicalSize(_renderer, 0, 0);
+	SDL_RenderClear(_renderer);
+	SDL_RenderSetViewport(_renderer, &viewport);
+	SDL_RenderSetScale(_renderer, scale, scale);
+	_world_offset_x = _sprites_cliprect.x;
+	_world_offset_y = _sprites_cliprect.y;
+}
+
+static void sdl2_end_scene() {
+	if (_hud_width <= 0) return;
+	SDL_RenderSetScale(_renderer, 1.f, 1.f);
+	SDL_RenderSetViewport(_renderer, NULL);
+	sdl2_draw_hud();
+	_world_offset_x = _world_offset_y = 0;
+}
+
 static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
 	const bool smooth_scroll = scroll_x != 0.f || scroll_y != 0.f;
-	SDL_RenderClear(_renderer);
-	if (!smooth_scroll) {
+	sdl2_begin_scene();
+	if (_hud_width > 0) {
+		sdl2_render_background(scroll_x, scroll_y, _sprites_cliprect.x,
+			_sprites_cliprect.y, _sprites_cliprect.w, _sprites_cliprect.h);
+	} else if (!smooth_scroll) {
 		SDL_Rect r = { _shake_dx, _shake_dy, _screen_w, _screen_h };
 		SDL_RenderCopy(_renderer, _texture, 0, &r);
 	} else {
@@ -505,6 +563,8 @@ static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
 
 	// sprites
 	SDL_Rect clip = _sprites_cliprect;
+	clip.x -= _world_offset_x;
+	clip.y -= _world_offset_y;
 	SDL_RenderSetClipRect(_renderer, &clip);
 	for (int i = 0; i < _sprites_count; ++i) {
 		const struct sprite_t *spr = &_sprites[i];
@@ -514,7 +574,7 @@ static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
 		}
 		const bool smooth_actor = _scroll_interpolation_active && spr->interpolate;
 		if (!smooth_scroll && !smooth_actor) {
-			SDL_Rect r = { spr->x + _shake_dx, spr->y + _shake_dy,
+			SDL_Rect r = { spr->x + _shake_dx - _world_offset_x, spr->y + _shake_dy - _world_offset_y,
 				sheet->r[spr->num].w, sheet->r[spr->num].h };
 			if (!spr->xflip) {
 				SDL_RenderCopy(_renderer, sheet->texture, &sheet->r[spr->num], &r);
@@ -523,6 +583,8 @@ static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
 			}
 		} else {
 			SDL_FRect r = sdl2_sprite_rect(spr, scroll_x, scroll_y, progress);
+			r.x -= _world_offset_x;
+			r.y -= _world_offset_y;
 			if (!spr->xflip) {
 				SDL_RenderCopyF(_renderer, sheet->texture, &sheet->r[spr->num], &r);
 			} else {
@@ -531,7 +593,7 @@ static void sdl2_draw_screen(float scroll_x, float scroll_y, float progress) {
 		}
 	}
 	SDL_RenderSetClipRect(_renderer, 0);
-	sdl2_draw_hud();
+	sdl2_end_scene();
 
 	SDL_RenderPresent(_renderer);
 }
@@ -644,6 +706,9 @@ static void handle_keyevent(int keysym, bool keydown, struct input_t *input, boo
 		if (keydown) {
 			input->view_step = 0;
 		}
+		break;
+	case SDLK_F7:
+		if (!keydown) input->switch_hud = true;
 		break;
 	case SDLK_F6:
 		if (!keydown) input->switch_mode = true;

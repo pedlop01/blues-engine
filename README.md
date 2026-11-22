@@ -22,7 +22,7 @@ focused on the first **Blues Brothers** game.
 | Dynamic framing | `-` reveals more of the map, `+` moves closer, and `0` restores the initial view; changes ease over about 300 ms. |
 | Original DOS audio | Native playback of four AdLib songs and 18 effects, read from the user's supported `1.EXE`, with Nuked OPL3 chip emulation. |
 | Live DOS / Amiga switch | `F6` changes graphics, palettes, HUD and native audio while retaining game state, map edits, rooms and framing. |
-| Readable native HUD | Top and bottom indicators keep their native display size during zoom, preserving the different DOS and Amiga artwork, fonts, colors and layouts. |
+| HUD choice | Classic HUD scales with the map (default); fixed HUD keeps its display size and reserves separate bands without covering the map. `F7` switches live. Both preserve DOS/Amiga artwork and layout. |
 | Larger views | Dynamic sprite storage replaces the fixed sprite limit; camera bounds and defeated-enemy visibility follow the current view. |
 | Regression tests | Tests cover DOS sequencer accuracy, PCM continuity, zoom, doors, defeated enemies and live presentation changes. |
 
@@ -114,6 +114,7 @@ Usage: blues [OPTIONS]...
   --scrollrate=HZ   Scroll presentation rate: 30, 60, or 120 (default 60)
   --sound=MODE      Blues Brothers audio: auto, dos, or amiga (default auto)
   --cga             Enable CGA colors
+  --hud=MODE       Blues Brothers HUD: classic or fixed (default classic)
   --camera=MODE    Blues Brothers camera: classic or smooth (default smooth)
   --dosscroll       Select classic camera with DOS style screen scrolling
   --hybrid          Enable fuchsia color as in Hybrid crack
@@ -126,11 +127,17 @@ limited by the level boundaries. The window size stays fixed; the larger map
 area is fitted into it, so characters and tiles become smaller. The camera
 keeps the player at the same relative position where map boundaries allow it.
 With the default settings, the logical view ranges from 320x200 to 960x600.
-The HUD keeps the original release's 320x200 display scale independently of
-map zoom: DOS retains its own bars, digits and icons, and Amiga retains its
-own. Only the original top/bottom bands are overlaid; their size responds to
-window size rather than camera distance. This also applies to two-player
-indicators and to live switches between DOS and Amiga.
+The default `--hud=classic` retains the earlier presentation: HUD and world
+scale together during zoom. `--hud=fixed` keeps the indicators at their native
+display size and fits the complete world view between the HUD bands, without
+cropping or stretching it. Fixed mode scales the world area independently of
+the reserved bands, so zoom retains the map's aspect ratio. If level bounds or
+custom view dimensions change that ratio, the world is fitted with margins.
+Press **F7** in a level to alternate between the two modes, including while
+zooming. The selected mode is retained across DOS/Amiga switches and levels;
+selection in the future options menu is tracked in task 08.
+Both modes preserve each release's bars, digits, portraits, icons and layout,
+including two-player indicators.
 Menus keep their original resolution; the chosen framing is reapplied when
 entering the next level. `--screensize` sets the initial framing.
 Changes of framing ease in and out over approximately 300 ms. Pressing another
@@ -314,7 +321,11 @@ BLUES_TEST_HUD=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
 ```
 
 The test compares the displayed HUD pixel-for-pixel with the original native
-presentation in both resource modes, with one and two players, three window
+presentation in both resource modes, verifies all four corners of the world
+remain visible between HUD bands, and covers one and two players, three window
 sizes, all eight zoom steps and intermediate transition sizes. It also verifies
 that the HUD layer is disabled before returning to menus. Repeat for levels
 1 through 5 to cover the full set of level markers.
+
+`BLUES_TEST_HUD_SWITCH=1` runs the real game loop with F7 presses during zoom
+and checks both directions. Add `--hud=fixed` to test the opposite starting mode.

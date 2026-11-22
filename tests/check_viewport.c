@@ -240,7 +240,9 @@ static void snapshot(const char *name) {
 	assert(SDL_GetRendererOutputSize(_renderer, &w, &h) == 0);
 	SDL_Surface *surface = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_ARGB8888);
 	assert(surface);
+	SDL_RenderSetLogicalSize(_renderer, 0, 0);
 	assert(SDL_RenderReadPixels(_renderer, NULL, surface->format->format, surface->pixels, surface->pitch) == 0);
+	SDL_RenderSetLogicalSize(_renderer, _screen_w, _screen_h);
 	char path[1024];
 	snprintf(path, sizeof(path), "%s/%s.bmp", directory, name);
 	assert(SDL_SaveBMP(surface, path) == 0);
@@ -280,10 +282,38 @@ static void assert_hud_pixels(const uint32_t *expected, int w, int h) {
 	free(actual);
 }
 
+static void assert_world_fits_hud() {
+	sdl2_draw_screen(0.f, 0.f, 1.f);
+	int w, h;
+	uint32_t *pixels = read_output(&w, &h);
+	const double hud_scale = w / 320. < h / 200. ? w / 320. : h / 200.;
+	const double sx = 320 * hud_scale / TILEMAP_SCREEN_W;
+	const double sy = 160 * hud_scale / TILEMAP_SCREEN_H;
+	const double scale = sx < sy ? sx : sy;
+	const int left = (int)((w - TILEMAP_SCREEN_W * scale) / 2. + .5);
+	const int top = (int)((h - 200 * hud_scale) / 2. + 14 * hud_scale +
+		(160 * hud_scale - TILEMAP_SCREEN_H * scale) / 2. + .5);
+	assert(top + .5 >= (h - 200 * hud_scale) / 2. + 14 * hud_scale);
+	assert(top + TILEMAP_SCREEN_H * scale <= (h - 200 * hud_scale) / 2. + 174 * hud_scale + 1);
+	for (int corner = 0; corner < 4; ++corner) {
+		const int x = left + (int)((corner & 1 ? TILEMAP_SCREEN_W - 4 : 4) * scale);
+		const int y = top + (int)((corner & 2 ? TILEMAP_SCREEN_H - 4 : 4) * scale);
+		assert(pixels[y * w + x] == (0xff000000 | _screen_palette[corner + 1]));
+	}
+	free(pixels);
+}
+
 static void render_hud_test_frame() {
 	g_sys.render_clear_sprites();
 	do_level_redraw_tilemap(g_vars.screen_tilemap_xorigin, g_vars.screen_tilemap_yorigin);
 	draw_level_panel();
+	/* Colored markers at the four world corners detect cropping under HUD. */
+	for (int corner = 0; corner < 4; ++corner) {
+		const int x = corner & 1 ? TILEMAP_SCREEN_W - 8 : 0;
+		const int y = TILEMAP_OFFSET_Y + (corner & 2 ? TILEMAP_SCREEN_H - 8 : 0);
+		for (int row = 0; row < 8; ++row)
+			memset(g_res.vga + (y + row) * GAME_SCREEN_W + x, corner + 1, 8);
+	}
 	g_sys.copy_bitmap(g_res.vga, GAME_SCREEN_W, GAME_SCREEN_H);
 	/* Keep interpolation active to verify scrolling cannot move the HUD. */
 	g_sys.set_scroll_interpolation(6, 3, 33, true);
@@ -291,6 +321,8 @@ static void render_hud_test_frame() {
 }
 
 static void test_hud() {
+	g_options.hud_mode = HUD_FIXED;
+	configure_level_hud();
 	const int sizes[][2] = {{640, 400}, {960, 600}, {800, 600}};
 	for (int mode = 0; mode < 2; ++mode) {
 		for (int players = 1; players <= 2; ++players) {
@@ -314,21 +346,24 @@ static void test_hud() {
 				g_sys.set_hud_layout(320, 200, 14, 26);
 				render_hud_test_frame();
 				assert_hud_pixels(expected, w, h);
+				assert_world_fits_hud();
 				for (int step = 1; step <= 8; ++step) {
 					update_level_view(base_w, base_h, step);
 					render_hud_test_frame();
 					assert_hud_pixels(expected, w, h);
+					assert_world_fits_hud();
 					/* Intermediate easing dimensions need the same exact HUD. */
 					resize_level_view(GAME_SCREEN_W - 3, GAME_SCREEN_H - 1, true);
 					render_hud_test_frame();
 					assert_hud_pixels(expected, w, h);
+					assert_world_fits_hud();
 				}
 				free(expected);
 			}
 		}
 		if (mode == 0) assert(switch_data_mode());
 	}
-	puts("HUD: original DOS/Amiga pixels, 1/2 players, 3 window sizes, 8 zoom steps and intermediate sizes passed");
+	puts("HUD: original DOS/Amiga pixels, complete world framing, 1/2 players, 3 window sizes, 8 zoom steps and intermediate sizes passed");
 	g_sys.input.quit = true;
 }
 
@@ -408,6 +443,34 @@ static void test_camera() {
 }
 
 
+static void test_hud_switch_events() {
+	static enum hud_mode initial;
+	if (!test_frames) {
+		initial = g_options.hud_mode;
+		base_w = GAME_SCREEN_W;
+		base_h = GAME_SCREEN_H;
+		g_sys.input.view_step = 4;
+	} else if (test_frames == 1 || test_frames == 3) {
+		bool paused = false;
+		handle_keyevent(SDLK_F7, true, &g_sys.input, &paused);
+		assert(!g_sys.input.switch_hud);
+		handle_keyevent(SDLK_F7, false, &g_sys.input, &paused);
+		assert(g_sys.input.switch_hud);
+	} else if (test_frames == 2 || test_frames == 4) {
+		assert(g_options.hud_mode == (test_frames == 2 ? !initial : initial));
+		assert((_hud_width > 0) == (g_options.hud_mode == HUD_FIXED));
+		int w, h;
+		level_view_size(base_w, base_h, g_sys.input.view_step, &w, &h);
+		assert(GAME_SCREEN_W == w && GAME_SCREEN_H == h);
+		if (test_frames == 2) g_sys.input.view_step = 6;
+		else {
+			puts("HUD: F7 toggles both directions during zoom without stale layout/interpolation passed");
+			g_sys.input.quit = true;
+		}
+	}
+	++test_frames;
+}
+
 static void test_events() {
 	sdl2_process_events();
 	if (_sprites_cliprect.y != TILEMAP_OFFSET_Y) {
@@ -415,6 +478,10 @@ static void test_events() {
 		return;
 	}
 	g_sys.input.space = false;
+	if (getenv("BLUES_TEST_HUD_SWITCH")) {
+		test_hud_switch_events();
+		return;
+	}
 	int window_w, window_h;
 	SDL_GetWindowSize(_window, &window_w, &window_h);
 	if (!test_frames) {
@@ -541,6 +608,7 @@ int main(int argc, char **argv) {
 		assert(_hud_width == 0); /* Disabled before menus/inter-level screens. */
 		return result;
 	}
+	if (getenv("BLUES_TEST_HUD_SWITCH")) return result;
 	if (getenv("BLUES_TEST_CAMERA")) return result;
 	assert(test_frames == 176 && out_frames >= 40 && closer_frames >= 40);
 	assert(GAME_SCREEN_W == base_w && GAME_SCREEN_H == base_h);

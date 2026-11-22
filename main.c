@@ -30,6 +30,7 @@ static const char *USAGE =
 	"  --sound=MODE      Blues Brothers audio: auto, dos, or amiga (default auto)\n"
 	"  In-game framing (Blues Brothers): - reveals more map, + moves closer, 0 resets\n"
 	"  --cga             Enable CGA colors\n"
+	"  --hud=MODE       Blues Brothers HUD: classic or fixed (default classic)\n"
 	"  --camera=MODE    Blues Brothers camera: classic or smooth (default smooth)\n"
 	"  --dosscroll       Enable DOS style screen scrolling\n"
 	"  --hybrid          Enable fuchsia color as in Hybrid crack\n"
@@ -108,6 +109,7 @@ int main(int argc, char *argv[]) {
 			{ "dos-datapath", required_argument, 0, 15 },
 			{ "amiga-datapath", required_argument, 0, 16 },
 			{ "camera", required_argument, 0, 17 },
+			{ "hud", required_argument, 0, 18 },
 			{ 0, 0, 0, 0 },
 		};
 		int index;
@@ -186,6 +188,14 @@ int main(int argc, char *argv[]) {
 		case 15:
 			free((char *)g_options.dos_datapath);
 			g_options.dos_datapath = strdup(optarg);
+			break;
+		case 18:
+			if (strcmp(optarg, "classic") == 0) g_options.hud_mode = HUD_CLASSIC;
+			else if (strcmp(optarg, "fixed") == 0) g_options.hud_mode = HUD_FIXED;
+			else {
+				fprintf(stderr, "Unsupported HUD mode '%s' (use classic or fixed)\n", optarg);
+				return -1;
+			}
 			break;
 		case 17:
 			if (strcmp(optarg, "classic") == 0) g_options.camera_mode = CAMERA_CLASSIC;

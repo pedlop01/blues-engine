@@ -7,6 +7,11 @@
 #include "util.h"
 #include "mixer.h"
 
+static void configure_level_hud() {
+	if (g_options.hud_mode == HUD_FIXED) g_sys.set_hud_layout(320, 200, 14, 26);
+	else g_sys.set_hud_layout(0, 0, 0, 0);
+}
+
 static bool resize_level_view(int w, int h, bool anchor_player);
 static void level_view_size(int base_w, int base_h, int step, int *width, int *height);
 static int _level_base_w, _level_base_h;
@@ -2322,7 +2327,7 @@ static bool resize_level_view(int w, int h, bool anchor_player) {
 	screen_init();
 	g_sys.render_clear_sprites();
 	g_sys.render_set_sprites_clipping_rect(0, TILEMAP_OFFSET_Y, TILEMAP_SCREEN_W, TILEMAP_SCREEN_H);
-	g_sys.set_hud_layout(320, 200, TILEMAP_OFFSET_Y, 40 - TILEMAP_OFFSET_Y);
+	configure_level_hud();
 	print_debug(DBG_SYSTEM, "Game viewport %dx%d", w, h);
 	return true;
 }
@@ -2337,7 +2342,11 @@ static void level_view_size(int base_w, int base_h, int step, int *width, int *h
 	 * Keep dimensions tile-aligned and inside the actual level. Leave a row
 	 * for camera/respawn routines that require a 16-pixel bottom margin. */
 	int w = (base_w * (4 + step) / 4) & ~15;
-	int h = ((base_h * (4 + step) / 4 - 40) & ~15) + 40;
+	/* Fixed HUD reserves the same display bands at every zoom. Scale
+	 * the world area itself to preserve its aspect and player anchor. */
+	int h = g_options.hud_mode == HUD_FIXED
+		? (base_h - 40) * w / base_w + 40
+		: ((base_h * (4 + step) / 4 - 40) & ~15) + 40;
 	w = MIN(w, g_vars.screen_tilemap_w * 16);
 	h = MIN(h, g_vars.screen_tilemap_h - 16 + 40);
 	*width = w;
@@ -2419,7 +2428,7 @@ void do_level() {
 	g_vars.player2_scrolling_flag = 0;
 	g_vars.found_music_instrument_flag = 0;
 	g_sys.render_set_sprites_clipping_rect(0, TILEMAP_OFFSET_Y, TILEMAP_SCREEN_W, TILEMAP_SCREEN_H);
-	g_sys.set_hud_layout(320, 200, TILEMAP_OFFSET_Y, 40 - TILEMAP_OFFSET_Y);
+	configure_level_hud();
 	bool screen_transition_flag = true;
 	int frame_duration_remainder = 0;
 	do {
@@ -2437,6 +2446,15 @@ void do_level() {
 		if (g_sys.input.switch_mode) {
 			g_sys.input.switch_mode = false;
 			view_changed = switch_data_mode();
+		}
+		if (g_sys.input.switch_hud) {
+			g_sys.input.switch_hud = false;
+			g_options.hud_mode = g_options.hud_mode == HUD_CLASSIC ? HUD_FIXED : HUD_CLASSIC;
+			configure_level_hud();
+			view.elapsed = 300;
+			view_changed = true;
+			update_level_view(base_w, base_h, g_sys.input.view_step);
+			_camera.valid = false;
 		}
 		if (view_step != g_sys.input.view_step) {
 			view_step = g_sys.input.view_step;

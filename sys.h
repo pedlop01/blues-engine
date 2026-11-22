@@ -24,6 +24,7 @@ struct input_t {
 	bool digit1, digit2, digit3;
 	int view_step; /* 0 = initial framing; higher values reveal more map. */
 	bool switch_mode;
+	bool switch_hud;
 };
 
 typedef void (*sys_audio_cb)(void *, uint8_t *data, int len);
