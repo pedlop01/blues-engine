@@ -245,6 +245,16 @@ static void psp_shake_screen(int dx, int dy) {
 	sceGuOffset(2048 - (SCREEN_W / 2) + dx, 2048 - (SCREEN_H / 2) + dy);
 }
 
+static void psp_set_scroll_interpolation(int dx, int dy, int simulation_period, bool enabled) {
+}
+
+static void psp_set_scroll_render_rate(int rate) {
+}
+
+static bool psp_resize_viewport(int w, int h) {
+	return false;
+}
+
 static void psp_process_events() {
 
 	g_sys.input.direction = 0;
@@ -425,4 +435,7 @@ struct sys_t g_sys = {
 	.render_clear_sprites = render_clear_sprites,
 	.render_set_sprites_clipping_rect = render_set_sprites_clipping_rect,
 	.print_log = print_log,
+	.set_scroll_interpolation = psp_set_scroll_interpolation,
+	.set_scroll_render_rate = psp_set_scroll_render_rate,
+	.resize_viewport = psp_resize_viewport,
 };

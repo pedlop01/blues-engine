@@ -16,6 +16,9 @@ static const char *DEFAULT_SCALE_FILTER = 0; // nearest pixel sampling
 static const char *USAGE =
 	"Usage: %s [OPTIONS]...\n"
 	"  --datapath=PATH   Path to data files (default '.')\n"
+	"  --dos-datapath=PATH    DOS resources for live mode switching\n"
+	"  --amiga-datapath=PATH  Amiga resources for live mode switching\n"
+	"  F6 during Blues Brothers gameplay switches DOS/Amiga\n"
 	"  --level=NUM       Start at level NUM\n"
 	"  --cheats=MASK     Cheats mask\n"
 	"  --startpos=XxY    Start at position (X,Y)\n"
@@ -23,6 +26,9 @@ static const char *USAGE =
 	"  --scale=N         Graphics scaling factor (default 2)\n"
 	"  --filter=NAME     Graphics scaling filter (default 'nearest')\n"
 	"  --screensize=WxH  Graphics screen size (default 320x200)\n"
+	"  --scrollrate=HZ   Scroll presentation rate: 30, 60, or 120 (default 60)\n"
+	"  --sound=MODE      Blues Brothers audio: auto, dos, or amiga (default auto)\n"
+	"  In-game framing (Blues Brothers): - reveals more map, + moves closer, 0 resets\n"
 	"  --cga             Enable CGA colors\n"
 	"  --dosscroll       Enable DOS style screen scrolling\n"
 	"  --hybrid          Enable fuchsia color as in Hybrid crack\n"
@@ -30,16 +36,20 @@ static const char *USAGE =
 
 static struct game_t *detect_game(const char *data_path) {
 	extern struct game_t game_bb;
+#if !defined(BLUES_ONLY)
 	extern struct game_t game_ja;
 	extern struct game_t game_p2;
+#endif
 	static struct {
 		struct game_t *game;
 		const char *filename;
 		uint16_t size;
 	} games[] = {
 		{ &game_bb, "MAGASIN.BIN",  2560 },
+#if !defined(BLUES_ONLY)
 		{ &game_ja, "JARDIN.EAT",  24876 },
 		{ &game_p2, "MOTIF.SQZ",    9396 },
+#endif
 		{ 0, 0, 0 }
 	};
 	for (int i = 0; games[i].game; ++i) {
@@ -59,6 +69,7 @@ int main(int argc, char *argv[]) {
 	bool fullscreen = false;
 	g_options.start_xpos16 = -1;
 	g_options.start_ypos16 = -1;
+	g_options.scroll_rate = 60;
 	g_options.amiga_copper_bars = true;
 	g_options.amiga_colors = true;
 	// g_options.amiga_status_bar = true;
@@ -90,6 +101,10 @@ int main(int argc, char *argv[]) {
 			{ "cga",        no_argument,       0, 10 },
 			{ "dosscroll",  no_argument,       0, 11 },
 			{ "hybrid",     no_argument,       0, 12 },
+			{ "scrollrate", required_argument, 0, 13 },
+			{ "sound",      required_argument, 0, 14 },
+			{ "dos-datapath", required_argument, 0, 15 },
+			{ "amiga-datapath", required_argument, 0, 16 },
 			{ 0, 0, 0, 0 },
 		};
 		int index;
@@ -145,18 +160,50 @@ int main(int argc, char *argv[]) {
 		case 12:
 			g_options.hybrid_color = true;
 			break;
+		case 13: {
+			char *end;
+			const long scroll_rate = strtol(optarg, &end, 10);
+			if (*optarg == '\0' || *end != '\0' || (scroll_rate != 30 && scroll_rate != 60 && scroll_rate != 120)) {
+				fprintf(stderr, "Unsupported scroll rate '%s' (use 30, 60, or 120)\n", optarg);
+				return -1;
+			}
+			g_options.scroll_rate = (int)scroll_rate;
+			break;
+		}
+		case 14:
+			if (strcmp(optarg, "auto") == 0) g_options.sound_mode = SOUND_AUTO;
+			else if (strcmp(optarg, "dos") == 0) g_options.sound_mode = SOUND_DOS;
+			else if (strcmp(optarg, "amiga") == 0) g_options.sound_mode = SOUND_AMIGA;
+			else {
+				fprintf(stderr, "Unsupported sound mode '%s' (use auto, dos, or amiga)\n", optarg);
+				return -1;
+			}
+			break;
+		case 15:
+			free((char *)g_options.dos_datapath);
+			g_options.dos_datapath = strdup(optarg);
+			break;
+		case 16:
+			free((char *)g_options.amiga_datapath);
+			g_options.amiga_datapath = strdup(optarg);
+			break;
 		default:
 			fprintf(stdout, USAGE, argv[0]);
 			return -1;
 		}
 	}
 #endif
+	if (data_path == DEFAULT_DATA_PATH) {
+		const char *initial = g_options.dos_datapath ? g_options.dos_datapath : g_options.amiga_datapath;
+		if (initial) data_path = strdup(initial);
+	}
 	struct game_t *game = detect_game(data_path);
 	if (!game) {
 		fprintf(stdout, "No data files found\n");
 	} else {
 		g_sys.init();
 		g_sys.set_screen_size(GAME_SCREEN_W, GAME_SCREEN_H, game->name, scale_factor, scale_filter, fullscreen);
+		g_sys.set_scroll_render_rate(g_options.scroll_rate);
 		game->res_init(data_path, GAME_SCREEN_W * GAME_SCREEN_H);
 		game->snd_init();
 		g_mix.init();
@@ -172,5 +219,7 @@ int main(int argc, char *argv[]) {
 	if (scale_filter != DEFAULT_SCALE_FILTER) {
 		free((char *)scale_filter);
 	}
+	free((char *)g_options.dos_datapath);
+	free((char *)g_options.amiga_datapath);
 	return 0;
 }

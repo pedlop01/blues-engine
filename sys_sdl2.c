@@ -1,5 +1,6 @@
 
 #include <SDL.h>
+#include <limits.h>
 #include "sys.h"
 #include "util.h"
 
@@ -24,12 +25,18 @@ struct sprite_t {
 	bool xflip;
 };
 
-static struct sprite_t _sprites[MAX_SPRITES];
-static int _sprites_count;
+static struct sprite_t *_sprites;
+static int _sprites_count, _sprites_capacity;
 static SDL_Rect _sprites_cliprect;
 
 static int _screen_w, _screen_h;
 static int _shake_dx, _shake_dy;
+static int _scroll_rate = 30;
+static double _scroll_target_x, _scroll_target_y;
+static double _scroll_previous_x, _scroll_previous_y;
+static uint64_t _scroll_update_timestamp, _scroll_period_counter;
+static uint64_t _render_schedule_origin, _next_render_counter;
+static bool _scroll_interpolation_active, _render_schedule_initialized;
 static SDL_Window *_window;
 static SDL_Renderer *_renderer;
 static SDL_Texture *_texture;
@@ -95,6 +102,9 @@ static void sdl2_fini() {
 		_window = 0;
 	}
 	free(_screen_buffer);
+	free(_sprites);
+	_sprites = 0;
+	_sprites_count = _sprites_capacity = 0;
 	if (_controller) {
 		SDL_GameControllerClose(_controller);
 		_controller = 0;
@@ -121,7 +131,17 @@ static void sdl2_set_screen_size(int w, int h, const char *caption, int scale, c
 	const int window_h = h * scale;
 	const int flags = fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_RESIZABLE;
 	_window = SDL_CreateWindow(caption, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_w, window_h, flags);
-	_renderer = SDL_CreateRenderer(_window, -1, 0);
+	if (!_window) {
+		print_error("Failed to create SDL window: %s", SDL_GetError());
+	}
+	_renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_PRESENTVSYNC);
+	if (!_renderer) {
+		print_warning("VSync renderer unavailable: %s", SDL_GetError());
+		_renderer = SDL_CreateRenderer(_window, -1, 0);
+	}
+	if (!_renderer) {
+		print_error("Failed to create SDL renderer: %s", SDL_GetError());
+	}
 	SDL_RenderSetLogicalSize(_renderer, w, h);
 	print_debug(DBG_SYSTEM, "set_screen_size %d,%d", _screen_w, _screen_h);
 	_screen_buffer = (uint32_t *)calloc(_screen_w * _screen_h, sizeof(uint32_t));
@@ -135,6 +155,63 @@ static void sdl2_set_screen_size(int w, int h, const char *caption, int scale, c
 	_sprites_cliprect.y = 0;
 	_sprites_cliprect.w = w;
 	_sprites_cliprect.h = h;
+}
+
+static bool sdl2_resize_viewport(int w, int h) {
+	uint32_t *buffer = calloc((size_t)w * h, sizeof(*buffer));
+	SDL_Texture *texture = SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_RGB888,
+		SDL_TEXTUREACCESS_STREAMING, w, h);
+	if (!buffer || !texture) {
+		free(buffer);
+		if (texture) SDL_DestroyTexture(texture);
+		print_warning("Unable to resize viewport to %dx%d: %s", w, h, SDL_GetError());
+		return false;
+	}
+	if (SDL_RenderSetLogicalSize(_renderer, w, h) != 0) {
+		free(buffer);
+		SDL_DestroyTexture(texture);
+		return false;
+	}
+	SDL_DestroyTexture(_texture);
+	free(_screen_buffer);
+	_texture = texture;
+	_screen_buffer = buffer;
+	_screen_w = w;
+	_screen_h = h;
+	_scroll_interpolation_active = false;
+	_render_schedule_initialized = false;
+	return true;
+}
+
+static void sdl2_set_scroll_render_rate(int rate) {
+	_scroll_rate = rate;
+	_render_schedule_initialized = false;
+}
+
+static void sdl2_set_scroll_interpolation(int dx, int dy, int simulation_period, bool enabled) {
+	const bool active = enabled && _scroll_rate > 30 && simulation_period > 0;
+	const uint64_t now = active ? SDL_GetPerformanceCounter() : 0;
+	if (active && !_scroll_interpolation_active) {
+		_scroll_target_x = _scroll_target_y = 0.;
+		_scroll_previous_x = _scroll_previous_y = 0.;
+		_render_schedule_origin = now;
+		_next_render_counter = _render_schedule_origin;
+		_render_schedule_initialized = true;
+	}
+	if (active) {
+		_scroll_previous_x = _scroll_target_x;
+		_scroll_previous_y = _scroll_target_y;
+		_scroll_target_x += dx;
+		_scroll_target_y += dy;
+		_scroll_update_timestamp = now;
+		_scroll_period_counter = SDL_GetPerformanceFrequency() * (uint64_t)simulation_period / 1000;
+		if (_scroll_period_counter == 0) {
+			_scroll_period_counter = 1;
+		}
+	} else {
+		_render_schedule_initialized = false;
+	}
+	_scroll_interpolation_active = active;
 }
 
 static uint32_t convert_amiga_color(uint16_t color) {
@@ -316,37 +393,95 @@ static void sdl2_copy_bitmap(const uint8_t *p, int w, int h) {
 	SDL_UpdateTexture(_texture, 0, _screen_buffer, _screen_w * sizeof(uint32_t));
 }
 
-static void sdl2_update_screen() {
-	SDL_Rect r;
-	r.x = _shake_dx;
-	r.y = _shake_dy;
-	r.w = _screen_w;
-	r.h = _screen_h;
+static void sdl2_render_background(float scroll_x, float scroll_y, int clip_x, int clip_y, int clip_w, int clip_h) {
+	SDL_Rect clip = { clip_x, clip_y, clip_w, clip_h };
+	SDL_RenderSetClipRect(_renderer, &clip);
+	SDL_FRect dest = { _shake_dx + scroll_x, _shake_dy + scroll_y, _screen_w, _screen_h };
+	SDL_RenderCopyF(_renderer, _texture, 0, &dest);
+}
+
+static void sdl2_draw_screen(float scroll_x, float scroll_y) {
+	const bool smooth_scroll = scroll_x != 0.f || scroll_y != 0.f;
 	SDL_RenderClear(_renderer);
-	SDL_RenderCopy(_renderer, _texture, 0, &r);
+	if (!smooth_scroll) {
+		SDL_Rect r = { _shake_dx, _shake_dy, _screen_w, _screen_h };
+		SDL_RenderCopy(_renderer, _texture, 0, &r);
+	} else {
+		const int world_bottom = _sprites_cliprect.y + _sprites_cliprect.h;
+		if (_sprites_cliprect.y > 0) {
+			sdl2_render_background(0.f, 0.f, 0, 0, _screen_w, _sprites_cliprect.y);
+		}
+		if (world_bottom < _screen_h) {
+			sdl2_render_background(0.f, 0.f, 0, world_bottom, _screen_w, _screen_h - world_bottom);
+		}
+		sdl2_render_background(scroll_x, scroll_y,
+			_sprites_cliprect.x, _sprites_cliprect.y, _sprites_cliprect.w, _sprites_cliprect.h);
+	}
 
 	// sprites
-	SDL_RenderSetClipRect(_renderer, &_sprites_cliprect);
+	SDL_Rect clip = _sprites_cliprect;
+	SDL_RenderSetClipRect(_renderer, &clip);
 	for (int i = 0; i < _sprites_count; ++i) {
 		const struct sprite_t *spr = &_sprites[i];
 		struct spritesheet_t *sheet = &_spritesheets[spr->sheet];
 		if (spr->num >= sheet->count) {
 			continue;
 		}
-		SDL_Rect r;
-		r.x = spr->x + _shake_dx;
-		r.y = spr->y + _shake_dy;
-		r.w = sheet->r[spr->num].w;
-		r.h = sheet->r[spr->num].h;
-		if (!spr->xflip) {
-			SDL_RenderCopy(_renderer, sheet->texture, &sheet->r[spr->num], &r);
+		if (!smooth_scroll) {
+			SDL_Rect r = { spr->x + _shake_dx, spr->y + _shake_dy,
+				sheet->r[spr->num].w, sheet->r[spr->num].h };
+			if (!spr->xflip) {
+				SDL_RenderCopy(_renderer, sheet->texture, &sheet->r[spr->num], &r);
+			} else {
+				SDL_RenderCopyEx(_renderer, sheet->texture, &sheet->r[spr->num], &r, 0., 0, SDL_FLIP_HORIZONTAL);
+			}
 		} else {
-			SDL_RenderCopyEx(_renderer, sheet->texture, &sheet->r[spr->num], &r, 0., 0, SDL_FLIP_HORIZONTAL);
+			SDL_FRect r = { spr->x + _shake_dx + scroll_x, spr->y + _shake_dy + scroll_y,
+				sheet->r[spr->num].w, sheet->r[spr->num].h };
+			if (!spr->xflip) {
+				SDL_RenderCopyF(_renderer, sheet->texture, &sheet->r[spr->num], &r);
+			} else {
+				SDL_RenderCopyExF(_renderer, sheet->texture, &sheet->r[spr->num], &r, 0., 0, SDL_FLIP_HORIZONTAL);
+			}
 		}
 	}
 	SDL_RenderSetClipRect(_renderer, 0);
 
 	SDL_RenderPresent(_renderer);
+}
+
+static void sdl2_present_at(uint64_t timestamp) {
+	double progress = (double)(timestamp - _scroll_update_timestamp) / _scroll_period_counter;
+	if (progress > 1.) {
+		progress = 1.;
+	}
+	const double display_x = _scroll_previous_x + (_scroll_target_x - _scroll_previous_x) * progress;
+	const double display_y = _scroll_previous_y + (_scroll_target_y - _scroll_previous_y) * progress;
+	sdl2_draw_screen(
+		(float)(_scroll_target_x - display_x),
+		(float)(_scroll_target_y - display_y));
+}
+
+static void sdl2_update_screen() {
+	if (!_scroll_interpolation_active) {
+		sdl2_draw_screen(0.f, 0.f);
+		return;
+	}
+	const uint64_t now = SDL_GetPerformanceCounter();
+	if (now < _next_render_counter) {
+		return;
+	}
+	const uint64_t frequency = SDL_GetPerformanceFrequency();
+	const uint64_t elapsed = now - _render_schedule_origin;
+	const uint64_t elapsed_seconds = elapsed / frequency;
+	const uint64_t elapsed_remainder = elapsed % frequency;
+	const uint64_t frames_elapsed = elapsed_seconds * _scroll_rate
+		+ (elapsed_remainder * _scroll_rate) / frequency;
+	const uint64_t next_frame = frames_elapsed + 1;
+	_next_render_counter = _render_schedule_origin
+		+ (next_frame / _scroll_rate) * frequency
+		+ ((next_frame % _scroll_rate) * frequency) / _scroll_rate;
+	sdl2_present_at(now);
 }
 
 static void sdl2_shake_screen(int dx, int dy) {
@@ -405,6 +540,27 @@ static void handle_keyevent(int keysym, bool keydown, struct input_t *input, boo
 		break;
 	case SDLK_3:
 		input->digit3 = keydown;
+		break;
+	case SDLK_MINUS:
+	case SDLK_KP_MINUS:
+		if (keydown) {
+			input->view_step = MIN(8, input->view_step + 1);
+		}
+		break;
+	case SDLK_EQUALS:
+	case SDLK_PLUS:
+	case SDLK_KP_PLUS:
+		if (keydown) {
+			input->view_step = MAX(0, input->view_step - 1);
+		}
+		break;
+	case SDLK_0:
+		if (keydown) {
+			input->view_step = 0;
+		}
+		break;
+	case SDLK_F6:
+		if (!keydown) input->switch_mode = true;
 		break;
 	case SDLK_p:
 		if (!keydown) {
@@ -636,7 +792,27 @@ static void sdl2_process_events() {
 }
 
 static void sdl2_sleep(int duration) {
-	SDL_Delay(duration);
+	if (!_scroll_interpolation_active) {
+		SDL_Delay(duration);
+		return;
+	}
+	const uint32_t end = SDL_GetTicks() + duration;
+	while ((int32_t)(end - SDL_GetTicks()) > 0) {
+		const uint64_t now = SDL_GetPerformanceCounter();
+		if (now >= _next_render_counter) {
+			sdl2_update_screen();
+			continue;
+		}
+		const int until_end = (int32_t)(end - SDL_GetTicks());
+		const uint64_t until_render_counter = _next_render_counter - now;
+		const uint64_t frequency = SDL_GetPerformanceFrequency();
+		const int until_render = (int)((until_render_counter * 1000) / frequency);
+		const int delay = MIN(until_end, MAX(1, until_render));
+		if (delay <= 0) {
+			break;
+		}
+		SDL_Delay(delay);
+	}
 }
 
 static uint32_t sdl2_get_timestamp() {
@@ -649,11 +825,15 @@ static void sdl2_start_audio(sys_audio_cb callback, void *param) {
 	desired.freq = SYS_AUDIO_FREQ;
 	desired.format = AUDIO_S16;
 	desired.channels = 1;
-	desired.samples = 2048;
+	/* Keep roughly 93ms of scheduling headroom at 44.1kHz, matching the
+	 * previous 2048/22050 buffer while avoiding low-rate OPL downsampling. */
+	desired.samples = 4096;
 	desired.callback = callback;
 	desired.userdata = param;
 	if (SDL_OpenAudio(&desired, 0) == 0) {
 		SDL_PauseAudio(0);
+	} else {
+		print_warning("Failed to open SDL audio device: %s", SDL_GetError());
 	}
 }
 
@@ -710,7 +890,18 @@ static void render_unload_sprites(int spr_type) {
 }
 
 static void render_add_sprite(int spr_type, int frame, int x, int y, int xflip) {
-	assert(_sprites_count < ARRAYSIZE(_sprites));
+	if (_sprites_count == _sprites_capacity) {
+		if (_sprites_capacity > INT_MAX / 2) {
+			print_error("Too many sprites");
+		}
+		const int capacity = _sprites_capacity ? _sprites_capacity * 2 : MAX_SPRITES;
+		struct sprite_t *sprites = (struct sprite_t *)realloc(_sprites, (size_t)capacity * sizeof(*sprites));
+		if (!sprites) {
+			print_error("Failed to allocate sprite list (%d entries)", capacity);
+		}
+		_sprites = sprites;
+		_sprites_capacity = capacity;
+	}
 	struct sprite_t *spr = &_sprites[_sprites_count];
 	spr->sheet = spr_type;
 	spr->num = frame;
@@ -761,4 +952,7 @@ struct sys_t g_sys = {
 	.render_clear_sprites = render_clear_sprites,
 	.render_set_sprites_clipping_rect = render_set_sprites_clipping_rect,
 	.print_log = print_log,
+	.set_scroll_interpolation = sdl2_set_scroll_interpolation,
+	.set_scroll_render_rate = sdl2_set_scroll_render_rate,
+	.resize_viewport = sdl2_resize_viewport,
 };

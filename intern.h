@@ -43,6 +43,8 @@ static inline void WRITE_LE_UINT16(uint8_t *p, uint16_t value) {
 #define GAME_SCREEN_W g_options.screen_w
 #define GAME_SCREEN_H g_options.screen_h
 
+enum sound_mode { SOUND_AUTO, SOUND_DOS, SOUND_AMIGA };
+
 struct options_t {
 	uint32_t cheats;
 	int start_level;
@@ -59,6 +61,10 @@ struct options_t {
 	bool cga_colors;
 	// 'p2' only options
 	bool hybrid_color;
+	int scroll_rate;
+	enum sound_mode sound_mode;
+	const char *dos_datapath;
+	const char *amiga_datapath;
 };
 
 struct game_t {

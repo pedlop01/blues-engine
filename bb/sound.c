@@ -3,8 +3,12 @@
 #include "resource.h"
 #include "mixer.h"
 #include "util.h"
+#include "dos_audio.h"
+#include "sys.h"
 
 #define PAULA_FREQ 3546897
+
+static struct dos_audio *_dos_audio;
 
 static const struct {
 	uint16_t offset; // words
@@ -50,6 +54,7 @@ static uint8_t *load_file(const char *filename, int *size, uint8_t *buffer) {
 		buffer = (uint8_t *)malloc(filesize);
 		if (!buffer) {
 			print_warning("Failed to allocate %d bytes", filesize);
+			fclose(fp);
 			return 0;
 		}
 	}
@@ -60,22 +65,57 @@ static uint8_t *load_file(const char *filename, int *size, uint8_t *buffer) {
 	} else {
 		*size = filesize;
 	}
+	fclose(fp);
 	return buffer;
 }
 
 void sound_init() {
+	if (g_options.sound_mode == SOUND_AMIGA ||
+		(g_options.sound_mode == SOUND_AUTO && g_res.amiga_data)) {
+		return;
+	}
+	int size = 0;
+	uint8_t *exe = load_file("1.exe", &size, 0);
+	if (exe) {
+		_dos_audio = dos_audio_create(exe, size, SYS_AUDIO_FREQ);
+		free(exe);
+	}
+	if (!_dos_audio) {
+		if (g_options.sound_mode == SOUND_DOS) {
+			print_error("DOS audio needs a supported original 1.EXE in the data directory");
+		}
+		print_warning("DOS audio unavailable (missing or unsupported 1.EXE); trying Amiga audio");
+	}
 }
 
 void sound_fini() {
+	/* The mixer stops its audio thread before this is called. */
+	dos_audio_destroy(_dos_audio);
+	_dos_audio = 0;
 }
 
 void play_sound(int num) {
+	if (num < 0 || num >= (int)ARRAYSIZE(_sounds_amiga)) return;
+	if (_dos_audio) {
+		g_sys.lock_audio();
+		dos_audio_sound(_dos_audio, num);
+		g_sys.unlock_audio();
+		return;
+	}
 	if (g_res.snd) {
 		g_mix.play_sound(g_res.snd + _sounds_amiga[num].offset * 2, _sounds_amiga[num].size, PAULA_FREQ / 0x358, 0);
 	}
 }
 
 void play_music(int num) {
+	if (num < 0 || num >= 4) return;
+	if (_dos_audio) {
+		g_sys.lock_audio();
+		dos_audio_music(_dos_audio, num);
+		g_sys.unlock_audio();
+		g_mix.set_music_callback(dos_audio_render, _dos_audio);
+		return;
+	}
 	const char *filename = _modules[num * 2]; // Amiga
 	int size = 0;
 	uint8_t *buf = load_file(filename, &size, 0);

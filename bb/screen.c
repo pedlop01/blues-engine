@@ -95,8 +95,13 @@ void screen_draw_frame(const uint8_t *frame, int fh, int fw, int x, int y) {
 	y += fh + 2;
 	if (g_options.amiga_status_bar || g_res.amiga_data) {
 		if (frame == g_res.spr_frames[123] || frame == g_res.spr_frames[124]) { // top or bottom status bar
+			uint8_t tile[16 * 12];
+			decode_amiga_gfx(tile, 16, 16, 12, 4, frame, 16, 0x20, 0xFFFF);
 			for (int x = 0; x < GAME_SCREEN_W; x += 16) {
-				decode_amiga_gfx(g_res.vga + y * GAME_SCREEN_W + x, GAME_SCREEN_W, 16, 12, 4, frame, 16, 0x20, 0xFFFF);
+				for (int row = 0; row < 12; ++row) {
+					memcpy(g_res.vga + (y + row) * GAME_SCREEN_W + x,
+						tile + row * 16, MIN(16, GAME_SCREEN_W - x));
+				}
 			}
 		} else {
 			decode_amiga_gfx(g_res.vga + y * GAME_SCREEN_W + x, GAME_SCREEN_W, 16, 12, 4, frame, 16, 0x20, 0xFFFF);
@@ -242,8 +247,10 @@ static void decode_graphics(int spr_type, int start, int end, const uint8_t *dit
 		int max_h = 0;
 		for (int i = start; i < end; ++i) {
 			const uint8_t *ptr = g_res.spr_frames[i];
-			if (!ptr) {
-				memset(&r[i], 0, sizeof(struct sys_rect_t));
+			/* These Amiga HUD faces are raw 16x12 bitplanes, not sprites
+			 * with a four-byte size header. The HUD draws them directly. */
+			if (!ptr || (g_res.amiga_data && start == 0 && (i == 115 || i == 117))) {
+				memset(&r[i - start], 0, sizeof(struct sys_rect_t));
 				continue;
 			}
 			const int h = READ_LE_UINT16(ptr - 4);
@@ -293,13 +300,23 @@ void screen_load_graphics(const uint8_t *dither_lut_sqv, const uint8_t *dither_l
 	if (g_res.spr_count <= SPRITES_COUNT) {
 		decode_graphics(RENDER_SPR_GAME, 0, g_res.spr_count, dither_lut_sqv);
 	} else {
+		/* Rebuild players/common sprites with the active release's frame
+		 * sizes AND the level palette, before rebuilding the enemy atlas.
+		 * F6 used to retain the previous release's player texture, mixing
+		 * DOS widths (16px in some walk frames) with Amiga anchors (32px). */
+		if (g_res.common_spr_count > 0) {
+			decode_graphics(RENDER_SPR_GAME, 0, g_res.common_spr_count, dither_lut_sqv);
+		}
 		decode_graphics(RENDER_SPR_LEVEL, SPRITES_COUNT, g_res.spr_count, dither_lut_sqv);
 		// foreground tiles
 		const uint8_t color_key = dither_lut_avt ? 0x20 : 0;
 		struct sys_rect_t r[MAX_SPR_FRAMES];
 		static const int FG_TILE_W = 16;
 		static const int FG_TILE_H = 16;
-		uint8_t *data = (uint8_t *)malloc(g_res.avt_count * FG_TILE_W * FG_TILE_H);
+		if (g_res.avt_count == 0) {
+			g_sys.render_unload_sprites(RENDER_SPR_FG);
+		}
+		uint8_t *data = g_res.avt_count > 0 ? (uint8_t *)malloc(g_res.avt_count * FG_TILE_W * FG_TILE_H) : 0;
 		if (data) {
 			const int pitch = g_res.avt_count * FG_TILE_W;
 			for (int i = 0; i < g_res.avt_count; ++i) {

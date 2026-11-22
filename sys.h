@@ -9,7 +9,7 @@
 #define INPUT_DIRECTION_UP    (1 << 2)
 #define INPUT_DIRECTION_DOWN  (1 << 3)
 
-#define SYS_AUDIO_FREQ 22050
+#define SYS_AUDIO_FREQ 44100
 
 #define RENDER_SPR_GAME  0 /* player sprites */
 #define RENDER_SPR_LEVEL 1 /* level sprites */
@@ -22,6 +22,8 @@ struct input_t {
 	bool space;
 	bool jump;
 	bool digit1, digit2, digit3;
+	int view_step; /* 0 = initial framing; higher values reveal more map. */
+	bool switch_mode;
 };
 
 typedef void (*sys_audio_cb)(void *, uint8_t *data, int len);
@@ -64,6 +66,9 @@ struct sys_t {
 	void	(*render_clear_sprites)();
 	void	(*render_set_sprites_clipping_rect)(int x, int y, int w, int h);
 	void	(*print_log)(FILE *fp, const char *s);
+	void	(*set_scroll_interpolation)(int dx, int dy, int simulation_period, bool enabled);
+	void	(*set_scroll_render_rate)(int rate);
+	bool	(*resize_viewport)(int w, int h);
 };
 
 extern struct sys_t g_sys;

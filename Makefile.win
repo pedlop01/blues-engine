@@ -1,0 +1,54 @@
+WIN_CC ?= x86_64-w64-mingw32-gcc
+WIN_LD ?= x86_64-w64-mingw32-ld
+WIN_OBJCOPY ?= x86_64-w64-mingw32-objcopy
+WIN_BUILD_DIR ?= build/windows-x64
+SDL2_ROOT ?=
+MODPLUG_ROOT ?=
+
+ifneq ($(MAKECMDGOALS),clean)
+ifeq ($(strip $(SDL2_ROOT)),)
+$(error Set SDL2_ROOT to the SDL2 MinGW x86_64 package directory)
+endif
+ifeq ($(strip $(MODPLUG_ROOT)),)
+$(error Set MODPLUG_ROOT to the libmodplug MinGW installation directory)
+endif
+endif
+
+BB_SRCS := bb/decode.c bb/game.c bb/level.c bb/objects.c bb/resource.c bb/screen.c bb/sound.c bb/staticres.c bb/tiles.c bb/unpack.c
+
+BB_OBJS := $(patsubst %.c,$(WIN_BUILD_DIR)/%.o,$(BB_SRCS))
+APP_OBJS := $(addprefix $(WIN_BUILD_DIR)/,main.o mixer.o dos_audio.o third_party/nuked-opl3/opl3.o sys_sdl2.o util.o)
+GAME_OBJS := $(WIN_BUILD_DIR)/game_bb.o
+WIN_CPPFLAGS := -I. -I$(SDL2_ROOT)/include/SDL2 -I$(MODPLUG_ROOT)/include -DBLUES_ONLY -DMODPLUG_STATIC
+WIN_CFLAGS := -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wpedantic -MMD -O2
+WIN_LDLIBS := -L$(SDL2_ROOT)/lib -L$(MODPLUG_ROOT)/lib -lmingw32 -lSDL2main -lSDL2 -lmodplug -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic -static-libgcc -mwindows
+
+.PHONY: all clean
+all: $(WIN_BUILD_DIR)/blues.exe $(WIN_BUILD_DIR)/SDL2.dll
+
+$(WIN_BUILD_DIR)/%.o: %.c Makefile.win
+	mkdir -p $(@D)
+	$(WIN_CC) $(WIN_CPPFLAGS) $(WIN_CFLAGS) -c -o $@ $<
+
+$(WIN_BUILD_DIR)/main.o: main.c Makefile.win
+	mkdir -p $(@D)
+	$(WIN_CC) $(WIN_CPPFLAGS) $(WIN_CFLAGS) -Dmain=SDL_main -c -o $@ $<
+
+$(WIN_BUILD_DIR)/game_bb.o: WIN_CFLAGS += -fvisibility=hidden
+$(WIN_BUILD_DIR)/game_bb.o: $(BB_OBJS)
+	mkdir -p $(@D)
+	$(WIN_LD) -r -o $@ $^
+	$(WIN_OBJCOPY) --localize-hidden $@
+
+$(WIN_BUILD_DIR)/blues.exe: $(APP_OBJS) $(GAME_OBJS)
+	$(WIN_CC) -mwindows -o $@ $^ $(WIN_LDLIBS)
+
+$(WIN_BUILD_DIR)/SDL2.dll: $(SDL2_ROOT)/bin/SDL2.dll
+	mkdir -p $(@D)
+	cp $< $@
+
+clean:
+	$(RM) $(APP_OBJS) $(APP_OBJS:.o=.d) $(BB_OBJS) $(BB_OBJS:.o=.d) $(GAME_OBJS)
+	$(RM) $(WIN_BUILD_DIR)/blues.exe $(WIN_BUILD_DIR)/SDL2.dll
+
+-include $(APP_OBJS:.o=.d) $(BB_OBJS:.o=.d)

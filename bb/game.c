@@ -266,10 +266,7 @@ static void do_inter_screen() {
 	fade_out_palette();
 }
 
-static void game_run() {
-	play_music(0);
-	screen_init();
-	g_vars.start_level = 0;
+void load_common_graphics() {
 	if (g_res.amiga_data) {
 		load_spr("sprite", g_res.spr_sqv, 0);
 		load_spr("objet", g_res.spr_sqv + SPRITE_SIZE, 101);
@@ -324,6 +321,19 @@ static void game_run() {
 		}
 		g_sys.set_palette_amiga(palette, 16);
 	}
+	/* Remember this before loading a level appends its enemy sprites. */
+	g_res.common_spr_count = g_res.spr_count;
+}
+
+static void game_run() {
+	if (g_options.dos_datapath && g_options.amiga_datapath) {
+		g_options.amiga_colors = g_res.amiga_data;
+		g_options.amiga_copper_bars = g_res.amiga_data;
+	}
+	play_music(0);
+	screen_init();
+	g_vars.start_level = 0;
+	load_common_graphics();
 	do_title_screen();
 	while (!g_sys.input.quit) {
 		if (!g_vars.level_completed_flag) {

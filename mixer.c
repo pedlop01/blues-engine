@@ -16,9 +16,14 @@ struct mixerchannel_t {
 static const int _rate = SYS_AUDIO_FREQ;
 static struct mixerchannel_t _channel;
 static ModPlugFile *_mpf;
+static mix_music_cb _music_callback;
+static void *_music_context;
 
 static void mix(void *param, uint8_t *buf, int len) {
 	memset(buf, 0, len);
+	if (_music_callback) {
+		_music_callback(_music_context, (int16_t *)buf, len / sizeof(int16_t));
+	}
 	if (_mpf) {
 		const int count = ModPlug_Read(_mpf, buf, len);
 		if (count == 0) {
@@ -61,6 +66,13 @@ static void mixer_init() {
 
 static void mixer_fini() {
 	g_sys.stop_audio();
+	if (_mpf) {
+		ModPlug_Unload(_mpf);
+		_mpf = 0;
+	}
+	_music_callback = 0;
+	_music_context = 0;
+	memset(&_channel, 0, sizeof(_channel));
 }
 
 static void play_sound(const uint8_t *data, uint32_t size, int freq, mix_repeat_sound_cb repeat_cb) {
@@ -75,6 +87,8 @@ static void play_sound(const uint8_t *data, uint32_t size, int freq, mix_repeat_
 
 static void play_music(const uint8_t *data, uint32_t size) {
 	g_sys.lock_audio();
+	_music_callback = 0;
+	_music_context = 0;
 	if (_mpf) {
 		ModPlug_Unload(_mpf);
 		_mpf = 0;
@@ -86,9 +100,21 @@ static void play_music(const uint8_t *data, uint32_t size) {
 	g_sys.unlock_audio();
 }
 
+static void set_music_callback(mix_music_cb callback, void *context) {
+	g_sys.lock_audio();
+	if (_mpf) {
+		ModPlug_Unload(_mpf);
+		_mpf = 0;
+	}
+	_music_callback = callback;
+	_music_context = context;
+	g_sys.unlock_audio();
+}
+
 struct mixer_t g_mix = {
 	.init = mixer_init,
 	.fini = mixer_fini,
 	.play_sound = play_sound,
 	.play_music = play_music,
+	.set_music_callback = set_music_callback,
 };

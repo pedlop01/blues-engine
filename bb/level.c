@@ -5,6 +5,37 @@
 #include "resource.h"
 #include "sys.h"
 #include "util.h"
+#include "mixer.h"
+
+static bool resize_level_view(int w, int h, bool anchor_player);
+static void level_view_size(int base_w, int base_h, int step, int *width, int *height);
+static int _level_base_w, _level_base_h;
+static bool _view_camera_cut;
+static uint8_t _level_base_sql[640 * 25];
+
+static bool data_file_present(const char *path, const char *filename) {
+	if (!path || !filename || !*filename) return false;
+	FILE *fp = fopen_nocase(path, filename);
+	if (!fp) return false;
+	fclose(fp);
+	return true;
+}
+
+static bool camera_in_room() {
+	const struct object_t *player = &g_vars.objects[g_vars.player2_scrolling_flag
+		? OBJECT_NUM_PLAYER2 : OBJECT_NUM_PLAYER1];
+	return player->scrolling_lock_flag && player->ypos > g_vars.screen_tilemap_h;
+}
+
+static void clamp_level_camera() {
+	/* Bonus rooms live below the main level in the SQL data. Their fixed
+	 * camera must never be clamped back into the outdoor map. */
+	if (camera_in_room()) return;
+	g_vars.screen_tilemap_xorigin = MAX(0, MIN(g_vars.screen_tilemap_xorigin,
+		g_vars.screen_tilemap_w * 16 - TILEMAP_SCREEN_W));
+	g_vars.screen_tilemap_yorigin = MAX(0, MIN(g_vars.screen_tilemap_yorigin,
+		g_vars.screen_tilemap_h - TILEMAP_SCREEN_H));
+}
 
 static const uint16_t _copper_data[18 * MAX_LEVELS] = {
 	0x190,0x00a,0x00b,0x00c,0x00d,0x00e,0x00f,0x01f,0x02f,0x03f,0x04f,0x05f,0x06f,0x07f,0x08f,0x09f,0x0af,0x0bf,
@@ -63,10 +94,23 @@ static const struct {
 
 void load_level_data(int num) {
 	print_debug(DBG_GAME, "load_level_data num %d", num);
+	memset(g_res.sql, 0, sizeof(_level_base_sql));
+	if (g_res.amiga_data && !g_options.amiga_datapath) g_options.amiga_datapath = strdup(g_res.datapath);
+	if (!g_res.amiga_data && !g_options.dos_datapath) g_options.dos_datapath = strdup(g_res.datapath);
 	if (g_res.amiga_data) {
 		load_blk(_levels_amiga[num].blk);
-		read_file(_levels_amiga[num].tbl, g_res.sql, 0);
-		load_bin(_levels_amiga[num].bin);
+		if (num == 5 && !data_file_present(g_res.datapath, _levels_amiga[num].bin) && g_options.dos_datapath) {
+			/* Some Amiga sets name the Concert trigger table concert.tbl
+			 * and omit its map. The paired DOS release supplies that map. */
+			const char *path = g_res.datapath;
+			g_res.datapath = g_options.dos_datapath;
+			load_sql(_levels[num].sql);
+			g_res.datapath = path;
+			load_bin("concert.tbl");
+		} else {
+			read_file(_levels_amiga[num].tbl, g_res.sql, 0);
+			load_bin(_levels_amiga[num].bin);
+		}
 		load_m(_levels_amiga[num].m);
 		// .avt
 		load_spr(_levels_amiga[num].ennemi, g_res.tmp, SPRITES_COUNT);
@@ -85,6 +129,7 @@ void load_level_data(int num) {
 		load_avt(_levels[num].avt, g_res.avt_sqv, 0, g_options.cga_colors ? _levels[num].cga_dither_avt : -1);
 		load_sqv(_levels[num].sqv, g_res.tmp, SPRITES_COUNT, g_options.cga_colors ? _levels[num].cga_dither_ck : -1);
 	}
+	memcpy(_level_base_sql, g_res.sql, sizeof(_level_base_sql));
 	memcpy(g_vars.level_xpos, _levels[num].xpos, MAX_OBJECTS * sizeof(int16_t));
 	memcpy(g_vars.level_ypos, _levels[num].ypos, MAX_OBJECTS * sizeof(int16_t));
 	if (g_vars.music_num != _levels[num].music) {
@@ -98,6 +143,86 @@ void load_level_data(int num) {
 		g_sys.set_screen_palette(g_res.palette, 0, 16, 8);
 	}
 	screen_load_graphics(g_options.cga_colors ? g_res.cga_lut_sqv : 0, g_options.cga_colors ? g_res.cga_lut_avt : 0);
+}
+
+static bool switch_data_mode() {
+	const bool amiga = !g_res.amiga_data;
+	const char *path = amiga ? g_options.amiga_datapath : g_options.dos_datapath;
+	if (!path) {
+		print_warning("F6 needs both --dos-datapath and --amiga-datapath");
+		return false;
+	}
+	const int num = g_vars.level;
+	const bool concert_fallback = amiga && num == 5 &&
+		!data_file_present(path, _levels_amiga[num].bin);
+	const char *files[] = {
+		amiga ? "sprite" : "sprite.sqv",
+		amiga ? "objet" : _levels[num].ck1,
+		amiga ? _levels_amiga[num].blk : _levels[num].ck2,
+		amiga ? _levels_amiga[num].tbl : _levels[num].sql,
+		amiga ? (concert_fallback ? "concert.tbl" : _levels_amiga[num].bin) : _levels[num].bin,
+		amiga ? _levels_amiga[num].ennemi : _levels[num].sqv,
+		amiga ? _levels_amiga[num].m : _levels[num].avt
+	};
+	for (unsigned i = 0; i < ARRAYSIZE(files); ++i) {
+		if (files[i] && *files[i] && !data_file_present(path, files[i])) {
+			print_warning("Cannot switch to %s: missing '%s'", amiga ? "Amiga" : "DOS", files[i]);
+			return false;
+		}
+	}
+	/* Keeping object/trigger state requires compatible level definitions.
+	 * The supported DOS/Amiga releases use identical trigger tables. */
+	const char *amiga_bin = _levels_amiga[num].bin;
+	if (num == 5 && !data_file_present(g_options.amiga_datapath, amiga_bin)) amiga_bin = "concert.tbl";
+	FILE *dos_fp = fopen_nocase(g_options.dos_datapath, _levels[num].bin);
+	FILE *amiga_fp = fopen_nocase(g_options.amiga_datapath, amiga_bin);
+	uint8_t dos_bin[MAX_TRIGGERS * 10], amiga_bin_data[MAX_TRIGGERS * 10];
+	bool compatible = dos_fp && amiga_fp;
+	if (compatible) {
+		compatible = fread(dos_bin, 1, sizeof(dos_bin), dos_fp) == sizeof(dos_bin) &&
+			fread(amiga_bin_data, 1, sizeof(amiga_bin_data), amiga_fp) == sizeof(amiga_bin_data) &&
+			memcmp(dos_bin, amiga_bin_data, sizeof(dos_bin)) == 0;
+	}
+	if (dos_fp) fclose(dos_fp);
+	if (amiga_fp) fclose(amiga_fp);
+	if (!compatible) {
+		print_warning("Cannot switch modes: incompatible level resources");
+		return false;
+	}
+	/* F6 selects the complete native presentation, including audio, even if
+	 * --sound was used to choose the initial soundtrack explicitly. */
+	g_options.sound_mode = SOUND_AUTO;
+	g_options.amiga_colors = amiga;
+	g_options.amiga_copper_bars = amiga;
+	const struct vars_t saved = g_vars;
+	struct trigger_t triggers[MAX_TRIGGERS];
+	memcpy(triggers, g_res.triggers, sizeof(triggers));
+	uint8_t sql[sizeof(_level_base_sql)], changed[sizeof(_level_base_sql)];
+	memcpy(sql, g_res.sql, sizeof(sql));
+	for (unsigned i = 0; i < sizeof(sql); ++i) changed[i] = sql[i] != _level_base_sql[i];
+	/* Stop the audio thread before replacing sample or sequencer buffers. */
+	g_mix.fini();
+	sound_fini();
+	res_fini();
+	memset(&g_res, 0, sizeof(g_res));
+	res_init(path, MAX(64000, GAME_SCREEN_W * GAME_SCREEN_H));
+	sound_init();
+	load_common_graphics();
+	g_mix.init();
+	load_level_data(num);
+	/* Apply collected items, switches and other edits over the target map,
+	 * retaining that release's untouched tiles. */
+	for (unsigned i = 0; i < sizeof(sql); ++i) if (changed[i]) g_res.sql[i] = sql[i];
+	memcpy(g_res.triggers, triggers, sizeof(triggers));
+	g_vars = saved;
+	play_music(g_vars.music_num);
+	g_sys.set_copper_bars(amiga ? _copper_data + num * 18 : 0);
+	screen_init();
+	g_sys.render_clear_sprites();
+	g_sys.set_scroll_interpolation(0, 0, 0, false);
+	print_info("Switched to %s graphics and %s audio", amiga ? "Amiga" : "DOS",
+		g_options.sound_mode == SOUND_AUTO ? (amiga ? "Amiga" : "DOS") : "selected");
+	return true;
 }
 
 static void init_level() {
@@ -273,8 +398,8 @@ static void init_level() {
 }
 
 static void do_level_redraw_tilemap(int xpos, int ypos) {
-	const int w = (TILEMAP_SCREEN_W / 16) + ((!g_options.dos_scrolling && (xpos & 15) != 0) ? 1 : 0);
-	const int h = (TILEMAP_SCREEN_H / 16) + ((!g_options.dos_scrolling && (ypos & 15) != 0) ? 1 : 0);
+	const int w = (TILEMAP_SCREEN_W + (xpos & 15) + 15) / 16;
+	const int h = (TILEMAP_SCREEN_H + (ypos & 15) + 15) / 16;
 	const int y = ypos >> 4;
 	const int x = xpos >> 4;
 	for (int j = 0; j < h; ++j) {
@@ -297,8 +422,8 @@ static void do_level_update_tiles_anim() {
 			++p[0];
 		}
 	}
-	const int w = (TILEMAP_SCREEN_W / 16) + ((!g_options.dos_scrolling && (g_vars.screen_tilemap_xorigin & 15) != 0) ? 1 : 0);
-	const int h = (TILEMAP_SCREEN_H / 16) + ((!g_options.dos_scrolling && (g_vars.screen_tilemap_yorigin & 15) != 0) ? 1 : 0);
+	const int w = (TILEMAP_SCREEN_W + (g_vars.screen_tilemap_xorigin & 15) + 15) / 16;
+	const int h = (TILEMAP_SCREEN_H + (g_vars.screen_tilemap_yorigin & 15) + 15) / 16;
 	const int y = g_vars.screen_tilemap_yorigin >> 4;
 	const int x = g_vars.screen_tilemap_xorigin >> 4;
 	for (int j = 0; j < h; ++j) {
@@ -326,6 +451,13 @@ static void do_level_update_tiles_anim() {
 }
 
 static void do_level_update_scrolling2() {
+	if (camera_in_room()) {
+		g_vars.screen_scrolling_dirmask = 0;
+		g_vars.screen_tilemap_xoffset = g_vars.screen_tilemap_yoffset = 0;
+		do_level_redraw_tilemap(g_vars.screen_tilemap_xorigin, g_vars.screen_tilemap_yorigin);
+		if ((g_vars.level_loop_counter & 3) == 0) do_level_update_tiles_anim();
+		return;
+	}
 	if (g_vars.screen_scrolling_dirmask & 2) {
 		if (g_vars.screen_tilemap_w * 16 - TILEMAP_SCREEN_W > g_vars.screen_tilemap_xorigin) {
 			g_vars.screen_tilemap_xorigin += 16;
@@ -363,8 +495,8 @@ static void do_level_update_scrolling2() {
 				g_vars.screen_tilemap_xorigin = 0;
 			}
 		}
-		const int y1 = 64;
-		const int y2 = 144;
+		const int y1 = TILEMAP_SCREEN_H * 64 / 160;
+		const int y2 = TILEMAP_SCREEN_H * 144 / 160;
 		if (obj->screen_ypos > y2) {
 			const int dy = obj->screen_ypos - y2;
 			g_vars.screen_tilemap_yorigin += dy;
@@ -378,9 +510,12 @@ static void do_level_update_scrolling2() {
 				g_vars.screen_tilemap_yorigin = 0;
 			}
 		}
-		g_vars.screen_tilemap_xoffset = -(g_vars.screen_tilemap_xorigin & 15);
-		g_vars.screen_tilemap_yoffset = -(g_vars.screen_tilemap_yorigin & 15);
 	}
+	/* Discrete scrolling and door/respawn camera changes must obey the same
+	 * bounds as the smooth camera, especially with a wider viewport. */
+	clamp_level_camera();
+	g_vars.screen_tilemap_xoffset = -(g_vars.screen_tilemap_xorigin & 15);
+	g_vars.screen_tilemap_yoffset = -(g_vars.screen_tilemap_yorigin & 15);
 	do_level_redraw_tilemap(g_vars.screen_tilemap_xorigin, g_vars.screen_tilemap_yorigin);
 	if ((g_vars.level_loop_counter & 3) == 0) {
 		do_level_update_tiles_anim();
@@ -1132,6 +1267,9 @@ static void draw_level_panel() {
 }
 
 void do_level_enter_door(struct object_t *obj) {
+	/* A trigger and the explicit door key can both run in one simulation
+	 * frame. Do not immediately traverse the return door after teleporting. */
+	if (_view_camera_cut) return;
 	static const uint8_t pos[] = { 74, 74, 77, 66, 102 };
 	for (int i = 0; i < MAX_DOORS; ++i) {
 		if (obj->xpos16 == g_vars.doors[i].src_x16 && obj->ypos16 == g_vars.doors[i].src_y16) {
@@ -1140,22 +1278,30 @@ void do_level_enter_door(struct object_t *obj) {
 			obj->ypos = g_vars.doors[i].dst_y16 << 4;
 			if (obj->ypos > g_vars.screen_tilemap_h) {
 				obj->scrolling_lock_flag = 1;
+				/* Rooms are separate 320x160 scenes, not part of a zoomable
+				 * continuous map. Keep adjacent rooms outside the view. */
+				resize_level_view(320, 200, false);
 				g_vars.screen_tilemap_yorigin = pos[g_vars.level] << 4;
-				const int w = TILEMAP_SCREEN_W / 16;
+				const int w = 320 / 16;
 				g_vars.screen_tilemap_xorigin = (((obj->xpos >> 4) / w) * w) << 4;
 			} else {
-				g_vars.screen_tilemap_xorigin = ((obj->xpos >> 4) - 10) << 4;
-				g_vars.screen_tilemap_yorigin = ((obj->ypos >> 4) -  6) << 4;
-				if (g_vars.screen_tilemap_yorigin + (TILEMAP_SCREEN_H + 16) > g_vars.screen_tilemap_h) {
-					g_vars.screen_tilemap_yorigin = g_vars.screen_tilemap_h - (TILEMAP_SCREEN_H + 16);
-				} else {
-					g_vars.screen_tilemap_yorigin += 16;
-				}
 				obj->scrolling_lock_flag = 0;
+				int w, h;
+				level_view_size(_level_base_w, _level_base_h, g_sys.input.view_step, &w, &h);
+				resize_level_view(w, h, false);
+				g_vars.screen_tilemap_xorigin = obj->xpos - TILEMAP_SCREEN_W / 2;
+				g_vars.screen_tilemap_yorigin = obj->ypos - TILEMAP_SCREEN_H / 2;
+				clamp_level_camera();
 			}
+			obj->xpos16 = obj->xpos >> 4;
+			obj->ypos16 = obj->ypos >> 4;
 			obj->screen_xpos = obj->xpos - g_vars.screen_tilemap_xorigin;
 			obj->screen_ypos = obj->ypos - g_vars.screen_tilemap_yorigin;
-			do_level_redraw_tilemap(g_vars.screen_tilemap_xorigin, g_vars.screen_tilemap_yorigin);
+			g_vars.screen_scrolling_dirmask = 0;
+			_view_camera_cut = true;
+			g_sys.set_scroll_interpolation(0, 0, 0, false);
+			screen_clear_sprites(0);
+			screen_clear(0);
 			do_level_update_scrolling2();
 			draw_level_panel();
 			do_level_update_panel_vinyls(obj);
@@ -1169,6 +1315,9 @@ void do_level_enter_door(struct object_t *obj) {
 			obj->sprite_type = 0;
 			obj->yacc = 2;
 			obj->yvelocity = 0;
+			/* One input crosses one door. Updating tile coordinates must not
+			 * cause a second matching return door to fire in this loop. */
+			return;
 		}
 	}
 }
@@ -1323,14 +1472,14 @@ static void do_level_update_scrolling(struct object_t *obj) {
 			g_vars.screen_scrolling_dirmask &= ~1;
 		}
 	}
-	if (obj->screen_ypos < 64) {
+	if (obj->screen_ypos < TILEMAP_SCREEN_H * 64 / 160) {
 		g_vars.screen_scrolling_dirmask |= 8;
-	} else if (obj->screen_ypos > 144) {
+	} else if (obj->screen_ypos > TILEMAP_SCREEN_H * 144 / 160) {
 		g_vars.screen_scrolling_dirmask |= 4;
 	}
-	if ((g_vars.screen_scrolling_dirmask & 8) != 0 && obj->screen_ypos > 112) {
+	if ((g_vars.screen_scrolling_dirmask & 8) != 0 && obj->screen_ypos > TILEMAP_SCREEN_H * 112 / 160) {
 		g_vars.screen_scrolling_dirmask &= ~8;
-	} else if ((g_vars.screen_scrolling_dirmask & 4) != 0 && obj->screen_ypos < 128) {
+	} else if ((g_vars.screen_scrolling_dirmask & 4) != 0 && obj->screen_ypos < TILEMAP_SCREEN_H * 128 / 160) {
 		g_vars.screen_scrolling_dirmask &= ~4;
 	}
 }
@@ -1941,7 +2090,9 @@ static void do_level_update_objects() {
 				do_level_update_grabbed_object(obj);
 			}
 			if (obj->collide_flag != 0) {
-				if (obj->screen_ypos > 200) {
+				/* DOS used a 200-pixel screen. Keep its knockback/gravity,
+				 * but let the full death arc leave the current zoomed view. */
+				if (obj->screen_ypos > GAME_SCREEN_H) {
 					obj->visible_flag = 0;
 				}
 				obj->xmaxvelocity = 60;
@@ -2050,9 +2201,11 @@ static void do_level_update_objects() {
 static void draw_foreground_tiles() {
 	int x = g_vars.screen_tilemap_xorigin >> 4;
 	int y = g_vars.screen_tilemap_yorigin >> 4;
-	for (int j = 0; j < (TILEMAP_SCREEN_H / 16); ++j) {
+	const int rows = (TILEMAP_SCREEN_H + (g_vars.screen_tilemap_yorigin & 15) + 15) / 16;
+	const int columns = (TILEMAP_SCREEN_W + (g_vars.screen_tilemap_xorigin & 15) + 15) / 16;
+	for (int j = 0; j < rows; ++j) {
 		const uint8_t *ptr = lookup_sql(x, y);
-		for (int i = 0; i < (TILEMAP_SCREEN_W / 16); ++i) {
+		for (int i = 0; i < columns; ++i) {
 			uint8_t num = *ptr++;
 			const uint8_t *data = g_res.triggers[num].op_table2;
 			if (data) {
@@ -2070,18 +2223,122 @@ static void draw_foreground_tiles() {
 	}
 }
 
+static bool resize_level_view(int w, int h, bool anchor_player) {
+	if (w == GAME_SCREEN_W && h == GAME_SCREEN_H) return false;
+	const int size = w * h;
+	if (size > g_res.vga_size) {
+		uint8_t *buffer = realloc(g_res.vga, size);
+		if (!buffer) {
+			print_warning("Unable to allocate %dx%d game viewport", w, h);
+			return false;
+		}
+		g_res.vga = buffer;
+		g_res.vga_size = size;
+	}
+	if (!g_sys.resize_viewport(w, h)) return false;
+	if (anchor_player) {
+		const struct object_t *player = &g_vars.objects[g_vars.player2_scrolling_flag
+			? OBJECT_NUM_PLAYER2 : OBJECT_NUM_PLAYER1];
+		/* Keep the player at the same relative point in the window. */
+		g_vars.screen_tilemap_xorigin = player->xpos -
+			(player->xpos - g_vars.screen_tilemap_xorigin) * w / GAME_SCREEN_W;
+		g_vars.screen_tilemap_yorigin = player->ypos -
+			(player->ypos - g_vars.screen_tilemap_yorigin) * (h - 40) / TILEMAP_SCREEN_H;
+	}
+	g_options.screen_w = w;
+	g_options.screen_h = h;
+	clamp_level_camera();
+	g_vars.screen_tilemap_xoffset = -(g_vars.screen_tilemap_xorigin & 15);
+	g_vars.screen_tilemap_yoffset = -(g_vars.screen_tilemap_yorigin & 15);
+	g_vars.screen_scrolling_dirmask = 0;
+	for (int i = 0; i < MAX_OBJECTS; ++i) {
+		g_vars.objects[i].screen_xpos = g_vars.objects[i].xpos - g_vars.screen_tilemap_xorigin;
+		g_vars.objects[i].screen_ypos = g_vars.objects[i].ypos - g_vars.screen_tilemap_yorigin;
+	}
+	screen_init();
+	g_sys.render_clear_sprites();
+	g_sys.render_set_sprites_clipping_rect(0, TILEMAP_OFFSET_Y, TILEMAP_SCREEN_W, TILEMAP_SCREEN_H);
+	print_debug(DBG_SYSTEM, "Game viewport %dx%d", w, h);
+	return true;
+}
+
+static void level_view_size(int base_w, int base_h, int step, int *width, int *height) {
+	if (camera_in_room()) {
+		*width = 320;
+		*height = 200;
+		return;
+	}
+	/* Quarter-size steps, up to three times the initial field of view.
+	 * Keep dimensions tile-aligned and inside the actual level. Leave a row
+	 * for camera/respawn routines that require a 16-pixel bottom margin. */
+	int w = (base_w * (4 + step) / 4) & ~15;
+	int h = ((base_h * (4 + step) / 4 - 40) & ~15) + 40;
+	w = MIN(w, g_vars.screen_tilemap_w * 16);
+	h = MIN(h, g_vars.screen_tilemap_h - 16 + 40);
+	*width = w;
+	*height = h;
+}
+
+static bool update_level_view(int base_w, int base_h, int step) {
+	int w, h;
+	level_view_size(base_w, base_h, step, &w, &h);
+	return resize_level_view(w, h, true);
+}
+
+struct view_transition {
+	int from_w, from_h, to_w, to_h, elapsed;
+};
+
+static void start_view_transition(struct view_transition *view, int base_w, int base_h, int step) {
+	/* Retarget from the current view, including when the key is reversed
+	 * midway through a transition. Never jump to the previous destination. */
+	view->from_w = GAME_SCREEN_W;
+	view->from_h = GAME_SCREEN_H;
+	level_view_size(base_w, base_h, step, &view->to_w, &view->to_h);
+	view->elapsed = 0;
+}
+
+static bool advance_view_transition(struct view_transition *view, int duration) {
+	static const int transition_ms = 300;
+	if (view->elapsed >= transition_ms) return false;
+	view->elapsed = MIN(transition_ms, view->elapsed + duration);
+	const double t = (double)view->elapsed / transition_ms;
+	const double ease = t * t * (3. - 2. * t);
+	/* Sub-tile intermediate sizes avoid visible 16-pixel jumps. Final sizes
+	 * remain tile aligned; edge tiles are clipped by the map renderer. */
+	const int w = view->from_w + (int)((view->to_w - view->from_w) * ease +
+		(view->to_w >= view->from_w ? 0.5 : -0.5));
+	const int h = view->from_h + (int)((view->to_h - view->from_h) * ease +
+		(view->to_h >= view->from_h ? 0.5 : -0.5));
+	return resize_level_view(w, h, true);
+}
+
 void do_level() {
+	const int base_w = GAME_SCREEN_W;
+	const int base_h = GAME_SCREEN_H;
+	_level_base_w = base_w;
+	_level_base_h = base_h;
+	_view_camera_cut = false;
+	int view_step = -1;
+	struct view_transition view = { 0, 0, 0, 0, 300 };
 	static const int W = 320 / 16;
 	for (int tile_num = 0; tile_num < 128; ++tile_num) {
 		g_vars.screen_tile_lut[tile_num] = (tile_num / W) * 640 + (tile_num % W);
 	}
 	g_vars.screen_tilemap_w = level_dim[g_vars.level * 2];
 	g_vars.screen_tilemap_h = level_dim[g_vars.level * 2 + 1];
+	/* Clamp oversized command-line viewports before initializing the camera. */
+	resize_level_view(MIN(base_w, g_vars.screen_tilemap_w * 16),
+		MIN(base_h, g_vars.screen_tilemap_h - 16 + 40), false);
 	for (int i = 0; i < MAX_TRIGGERS; ++i) {
 		g_res.triggers[i].unk16 = i;
 	}
 	g_vars.switch_player_scrolling_flag = 0;
 	init_level();
+	g_vars.screen_tilemap_xorigin = MAX(0, MIN(g_vars.screen_tilemap_xorigin,
+		g_vars.screen_tilemap_w * 16 - TILEMAP_SCREEN_W));
+	g_vars.screen_tilemap_yorigin = MAX(0, MIN(g_vars.screen_tilemap_yorigin,
+		g_vars.screen_tilemap_h - TILEMAP_SCREEN_H));
 	screen_clear(0);
 	do_level_redraw_tilemap(g_vars.screen_tilemap_xorigin, g_vars.screen_tilemap_yorigin);
 	if (g_options.amiga_copper_bars) {
@@ -2097,18 +2354,53 @@ void do_level() {
 	g_vars.found_music_instrument_flag = 0;
 	g_sys.render_set_sprites_clipping_rect(0, TILEMAP_OFFSET_Y, TILEMAP_SCREEN_W, TILEMAP_SCREEN_H);
 	bool screen_transition_flag = true;
+	int frame_duration_remainder = 0;
 	do {
 		screen_clear_sprites(0);
 		const uint32_t timestamp = g_sys.get_timestamp();
+		frame_duration_remainder += 1000 % 30;
+		int frame_duration = 1000 / 30;
+		if (frame_duration_remainder >= 30) {
+			++frame_duration;
+			frame_duration_remainder -= 30;
+		}
 		update_input();
+		bool view_changed = false;
+		if (g_sys.input.switch_mode) {
+			g_sys.input.switch_mode = false;
+			view_changed = switch_data_mode();
+		}
+		if (view_step != g_sys.input.view_step) {
+			view_step = g_sys.input.view_step;
+			if (screen_transition_flag) {
+				view_changed = update_level_view(base_w, base_h, view_step);
+			} else {
+				start_view_transition(&view, base_w, base_h, view_step);
+			}
+		}
+		view_changed |= advance_view_transition(&view, frame_duration);
+		const int prev_scroll_x = g_vars.screen_tilemap_xorigin;
+		const int prev_scroll_y = g_vars.screen_tilemap_yorigin;
 		// demo
 		do_level_update_scrolling2();
 		do_level_update_objects();
+		if (_view_camera_cut) {
+			/* Door teleports replace the camera; discard any outdoor zoom
+			 * destination and never interpolate across disconnected scenes. */
+			view.elapsed = 300;
+			view_step = g_sys.input.view_step;
+			view_changed = true;
+			_view_camera_cut = false;
+		}
 		if (!g_res.amiga_data) {
 			draw_foreground_tiles();
 		}
 		++g_vars.level_loop_counter;
 		draw_level_panel();
+		g_sys.set_scroll_interpolation(
+			g_vars.screen_tilemap_xorigin - prev_scroll_x,
+			g_vars.screen_tilemap_yorigin - prev_scroll_y,
+			frame_duration, !screen_transition_flag && !view_changed);
 
 		g_sys.copy_bitmap(g_res.vga, GAME_SCREEN_W, GAME_SCREEN_H);
 		if (screen_transition_flag) {
@@ -2119,10 +2411,13 @@ void do_level() {
 		}
 		memset(g_res.vga, 0, GAME_SCREEN_W * GAME_SCREEN_H);
 
-		const int diff = (timestamp + (1000 / 30)) - g_sys.get_timestamp();
+		const int diff = (timestamp + frame_duration) - g_sys.get_timestamp();
 		g_sys.sleep(diff < 10 ? 10 : diff);
 
 	} while (!g_sys.input.quit && !g_vars.quit_level_flag);
+	g_sys.set_scroll_interpolation(0, 0, 0, false);
+	/* Menus and inter-level screens retain the original logical resolution. */
+	resize_level_view(base_w, base_h, false);
 	// g_vars.screen_draw_offset -= TILEMAP_OFFSET_Y * 40;
 	screen_unk5();
 	if (g_options.amiga_copper_bars) {

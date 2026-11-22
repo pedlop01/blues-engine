@@ -1,0 +1,22 @@
+# Build output (Linux, MinGW and test harnesses)
+*.o
+*.d
+/blues
+/build/
+
+# Local Python environments and caches
+/.venv/
+/venv/
+__pycache__/
+*.py[cod]
+
+# User-supplied original games and local runtime data
+/orig-games/
+/game-data/
+/captures/
+/saves/
+*.log
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db

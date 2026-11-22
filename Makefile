@@ -14,6 +14,10 @@ P2_SRCS := $(foreach f,$(P2),p2/$f)
 SRCS := $(BB_SRCS) $(JA_SRCS) $(P2_SRCS)
 OBJS := $(SRCS:.c=.o)
 DEPS := $(SRCS:.c=.d)
+APP_OBJS := main.o mixer.o dos_audio.o third_party/nuked-opl3/opl3.o sys_sdl2.o util.o
+GAME_OBJS := game_bb.o game_ja.o game_p2.o
+
+.PHONY: all clean
 
 CPPFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wpedantic -MMD $(SDL_CFLAGS) -I. -g
 
@@ -37,10 +41,16 @@ game_p2.o: $(P2_SRCS:.c=.o)
 	ld -r -o $@ $^
 	objcopy --localize-hidden $@
 
-blues: main.o mixer.o sys_sdl2.o util.o game_bb.o game_ja.o game_p2.o
+blues: $(APP_OBJS) $(GAME_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(SDL_LIBS) $(MODPLUG_LIBS)
 
-clean:
-	rm -f $(OBJS) $(DEPS) *.o *.d
+VIEW_TEST_OBJS := $(filter-out bb/level.o,$(BB_SRCS:.c=.o)) mixer.o dos_audio.o third_party/nuked-opl3/opl3.o util.o
+build/tests/check_viewport: tests/check_viewport.c bb/level.c sys_sdl2.c main.c $(VIEW_TEST_OBJS)
+	mkdir -p $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -DBLUES_ONLY $(LDFLAGS) -o $@ tests/check_viewport.c $(VIEW_TEST_OBJS) $(SDL_LIBS) $(MODPLUG_LIBS)
 
--include $(DEPS)
+clean:
+	$(RM) $(OBJS) $(DEPS) $(APP_OBJS) $(APP_OBJS:.o=.d) $(GAME_OBJS) blues
+	$(RM) build/tests/check_viewport build/tests/check_viewport.d
+
+-include $(DEPS) main.d mixer.d dos_audio.d sys_sdl2.d util.d third_party/nuked-opl3/opl3.d build/tests/check_viewport.d

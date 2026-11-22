@@ -37,6 +37,7 @@ struct resource_data_t {
 	int avt_count;
 	const uint8_t *avt[MAX_AVT];
 	int spr_count;
+	int common_spr_count;
 	const uint8_t *spr_frames[MAX_SPR_FRAMES];
 	uint8_t palette[16 * 3];
 	struct trigger_t triggers[MAX_TRIGGERS];

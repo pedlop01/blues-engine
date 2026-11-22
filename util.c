@@ -2,6 +2,8 @@
 #include <stdarg.h>
 #include <sys/param.h>
 #include <sys/unistd.h>
+#include <dirent.h>
+#include <strings.h>
 #include "sys.h"
 #include "util.h"
 
@@ -84,6 +86,20 @@ FILE *fopen_nocase(const char *path, const char *filename) {
 			if (strcmp(filename, p) != 0) {
 				fp = fopen(buf, "rb");
 			}
+		}
+	}
+	if (!fp) {
+		DIR *directory = opendir(path);
+		if (directory) {
+			struct dirent *entry;
+			while ((entry = readdir(directory)) != 0) {
+				if (strcasecmp(entry->d_name, filename) == 0) {
+					snprintf(buf, sizeof(buf), "%s/%s", path, entry->d_name);
+					fp = fopen(buf, "rb");
+					break;
+				}
+			}
+			closedir(directory);
 		}
 	}
 	return fp;

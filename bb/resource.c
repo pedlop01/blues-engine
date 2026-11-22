@@ -221,6 +221,12 @@ static void load_iff(const uint8_t *data, uint32_t size, uint8_t *dst, int dst_p
 }
 
 void load_avt(const char *filename, uint8_t *dst, int offset, int dither_pattern) {
+	/* Concert has no foreground tile file. Do not try to unpack a directory
+	 * when its entry in the level table is the empty string. */
+	if (!filename || !*filename) {
+		g_res.avt_count = 0;
+		return;
+	}
 	read_compressed_file(filename, dst);
 	const uint8_t *ptr = dst;
 	const int count = READ_LE_UINT16(ptr); ptr += 6;
@@ -322,6 +328,7 @@ void load_img(const char *filename, int screen_w, int dither_pattern) {
 }
 
 void load_m(const char *filename) {
+	if (!filename || !*filename) return;
 	const int filesize = read_file(filename, g_res.tmp, 0);
 	const int count = READ_BE_UINT16(g_res.tmp);
 	assert(filesize == 2 + count * 32);
@@ -378,5 +385,9 @@ void load_sql(const char *filename) {
 }
 
 uint8_t *lookup_sql(int x, int y) {
+	/* A larger view activates objects above/alongside the map. Their collision
+	 * probes can extend beyond its storage; use the nearest boundary tile. */
+	x = MAX(0, MIN(x, 127));
+	y = MAX(0, MIN(y, (640 * 25) / 128 - 1));
 	return g_res.sql + y * 128 + x;
 }

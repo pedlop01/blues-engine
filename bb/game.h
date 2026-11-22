@@ -203,6 +203,7 @@ extern uint8_t *level_tilesdata_1e8c[];
 
 /* game.c */
 extern void	update_input();
+extern void	load_common_graphics();
 
 /* level.c */
 extern void	load_level_data(int num);
