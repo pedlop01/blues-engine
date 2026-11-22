@@ -7,9 +7,9 @@ refieren a cada tarea; no representan una estimación del tiempo restante.
 
 ## Estado general
 
-- Tareas completadas: **1 de 18**.
-- Publicada y completada: **01**.
-- Pendiente de validación al jugar: **02**.
+- Tareas completadas: **2 de 18**.
+- Completadas: **01–02**.
+- En implementación: **03**.
 - Las demás tareas están pendientes de implementación.
 
 ## Base disponible
@@ -26,16 +26,16 @@ Estas funciones ya existen y no deben confundirse con las ampliaciones pendiente
 
 Se han corregido los problemas detectados en habitaciones, desaparición de
 enemigos con zoom y alineación de los sprites al cambiar de versión.
-El ajuste de audio a 44,1 kHz está implementado y probado automáticamente,
-pero falta confirmar si elimina el petardeo que se oía en Windows.
+El ajuste de audio a 44,1 kHz está implementado, probado automáticamente y
+confirmado por el usuario: el audio DOS funciona correctamente en Windows.
 
 ## Tabla de tareas
 
 | ID | Tarea | Alcance y criterio de finalización | Dependencias | Estado | Progreso |
 |---|---|---|---|---|---:|
 | 01 | Consolidar el proyecto | Ordenar archivos generados, revisar rutas y separar los cambios en commits claros. La nueva estructura y sus ejemplos deben funcionar. | — | Completada: fuentes y documentación publicadas en pedlop01/blues-engine, rama main verificada; historial y autoría de cyxx/blues conservados. | 100 % |
-| 02 | Terminar de validar el audio | Confirmar la ausencia de petardeo DOS y comprobar música y efectos en ambos modos, en Windows. | — | Salida a 44,1 kHz y pruebas listas; pendiente de confirmación al escuchar. | 75 % |
-| 03 | Suavizar personajes y objetos | Interpolar el desplazamiento a 60/120 Hz conservando física y colisiones a 30 Hz. Evitar saltos visuales en puertas, cambios de modo y zoom. | 01 | Pendiente | 0 % |
+| 02 | Terminar de validar el audio | Confirmar la ausencia de petardeo DOS y comprobar música y efectos en ambos modos, en Windows. | — | Completada: pruebas técnicas superadas y audio DOS confirmado por el usuario en Windows. | 100 % |
+| 03 | Suavizar personajes y objetos | Interpolar el desplazamiento a 60/120 Hz conservando física y colisiones a 30 Hz. Evitar saltos visuales en puertas, cambios de modo y zoom. | 01 | En implementación: identificación estable de actores e historial de posiciones para el renderizado. | 25 % |
 | 04 | Mejorar la cámara | Añadir anticipación hacia donde se camina y seguimiento suave, respetando bordes, habitaciones y cambios de dirección. | 01 | Pendiente | 0 % |
 | 05 | Mantener legible el HUD | Conservar un tamaño cómodo de indicadores al alejar el encuadre, sin tapar innecesariamente el mapa. | 01 | Pendiente | 0 % |
 | 06 | Crear el menú dentro del juego | Una tecla abre un cuadro centrado y pausa la acción. Navegación con teclado y mando; cerrar el menú devuelve el control sin entradas residuales. | 01 | Pendiente | 0 % |
@@ -72,11 +72,12 @@ distintos. Para el resumen se utiliza el número de tareas completadas.
 ## Orden de trabajo propuesto
 
 1. Consolidar el proyecto y cerrar la validación de audio: **01–02**.
-2. Crear el menú e integrar sus opciones: **06–12**.
-3. Implementar el estado guardable y los ocho slots con miniaturas: **13–14**.
-4. Reutilizar esa base para rebobinar y añadir el efecto VHS: **15–16**.
-5. Pulir interpolación, cámara y HUD: **03–05**.
-6. Cerrar la campaña de pruebas y preparar la distribución: **17–18**.
+2. Suavizar personajes y objetos, siguiente tarea elegida por el usuario: **03**.
+3. Crear el menú e integrar sus opciones: **06–12**.
+4. Implementar el estado guardable y los ocho slots con miniaturas: **13–14**.
+5. Reutilizar esa base para rebobinar y añadir el efecto VHS: **15–16**.
+6. Pulir cámara y HUD: **04–05**.
+7. Cerrar la campaña de pruebas y preparar la distribución: **17–18**.
 
 La tarea 17 acompaña cada etapa; no se aplaza toda la validación hasta el final.
 
@@ -116,3 +117,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-22 | Todas | Creado este documento a partir del plan acordado en el chat. | Actualizar filas y registro conforme se implemente cada tarea. |
 | 2026-11-22 | 01 | Preparada la publicación en pedlop01/blues-engine. Historial original conservado y remoto upstream configurado; añadidos .gitignore y CREDITS.md, limpieza de compilación y README con mejoras actuales e ideas pendientes. Compilaciones Linux/Windows desde cero y pruebas de audio, modos, puertas, enemigos y zoom superadas. | Finalizar commits, autenticar la escritura y verificar la publicación remota. |
 | 2026-11-22 | 01 | Publicada y verificada la rama main en [pedlop01/blues-engine](https://github.com/pedlop01/blues-engine). Conservados los 49 commits originales; separados los cambios de implementación y documentación. Descripción del repositorio y README enlazan a cyxx/blues y reconocen a Gregory Montoir. | Ninguna para esta tarea. El audio continúa pendiente de confirmación en la tarea 02. |
+| 2026-11-22 | 02 | El usuario confirma que el audio DOS funciona bien. Tarea cerrada al 100 %. | Ninguna. |
+| 2026-11-22 | 03 | Inicio de la interpolación visual de personajes y objetos, priorizada por el usuario antes del menú. | Implementación, pruebas de continuidad y validación al jugar a 60/120 Hz. |

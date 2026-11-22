@@ -24,8 +24,8 @@ focused on the first **Blues Brothers** game.
 | Larger views | Dynamic sprite storage replaces the fixed sprite limit; camera bounds and defeated-enemy visibility follow the current view. |
 | Regression tests | Tests cover DOS sequencer accuracy, PCM continuity, zoom, doors, defeated enemies and live presentation changes. |
 
-The latest audio output is 44.1 kHz. Technical tests pass; final confirmation
-of the reported Windows crackle is still pending.
+Audio output is 44.1 kHz. Technical tests pass, and the Windows DOS audio
+adjustment has been confirmed in gameplay.
 
 ## Ideas and roadmap
 
