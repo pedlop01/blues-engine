@@ -18,6 +18,7 @@ focused on the first **Blues Brothers** game.
 |---|---|
 | Native Windows x64 | Build from WSL with MinGW-w64, SDL2 and libmodplug. |
 | Smoother motion | Camera, characters and objects presented at 30, 60 or 120 Hz while gameplay simulation remains at 30 Hz. |
+| Camera choice | Classic following or smooth following with directional anticipation and a vertical dead zone; select with `--camera=classic` or `--camera=smooth` (default). |
 | Dynamic framing | `-` reveals more of the map, `+` moves closer, and `0` restores the initial view; changes ease over about 300 ms. |
 | Original DOS audio | Native playback of four AdLib songs and 18 effects, read from the user's supported `1.EXE`, with Nuked OPL3 chip emulation. |
 | Live DOS / Amiga switch | `F6` changes graphics, palettes, HUD and native audio while retaining game state, map edits, rooms and framing. |
@@ -32,7 +33,7 @@ adjustment has been confirmed in gameplay.
 The next phase includes a centered in-game options menu, configurable controls
 and volumes, invulnerability and life controls, level selection, eight save
 slots with thumbnails, and a short rewind with a VHS-style visual effect.
-Further work includes camera/HUD polish and Windows packaging.
+Further work includes HUD polish and Windows packaging.
 
 **These are planned features, not features already available.** Progress,
 dependencies and completion criteria are tracked in [PLAN.md](PLAN.md).
@@ -112,7 +113,8 @@ Usage: blues [OPTIONS]...
   --scrollrate=HZ   Scroll presentation rate: 30, 60, or 120 (default 60)
   --sound=MODE      Blues Brothers audio: auto, dos, or amiga (default auto)
   --cga             Enable CGA colors
-  --dosscroll       Enable DOS style screen scrolling
+  --camera=MODE    Blues Brothers camera: classic or smooth (default smooth)
+  --dosscroll       Select classic camera with DOS style screen scrolling
   --hybrid          Enable fuchsia color as in Hybrid crack
 ```
 
@@ -132,6 +134,26 @@ scenes stored below the main map. Leaving a room restores the selected outdoor
 framing. Door transitions cancel any active zoom/scroll interpolation.
 
 `--scrollrate=60` (default) keeps the game simulation at 30 Hz and presents camera, character and object motion at 60 Hz. On a 120 Hz display, each presented frame can be shown for exactly two refreshes; `--scrollrate=120` targets every refresh.
+
+`--camera=smooth` follows gradually, leaves more room ahead while walking and
+changes anticipation gently when turning. Stopping retains the current look-ahead;
+a vertical dead zone avoids chasing small jumps. Bonus rooms keep their fixed
+camera, and doors and viewport changes reset the following history.
+`--camera=classic` restores the previous camera behavior. `--dosscroll` selects
+the classic camera's DOS scrolling variant (a later `--camera` overrides the
+camera selection). Both cameras retain the selected presentation frequency.
+The planned in-game options menu will expose the classic/smooth selector.
+
+Camera regression tests cover all six levels with the supplied assets:
+
+```
+make build/tests/check_viewport
+BLUES_TEST_CAMERA=1 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+  build/tests/check_viewport --dos-datapath=../orig-games/dos \
+  --amiga-datapath=../orig-games/amiga --cheats=7 --level=0
+```
+
+Repeat with `--level=1` through `--level=5` for the other levels.
 
 Actor interpolation tracks object slots independently of drawing order and uses
 the center of their feet as an anchor when animation dimensions change. Doors,

@@ -247,6 +247,82 @@ static void snapshot(const char *name) {
 	SDL_FreeSurface(surface);
 }
 
+/* Exercise the camera against each real level and several viewport sizes. */
+static void test_camera() {
+	for (int step = 0; step <= 8; step += 4) {
+		update_level_view(base_w, base_h, step);
+		struct object_t *player = &g_vars.objects[OBJECT_NUM_PLAYER1];
+		g_vars.player2_scrolling_flag = 0;
+		player->scrolling_lock_flag = 0;
+		const int max_x = g_vars.screen_tilemap_w * 16 - TILEMAP_SCREEN_W;
+		const int max_y = g_vars.screen_tilemap_h - TILEMAP_SCREEN_H;
+		g_vars.screen_tilemap_xorigin = max_x / 2;
+		g_vars.screen_tilemap_yorigin = max_y / 2;
+		player->xpos = g_vars.screen_tilemap_xorigin + TILEMAP_SCREEN_W / 2;
+		player->ypos = g_vars.screen_tilemap_yorigin + TILEMAP_SCREEN_H * 5 / 8;
+		player->xvelocity = 32;
+		_camera.valid = false;
+		const struct object_t before = *player;
+		const int start = g_vars.screen_tilemap_xorigin;
+		for (int tick = 0; tick < 90; ++tick) update_smooth_camera();
+		assert(g_vars.screen_tilemap_xorigin > start);
+		assert(memcmp(&before, player, sizeof(before)) == 0);
+		const double right_lead = _camera.lead;
+		const int right = g_vars.screen_tilemap_xorigin;
+		player->xvelocity = -32;
+		update_smooth_camera();
+		assert(_camera.lead < right_lead && _camera.lead > 0);
+		assert(abs(g_vars.screen_tilemap_xorigin - right) <= 4);
+		for (int tick = 0; tick < 90; ++tick) update_smooth_camera();
+		assert(g_vars.screen_tilemap_xorigin < start);
+		/* Stopping retains look-ahead; small vertical steps stay in the band. */
+		player->xvelocity = 0;
+		const double lead = _camera.lead;
+		const int y = g_vars.screen_tilemap_yorigin;
+		player->ypos -= 4;
+		update_smooth_camera();
+		assert(_camera.lead == lead && g_vars.screen_tilemap_yorigin == y);
+		for (int corner = 0; corner < 4; ++corner) {
+			player->xpos = corner & 1 ? g_vars.screen_tilemap_w * 16 : 0;
+			player->ypos = corner & 2 ? g_vars.screen_tilemap_h : 0;
+			for (int tick = 0; tick < 120; ++tick) {
+				update_smooth_camera();
+				assert(g_vars.screen_tilemap_xorigin >= 0 && g_vars.screen_tilemap_xorigin <= max_x);
+				assert(g_vars.screen_tilemap_yorigin >= 0 && g_vars.screen_tilemap_yorigin <= max_y);
+			}
+		}
+		/* A fast fall may accelerate the camera, but never lose the player. */
+		player->xpos = g_vars.screen_tilemap_w * 8;
+		player->ypos = TILEMAP_SCREEN_H;
+		g_vars.screen_tilemap_yorigin = 0;
+		_camera.valid = false;
+		for (int tick = 0; tick < 40; ++tick) {
+			player->ypos = MIN(player->ypos + 24, g_vars.screen_tilemap_h);
+			update_smooth_camera();
+			assert(player->ypos - g_vars.screen_tilemap_yorigin <= TILEMAP_SCREEN_H);
+		}
+		/* External camera cuts must discard the old following position. */
+		g_vars.screen_tilemap_xorigin = max_x / 2;
+		player->xpos = max_x / 2 + TILEMAP_SCREEN_W / 2;
+		update_smooth_camera();
+		assert(abs(g_vars.screen_tilemap_xorigin - max_x / 2) <= 16);
+		player->scrolling_lock_flag = 1;
+		const int locked = g_vars.screen_tilemap_xorigin;
+		update_smooth_camera();
+		assert(g_vars.screen_tilemap_xorigin == locked && !_camera.valid);
+		/* The classic branch still performs its original 16px scroll step. */
+		g_options.camera_mode = CAMERA_CLASSIC;
+		g_vars.screen_scrolling_dirmask = 2;
+		player->ypos = 100;
+		do_level_update_scrolling2();
+		assert(g_vars.screen_tilemap_xorigin == MIN(locked + 16, max_x));
+		g_options.camera_mode = CAMERA_SMOOTH;
+	}
+	puts("camera: anticipation, reversal, stopping, dead zone, bounds, cuts, locks and classic steps passed");
+	g_sys.input.quit = true;
+}
+
+
 static void test_events() {
 	sdl2_process_events();
 	if (_sprites_cliprect.y != TILEMAP_OFFSET_Y) {
@@ -261,6 +337,10 @@ static void test_events() {
 		base_h = previous_h = GAME_SCREEN_H;
 		saved_window_w = window_w;
 		saved_window_h = window_h;
+		if (getenv("BLUES_TEST_CAMERA")) {
+			test_camera();
+			return;
+		}
 		if (getenv("BLUES_TEST_MODES")) {
 			test_modes();
 			return;
@@ -368,6 +448,7 @@ int main(int argc, char **argv) {
 		printf("doors: %d transitions at normal, wide and intermediate zoom sizes passed\n", doors_tested);
 		return result;
 	}
+	if (getenv("BLUES_TEST_CAMERA")) return result;
 	assert(test_frames == 176 && out_frames >= 40 && closer_frames >= 40);
 	assert(GAME_SCREEN_W == base_w && GAME_SCREEN_H == base_h);
 	printf("viewport: eased zoom-out/in, mid-transition reversal, reset, four map corners, fixed window, restored menus: passed\n");

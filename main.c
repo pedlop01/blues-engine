@@ -30,6 +30,7 @@ static const char *USAGE =
 	"  --sound=MODE      Blues Brothers audio: auto, dos, or amiga (default auto)\n"
 	"  In-game framing (Blues Brothers): - reveals more map, + moves closer, 0 resets\n"
 	"  --cga             Enable CGA colors\n"
+	"  --camera=MODE    Blues Brothers camera: classic or smooth (default smooth)\n"
 	"  --dosscroll       Enable DOS style screen scrolling\n"
 	"  --hybrid          Enable fuchsia color as in Hybrid crack\n"
 ;
@@ -70,6 +71,7 @@ int main(int argc, char *argv[]) {
 	g_options.start_xpos16 = -1;
 	g_options.start_ypos16 = -1;
 	g_options.scroll_rate = 60;
+	g_options.camera_mode = CAMERA_SMOOTH;
 	g_options.amiga_copper_bars = true;
 	g_options.amiga_colors = true;
 	// g_options.amiga_status_bar = true;
@@ -105,6 +107,7 @@ int main(int argc, char *argv[]) {
 			{ "sound",      required_argument, 0, 14 },
 			{ "dos-datapath", required_argument, 0, 15 },
 			{ "amiga-datapath", required_argument, 0, 16 },
+			{ "camera", required_argument, 0, 17 },
 			{ 0, 0, 0, 0 },
 		};
 		int index;
@@ -156,6 +159,7 @@ int main(int argc, char *argv[]) {
 			break;
 		case 11:
 			g_options.dos_scrolling = true;
+			g_options.camera_mode = CAMERA_CLASSIC;
 			break;
 		case 12:
 			g_options.hybrid_color = true;
@@ -182,6 +186,14 @@ int main(int argc, char *argv[]) {
 		case 15:
 			free((char *)g_options.dos_datapath);
 			g_options.dos_datapath = strdup(optarg);
+			break;
+		case 17:
+			if (strcmp(optarg, "classic") == 0) g_options.camera_mode = CAMERA_CLASSIC;
+			else if (strcmp(optarg, "smooth") == 0) g_options.camera_mode = CAMERA_SMOOTH;
+			else {
+				fprintf(stderr, "Unsupported camera mode '%s' (use classic or smooth)\n", optarg);
+				return -1;
+			}
 			break;
 		case 16:
 			free((char *)g_options.amiga_datapath);

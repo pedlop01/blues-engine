@@ -43,6 +43,8 @@ static inline void WRITE_LE_UINT16(uint8_t *p, uint16_t value) {
 #define GAME_SCREEN_W g_options.screen_w
 #define GAME_SCREEN_H g_options.screen_h
 
+enum camera_mode { CAMERA_CLASSIC, CAMERA_SMOOTH };
+
 enum sound_mode { SOUND_AUTO, SOUND_DOS, SOUND_AMIGA };
 
 struct options_t {
@@ -62,6 +64,7 @@ struct options_t {
 	// 'p2' only options
 	bool hybrid_color;
 	int scroll_rate;
+	enum camera_mode camera_mode;
 	enum sound_mode sound_mode;
 	const char *dos_datapath;
 	const char *amiga_datapath;
