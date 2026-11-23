@@ -63,10 +63,18 @@ binary because of xBRZ. Their dependency notices must be retained if integrated.
 was used externally to unpack the user's DIET-compressed executable for audit.
 [amitools](https://github.com/cnvogelg/amitools), by Christian Vogelgsang and
 contributors (GPL-2.0-or-later), was used externally for read-only ADF comparison.
-Neither is bundled. Our audit scripts contain no original game data or copies
+Neither is bundled. Unicorn 2.1.4 is an external preparation tool for the
+verified Fox COM decompressor; it is not a game runtime dependency.
+Chocolate Doom 1.6.0 OPL (Simon Howard and contributors, GPL-2.0-or-later),
+with OpenTitus DBOPL (DOSBox Team, GPL-2.0-or-later), is rebuilt externally for
+Fox. SDL 1.2 compatibility and SDL_mixer reference SDKs also remain external.
+The two patches under `patches/` retain GPL-3.0-or-later for their respective
+external engine changes; they do not assign a license to the inherited base.
+Our audit scripts contain no original game data or copies
 of these tools. Pinned revisions, preparation and distribution constraints are
 recorded in [the audit](docs/ENGINE_AUDIT.md) and
-[identification rules](docs/GAME_DETECTION_RULES.md).
+[identification rules](docs/GAME_DETECTION_RULES.md). Builds and reference
+validation are described in [TH-02](docs/ENGINE_REFERENCE_TESTS.md).
 
 ## License information
 

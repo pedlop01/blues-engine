@@ -5,6 +5,7 @@ static void smoke_present(SDL_Renderer *renderer);
 #define SDL_RenderPresent smoke_present
 #include "../sys_sdl2.c"
 #undef SDL_RenderPresent
+#undef main
 #define main production_main
 #include "../main.c"
 #undef main
@@ -39,12 +40,15 @@ static void smoke_present(SDL_Renderer *renderer) {
 }
 
 int main(int argc, char **argv) {
+	SDL_SetMainReady();
 	if (argc != 2) {
 		fprintf(stderr, "Usage: %s GAME_DATA_DIRECTORY\n", argv[0]);
 		return 2;
 	}
 	/* Neither read nor write the player's preferences. */
 	SDL_setenv("BLUES_CONFIG_FILE", "", 1);
+	g_sys.load_preferences = NULL;
+	g_sys.save_preferences = NULL;
 	production_events = g_sys.process_events;
 	g_sys.process_events = smoke_events;
 	char *option = malloc(strlen(argv[1]) + sizeof("--datapath="));

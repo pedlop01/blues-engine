@@ -77,7 +77,8 @@ def main():
                 shot = staging / f"level{level}.bmp"
                 log = run([str(args.olduvai.resolve()), "--game-dir", str(staging), "--play",
                            "--level", str(level), "--display-mode", "cpu", "--play-frames", "30",
-                           "--play-shot", str(shot), "--sound-card", "off"], env=env, cwd=staging)
+                           "--play-shot", str(shot), "--play-shot-frame", "30",
+                           "--sound-card", "off"], env=env, cwd=staging)
                 errors = ("EXE tables not installed", "failed to parse game files", "could not load level data")
                 if any(message in log for message in errors) or f"game: level {level} " not in log:
                     raise ValueError(f"Level {level} failed to load despite exit code 0\n{log}")

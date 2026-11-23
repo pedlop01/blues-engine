@@ -6,10 +6,13 @@ Fecha: **23 de noviembre de 2026**. Corresponde a TH-01 y TH-02 del
 
 **TH-01 cerrada:** variantes identificadas, estrategia de preparación comprobada
 y bases/dependencias/licencias documentadas. [Reglas de identificación](GAME_DETECTION_RULES.md)
-y [resultados estructurados](audit/th01-results.json). La validación de partidas
-y audio sigue abierta en TH-02.
+y [resultados estructurados](audit/th01-results.json). TH-02 ya aporta rutas cortas y audio de referencia:
+[ENGINE_REFERENCE_TESTS.md](ENGINE_REFERENCE_TESTS.md).
 
-## Alcance comprobado
+## Alcance inicial comprobado en TH-01
+
+La siguiente tabla conserva el primer corte. Para el estado posterior de los
+cuatro motores, incluido Fox con audio y Windows, consultar TH-02 arriba.
 
 Entorno: Linux AArch64, GCC, SDL2 **2.30.0**; SDL 1.2 mediante
 **sdl12-compat 1.2.68-2** para el ensayo de OpenTitus. Los motores externos
@@ -207,9 +210,9 @@ convertirlo en un build mantenible con sonido y recorrido real.
 
 ## Siguiente paso
 
-TH-01 está completada. Continuar TH-02 con partidas de referencia, controles,
-audio y Windows, incluido el build completo de Fox. TH-09 incorporará la
-preparación DIET demostrada, que hoy es una herramienta de auditoría externa.
+TH-01 y TH-02 están completadas: las rutas cortas y builds con audio se
+registran en ENGINE_REFERENCE_TESTS.md. TH-09 incorporará la preparación DIET
+demostrada, que hoy es una herramienta de auditoría externa.
 TH-03 concretará el
 contrato del lanzador, conservando estos motores como procesos separados en la
 primera etapa y las capacidades exclusivas de Blues dentro de su adaptador.

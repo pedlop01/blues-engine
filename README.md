@@ -21,7 +21,8 @@ this transition.
 [Titus Engine: expansion plan](docs/TITUS_PLATFORM_PLAN.md) ·
 [Local game inventory](docs/GAME_INVENTORY.md) ·
 [Engine audit and startup checks](docs/ENGINE_AUDIT.md) ·
-[Game detection rules](docs/GAME_DETECTION_RULES.md)
+[Game detection rules](docs/GAME_DETECTION_RULES.md) ·
+[Reference engine validation](docs/ENGINE_REFERENCE_TESTS.md)
 
 ## What this extension adds
 
@@ -112,6 +113,16 @@ Compared to the original DOS executables, the rewritten engines feature:
 - configurable screen size
 - game cheats: unlimited lifes and energy, no hit
 
+
+## Windows multigame reference build
+
+`Makefile.win` now accepts `MULTIGAME=1` to build Blues Brothers, Jukebox
+Adventure and Prehistorik 2 together in `build/windows-x64-multigame/blues.exe`.
+The default Windows build remains Blues-only in `build/windows-x64/`.
+Use `--datapath` to select the game data; the global Titus library is still
+planned. Fox and Prehistorik 1 currently have separate reference builds.
+See [TH-02 reference checks](docs/ENGINE_REFERENCE_TESTS.md) for builds,
+controls/audio results, source patches and known limitations.
 
 ## Running
 

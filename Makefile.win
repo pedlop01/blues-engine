@@ -1,7 +1,9 @@
 WIN_CC ?= x86_64-w64-mingw32-gcc
 WIN_LD ?= x86_64-w64-mingw32-ld
 WIN_OBJCOPY ?= x86_64-w64-mingw32-objcopy
-WIN_BUILD_DIR ?= build/windows-x64
+WIN_NM ?= x86_64-w64-mingw32-nm
+MULTIGAME ?= 0
+WIN_BUILD_DIR ?= $(if $(filter 1,$(MULTIGAME)),build/windows-x64-multigame,build/windows-x64)
 SDL2_ROOT ?=
 MODPLUG_ROOT ?=
 
@@ -15,11 +17,20 @@ endif
 endif
 
 BB_SRCS := bb/decode.c bb/game.c bb/level.c bb/objects.c bb/state.c bb/resource.c bb/screen.c bb/sound.c bb/staticres.c bb/tiles.c bb/unpack.c
+JA_SRCS := ja/game.c ja/level.c ja/resource.c ja/screen.c ja/sound.c ja/staticres.c ja/unpack.c
+P2_SRCS := p2/bosses.c p2/game.c p2/level.c p2/monsters.c p2/resource.c p2/screen.c p2/sound.c p2/staticres.c p2/unpack.c
 
 BB_OBJS := $(patsubst %.c,$(WIN_BUILD_DIR)/%.o,$(BB_SRCS))
+JA_OBJS := $(patsubst %.c,$(WIN_BUILD_DIR)/%.o,$(JA_SRCS))
+P2_OBJS := $(patsubst %.c,$(WIN_BUILD_DIR)/%.o,$(P2_SRCS))
 APP_OBJS := $(addprefix $(WIN_BUILD_DIR)/,main.o mixer.o dos_audio.o third_party/nuked-opl3/opl3.o sys_sdl2.o util.o)
 GAME_OBJS := $(WIN_BUILD_DIR)/game_bb.o
-WIN_CPPFLAGS := -I. -I$(SDL2_ROOT)/include/SDL2 -I$(MODPLUG_ROOT)/include -DBLUES_ONLY -DMODPLUG_STATIC
+WIN_CPPFLAGS := -I. -I$(SDL2_ROOT)/include/SDL2 -I$(MODPLUG_ROOT)/include -DMODPLUG_STATIC
+ifeq ($(MULTIGAME),1)
+GAME_OBJS += $(WIN_BUILD_DIR)/game_ja.o $(WIN_BUILD_DIR)/game_p2.o
+else
+WIN_CPPFLAGS += -DBLUES_ONLY
+endif
 WIN_CFLAGS := -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wpedantic -MMD -O2
 WIN_LDLIBS := -L$(SDL2_ROOT)/lib -L$(MODPLUG_ROOT)/lib -lmingw32 -lSDL2main -lSDL2 -lmodplug -Wl,-Bstatic -lstdc++ -Wl,-Bdynamic -static-libgcc -mwindows
 
@@ -34,11 +45,13 @@ $(WIN_BUILD_DIR)/main.o: main.c Makefile.win
 	mkdir -p $(@D)
 	$(WIN_CC) $(WIN_CPPFLAGS) $(WIN_CFLAGS) -Dmain=SDL_main -c -o $@ $<
 
-$(WIN_BUILD_DIR)/game_bb.o: WIN_CFLAGS += -fvisibility=hidden
 $(WIN_BUILD_DIR)/game_bb.o: $(BB_OBJS)
+$(WIN_BUILD_DIR)/game_ja.o: $(JA_OBJS)
+$(WIN_BUILD_DIR)/game_p2.o: $(P2_OBJS)
+$(GAME_OBJS): tools/namespace_coff_module.py
 	mkdir -p $(@D)
-	$(WIN_LD) -r -o $@ $^
-	$(WIN_OBJCOPY) --localize-hidden $@
+	$(WIN_LD) -r -o $@ $(filter %.o,$^)
+	python3 tools/namespace_coff_module.py $@ $(basename $(notdir $@)) --nm $(WIN_NM) --objcopy $(WIN_OBJCOPY)
 
 $(WIN_BUILD_DIR)/blues.exe: $(APP_OBJS) $(GAME_OBJS)
 	$(WIN_CC) -mwindows -o $@ $^ $(WIN_LDLIBS)
@@ -47,8 +60,23 @@ $(WIN_BUILD_DIR)/SDL2.dll: $(SDL2_ROOT)/bin/SDL2.dll
 	mkdir -p $(@D)
 	cp $< $@
 
-clean:
-	$(RM) $(APP_OBJS) $(APP_OBJS:.o=.d) $(BB_OBJS) $(BB_OBJS:.o=.d) $(GAME_OBJS)
-	$(RM) $(WIN_BUILD_DIR)/blues.exe $(WIN_BUILD_DIR)/SDL2.dll
+PROBE_COMMON := $(addprefix $(WIN_BUILD_DIR)/,mixer.o dos_audio.o third_party/nuked-opl3/opl3.o util.o)
+$(WIN_BUILD_DIR)/check_gameplay_bb.exe: tests/check_engine_gameplay.c $(GAME_OBJS) $(PROBE_COMMON)
+	$(WIN_CC) $(WIN_CPPFLAGS) $(WIN_CFLAGS) -DPROBE_BB -o $@ tests/check_engine_gameplay.c $(GAME_OBJS) $(PROBE_COMMON) $(filter-out -mwindows,$(WIN_LDLIBS))
 
--include $(APP_OBJS:.o=.d) $(BB_OBJS:.o=.d)
+$(WIN_BUILD_DIR)/check_gameplay_ja.exe: tests/check_engine_gameplay.c $(GAME_OBJS) $(PROBE_COMMON)
+	$(WIN_CC) $(filter-out -DBLUES_ONLY,$(WIN_CPPFLAGS)) $(WIN_CFLAGS) -DPROBE_JA -DPROBE_BUNDLED -o $@ tests/check_engine_gameplay.c $(GAME_OBJS) $(PROBE_COMMON) $(filter-out -mwindows,$(WIN_LDLIBS))
+
+$(WIN_BUILD_DIR)/check_gameplay_p2.exe: tests/check_engine_gameplay.c $(GAME_OBJS) $(PROBE_COMMON)
+	$(WIN_CC) $(filter-out -DBLUES_ONLY,$(WIN_CPPFLAGS)) $(WIN_CFLAGS) -DPROBE_BUNDLED -o $@ tests/check_engine_gameplay.c $(GAME_OBJS) $(PROBE_COMMON) $(filter-out -mwindows,$(WIN_LDLIBS))
+
+$(WIN_BUILD_DIR)/check_engine_startup.exe: tests/check_engine_startup.c $(GAME_OBJS) $(PROBE_COMMON)
+	$(WIN_CC) $(WIN_CPPFLAGS) $(WIN_CFLAGS) -o $@ tests/check_engine_startup.c $(GAME_OBJS) $(PROBE_COMMON) $(filter-out -mwindows,$(WIN_LDLIBS))
+
+clean:
+	$(RM) $(APP_OBJS) $(APP_OBJS:.o=.d) $(BB_OBJS) $(BB_OBJS:.o=.d) $(JA_OBJS) $(JA_OBJS:.o=.d) $(P2_OBJS) $(P2_OBJS:.o=.d) $(GAME_OBJS) $(GAME_OBJS:%=%.locals)
+	$(RM) $(WIN_BUILD_DIR)/blues.exe $(WIN_BUILD_DIR)/SDL2.dll
+	$(RM) $(WIN_BUILD_DIR)/check_gameplay_*.exe $(WIN_BUILD_DIR)/check_engine_startup.exe
+
+-include $(APP_OBJS:.o=.d) $(BB_OBJS:.o=.d) $(JA_OBJS:.o=.d) $(P2_OBJS:.o=.d)
+-include $(WIN_BUILD_DIR)/check_gameplay_bb.d $(WIN_BUILD_DIR)/check_gameplay_ja.d $(WIN_BUILD_DIR)/check_gameplay_p2.d $(WIN_BUILD_DIR)/check_engine_startup.d

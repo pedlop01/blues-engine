@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Changes to the external reference engine; see docs/ENGINE_REFERENCE_TESTS.md.
+diff --git a/src/presentation/audio/dynlib.hpp b/src/presentation/audio/dynlib.hpp
+index ec3fabf..18e8a00 100644
+--- a/src/presentation/audio/dynlib.hpp
++++ b/src/presentation/audio/dynlib.hpp
+@@ -2,14 +2,14 @@
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ // Minimal cross-platform dynamic-library loader for the OPTIONAL runtime
+ // audio backends (libmt32emu, libfluidsynth) — loaded by name if the user
+-// has them, absent otherwise.  POSIX and MinGW (with dlfcn-win32) use
+-// <dlfcn.h>; MSVC has no dlopen, so it uses the Win32 loader directly.
++// has them, absent otherwise. POSIX uses <dlfcn.h>; all Windows builds
++// use the Win32 loader directly, without an extra dlfcn-win32 dependency.
+ // The two spellings behave identically for our use: open-by-name, resolve
+ // a symbol, close.
+ 
+ #pragma once
+ 
+-#if defined(_MSC_VER)
++#if defined(_WIN32)
+ 
+ #ifndef WIN32_LEAN_AND_MEAN
+ #define WIN32_LEAN_AND_MEAN
+@@ -32,7 +32,7 @@ inline void dyn_close(void* handle) {
+ }
+ }  // namespace olduvai::presentation
+ 
+-#else  // POSIX + MinGW (dlfcn-win32)
++#else  // POSIX
+ 
+ #include <dlfcn.h>
+ 

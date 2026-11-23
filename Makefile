@@ -45,6 +45,15 @@ blues: $(APP_OBJS) $(GAME_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(SDL_LIBS) $(MODPLUG_LIBS)
 
 VIEW_TEST_OBJS := $(filter-out bb/level.o,$(BB_SRCS:.c=.o)) mixer.o dos_audio.o third_party/nuked-opl3/opl3.o util.o
+PROBE_COMMON := mixer.o dos_audio.o third_party/nuked-opl3/opl3.o util.o
+build/tests/check_gameplay_ja: tests/check_engine_gameplay.c $(filter-out ja/game.o,$(JA_SRCS:.c=.o)) $(PROBE_COMMON)
+	mkdir -p $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -DPROBE_JA $(LDFLAGS) -o $@ tests/check_engine_gameplay.c $(filter-out ja/game.o,$(JA_SRCS:.c=.o)) $(PROBE_COMMON) $(SDL_LIBS) $(MODPLUG_LIBS)
+
+build/tests/check_gameplay_p2: tests/check_engine_gameplay.c $(filter-out p2/game.o,$(P2_SRCS:.c=.o)) $(PROBE_COMMON)
+	mkdir -p $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_engine_gameplay.c $(filter-out p2/game.o,$(P2_SRCS:.c=.o)) $(PROBE_COMMON) $(SDL_LIBS) $(MODPLUG_LIBS)
+
 build/tests/check_engine_startup: tests/check_engine_startup.c main.c sys_sdl2.c $(GAME_OBJS) mixer.o dos_audio.o third_party/nuked-opl3/opl3.o util.o
 	mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_engine_startup.c $(GAME_OBJS) mixer.o dos_audio.o third_party/nuked-opl3/opl3.o util.o $(SDL_LIBS) $(MODPLUG_LIBS)
@@ -75,6 +84,7 @@ build/tests/check_mixer_volumes: tests/check_mixer_volumes.c mixer.c audio_gain.
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_mixer_volumes.c util.o $(MODPLUG_LIBS)
 
 clean:
+	$(RM) build/tests/check_gameplay_ja build/tests/check_gameplay_p2 build/tests/check_gameplay_ja.d build/tests/check_gameplay_p2.d
 	$(RM) build/tests/check_engine_startup build/tests/check_engine_startup.d
 	$(RM) build/tests/check_intermission build/tests/check_intermission.d
 	$(RM) $(OBJS) $(DEPS) $(APP_OBJS) $(APP_OBJS:.o=.d) $(GAME_OBJS) blues
@@ -90,6 +100,8 @@ clean:
 -include build/tests/check_pause_menu.d
 
 -include build/tests/check_engine_startup.d
+
+-include build/tests/check_gameplay_ja.d build/tests/check_gameplay_p2.d
 
 -include build/tests/check_mixer_volumes.d
 

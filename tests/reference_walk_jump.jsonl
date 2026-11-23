@@ -1,0 +1,10 @@
+{"time_ms":550,"key":"right","action":"press"}
+{"time_ms":2200,"key":"right","action":"release"}
+{"time_ms":2200,"key":"left","action":"press"}
+{"time_ms":3300,"key":"left","action":"release"}
+{"time_ms":3300,"key":"up","action":"press"}
+{"time_ms":4400,"key":"up","action":"release"}
+{"time_ms":4400,"key":"attack","action":"press"}
+{"time_ms":5500,"key":"attack","action":"release"}
+{"time_ms":5500,"key":"right","action":"press"}
+{"time_ms":6600,"key":"right","action":"release"}

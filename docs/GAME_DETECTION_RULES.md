@@ -34,7 +34,7 @@ integridad**: verificar también firmas conocidas y recursos del modo solicitado
 | `blues` / Amiga | `mag.tbl`, `sprite`, `objet`; comprobar firmas, no solo `MAGASIN.BIN`, compartido con DOS | Usar conjuntos `_levels_amiga` de `bb/level.c`: BLK, TBL, BIN, máscaras y enemigos. Conservar la dependencia DOS para Concierto cuando se use el fallback actual. `sound`, módulos e instrumentos determinan capacidades de audio por separado. |
 | `jukebox` / DOS | `JARDIN.EAT` (24876 bytes y SHA-256 conocido), `FONT256.EAT`, `SPRITES.EAT` | Comunes: BOARD, MOTIF, SAMPLES; pantallas TITUS, TINY, SELECT, FOND, PASSWORD, MENU, WIN, END; fondos BACK0–3, mapas JARDIN/PRISON/ENTREPOT/EGOUT y DIF01–04, todos EAT. Música: ALMOST/EVERY/BARTENDE/PETERGUN/SHOOT.MOD. Ejecutable DOS innecesario para este motor. |
 | `prehistorik2` / DOS | `MOTIF.SQZ` (9396 bytes y SHA-256 conocido), `MAP.SQZ`, `SPRITES.SQZ` | Comunes MAP/MOTIF/ALLFONTS/SPRITES/FRONT/UNION/KEYB y SAMPLE en edición completa; pantallas y BACK0–5/LEVEL1–9/LEVELA–G según `p2/game.c` y `p2/level.c`. `JOYSTICK.SQZ` activa la rama demo: no confundirla con la edición completa verificada. |
-| `fox` / DOS | `SPREXP.SQZ`, `LEVEL0.SQZ` con firmas inventariadas; `FOX.COM` como referencia de variante | OpenTitus usa los 15 niveles declarados por `bin/titus.conf`, FONTS, TITUS, TITRE, MENU y LEVELA.SQZ. `FOX.COM` no es requisito de su cargador gráfico. El audio necesita adaptación: espera `music.bin`, ausente de nuestra carpeta; el COM disponible declara un empaquetador propio de Eric Zmiro. No prometer extracción por el offset de un FOX.EXE distinto. |
+| `fox` / DOS | `SPREXP.SQZ`, `LEVEL0.SQZ` con firmas inventariadas; `FOX.COM` como referencia de variante | OpenTitus usa los 15 niveles declarados por `bin/titus.conf`, FONTS, TITUS, TITRE, MENU y LEVELA.SQZ. `FOX.COM` no es requisito de su cargador gráfico. El audio espera `music.bin`, ausente de los originales como archivo separado. TH-02 verifica cómo extraerlo del COM propio de Eric Zmiro, con firmas de MZ/audio: véase ENGINE_REFERENCE_TESTS.md. |
 | `prehistorik` / DOS, DIET | `PRE1.EXE` y los cuatro `FILESA/B.CUR/VGA`, **todos con las firmas verificadas** | Preparación descrita debajo. El mismo conjunto existe dentro de `prehistorik2-dos`; identificarlo independientemente. |
 | `prehistorik` / Amiga | `main`, `H1.MAT`, `TITRE1.PC1` con firmas inventariadas; familia L1–7SPR.MAT/LEVEL*.DUR | Identificado como **Prehistorik 1**, aunque la carpeta se llame `prehistorik2-amiga`. Sus 71 archivos coinciden con `Prehistorik.adf`. Motor Amiga pendiente; no registrarlo como Prehistorik 2. |
 | `fox` / Amiga | `main`, `LEVEL01.TBL`, familia BRIK*.BIN/POIL*.BIN | Los 89 archivos coinciden con `fox.adf`. Identidad del conjunto fijada por firmas; no se atribuye un número de revisión comercial que no se ha comprobado. Motor Amiga pendiente. |
@@ -65,9 +65,9 @@ El MZ descomprimido usa cabecera de 8192 bytes y layout canónico (`ds_delta=0`)
 Su FNV-1a64 es `3820d2a9e2b4e4f6`, **distinto** de las dos identidades incluidas
 en `kKnownBuilds` de Olduvai. Por ello, el adaptador reconocerá nuestra firma
 explícitamente; no generalizará el fallback del motor a cualquier EXE desconocido.
-Los siete niveles cargaron 30 fotogramas y produjeron capturas. Falta validar
-recorridos, física y audio en TH-02: esto demuestra una vía de adaptación, no
-equivalencia completa con otro ejecutable.
+Los siete niveles cargaron 30 fotogramas y produjeron capturas. TH-02 añade una ruta corta y audio Linux/Windows; quedan recorridos completos
+y fidelidad de campaña para TH-12. Esto no demuestra equivalencia completa con
+otro ejecutable.
 
 ## Carpetas mixtas, imágenes y duplicados
 
@@ -93,7 +93,7 @@ equivalencia completa con otro ejecutable.
 | Familia | Base fijada para la siguiente etapa | Decisión |
 |---|---|---|
 | Blues, Jukebox y Prehistorik 2 | Nuestra extensión de cyxx/blues | Conservar módulos y mejoras de Blues; ampliar el build Windows después de la validación. |
-| Fox DOS | OpenTitus `6540e8f2867f99aff54ad1a710ae6379ecb9c590` | Base de TH-08, proceso separado; corregir portabilidad y compilar OPL desde fuentes. Audio y partida pendientes de TH-02. |
+| Fox DOS | OpenTitus `6540e8f2867f99aff54ad1a710ae6379ecb9c590` | Base de TH-08, proceso separado; corregir portabilidad y compilar OPL desde fuentes. Ruta corta con audio probada en TH-02; integración pendiente. |
 | Prehistorik 1 DOS | Olduvai `a69e9204fc311c8810d696a6b799000d1bcd1642` | Base de TH-09, proceso separado y preparación DIET conocida. |
 | Fox/Prehistorik Amiga | Ninguna base ejecutable validada | Datos identificados, investigación TH-13 antes de habilitar estas ediciones. |
 

@@ -1,0 +1,77 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Changes to the external reference engine; see docs/ENGINE_REFERENCE_TESTS.md.
+diff --git a/include/definitions.h b/include/definitions.h
+index f459b98..e409785 100644
+--- a/include/definitions.h
++++ b/include/definitions.h
+@@ -29,14 +29,15 @@
+ #ifndef DEFINITIONS_H
+ #define DEFINITIONS_H
+ 
++#include <stdint.h>
+ #include <unistd.h> //bool
+ 
+ typedef unsigned char uint8;
+ typedef unsigned short int uint16;
+-typedef unsigned long int uint32;
++typedef uint32_t uint32;
+ typedef signed char int8;
+ typedef signed short int int16;
+-typedef signed long int int32;
++typedef int32_t int32;
+ 
+ typedef enum _bool bool;
+ 
+diff --git a/opentitus.c b/opentitus.c
+index 9ed5d0d..52862cd 100644
+--- a/opentitus.c
++++ b/opentitus.c
+@@ -194,7 +194,9 @@ int init() {
+ #endif
+ */
+ 
++#ifdef AUDIO_ENABLED
+ 	initaudio();
++#endif
+ 
+     initoriginal();
+ 
+diff --git a/src/audio.c b/src/audio.c
+index 275426b..c355d5d 100644
+--- a/src/audio.c
++++ b/src/audio.c
+@@ -416,10 +416,10 @@ int SELECT_MUSIC(int song_number)
+ 
+     tmp2 = ((unsigned int)raw_data[j] & 0xFF) + (((unsigned int)raw_data[j + 1] << 8) & 0xFF00);
+ 
+-    for (i = 0; i < ADLIB_INSTRUMENT_COUNT + 1; i++)
++    for (i = 0; i < ADLIB_INSTRUMENT_COUNT; i++)
+         aad->instrument_data[i].vox = 0xFF; //Init; instrument not in use
+ 
+-    for (i = 0; (i < ADLIB_INSTRUMENT_COUNT + 1) && ((j + 2) < aad->data_size); i++) {
++    for (i = 0; (i < ADLIB_INSTRUMENT_COUNT) && ((j + 3) < aad->data_size); i++) {
+         tmp1 = tmp2;
+         tmp2 = ((unsigned int)raw_data[j + 2] & 0xFF) + (((unsigned int)raw_data[j + 3] << 8) & 0xFF00);
+         j += 2;
+diff --git a/src/original.c b/src/original.c
+index 33835d2..6d85274 100644
+--- a/src/original.c
++++ b/src/original.c
+@@ -330,7 +330,7 @@ int initoriginal() {
+         NMI_POWER[i] = tmp_nmi_power[i];
+     }
+ 
+-    for (i = 0; i < NMI_ANIM_TABLE_COUNT; i++) {
++    for (i = 0; i < sizeof(tmpanimnmi) / 2; i++) {
+         anim_enemy[i] = (int16)(((uint16)(tmpanimnmi[i * 2 + 1]) << 8) + (uint16)(tmpanimnmi[i * 2]));
+     }
+ 
+@@ -404,7 +404,7 @@ int initoriginal() {
+             spriterefwidth[i] = tmpspriteref_moktar[i * 2];
+             spriterefheight[i] = tmpspriteref_moktar[(i * 2) + 1];
+         }
+-        for (i = 0; i < ANIM_PLAYER_MAX; i++) {
++        for (i = 0; i < sizeof(anim_player_moktar) / sizeof(anim_player_moktar[0]); i++) {
+             anim_player[1][i] = anim_player_moktar[i];
+         }
+     }

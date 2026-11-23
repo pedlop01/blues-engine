@@ -1,0 +1,216 @@
+{
+  "date": "2026-11-23",
+  "scope": "Short automated reference routes; not completed campaigns or human listening",
+  "platforms": {
+    "linux": "AArch64, SDL2 2.30.0",
+    "windows": "x64 binaries run on Windows ARM64 using x64 compatibility; SDL2 2.30.11"
+  },
+  "drivers": {
+    "video": "dummy",
+    "audio": "dummy"
+  },
+  "games": {
+    "ja": {
+      "linux": {
+        "ticks": 140,
+        "right": 114,
+        "left": 80,
+        "jump": 68,
+        "attack_effects": 1,
+        "samples": 229376,
+        "nonzero": 209898,
+        "peak": 28496,
+        "clipped": 0,
+        "quit": 1
+      },
+      "windows": {
+        "ticks": 140,
+        "right": 114,
+        "left": 80,
+        "jump": 68,
+        "attack_effects": 1,
+        "samples": 245760,
+        "nonzero": 224538,
+        "peak": 29657,
+        "clipped": 0,
+        "quit": 1
+      }
+    },
+    "p2": {
+      "linux": {
+        "ticks": 140,
+        "right": 135,
+        "left": 70,
+        "jump": 60,
+        "attack_effects": 3,
+        "samples": 204800,
+        "nonzero": 178381,
+        "peak": 32768,
+        "clipped": 317,
+        "quit": 1
+      },
+      "windows": {
+        "ticks": 140,
+        "right": 135,
+        "left": 70,
+        "jump": 60,
+        "attack_effects": 3,
+        "samples": 217088,
+        "nonzero": 183089,
+        "peak": 32768,
+        "clipped": 530,
+        "quit": 1
+      }
+    },
+    "fox": {
+      "linux": {
+        "ticks": 140,
+        "right": 110,
+        "left": 64,
+        "jump": 50,
+        "samples": 360448,
+        "nonzero": 344050,
+        "peak": 27438,
+        "clipped": 0,
+        "result": -1
+      },
+      "windows": {
+        "ticks": 140,
+        "right": 110,
+        "left": 64,
+        "jump": 50,
+        "samples": 352256,
+        "nonzero": 335858,
+        "peak": 27438,
+        "clipped": 0,
+        "result": -1
+      }
+    },
+    "prehistorik": {
+      "trace": {
+        "frames": 140,
+        "right": 148,
+        "left": 102,
+        "jump": 31,
+        "attack": 1,
+        "canonical_trace_sha256": "41de9e51963a5fb7498ec19d585d43224f7d13672c4e25440d2a2def4dcea046",
+        "identical_platforms": true
+      },
+      "level_loads": [
+        {
+          "level": 1,
+          "frames_requested": 30,
+          "capture": true
+        },
+        {
+          "level": 2,
+          "frames_requested": 30,
+          "capture": true
+        },
+        {
+          "level": 3,
+          "frames_requested": 30,
+          "capture": true
+        },
+        {
+          "level": 4,
+          "frames_requested": 30,
+          "capture": true
+        },
+        {
+          "level": 5,
+          "frames_requested": 30,
+          "capture": true
+        },
+        {
+          "level": 6,
+          "frames_requested": 30,
+          "capture": true
+        },
+        {
+          "level": 7,
+          "frames_requested": 30,
+          "capture": true
+        }
+      ],
+      "effects": [
+        {
+          "id": "SFX_GENERIC",
+          "pcm_sha256": "73171f59ed4ea3ac250dfde9fd99dfd60036550d25c9809c1c015d2a2f677d19",
+          "sample_rate": 44100,
+          "channels": 2,
+          "frames": 101430,
+          "identical_platforms": true
+        },
+        {
+          "id": "SFX_HIT",
+          "pcm_sha256": "225167791a979cacbdc837b3d91fab56c9166a15616a8f27c98e61db4f7426b1",
+          "sample_rate": 44100,
+          "channels": 2,
+          "frames": 52920,
+          "identical_platforms": true
+        },
+        {
+          "id": "SFX_JUMP_APEX",
+          "pcm_sha256": "ae00f8f70a9388f219df19929b8dcea98b5888e0ab771ee8be348cba4cf274d3",
+          "sample_rate": 44100,
+          "channels": 2,
+          "frames": 119070,
+          "identical_platforms": true
+        }
+      ],
+      "mixer_capture": {
+        "linux": {
+          "rate": 44100,
+          "channels": 2,
+          "samples": 888832,
+          "nonzero": 655121,
+          "peak": 25147,
+          "clipped": 0
+        },
+        "windows": {
+          "rate": 44100,
+          "channels": 2,
+          "samples": 802816,
+          "nonzero": 507717,
+          "peak": 25147,
+          "clipped": 0
+        }
+      }
+    }
+  },
+  "fox_audio_preparation": {
+    "source_sha256": "a47ab6e4f8016db90e727df2eef5450edf1e16ecb6c90f5cb31ad214fef65f7b",
+    "decoded_image_sha256": "f398540b9bd65ef64fcd7898285cafb30f95e456d8b3d7a5123d2337c0c0df41",
+    "audio_sha256": "386dbe1cad7a67e20ec3edb98bdb116c035e68cc762cd85762d2bedbb1215986",
+    "audio_bytes": 18749,
+    "originals_unchanged": true
+  },
+  "checks": {
+    "startup_linux": "Blues DOS/Amiga, Jukebox uppercase/lowercase, Prehistorik 2",
+    "startup_windows": "Blues DOS/Amiga, Jukebox, Prehistorik 2",
+    "address_sanitizer": [
+      "Jukebox short route",
+      "Prehistorik 2 short route",
+      "Fox short route"
+    ],
+    "leak_detection": false,
+    "blues_windows_bundled_route": {
+      "steps": 140,
+      "right_tiles": 10,
+      "left_tiles": 6,
+      "jump_tiles": 3,
+      "pcm_nonzero": 228575,
+      "peak": 16889,
+      "clipped": 0,
+      "clean_quit": true
+    }
+  },
+  "known_limits": [
+    "P2 mixed PCM saturation recorded; review in TH-07",
+    "No human listening or physical controller/fullscreen/latency validation",
+    "Fox object pickup/throw not demonstrated by the route",
+    "No complete-level or campaign traversal",
+    "External engines are reference binaries, not launcher adapters"
+  ]
+}

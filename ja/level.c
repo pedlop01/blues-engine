@@ -2785,14 +2785,11 @@ static void load_level_data(uint16_t level) {
 	}
 	const uint8_t *src = tiles_lut;
 	int total_count = src[0]; // total_count
-	while (1) {
+	/* Check the record count before reading: there is no trailing record. */
+	while (total_count-- > 0) {
 		const uint8_t start = src[1];
 		const uint8_t count = src[2];
 		src += 3;
-		--total_count;
-		if (total_count < 0) {
-			break;
-		}
 		uint8_t bh = 0;
 		do {
 			uint8_t ch = 0;
