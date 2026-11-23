@@ -76,6 +76,15 @@ recorded in [the audit](docs/ENGINE_AUDIT.md) and
 [identification rules](docs/GAME_DETECTION_RULES.md). Builds and reference
 validation are described in [TH-02](docs/ENGINE_REFERENCE_TESTS.md).
 
+## Catalog core dependency
+
+[nlohmann/json 3.11.3](https://github.com/nlohmann/json/tree/v3.11.3), by Niels
+Lohmann and contributors, is bundled for the C++17 catalog core under the
+[MIT license](third_party/nlohmann-json/LICENSE.MIT). Its pinned header and
+provenance are under `third_party/nlohmann-json`. The core adds no SDL or
+original game resources; SHA-256 and catalog/detection code are part of this
+extension. The inherited game implementation remains credited above.
+
 ## License information
 
 The inherited upstream snapshot does not include a top-level license file.

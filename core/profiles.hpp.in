@@ -1,0 +1,2 @@
+#pragma once
+inline constexpr const char* embedded_profiles = R"TITUS_PROFILES(@TITUS_PROFILES@)TITUS_PROFILES";

@@ -7,7 +7,7 @@ contributors.** The original engine and reverse-engineering work are theirs;
 this repository preserves the upstream history and adds a new set of features
 focused on the first **Blues Brothers** game.
 
-**Titus Engine expansion has started with an inventory and engine audit.** The
+**Titus Engine now has a persistent C++17 catalog and game detection CLI.** The
 current Windows executable still runs Blues Brothers; the global library and new
 engine adapters are tracked in the expansion plan. Blues playtesting continues
 in parallel, and final Windows packaging follows the validated expansion. The
@@ -23,7 +23,14 @@ this transition.
 [Engine audit and startup checks](docs/ENGINE_AUDIT.md) ·
 [Game detection rules](docs/GAME_DETECTION_RULES.md) ·
 [Reference engine validation](docs/ENGINE_REFERENCE_TESTS.md) ·
-[Architecture and v1 contracts](docs/TITUS_ARCHITECTURE.md)
+[Architecture and v1 contracts](docs/TITUS_ARCHITECTURE.md) ·
+[Catalog core: build, commands and tests](docs/CATALOG_CORE.md)
+
+The independent `titus-catalog` tool recognizes the eight audited DOS/Amiga
+resource sets, links known ADF sources and manages installation references without
+changing game files. It does not launch engines yet. Build and test it with
+`make check-catalog`; [TH-04 documentation](docs/CATALOG_CORE.md) covers optional
+read-only checks against user-supplied games and the Windows build.
 
 ## What this extension adds
 

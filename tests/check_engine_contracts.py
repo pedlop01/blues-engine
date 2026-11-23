@@ -88,6 +88,18 @@ class ContractTests(unittest.TestCase):
         validate(mixed)
         self.assertNotEqual(first["id"], second["id"])
 
+    def test_unsupported_amiga_can_report_data_damage_without_becoming_playable(self):
+        catalog = deepcopy(self.catalog)
+        installation = catalog["installations"][1]
+        installation.update(game_id="fox", engine_id=None)
+        for status in ("missing_engine", "incomplete", "unverified"):
+            installation["status"] = status
+            validate(catalog)
+        for status in ("recognized", "needs_preparation"):
+            installation["status"] = status
+            with self.assertRaises(ValueError):
+                validate(catalog)
+
     def test_linux_unicode_locations(self):
         request, catalog = deepcopy(self.request), deepcopy(self.catalog)
         request["platform"] = "linux"

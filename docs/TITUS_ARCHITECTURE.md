@@ -16,7 +16,7 @@ no instalaciones registradas o ejecutables ya disponibles.
 | Primera integración | Lanzador y motores en procesos separados; una sesión de juego activa por instancia. |
 | Frontend/core | C++17; core sin SDL, frontend SDL2. SDL_ttf 2.x para texto de biblioteca se incorporará en TH-05, sin modificar HUD/fuentes de los juegos. |
 | Motores | Conservar C en Blues/Jukebox/P2 y OpenTitus, C++17 en Olduvai; puente C/C++ pequeño por runtime. No convertir física o recursos al core común. |
-| JSON | UTF-8, esquema v1. Parser objetivo: nlohmann/json 3.11.3, a incorporar con su licencia en TH-04. Validación estricta de tipos, duplicados, límites y referencias. |
+| JSON | UTF-8, esquema v1. Parser: nlohmann/json 3.11.3, incorporado con su licencia en TH-04. Validación estricta de tipos, duplicados, límites y referencias. |
 | IPC | Request JSON, eventos/comandos JSONL en directorio privado de sesión, resultado JSON atómico. stdout/stderr son logs, nunca el protocolo. |
 | Progreso | Perfil estable por jugador/juego/grupo de compatibilidad, independiente de la ruta de instalación y de la edición de presentación cuando el motor lo permita. |
 | Originales | Solo lectura. Preparación nativa y recursos privados para cada runtime; nunca arrancar EXE/COM del juego como programa del sistema. |
@@ -81,8 +81,8 @@ tools/, tests/            # utilidades y comprobaciones de desarrollo
 ```
 
 Estos directorios de implementación se crearán cuando empiece su tarea, no como
-stubs que aparenten funcionalidad. En TH-04 se añadirá CMake para `titus_core` y
-sus pruebas; TH-05 añadirá `titus-engine`. Se conservan Makefile/Makefile.win para
+stubs que aparenten funcionalidad. TH-04 incorpora CMake para `titus_core`,
+`titus-catalog` y sus pruebas; TH-05 añadirá `titus-engine`. Se conservan Makefile/Makefile.win para
 el ejecutable clásico y las regresiones. Los motores externos tendrán builds
 separados y reproducibles; el build común no descargará juegos o componentes al
 iniciar una partida.
@@ -131,8 +131,8 @@ El fingerprint de una instalación será SHA-256 de un manifiesto canónico de
 recursos requeridos: nombre relativo ASCII normalizado/minúsculas, tamaño y
 SHA-256 de contenido, ordenados por nombre y serializados en UTF-8 con separadores
 JSON canónicos. Sin rutas absolutas, fechas, `:Zone.Identifier` o archivos de
-documentación. TH-04 fijará los manifiestos completos por perfil a partir del
-inventario; un marcador aislado no valida toda la instalación.
+documentación. TH-04 fija los manifiestos completos por perfil en `core/data_profiles.json`
+a partir del inventario; un marcador aislado no valida toda la instalación.
 
 Serialización exacta v1: objeto con `version=1`, `game_id`, `edition_id`,
 `variant_id` y `files`. Cada entrada de files contiene solo `name`, `size` y
@@ -439,3 +439,12 @@ carpetas mixtas, reubicación, capacidades, storage separado de originales,
 confirmación cancelada, exit 0 con carga fallida, crash, secuencias/sesiones
 cruzadas y ocho slots/formato legado. No arrancan motores ni prueban todavía la
 persistencia, migración, proceso o UI reales que se implementarán después.
+
+## Implementación del catálogo (TH-04)
+
+El core y la CLI `titus-catalog` ya implementan detección y catálogo v1; véase
+[CATALOG_CORE.md](CATALOG_CORE.md) para API, compilación, comandos y pruebas.
+`incomplete`/`unverified` también pueden describir daños de ediciones Amiga sin
+motor, manteniendo `engine_id=null`; `missing_engine` corresponde a sus conjuntos
+completos. Ninguno de esos estados habilita un motor DOS para datos Amiga.
+El frontend y los adaptadores siguen las tareas TH-05–09.

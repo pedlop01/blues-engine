@@ -114,3 +114,12 @@ TH-03 debe conservar esta separación y resolver la estrategia de licencia del
 código heredado antes de combinar motores; la tarea 18 revisará fuentes, avisos y
 componentes realmente incluidos al preparar la distribución. La falta de licencia
 general en el snapshot de cyxx/blues sigue registrada, sin asignarle otra.
+
+## Implementación TH-04
+
+Las reglas se implementan en el core C++17 y `titus-catalog`, con los manifiestos
+completos de referencia en `core/data_profiles.json`. [CATALOG_CORE.md](CATALOG_CORE.md)
+detalla estados, límites, reconocimiento de ADF por hash y pruebas Linux/Windows.
+El ADF de Blues también se ha contrastado en solo lectura: sus 58 archivos
+coinciden con `blues-amiga`, sin diferencias ni ausencias. No se incorpora un
+extractor ADF al producto en esta tarea.

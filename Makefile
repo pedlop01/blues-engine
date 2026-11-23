@@ -17,11 +17,18 @@ DEPS := $(SRCS:.c=.d)
 APP_OBJS := main.o mixer.o dos_audio.o third_party/nuked-opl3/opl3.o sys_sdl2.o util.o
 GAME_OBJS := game_bb.o game_ja.o game_p2.o
 
-.PHONY: all clean check-contracts
+.PHONY: all clean check-contracts check-catalog
 
 CPPFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wpedantic -MMD $(SDL_CFLAGS) -I. -g
 
 all: blues
+
+# Independent C++17 core; no SDL or original game files required.
+check-catalog:
+	cmake -S . -B build/core -DCMAKE_BUILD_TYPE=Debug
+	cmake --build build/core --parallel 2
+	ctest --test-dir build/core --output-on-failure
+	python3 tests/check_catalog_cli.py --binary build/core/titus-catalog
 
 check-contracts:
 	python3 tests/check_engine_contracts.py

@@ -78,7 +78,8 @@ def validate(document):
             supported = installation["edition_id"] == "dos" or game == "blues"
             require(engine == (GAME_ENGINES[game] if supported else None), "Wrong engine for game/edition")
             if engine is None:
-                require(installation["status"] == "missing_engine", "Unsupported edition must say missing_engine")
+                require(installation["status"] in {"missing_engine", "incomplete", "unverified"},
+                        "Unsupported edition cannot be playable")
             locations = [(item["kind"], item["location"]["platform"], path_of(item["location"]))
                          for item in installation["locations"]]
             require(len(locations) == len(set(locations)), "Duplicate location")
