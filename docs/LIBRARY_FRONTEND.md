@@ -19,10 +19,10 @@ SDL2/C++17 de la biblioteca; utiliza el catálogo y los detectores de TH-04.
   o un mando SDL GameController, incluido conectar/desconectar durante el uso.
 - Texto Unicode con DejaVu Sans, independiente de las fuentes/HUD de los juegos.
 
-**Jugar permanece deshabilitado y muestra el motivo.** Esta entrega no incorpora
-adaptadores ni arranca procesos de juego. TH-06 conecta Blues con la biblioteca;
-TH-07–09 incorporan los demás juegos. Reconocer un conjunto no equivale a tener
-su motor integrado. Las fuentes ADF se registran sin extraerse ni arrancarse.
+**Jugar está disponible para Blues Brothers DOS y Amiga** desde TH-06, con
+importación inicial reversible y retorno a biblioteca; ver [runtime Blues](BLUES_RUNTIME.md).
+TH-07–09 incorporarán los demás motores, que mantienen Jugar deshabilitado con
+su motivo. Las fuentes ADF se registran sin extraerse ni arrancarse.
 
 ## Abrir y añadir los juegos
 
@@ -32,7 +32,7 @@ El ejecutable preparado en esta máquina es:
 build/launcher-windows/titus-engine.exe
 ```
 
-Mantener junto a él `SDL2.dll`, `SDL2_ttf.dll` y `assets/fonts/`. La aplicación
+Mantener junto a él `SDL2.dll`, `SDL2_ttf.dll`, `assets/fonts/` y `engines/`. La aplicación
 Windows abre una ventana gráfica sin consola auxiliar. Linux usa
 `build/launcher/titus-engine` con sus bibliotecas SDL instaladas.
 
@@ -112,14 +112,14 @@ Restaurar copia pide confirmación y conserva el documento dañado.
 
 La disponibilidad de la ruta se consulta al mostrar la ficha; **Verificar**
 comprueba el conjunto de recursos. Un estado previamente reconocido no reemplaza
-la inspección que requerirán los futuros adaptadores antes de arrancar un juego.
+la comprobación por hashes que hace el adaptador Blues antes de arrancar.
 
 ## Compilar
 
 El core y sus pruebas siguen sin necesitar SDL. La GUI se habilita explícitamente:
 
 ```sh
-# Desarrollo Linux: SDL2 >= 2.30 y SDL2_ttf 2.x, incluidos sus headers.
+# Desarrollo Linux: SDL2 >= 2.30, SDL2_ttf 2.x y libmodplug, con headers.
 cmake -S . -B build/launcher -DTITUS_BUILD_LAUNCHER=ON -DCMAKE_BUILD_TYPE=Debug
 cmake --build build/launcher --parallel 2
 ```
@@ -133,12 +133,14 @@ Windows x64 desde WSL, con SDK MinGW de SDL2 2.30.11 y SDL_ttf 2.22.0:
 
 ```sh
 cmake -S . -B build/launcher-windows -DCMAKE_SYSTEM_NAME=Windows \
+  -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc-posix \
   -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++-posix \
   -DCMAKE_BUILD_TYPE=Release -DTITUS_BUILD_LAUNCHER=ON \
   -DSDL2_DIR=/ruta/SDL2/x86_64-w64-mingw32/lib/cmake/SDL2 \
   -DTITUS_TTF_INCLUDE=/ruta/SDL2_ttf/x86_64-w64-mingw32/include/SDL2 \
   -DTITUS_TTF_LIBRARY=/ruta/SDL2_ttf/x86_64-w64-mingw32/lib/libSDL2_ttf.dll.a \
-  -DTITUS_TTF_DLL=/ruta/SDL2_ttf/x86_64-w64-mingw32/bin/SDL2_ttf.dll
+  -DTITUS_TTF_DLL=/ruta/SDL2_ttf/x86_64-w64-mingw32/bin/SDL2_ttf.dll \
+  -DTITUS_MODPLUG_ROOT=/ruta/modplug-install
 cmake --build build/launcher-windows --parallel 2
 ```
 

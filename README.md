@@ -29,15 +29,17 @@ this transition.
 
 The independent `titus-catalog` tool recognizes the eight audited DOS/Amiga
 resource sets, links known ADF sources and manages installation references without
-changing game files. It does not launch engines yet. Build and test it with
+changing game files. It manages the catalog; the graphical frontend launches games. Build and test it with
 `make check-catalog`; [TH-04 documentation](docs/CATALOG_CORE.md) covers optional
 read-only checks against user-supplied games and the Windows build.
 
 The new `titus-engine` frontend lists installed games and DOS/Amiga releases,
 remembers per-game selections and provides a folder/ADF browser, verification
 and installation management. Keyboard, mouse, controller and fullscreen are
-supported. **Launching games from this library starts with TH-06.** Build it with
-`-DTITUS_BUILD_LAUNCHER=ON` and SDL2/SDL2_ttf development files; see the
+supported. **Blues Brothers DOS/Amiga now launch from the library**, with a clean return
+and initial reversible import of classic preferences and saves. Other engines
+remain scheduled for TH-07–09. See the [Blues runtime guide](docs/BLUES_RUNTIME.md). Build it with
+`-DTITUS_BUILD_LAUNCHER=ON` and SDL2/SDL2_ttf/libmodplug development files; see the
 [library guide](docs/LIBRARY_FRONTEND.md). The classic game executable still works.
 
 ## What this extension adds

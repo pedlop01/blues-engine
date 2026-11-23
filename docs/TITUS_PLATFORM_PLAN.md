@@ -1,7 +1,7 @@
 # Titus Engine: plan de expansión
 
 Actualización: **23 de noviembre de 2026**.
-Estado: **expansión autorizada; TH-00–TH-05 completadas; siguiente implementación TH-06**.
+Estado: **expansión autorizada; TH-00–TH-06 completadas; siguiente implementación TH-07**.
 Nombre de producto acordado: **Titus Engine** (`titus-engine`).
 
 ## Prioridades y punto de partida
@@ -187,7 +187,7 @@ inventario no equivale a haber integrado o validado un nuevo juego.
 | TH-03 | Definir arquitectura y transición | Contrato de motores, capacidades, catálogo/partidas, rutas configurables y organización C/C++/SDL. Plan de nombres/binarios/repositorio de Titus Engine con compatibilidad de Blues. Elegir estrategia de ejecución. | TH-01, TH-02 | Completada: C++17/SDL2, runtimes separados, contratos v1, perfiles/importación y transición documentados y comprobados como especificación | 100 % |
 | TH-04 | Implementar catálogo y detección | Añadir, volver a localizar y quitar instalaciones sin borrar datos. Reconocer conjuntos, variantes y ambigüedad de carpetas mixtas; separar fuente ADF y edición extraída. Catálogo persistente con versiones de esquema. | TH-03 | Completada: core C++17 y CLI Linux/Windows, ocho conjuntos, ADF enlazados, catálogo atómico/recuperable y originales intactos; ver CATALOG_CORE.md | 100 % |
 | TH-05 | Crear biblioteca global | Menú principal para juegos instalados, ficha, selector de instalación/DOS/Amiga, estados claros, teclado/mando y preferencias de selección. Verificar ventana y pantalla completa. | TH-04 | Completada: biblioteca SDL2, fichas/selectores, explorador Unicode, gestión de instalaciones, teclado/mando y preferencias; pruebas Linux/Windows en LIBRARY_FRONTEND.md | 100 % |
-| TH-06 | Integrar Blues Brothers | Arrancar DOS/Amiga desde biblioteca, conservar controles, HUD, ayudas, cámara, zoom, slots/miniaturas y rebobinado. Volver a biblioteca limpiamente; importación inicial reversible de opciones/slots a perfil privado sin sobrescribir originales. | TH-05 | Sin iniciar | 0 % |
+| TH-06 | Integrar Blues Brothers | Arrancar DOS/Amiga desde biblioteca, conservar controles, HUD, ayudas, cámara, zoom, slots/miniaturas y rebobinado. Volver a biblioteca limpiamente; importación inicial reversible de opciones/slots a perfil privado sin sobrescribir originales. | TH-05 | Completada: runtime DOS/Amiga, importación inicial reversible, bloqueo heredado y retorno; pruebas Linux/Windows en BLUES_RUNTIME.md | 100 % |
 | TH-07 | Incorporar motores del proyecto base | Jukebox Adventure y Prehistorik 2 desde Windows/biblioteca, con datos y preferencias separados. Comprobar que las opciones no implementadas no se anuncien como disponibles; revisar la saturación de mezcla observada en P2 sin afectar Blues. | TH-02, TH-06 | Sin iniciar | 0 % |
 | TH-08 | Incorporar Titus the Fox DOS | Adaptador OpenTitus con nuestros archivos, controles/audio comprobados, configuración externa al original, cierre y retorno. Mantener créditos y revisión del motor de origen. | TH-02, TH-06 | Sin iniciar | 0 % |
 | TH-09 | Incorporar Prehistorik 1 DOS | Adaptador Olduvai con identificación del conjunto `FILES*`/`PRE1.EXE` por contenido, sin renombrar originales. Arranque, controles, audio, cierre y retorno comprobados. | TH-02, TH-06 | Sin iniciar | 0 % |
@@ -248,7 +248,7 @@ TH-04 completa el catálogo definido en TH-03; [implementación y pruebas](CATAL
 - Qué adaptadores merece la pena integrar en proceso y cuáles seguirán separados.
 - Qué mejoras adicionales recibirá cada juego después de asegurar su fidelidad.
 
-Siguiente trabajo de expansión: **TH-06**, integrar Blues Brothers desde la
-biblioteca global con importación reversible de opciones/slots y retorno limpio. En paralelo, atender
+Siguiente trabajo de expansión: **TH-07**, incorporar Jukebox Adventure y
+Prehistorik 2 a la biblioteca y revisar la saturación de mezcla de P2. En paralelo, atender
 los errores que el usuario encuentre en la tarea 17.
 La distribución 18 se retoma después de la primera expansión validada.

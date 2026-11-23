@@ -11,7 +11,7 @@ struct Library {
     Json catalog, preferences;
     std::vector<std::string> games;
     std::string error, preference_error;
-    bool dirty=false, healthy=false;
+    bool dirty=false, healthy=false,blues_runtime_installed=false;
     explicit Library(Paths paths, Detector detector=Detector());
     void reload();
     void reconcile();
@@ -27,6 +27,7 @@ struct Library {
     std::string data_status() const;
     std::string launch_reason() const;
     bool source_available() const;
+    bool can_play() const;
     void persist();
 };
 }

@@ -1,5 +1,6 @@
 #define SDL_MAIN_HANDLED
 #include "library.hpp"
+#include "titus/session.hpp"
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include <algorithm>
@@ -48,6 +49,13 @@ class App {
     std::array<bool,SDL_CONTROLLER_AXIS_MAX> neutral{};
     Uint32 last_axis=0,last_save=0;
     std::future<Json> job;
+    std::future<std::unique_ptr<Session>> starting_session;
+    std::unique_ptr<Session> session;
+    fs::path package_root;
+    bool session_hidden=false,cancel_start=false;
+    bool test_play=false;
+    int play_test_stage=0;
+    Uint32 play_test_started=0;
     bool smoke=false;
     fs::path screenshot,workflow_source;
     size_t workflow_count=0;
@@ -99,7 +107,40 @@ class App {
         for(int i=0;i<SDL_CONTROLLER_AXIS_MAX;++i)neutral[i]=controller&&std::abs(int(SDL_GameControllerGetAxis(controller,static_cast<SDL_GameControllerAxis>(i))))<12000;
         for(int i=0;i<SDL_CONTROLLER_BUTTON_MAX;++i)blocked_buttons[i]=controller&&SDL_GameControllerGetButton(controller,static_cast<SDL_GameControllerButton>(i));
     }
-    void open_controller(int device){if(controller||!SDL_IsGameController(device))return;controller=SDL_GameControllerOpen(device);reset_controller_input();}
+    LegacySources legacy_sources(){
+        auto config=environment_value("BLUES_CONFIG_FILE"),saves=environment_value("BLUES_SAVE_DIR");fs::path folder;
+        if(!config||!saves){char* root=SDL_GetPrefPath("pedlop01","blues-engine");if(root)folder=fs::u8path(root);SDL_free(root);}
+        return {config?fs::u8path(*config):(folder.empty()?fs::path():folder/"preferences.ini"),
+                saves?fs::u8path(*saves):(folder.empty()?fs::path():folder/"saves")};
+    }
+    void begin_play(){
+        if(!library.can_play()||session||starting_session.valid()||job.valid())return;
+        library.persist();SessionOptions options;options.legacy=legacy_sources();options.primary_source=*library.source();if(test_play)options.test_ms=500;
+        auto storage=paths;auto root=package_root;auto catalog=library.catalog;auto id=library.selected()->at("id").get<std::string>();
+        modal="session";focus="cancel-session";notice.clear();cancel_start=false;
+        starting_session=std::async(std::launch::async,[storage,root,catalog,id,options](){return std::make_unique<Session>(storage,root,catalog,id,options);});
+    }
+    void return_to_library(){cancel_start=true;try{if(session&&!session->finished())session->request_return();}catch(const std::exception& e){notice=friendly_error(e);}}
+    void poll_session(){
+        if(starting_session.valid()&&starting_session.wait_for(std::chrono::seconds(0))==std::future_status::ready){
+            try{session=starting_session.get();if(cancel_start)session->request_return();}
+            catch(const std::exception& e){notice=friendly_error(e);modal.clear();if(pending_quit)running=false;}
+        }
+        if(!session)return;session->poll();
+        if(session->ready()&&!session_hidden&&!session->finished()){
+            SDL_StopTextInput();if(controller){SDL_GameControllerClose(controller);controller=nullptr;}neutral.fill(false);SDL_HideWindow(window);session_hidden=true;
+        }
+        if(session->state==Session::State::Playing&&cancel_start){cancel_start=false;pending_quit=false;}
+        if(!session->finished())return;
+        bool success=session->state==Session::State::Done;
+        notice=success?session->message():session->error();session.reset();modal.clear();
+        if(session_hidden)SDL_ShowWindow(window);SDL_RaiseWindow(window);SDL_SetWindowInputFocus(window);SDL_ShowCursor(SDL_ENABLE);session_hidden=false;
+        focused=true;int count=0;auto keys=SDL_GetKeyboardState(&count);for(int i=0;i<count&&i<SDL_NUM_SCANCODES;++i)blocked[i]=keys[i]!=0;
+        for(int i=0;i<SDL_NumJoysticks();++i)open_controller(i);reset_controller_input();focus=library.selected()?"game:"+std::string(library.info().id):"add";
+        if(test_play){if(!success)throw Error("E_UI_SESSION_TEST",notice);++play_test_stage;}
+        if(pending_quit)running=false;
+    }
+    void open_controller(int device){if(session_hidden||controller||!SDL_IsGameController(device))return;controller=SDL_GameControllerOpen(device);reset_controller_input();}
     void toggle_fullscreen(){bool target=(SDL_GetWindowFlags(window)&SDL_WINDOW_FULLSCREEN_DESKTOP)==0;
         if(SDL_SetWindowFullscreen(window,target?SDL_WINDOW_FULLSCREEN_DESKTOP:0)!=0){notice=std::string("No se pudo cambiar la pantalla: ")+SDL_GetError();return;}
         library.preferences["fullscreen"]=target;library.dirty=true;}
@@ -154,9 +195,9 @@ class App {
         int n=static_cast<int>(widgets.size());focus=widgets[(index+delta+n)%n].id;
         if(focus=="path"){path_edit=true;path_select_all=true;SDL_StartTextInput();}else{path_edit=false;SDL_StopTextInput();}}
     void activate(){for(const auto& w:widgets)if(w.id==focus){auto fn=w.action;fn();return;}}
-    void back(){if(modal=="busy")return;if(!modal.empty()){close_modal();return;}set_modal("quit");}
+    void back(){if(modal=="force-session"){modal="session";focus="cancel-session";return;}if(modal=="session"){return_to_library();return;}if(modal=="busy")return;if(!modal.empty()){close_modal();return;}set_modal("quit");}
     void navigate(int dx,int dy){
-        if(modal=="busy")return;
+        if(modal=="session"){move_focus(dy?dy:dx);return;}if(modal=="busy")return;
         if(modal=="browser"&&focus=="files"){
             if(dy&&!entries.empty()){
                 int target=browse_index+dy;
@@ -195,7 +236,7 @@ class App {
         else if(modal.empty()&&k==SDLK_F5){library.reload();notice="Catálogo actualizado.";}
     }
     void event(const SDL_Event& e){
-        if(e.type==SDL_QUIT){if(job.valid())pending_quit=true;else running=false;return;}
+        if(e.type==SDL_QUIT){if(session||starting_session.valid()){pending_quit=true;return_to_library();}else if(job.valid())pending_quit=true;else running=false;return;}
         if(e.type==SDL_CONTROLLERDEVICEADDED){open_controller(e.cdevice.which);return;}
         if(e.type==SDL_CONTROLLERDEVICEREMOVED){if(controller&&SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(controller))==e.cdevice.which){SDL_GameControllerClose(controller);controller=nullptr;neutral.fill(false);for(int i=0;i<SDL_NumJoysticks();++i)open_controller(i);}return;}
         if(e.type==SDL_WINDOWEVENT){
@@ -268,13 +309,20 @@ class App {
         int location_index=0;for(size_t n=0;n<i->at("locations").size();++n)if(i->at("locations")[n]==*source)location_index=static_cast<int>(n);
         button("source","Ubicación "+std::to_string(location_index+1)+" / "+std::to_string(i->at("locations").size())+"  ›",{390,453,224,38},[this](){library.select_source(1);});
         text("Los archivos originales y las partidas se conservan.",390,520,13,muted,638);
-        button("play","Jugar",{366,592,132,45},[](){},false,true);
+        button("play","Jugar",{366,592,132,45},[this](){begin_play();},library.can_play(),true);
         button("check","Verificar",{510,592,126,45},[this](){auto id=library.selected()->at("id").get<std::string>();auto revision=library.catalog.at("revision").get<long long>();action([id,revision](CatalogStore& store){return store.recheck(id,revision);});});
         button("relocate","Localizar",{648,592,126,45},[this](){browse(true);});button("remove","Quitar",{786,592,110,45},[this](){set_modal("remove");});
         text(library.launch_reason(),366,651,14,muted,690,true);
     }
     void draw_modal(){
         if(modal.empty())return;fill({0,0,W,H},color(0x050a12,215));widgets.clear();
+        if(modal=="session"){
+            panel({260,226,580,246},color(0x213146));text("Blues Brothers",294,253,27,ink);
+            text(session?session->message():"Preparando tu perfil…",294,305,17,muted,510,true);
+            text(session&&session->stalled()?"El proceso tarda más de lo esperado. Puedes seguir esperando.":"Tus opciones y partidas originales se conservan.",294,353,14,muted,510,true);
+            button("cancel-session","Volver a la biblioteca",{294,403,session&&session->stalled()?270:510,42},[this](){return_to_library();});
+            if(session&&session->stalled())button("force-session","Cerrar proceso…",{584,403,220,42},[this](){set_modal("force-session");});return;
+        }
         if(modal=="browser"){
             panel({120,73,860,575},color(0x1b293b));text(relocate_id.empty()?"Añadir juegos":"Volver a localizar",146,94,27,ink);
             text(controller?"Cruceta: navegar · A: abrir · LB/RB: cambiar control · B: cancelar":"Carpetas y discos ADF · Enter para abrir · Ctrl+L para escribir una ruta",146,137,13,muted);
@@ -306,14 +354,14 @@ class App {
         panel({260,226,580,246},color(0x213146));
         if(modal=="busy"){text("Comprobando archivos…",294,260,26,ink);text("Conservamos los originales mientras actualizamos la biblioteca.",294,315,16,muted,510,true);
             int dots=(SDL_GetTicks()/300)%4;text(std::string(dots+1,'.'),294,402,22,aqua);return;}
-        std::string heading=modal=="remove"?"¿Quitar esta instalación?":modal=="recover"?"¿Restaurar la copia del catálogo?":"¿Salir de Titus Engine?";
+        std::string heading=modal=="force-session"?"¿Forzar el cierre del juego?":modal=="remove"?"¿Quitar esta instalación?":modal=="recover"?"¿Restaurar la copia del catálogo?":"¿Salir de Titus Engine?";
         text(heading,294,251,25,ink,510);
-        text(modal=="remove"?"Solo se quitará de la biblioteca. Los archivos del juego y las partidas se conservarán.":modal=="recover"?"El catálogo dañado se conservará con otro nombre. Se recuperará la última copia válida.":"Tu selección quedará guardada para la próxima vez.",294,305,17,muted,510,true);
-        button("confirm",modal=="remove"?"Quitar":modal=="recover"?"Restaurar":"Salir",{294,403,238,42},[this](){
-            if(modal=="quit"){running=false;return;}if(modal=="recover"){action([](CatalogStore& store){return store.recover();});return;}
+        text(modal=="force-session"?"Se perderá el progreso que no hayas guardado. Los slots y los originales se conservarán.":modal=="remove"?"Solo se quitará de la biblioteca. Los archivos del juego y las partidas se conservarán.":modal=="recover"?"El catálogo dañado se conservará con otro nombre. Se recuperará la última copia válida.":"Tu selección quedará guardada para la próxima vez.",294,305,17,muted,510,true);
+        button("confirm",modal=="force-session"?"Cerrar proceso":modal=="remove"?"Quitar":modal=="recover"?"Restaurar":"Salir",{294,403,238,42},[this](){
+            if(modal=="force-session"){try{if(session)session->force_stop();}catch(const std::exception& e){notice=friendly_error(e);}modal="session";return;}if(modal=="quit"){running=false;return;}if(modal=="recover"){action([](CatalogStore& store){return store.recover();});return;}
             auto id=library.selected()->at("id").get<std::string>();auto revision=library.catalog.at("revision").get<long long>();action([id,revision](CatalogStore& store){return store.remove(id,revision);});
         },true,true);
-        button("cancel","Cancelar",{550,403,254,42},[this](){close_modal();});
+        button("cancel","Cancelar",{550,403,254,42},[this](){if(modal=="force-session"){modal="session";focus="cancel-session";}else close_modal();});
     }
     void draw(){
         if(text_cache.size()>512){for(auto& p:text_cache)SDL_DestroyTexture(p.second.texture);text_cache.clear();}
@@ -330,6 +378,14 @@ class App {
         if(result==0)result=SDL_SaveBMP(surface,screenshot.u8string().c_str());SDL_FreeSurface(surface);if(result!=0)throw Error("E_CAPTURE",SDL_GetError());}
     void capture_state(const char* label){if(screenshot.empty())return;auto original=screenshot;screenshot=original.parent_path()/fs::u8path(original.stem().u8string()+"."+label+".bmp");capture();screenshot=original;}
     void push_key(SDL_Keycode sym,SDL_Keymod mod=KMOD_NONE){SDL_Event e{};e.type=SDL_KEYDOWN;e.key.keysym.sym=sym;e.key.keysym.mod=mod;e.key.keysym.scancode=SDL_GetScancodeFromKey(sym);SDL_PushEvent(&e);}
+    void play_test_tick(){
+        if(!test_play)return;
+        if(SDL_GetTicks()-play_test_started>60000)throw Error("E_UI_SESSION_TEST","Session UI probe timed out");
+        if(starting_session.valid()||session)return;
+        if(play_test_stage==0){library.choose_game("blues");library.select_edition("dos");check(library.can_play(),"DOS play enabled");focus="play";draw();push_key(SDLK_RETURN);play_test_stage=1;}
+        else if(play_test_stage==2){check(!session_hidden&&(SDL_GetWindowFlags(window)&SDL_WINDOW_SHOWN),"library restored after DOS");library.select_edition("amiga");check(library.can_play(),"Amiga play enabled");focus="play";draw();push_key(SDLK_RETURN);play_test_stage=3;}
+        else if(play_test_stage==4){check(!session_hidden&&(SDL_GetWindowFlags(window)&SDL_WINDOW_SHOWN),"library restored after Amiga");library.persist();capture();std::cout<<Json({{"session_ui_checks",smoke_checks},{"sessions",2},{"selected_edition",library.selected()->at("edition_id")},{"notice",notice}}).dump()<<'\n';running=false;}
+    }
     void smoke_report(){capture();library.persist();check(library.preference_error.empty(),"preferences saved");std::cout<<Json({{"ui_checks",smoke_checks},{"games",library.games.size()},{"installations",library.catalog["installations"].size()},{"selected_game",library.preferences["selected_game"]},{"fullscreen",library.preferences["fullscreen"]}}).dump()<<'\n';running=false;}
     void smoke_tick(){
         if(smoke_step==-4){focus="use";push_key(SDLK_RETURN);}
@@ -379,7 +435,12 @@ class App {
         ++smoke_step;
     }
 public:
-    App(Paths p,bool test,fs::path capture_path,fs::path initial_browse,fs::path import_source):paths(std::move(p)),library(paths),smoke(test),screenshot(std::move(capture_path)),workflow_source(std::move(import_source)){
+    App(Paths p,bool test,fs::path capture_path,fs::path initial_browse,fs::path import_source,bool play_probe):paths(std::move(p)),library(paths),smoke(test),screenshot(std::move(capture_path)),workflow_source(std::move(import_source)){
+        test_play=play_probe;play_test_started=SDL_GetTicks();
+        char* base=SDL_GetBasePath();if(!base)throw Error("E_PATH",SDL_GetError());package_root=fs::u8path(base);SDL_free(base);
+        try{auto registry=parse_json(read_document(package_root/"engines/registry.json"));
+            for(const auto& entry:registry.at("engines"))if(entry.at("engine_id")=="blues-family"&&entry.at("adapter_state")=="validated"&&registry.at("role")=="package")library.blues_runtime_installed=fs::is_regular_file(package_root/fs::u8path(entry.at("executables").at(platform()).get<std::string>()));
+        }catch(const std::exception&){}
         if(!initial_browse.empty()){library.preferences["browse_path"]=normalized_path(initial_browse).u8string();library.dirty=true;}
         if(smoke)SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS,"1");
         if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER)!=0)throw Error("E_SDL",SDL_GetError());
@@ -397,21 +458,22 @@ public:
     }
     ~App(){if(job.valid())job.wait();if(virtual_pad)SDL_JoystickClose(virtual_pad);if(virtual_device>=0)SDL_JoystickDetachVirtual(virtual_device);for(auto& p:text_cache)SDL_DestroyTexture(p.second.texture);for(auto& p:fonts)TTF_CloseFont(p.second);
         if(controller)SDL_GameControllerClose(controller);if(renderer)SDL_DestroyRenderer(renderer);if(window)SDL_DestroyWindow(window);TTF_Quit();SDL_Quit();}
-    int run(){draw();SDL_RenderPresent(renderer);while(running){SDL_Event e;while(SDL_PollEvent(&e)){auto previous_modal=modal;event(e);if(modal!=previous_modal)draw();}finish_job();draw();
-            if(smoke)smoke_tick();SDL_RenderPresent(renderer);
-            if(!job.valid()&&library.dirty&&SDL_GetTicks()-last_save>600){library.persist();last_save=SDL_GetTicks();}
-            SDL_Delay(smoke?20:8);
+    int run(){draw();SDL_RenderPresent(renderer);while(running){SDL_Event e;while(SDL_PollEvent(&e)){auto previous_modal=modal;event(e);if(modal!=previous_modal&&!session_hidden)draw();}finish_job();poll_session();
+            if(!session_hidden){draw();if(smoke)smoke_tick();if(test_play)play_test_tick();SDL_RenderPresent(renderer);}
+            if(!job.valid()&&!starting_session.valid()&&!session&&library.dirty&&SDL_GetTicks()-last_save>600){library.persist();last_save=SDL_GetTicks();}
+            SDL_Delay(session_hidden?25:smoke?20:8);
         }library.persist();return 0;}
 };
 int run(const std::vector<std::string>& args){
-    try{fs::path user,screenshot,browse,import_source;bool smoke=false;
+    try{fs::path user,screenshot,browse,import_source;bool smoke=false,play_probe=false;
         for(size_t i=1;i<args.size();++i){auto option=args[i];if(option=="--smoke-test")smoke=true;
+            else if(option=="--session-smoke-test")play_probe=true;
             else if(option=="--user-dir"||option=="--screenshot"||option=="--browse-dir"||option=="--test-import"){if(++i==args.size())throw Error("E_ARGUMENT","Missing option value");auto p=fs::u8path(args[i]);if(option=="--user-dir")user=p;else if(option=="--screenshot")screenshot=p;else if(option=="--browse-dir")browse=p;else import_source=p;}
             else if(option=="--help"){std::cout<<"titus-engine [--user-dir ABS] [--browse-dir PATH]\n  F11: fullscreen; Tab/arrows/Enter: navigation; A: add; Esc: cancel/quit\n  --smoke-test [--screenshot FILE.bmp]: bounded UI regression test\n";return 0;}
             else throw Error("E_ARGUMENT","Unknown option: "+option);}
-        if(smoke&&user.empty())throw Error("E_ARGUMENT","--smoke-test requires an isolated --user-dir");
+        if((smoke||play_probe)&&user.empty())throw Error("E_ARGUMENT","--smoke-test requires an isolated --user-dir");
         if(!import_source.empty()&&!smoke)throw Error("E_ARGUMENT","--test-import requires --smoke-test");
-        SDL_SetMainReady();App app(Paths::resolve(user),smoke,screenshot,browse,import_source);return app.run();
+        SDL_SetMainReady();App app(Paths::resolve(user),smoke,screenshot,browse,import_source,play_probe);return app.run();
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}
 }
 }

@@ -2,6 +2,7 @@
 #include "json.hpp"
 #include <filesystem>
 #include <functional>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -18,7 +19,19 @@ std::string file_sha256(const fs::path& path);
 std::string fingerprint(const Json& manifest);
 Json parse_json(const std::string& text);
 std::string platform();
+std::optional<std::string> environment_value(const char* name);
 std::string uuid();
+bool path_exists(const fs::path& path);
+bool path_is_directory(const fs::path& path);
+bool path_is_regular_file(const fs::path& path);
+bool path_is_symlink(const fs::path& path);
+bool path_is_empty(const fs::path& path);
+uint64_t path_file_size(const fs::path& path);
+void copy_file_exact(const fs::path& from,const fs::path& to);
+void move_directory(const fs::path& from,const fs::path& to);
+void remove_empty_directory(const fs::path& path);
+void ensure_directory(const fs::path& path);
+fs::path filesystem_path(const fs::path& path); // Native I/O spelling; keep normalized paths in JSON.
 fs::path normalized_path(const fs::path& path);
 struct Paths {
     fs::path config, data, cache;

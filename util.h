@@ -24,6 +24,11 @@ extern void	print_info(const char *msg, ...);
 #define print_debug(x, ...)
 #endif
 
+#ifdef _WIN32
+#include <wchar.h>
+extern wchar_t *path_utf16(const char *path);
+#endif
+extern FILE *fopen_utf8(const char *path, const char *mode);
 extern FILE *	fopen_nocase(const char *path, const char *filename);
 extern uint16_t	fread_le16(FILE *fp);
 

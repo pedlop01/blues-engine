@@ -58,7 +58,7 @@ public:
 }
 std::string sha256(const std::string& bytes) { Sha256 s;s.update(bytes.data(),bytes.size());return s.finish(); }
 std::string file_sha256(const fs::path& path) {
-    std::ifstream in(path,std::ios::binary);
+    std::ifstream in(filesystem_path(path),std::ios::binary);
     if(!in) throw Error("E_READ", "Cannot read " + path.u8string());
     Sha256 s;std::array<char,65536> bytes;
     while(in) { in.read(bytes.data(),bytes.size());s.update(bytes.data(),static_cast<size_t>(in.gcount())); }

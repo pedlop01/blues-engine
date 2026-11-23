@@ -455,4 +455,16 @@ El frontend se incorpora en TH-05; los adaptadores siguen TH-06–09.
 [LIBRARY_FRONTEND.md](LIBRARY_FRONTEND.md) describe compilación, controles,
 preferencias atómicas en `config/library.json`, explorador y pruebas.
 El texto usa SDL_ttf/DejaVu; no comparte fuentes/HUD o estados de los juegos.
-Jugar continúa deshabilitado hasta la inspección e integración de cada motor.
+Desde TH-06, Jugar está disponible para Blues DOS/Amiga. Los demás motores
+permanecen deshabilitados hasta su integración e inspección.
+
+## Implementación TH-06
+
+El supervisor de Blues está en `platform/`, con contratos en
+`include/titus/session.hpp` y procesos/bloqueos en `include/titus/process.hpp`.
+`engines/blues-family/` adapta el código Blues existente como runtime separado;
+no incorpora todavía Jukebox/P2. La biblioteca lanza DOS/Amiga y recupera su
+ventana al terminar. La migración inicial usa staging, inspección nativa, recibo
+y snapshot; el bloqueo se hereda al hijo. Ver [uso y validación](BLUES_RUNTIME.md).
+Los ocho slots siguen en el menú nativo; `load_slot` desde biblioteca queda para
+TH-10 y se rechaza explícitamente mientras tanto.

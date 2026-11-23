@@ -480,6 +480,9 @@ static void sdl2_draw_pause_menu() {
 		}
 		const char *main_items[] = {"CONTINUAR", "OPCIONES", "CONTROLES", "SELECCIONAR NIVEL", "PARTIDA", "ELEGIR PERSONAJE", "SALIR DEL JUEGO"};
 		const char *quit_items[] = {"VOLVER", "SALIR"};
+#ifdef TITUS_MANAGED
+        main_items[6]="VOLVER A BIBLIOTECA";quit_items[1]="VOLVER A BIBLIOTECA";
+#endif
 		const int count = pause_item_count();
 		for (int i = 0; i < count; ++i) {
 			const int y = _pause_page == PAUSE_QUIT ? 87 + i * 21 : 56 + i * 14;
@@ -694,7 +697,13 @@ static void remember_held_controls() {
 /* Menu events never pass through gameplay input. Held controls remain blocked
  * after returning until their release/neutral event is received. */
 static bool pause_event(const SDL_Event *ev) {
-	if (ev->type == SDL_QUIT) { g_sys.input.quit = true; return true; }
+	if (ev->type == SDL_QUIT) {
+#ifdef TITUS_MANAGED
+        _pause_page=PAUSE_QUIT;_pause_selection=0;return false;
+#else
+        g_sys.input.quit = true; return true;
+#endif
+    }
 	if (ev->type == SDL_WINDOWEVENT) {
 		if (ev->window.event == SDL_WINDOWEVENT_FOCUS_LOST) _pause_focused = _window_has_focus = false;
 		if (ev->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) _pause_focused = _window_has_focus = true;
@@ -833,8 +842,17 @@ static void sdl2_run_pause_menu() {
 	memcpy(_edit_buttons,_game_buttons,sizeof(_game_buttons));
 	_pause_focused = _window_has_focus;
 	_pause_menu_open = true;
+#ifdef TITUS_MANAGED
+    if(_managed_return_pending){_pause_page=PAUSE_QUIT;_pause_selection=0;_managed_return_pending=false;}
+    bool managed_confirmation=false;
+#endif
 	bool done = false;
 	while (!done && !g_sys.input.quit) {
+#ifdef TITUS_MANAGED
+        if(titus_runtime_poll()){_pause_page=PAUSE_QUIT;_pause_selection=0;}
+        if(_pause_page==PAUSE_QUIT&&!managed_confirmation){titus_runtime_return_request(1);managed_confirmation=true;}
+        if(_pause_page!=PAUSE_QUIT&&managed_confirmation){titus_runtime_return_cancelled();managed_confirmation=false;}
+#endif
 		sdl2_draw_screen(0.f, 0.f, 1.f);
 		SDL_Event ev;
 		if (SDL_WaitEventTimeout(&ev, 16)) {
@@ -842,6 +860,9 @@ static void sdl2_run_pause_menu() {
 			while (!done && SDL_PollEvent(&ev)) done = pause_event(&ev);
 		}
 	}
+#ifdef TITUS_MANAGED
+    if(managed_confirmation&&!g_sys.input.quit)titus_runtime_return_cancelled();
+#endif
 	remember_held_controls();
 	if (!g_sys.input.quit) {
 		memcpy(_game_keys,_edit_keys,sizeof(_game_keys));

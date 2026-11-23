@@ -1,6 +1,9 @@
 /* Presentation only: rendering noise uses its own deterministic seed, never
  * the simulation RNG. The original DOS/Amiga scene and HUD remain intact. */
 static void sdl2_set_rewind(bool active,int frames) {
+#ifdef TITUS_MANAGED
+    titus_runtime_probe_rewind(active);
+#endif
 	const bool ending=_rewind_active && !active;
 	_rewind_active=active;_rewind_frames=frames;
 	if(active) SDL_PauseAudio(1);

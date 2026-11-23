@@ -2523,6 +2523,23 @@ static void apply_game_assists(const struct sys_pause_options *options) {
 
 static void rewind_clear();
 #include "level_state.h"
+#ifdef TITUS_MANAGED
+#include "engines/blues-family/native.h"
+void titus_native_inspect(const uint8_t *data,size_t size,struct titus_slot_info *info) {
+    memset(info,0,sizeof(*info));
+    if(size>=24&&!memcmp(data,"BBSAVE\r\n",8)&&((READ_LE_UINT32(data+8)!=1&&READ_LE_UINT32(data+8)!=2)||READ_LE_UINT32(data+20)!=0x42423031)){info->version=-1;return;}
+    struct bb_state *state=malloc(sizeof(*state));
+    if(!state)return;
+    if(bb_state_decode(state,data,size)) {
+        info->decoded=1;info->compatible=state_resources_available(state);
+        info->version=READ_LE_UINT32(data+8);info->amiga=state->amiga;info->preview=bb_state_preview(data,size)!=NULL;
+        info->camera=state->camera_mode;info->hud=state->hud_mode;info->view=state->input_view_step;
+        info->level=state->vars.level;info->resources=state->resources;info->timestamp=state->timestamp;
+        info->lives1=state->vars.objects[OBJECT_NUM_PLAYER1].lifes_count;info->lives2=state->vars.objects[OBJECT_NUM_PLAYER2].lifes_count;
+    }
+    free(state);
+}
+#endif
 #include "level_rewind.h"
 
 void do_level() {
@@ -2573,6 +2590,9 @@ void do_level() {
 	g_sys.render_set_sprites_clipping_rect(0, TILEMAP_OFFSET_Y, TILEMAP_SCREEN_W, TILEMAP_SCREEN_H);
 	configure_level_hud();
 	g_sys.set_pause_menu_enabled(true);
+#ifdef TITUS_MANAGED
+    titus_runtime_gameplay();
+#endif
 	update_assist_status();
 	bool screen_transition_flag = true;
 	int frame_duration_remainder = 0;
@@ -2584,6 +2604,11 @@ void do_level() {
 			rewind_finish();
 			if (!g_sys.input.menu && !g_sys.input.quit) continue;
 		}
+#ifdef TITUS_MANAGED
+        if(!screen_transition_flag&&titus_runtime_probe_save()){
+            for(int slot=0;slot<SAVE_SLOT_COUNT;++slot)if(!save_current_game(slot))print_error("Managed save probe failed: %s",game_save_error());
+        }
+#endif
 		if (g_sys.input.menu && !screen_transition_flag) {
 			struct sys_pause_options options = {
 				.amiga = g_res.amiga_data,

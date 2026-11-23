@@ -12,9 +12,9 @@ static void allow_preferences_reset() { _preferences_writable = true; }
 
 static FILE *preferences_open(const char *path, bool write) {
 #ifdef _WIN32
-	wchar_t *wide=(wchar_t *)SDL_iconv_string("UTF-16LE","UTF-8",path,strlen(path)+1);
+	wchar_t *wide=path_utf16(path);
 	FILE *fp=wide ? _wfopen(wide,write ? L"wb" : L"rb") : NULL;
-	SDL_free(wide);
+	free(wide);
 	return fp;
 #else
 	return fopen(path,write ? "wb" : "rb");
@@ -23,11 +23,11 @@ static FILE *preferences_open(const char *path, bool write) {
 
 static bool preferences_replace(const char *temporary, const char *path) {
 #ifdef _WIN32
-	wchar_t *from=(wchar_t *)SDL_iconv_string("UTF-16LE","UTF-8",temporary,strlen(temporary)+1);
-	wchar_t *to=(wchar_t *)SDL_iconv_string("UTF-16LE","UTF-8",path,strlen(path)+1);
+	wchar_t *from=path_utf16(temporary);
+	wchar_t *to=path_utf16(path);
 	const bool success=from && to && MoveFileExW(from,to,MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH);
 	if (!success && from) _wremove(from);
-	SDL_free(from); SDL_free(to);
+	free(from); free(to);
 	return success;
 #else
 	const bool success=rename(temporary,path)==0;
@@ -188,9 +188,9 @@ static void sdl2_save_preferences() {
 		if (success) success=preferences_replace(temporary,path);
 		else {
 #ifdef _WIN32
-			wchar_t *wide=(wchar_t *)SDL_iconv_string("UTF-16LE","UTF-8",temporary,strlen(temporary)+1);
+			wchar_t *wide=path_utf16(temporary);
 			if (wide) _wremove(wide);
-			SDL_free(wide);
+			free(wide);
 #else
 			remove(temporary);
 #endif

@@ -28,7 +28,7 @@ void require(bool ok,const std::string& message,const std::string& code="E_INVAL
 }
 std::string lower(std::string s) { for(auto& c:s) if(c>='A'&&c<='Z') c+=32;return s; }
 std::string read(const fs::path& p) {
-    std::ifstream in(p,std::ios::binary);require(bool(in),"Cannot read "+p.u8string(),"E_READ");
+    std::ifstream in(filesystem_path(p),std::ios::binary);require(bool(in),"Cannot read "+p.u8string(),"E_READ");
     std::string s;char b[8192];
     while(in) { in.read(b,sizeof b);s.append(b,static_cast<size_t>(in.gcount()));
         require(s.size()<=1024*1024,"JSON exceeds 1 MiB","E_JSON"); }
@@ -92,7 +92,7 @@ class Lock {
 public:
     explicit Lock(const fs::path& file) {
 #ifdef _WIN32
-        handle=CreateFileW(file.c_str(),GENERIC_READ|GENERIC_WRITE,0,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
+        handle=CreateFileW(filesystem_path(file).c_str(),GENERIC_READ|GENERIC_WRITE,0,nullptr,OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,nullptr);
         require(handle!=INVALID_HANDLE_VALUE,"Catalog is locked or inaccessible","E_LOCKED");
 #else
         handle=::open(file.c_str(),O_CREAT|O_RDWR|O_CLOEXEC,0600);
@@ -114,13 +114,13 @@ void atomic_write(const fs::path& target,const std::string& bytes) {
     auto tmp=target;tmp+=fs::u8path(".tmp."+uuid());
     try {
 #ifdef _WIN32
-        HANDLE h=CreateFileW(tmp.c_str(),GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
+        HANDLE h=CreateFileW(filesystem_path(tmp).c_str(),GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
         require(h!=INVALID_HANDLE_VALUE,"Cannot create catalog temporary file","E_WRITE");
         DWORD count=0;
         bool ok=WriteFile(h,bytes.data(),static_cast<DWORD>(bytes.size()),&count,nullptr)&&count==bytes.size();
         ok=FlushFileBuffers(h)&&ok;CloseHandle(h);
         require(ok,"Cannot flush catalog","E_WRITE");
-        require(MoveFileExW(tmp.c_str(),target.c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH),"Cannot replace catalog","E_WRITE");
+        require(MoveFileExW(filesystem_path(tmp).c_str(),filesystem_path(target).c_str(),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH),"Cannot replace catalog","E_WRITE");
 #else
         int fd=::open(tmp.c_str(),O_CREAT|O_EXCL|O_WRONLY|O_CLOEXEC,0600);
         require(fd>=0,"Cannot create catalog temporary file","E_WRITE");
@@ -152,6 +152,102 @@ std::string platform() {
     return "linux";
 #endif
 }
+fs::path filesystem_path(const fs::path& path) {
+#ifdef _WIN32
+    auto s=path.native();for(auto& c:s)if(c==L'/')c=L'\\';
+    if(s.rfind(L"\\\\?\\",0)==0)return fs::path(s);
+    if(s.size()>2&&s[0]==L'\\'&&s[1]==L'\\')return fs::path(L"\\\\?\\UNC\\"+s.substr(2));
+    if(s.size()>2&&s[1]==L':'&&s[2]==L'\\')return fs::path(L"\\\\?\\"+s);
+#endif
+    return path;
+}
+#ifdef _WIN32
+static DWORD path_attributes(const fs::path& path) {
+    DWORD value=GetFileAttributesW(filesystem_path(path).c_str());
+    if(value==INVALID_FILE_ATTRIBUTES){auto error=GetLastError();
+        if(error!=ERROR_FILE_NOT_FOUND&&error!=ERROR_PATH_NOT_FOUND&&error!=ERROR_INVALID_NAME)
+            throw Error("E_READ","Cannot inspect path: "+path.u8string());
+    }
+    return value;
+}
+#endif
+bool path_exists(const fs::path& path){
+#ifdef _WIN32
+    return path_attributes(path)!=INVALID_FILE_ATTRIBUTES;
+#else
+    return fs::exists(path);
+#endif
+}
+bool path_is_directory(const fs::path& path){
+#ifdef _WIN32
+    auto a=path_attributes(path);return a!=INVALID_FILE_ATTRIBUTES&&(a&FILE_ATTRIBUTE_DIRECTORY);
+#else
+    return fs::is_directory(path);
+#endif
+}
+bool path_is_regular_file(const fs::path& path){
+#ifdef _WIN32
+    auto a=path_attributes(path);return a!=INVALID_FILE_ATTRIBUTES&&!(a&FILE_ATTRIBUTE_DIRECTORY);
+#else
+    return fs::is_regular_file(path);
+#endif
+}
+bool path_is_symlink(const fs::path& path){
+#ifdef _WIN32
+    auto a=path_attributes(path);return a!=INVALID_FILE_ATTRIBUTES&&(a&FILE_ATTRIBUTE_REPARSE_POINT);
+#else
+    return fs::is_symlink(path);
+#endif
+}
+bool path_is_empty(const fs::path& path){
+#ifdef _WIN32
+    require(path_is_directory(path),"Not a directory","E_READ");WIN32_FIND_DATAW data;
+    HANDLE find=FindFirstFileW(filesystem_path(path/"*").c_str(),&data);
+    if(find==INVALID_HANDLE_VALUE){require(GetLastError()==ERROR_FILE_NOT_FOUND,"Cannot list directory","E_READ");return true;}
+    bool empty=true;do{if(wcscmp(data.cFileName,L".")&&wcscmp(data.cFileName,L"..")){empty=false;break;}}while(FindNextFileW(find,&data));FindClose(find);return empty;
+#else
+    return fs::is_empty(path);
+#endif
+}
+uint64_t path_file_size(const fs::path& path){
+#ifdef _WIN32
+    WIN32_FILE_ATTRIBUTE_DATA data;require(GetFileAttributesExW(filesystem_path(path).c_str(),GetFileExInfoStandard,&data),"Cannot read file size","E_READ");return (uint64_t(data.nFileSizeHigh)<<32)|data.nFileSizeLow;
+#else
+    return fs::file_size(path);
+#endif
+}
+void copy_file_exact(const fs::path& from,const fs::path& to){
+#ifdef _WIN32
+    require(CopyFileW(filesystem_path(from).c_str(),filesystem_path(to).c_str(),TRUE),"Cannot copy legacy file: "+from.u8string(),"E_IMPORT");
+#else
+    fs::copy_file(from,to);
+#endif
+}
+void move_directory(const fs::path& from,const fs::path& to){
+#ifdef _WIN32
+    require(MoveFileExW(filesystem_path(from).c_str(),filesystem_path(to).c_str(),MOVEFILE_WRITE_THROUGH),"Cannot publish imported profile","E_IMPORT");
+#else
+    fs::rename(from,to);
+#endif
+}
+void remove_empty_directory(const fs::path& path){
+#ifdef _WIN32
+    require(RemoveDirectoryW(filesystem_path(path).c_str()),"Cannot replace empty profile directory","E_IMPORT");
+#else
+    fs::remove(path);
+#endif
+}
+void ensure_directory(const fs::path& path) {
+#ifdef _WIN32
+    auto normal=normalized_path(path),native=filesystem_path(normal);
+    auto attrs=GetFileAttributesW(native.c_str());
+    if(attrs!=INVALID_FILE_ATTRIBUTES){require((attrs&FILE_ATTRIBUTE_DIRECTORY)!=0,"Not a directory: "+normal.u8string(),"E_WRITE");return;}
+    auto parent=normal.parent_path();require(parent!=normal&&!parent.empty(),"Cannot create path root","E_WRITE");ensure_directory(parent);
+    if(!CreateDirectoryW(native.c_str(),nullptr)&&GetLastError()!=ERROR_ALREADY_EXISTS)throw Error("E_WRITE","Cannot create directory: "+normal.u8string());
+#else
+    fs::create_directories(path);
+#endif
+}
 fs::path normalized_path(const fs::path& path) {
     require(!path.empty(),"Empty path");
     require(path.u8string().find('\0')==std::string::npos,"NUL in path");
@@ -165,7 +261,7 @@ fs::path normalized_path(const fs::path& path) {
     require(written>0&&written<size,"Cannot resolve Windows path","E_PATH");full.resize(written);
     fs::path probe(full);std::vector<fs::path> tail;
     for(;;) {
-        auto handle=CreateFileW(probe.c_str(),0,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,
+        auto handle=CreateFileW(filesystem_path(probe).c_str(),0,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,nullptr,
                                 OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS,nullptr);
         if(handle!=INVALID_HANDLE_VALUE) {
             size=GetFinalPathNameByHandleW(handle,nullptr,0,FILE_NAME_NORMALIZED);
@@ -209,17 +305,18 @@ Json parse_json(const std::string& text) {
     try { auto j=Json::parse(text,callback); j.dump(-1,' ',false,Json::error_handler_t::strict);return j; }
     catch(const Json::exception& e) { throw Error("E_JSON",e.what()); }
 }
-Paths Paths::resolve(const fs::path& override_root,std::function<std::string(const char*)> env) {
-    if(!env) env=[](const char* name){
+std::optional<std::string> environment_value(const char* name) {
 #ifdef _WIN32
         std::wstring w;while(*name)w+=static_cast<wchar_t>(*name++);
-        auto n=GetEnvironmentVariableW(w.c_str(),nullptr,0);if(!n)return std::string();
+        auto n=GetEnvironmentVariableW(w.c_str(),nullptr,0);if(!n)return GetLastError()==ERROR_ENVVAR_NOT_FOUND?std::nullopt:std::optional<std::string>("");
         std::wstring value(n,L'\0');GetEnvironmentVariableW(w.c_str(),value.data(),n);value.resize(n-1);
         return fs::path(value).u8string();
 #else
-        auto p=std::getenv(name);return p?std::string(p):std::string();
+        auto p=std::getenv(name);return p?std::optional<std::string>(p):std::nullopt;
 #endif
-    };
+}
+Paths Paths::resolve(const fs::path& override_root,std::function<std::string(const char*)> env) {
+    if(!env) env=[](const char* name){return environment_value(name).value_or("");};
     auto root=override_root.empty()?fs::u8path(env("TITUS_USER_DIR")):override_root;
     if(!root.empty()) {
         require(native_absolute(root),"User directory must be absolute");root=normalized_path(root);
@@ -404,7 +501,7 @@ Json CatalogStore::mutate(const std::function<bool(Json&)>& change,long long exp
         auto old=load();for(const auto& i:old["installations"])for(const auto& l:i["locations"])
             if(l["location"]["platform"]==platform()) paths_.protect_source(fs::u8path(l["location"]["path"].get<std::string>()));
     }
-    fs::create_directories(paths_.config);Lock lock(paths_.config/"catalog.lock");
+    ensure_directory(paths_.config);Lock lock(paths_.config/"catalog.lock");
     bool exists=fs::exists(paths_.catalog());auto c=exists?load():fresh();auto before=c;
     require(expected<0||c["revision"]==expected,"Catalog revision changed; reload before editing","E_REVISION");
     if(!change(c)&&exists)return c;
@@ -502,7 +599,7 @@ Json CatalogStore::recover(long long expected) {
     require(expected<0,"Recovery does not accept expected revision");
     auto backup=parse_json(read(paths_.config/"catalog.json.bak"));validate_catalog(backup);
     for(const auto& i:backup["installations"])for(const auto& l:i["locations"])if(l["location"]["platform"]==platform())paths_.protect_source(fs::u8path(l["location"]["path"].get<std::string>()));
-    fs::create_directories(paths_.config);Lock lock(paths_.config/"catalog.lock");
+    ensure_directory(paths_.config);Lock lock(paths_.config/"catalog.lock");
     // Reload under the lock, so a concurrent writer cannot replace the backup.
     backup=parse_json(read(paths_.config/"catalog.json.bak"));validate_catalog(backup);
     if(fs::exists(paths_.catalog())) {

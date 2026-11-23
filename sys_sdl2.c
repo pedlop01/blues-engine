@@ -91,6 +91,11 @@ static uint32_t _copper_palette[COPPER_BARS_H];
 static SDL_GameController *_controller;
 static SDL_Joystick *_joystick;
 
+#ifdef TITUS_MANAGED
+#include "engines/blues-family/native.h"
+static bool _managed_return_pending;
+static void remember_held_controls();
+#endif
 static void sdl2_init() {
 	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
 	SDL_ShowCursor(SDL_DISABLE);
@@ -206,6 +211,9 @@ static void sdl2_set_screen_size(int w, int h, const char *caption, int scale, c
 	_sprites_cliprect.y = 0;
 	_sprites_cliprect.w = w;
 	_sprites_cliprect.h = h;
+#ifdef TITUS_MANAGED
+    SDL_PumpEvents();remember_held_controls();
+#endif
 }
 
 static bool sdl2_resize_viewport(int w, int h) {
@@ -964,6 +972,9 @@ static void handle_joystickbutton(int button, int pressed, struct input_t *input
 static int handle_event(const SDL_Event *ev, bool *paused) {
 	switch (ev->type) {
 	case SDL_QUIT:
+#ifdef TITUS_MANAGED
+        if(_pause_menu_enabled){_managed_return_pending=true;g_sys.input.menu=true;break;}
+#endif
 		g_sys.input.quit = true;
 		break;
 	case SDL_WINDOWEVENT:
@@ -1081,6 +1092,12 @@ static int handle_event(const SDL_Event *ev, bool *paused) {
 #include "sys_sdl2_saves.h"
 
 static void sdl2_process_events() {
+#ifdef TITUS_MANAGED
+    if(titus_runtime_poll()) {
+        if(_pause_menu_enabled){_managed_return_pending=true;g_sys.input.menu=true;}
+        else {titus_runtime_return_request(0);g_sys.input.quit=true;}
+    }
+#endif
 	bool paused = false;
 	while (1) {
 		SDL_Event ev;
@@ -1097,6 +1114,12 @@ static void sdl2_process_events() {
 		if (!paused || g_sys.input.quit || g_sys.input.menu) {
 			break;
 		}
+#ifdef TITUS_MANAGED
+        if(titus_runtime_poll()) {
+            if(_pause_menu_enabled){_managed_return_pending=true;g_sys.input.menu=true;}
+            else {titus_runtime_return_request(0);g_sys.input.quit=true;}
+        }
+#endif
 		SDL_Delay(100);
 	}
 }

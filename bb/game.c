@@ -2,6 +2,9 @@
 #include "game.h"
 #include "resource.h"
 #include "sys.h"
+#ifdef TITUS_MANAGED
+#include "engines/blues-family/native.h"
+#endif
 
 // palette colors 0..15
 static const uint16_t _colors_180_data[] = {
@@ -35,6 +38,9 @@ static void do_title_screen() {
 	const uint32_t timestamp = g_sys.get_timestamp() + 20 * 1000;
 	load_img(g_res.amiga_data ? "blues.lbm" : "pres.sqz", GAME_SCREEN_W, g_options.cga_colors ? 0 : -1);
 	g_sys.fade_in_palette();
+#ifdef TITUS_MANAGED
+	if(!g_sys.input.quit)titus_runtime_ready("title");
+#endif
 	do {
 		update_input();
 		if (g_sys.input.space || g_sys.input.quit) {

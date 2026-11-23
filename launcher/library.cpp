@@ -120,12 +120,27 @@ std::string Library::data_status() const {
     if(status=="needs_preparation")return "Preparación de recursos pendiente";
     return "Conjunto de archivos verificado";
 }
+bool Library::can_play() const {
+    auto i=selected();if(!blues_runtime_installed||!i||i->at("game_id")!="blues"||i->at("status")!="recognized"||!source_available()||source()->at("kind")!="directory")return false;
+    if(i->at("edition_id")=="amiga"){
+        for(const auto& other:catalog.at("installations"))if(other.at("game_id")=="blues"&&other.at("edition_id")=="dos"&&other.at("status")=="recognized"&&other.at("save_compatibility_id")==i->at("save_compatibility_id"))
+            for(const auto& l:other.at("locations"))if(l.at("kind")=="directory"&&l.at("location").at("platform")==platform()){
+                std::error_code e;if(fs::is_directory(fs::u8path(l.at("location").at("path").get<std::string>()),e))return true;
+            }
+        return false;
+    }
+    return true;
+}
 std::string Library::launch_reason() const {
     auto i=selected();if(!i)return "Añade una carpeta para empezar tu biblioteca.";
     if(!source_available())return "Vuelve a localizar esta instalación para recuperar sus archivos.";
     if(i->at("status")=="missing_engine")return "Esta edición Amiga todavía no tiene un motor compatible.";
     if(i->at("status")=="incomplete"||i->at("status")=="unverified")return "Revisa los archivos antes de iniciar este juego.";
     if(source()->at("kind")=="adf")return "Esta imagen de disco requiere una extracción compatible.";
+    if(i->at("game_id")=="blues"&&blues_runtime_installed){
+        if(!can_play())return "Esta edición Amiga necesita también la carpeta DOS para el nivel Concierto.";
+        return "Esc abre la pausa. Al salir del juego volverás a esta biblioteca.";
+    }
     return "El inicio de este juego se incorporará en una próxima entrega.";
 }
 void Library::persist() {
