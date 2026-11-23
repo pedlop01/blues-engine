@@ -49,6 +49,25 @@ music/effect volumes; operators and the original register stream are preserved.
 SDL2 and libmodplug are external build dependencies and retain their own
 licenses. The compiled SDL2 DLL and other build products are not committed.
 
+## Audited engines and tools for the expansion
+
+The expansion selects [OpenTitus](https://github.com/stople/OpenTitus) (Eirik
+Stople and contributors, GPL-3.0-or-later) for Fox DOS and
+[Olduvai](https://github.com/ksokolowski/olduvai) (Krzysztof Sokołowski,
+GPL-3.0-or-later source) for Prehistorik DOS. They have been tested externally;
+their sources, binaries and bundled game resources have not been imported.
+Olduvai's notices distinguish its source license from the GPL-3.0 combined
+binary because of xBRZ. Their dependency notices must be retained if integrated.
+
+[Deark](https://github.com/jsummers/deark), by Jason Summers (MIT-style license),
+was used externally to unpack the user's DIET-compressed executable for audit.
+[amitools](https://github.com/cnvogelg/amitools), by Christian Vogelgsang and
+contributors (GPL-2.0-or-later), was used externally for read-only ADF comparison.
+Neither is bundled. Our audit scripts contain no original game data or copies
+of these tools. Pinned revisions, preparation and distribution constraints are
+recorded in [the audit](docs/ENGINE_AUDIT.md) and
+[identification rules](docs/GAME_DETECTION_RULES.md).
+
 ## License information
 
 The inherited upstream snapshot does not include a top-level license file.

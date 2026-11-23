@@ -1,7 +1,7 @@
 # Titus Engine: plan de expansión
 
 Actualización: **23 de noviembre de 2026**.
-Estado: **expansión autorizada; inventario y primeras pruebas de arranque realizados; auditoría en curso**.
+Estado: **expansión autorizada; TH-01 completada; validación de motores TH-02 en curso**.
 Nombre de producto acordado: **Titus Engine** (`titus-engine`).
 
 ## Prioridades y punto de partida
@@ -24,6 +24,7 @@ Orden acordado el 23 de noviembre:
 Este orden sustituye la condición del borrador anterior que exigía cerrar 17 y 18
 antes de empezar. El inventario inicial está en [GAME_INVENTORY.md](GAME_INVENTORY.md).
 Resultados y límites de las pruebas: [ENGINE_AUDIT.md](ENGINE_AUDIT.md).
+Reglas acordadas de identificación: [GAME_DETECTION_RULES.md](GAME_DETECTION_RULES.md).
 
 Se conserva por ahora el repositorio, remoto y directorio `blues-engine`, junto
 con sus ejecutables y rutas de preferencias/guardado, para mantener la continuidad
@@ -41,9 +42,9 @@ que un motor pueda ejecutarla.
 |---|---|---|---|---|
 | The Blues Brothers | Nuestra extensión de cyxx/blues | Implementado y probado | Implementado; continúa la validación visual | Primer juego para integrar; conservar sus mejoras y datos actuales. |
 | Blues Brothers: Jukebox Adventure | Módulo `ja/` de cyxx/blues | Soportado por el proyecto base | Sin soporte verificado | Arranque/cierre DOS comprobados en Linux; pendientes partida, audio y Windows. |
-| Prehistorik 2 | Módulo `p2/` de cyxx/blues | Datos en `prehistorik2-dos/`; soportado por el proyecto base | `prehistorik2-amiga/` presente, título/edición por confirmar | Arranque/cierre DOS comprobados en Linux; investigar el conjunto Amiga antes de atribuirlo a una entrega. |
-| Titus the Fox | OpenTitus o un fork evaluado | Datos en `fox-dos/`; pendiente probar motor | `fox-amiga/` y `fox.adf` disponibles; motor pendiente de investigar | Objetivo DOS inicial; edición Amiga sujeta a viabilidad. |
-| Prehistorik 1 | Olduvai | Datos en `prehistorik-dos/`; verificar `PRE1.EXE` | `Prehistorik.adf` disponible; confirmar identificación del conjunto extraído | Objetivo DOS inicial; edición Amiga sujeta a viabilidad. |
+| Prehistorik 2 | Módulo `p2/` de cyxx/blues | Datos en `prehistorik2-dos/`; soportado por el proyecto base | Datos Amiga identificados como Prehistorik 1, no 2 | Arranque/cierre DOS comprobados en Linux; no hay datos de Prehistorik 2 Amiga identificados. |
+| Titus the Fox | OpenTitus, revisión fijada en auditoría | Datos en `fox-dos/`; arranque experimental sin audio | `fox-amiga/` y `fox.adf` idénticos; motor pendiente | Objetivo DOS inicial; edición Amiga sujeta a viabilidad. |
+| Prehistorik 1 | Olduvai | Variante DIET identificada; carga inicial de siete niveles tras preparación | `Prehistorik.adf` y `prehistorik2-amiga/` coinciden: Prehistorik 1 | Objetivo DOS inicial; edición Amiga sujeta a viabilidad. |
 | Moktar | OpenTitus | Declarado por OpenTitus | Sin soporte verificado | Posible ampliación posterior; fuera del mínimo inicial. |
 
 Fuentes consultadas: [cyxx/blues](https://github.com/cyxx/blues),
@@ -51,7 +52,7 @@ Fuentes consultadas: [cyxx/blues](https://github.com/cyxx/blues),
 [Olduvai](https://github.com/ksokolowski/olduvai). La información externa procede
 de sus repositorios/documentación; las afirmaciones de funcionamiento de esos
 proyectos deberán comprobarse con nuestros datos y compilaciones. La auditoría
-registrará los commits concretos y los forks elegidos antes de integrar código.
+registra las revisiones elegidas y sus límites antes de integrar código.
 
 La primera versión priorizará Windows x64 y mantendrá Linux/WSL como entorno de
 desarrollo y pruebas. Amiga se ofrecerá por juego cuando exista un adaptador
@@ -175,8 +176,8 @@ inventario no equivale a haber integrado o validado un nuevo juego.
 | ID | Tarea | Resultado y criterio de cierre | Depende de | Estado | Progreso |
 |---|---|---|---|---|---:|
 | TH-00 | Conservar el punto de recuperación | Código anterior publicado, árbol limpio, sin datos/binarios de usuario en Git y etiqueta `blues-baseline-2026-11-23` identificada. 17 sigue abierta y 18 queda pospuesta. | Arreglos actuales de Blues | Completada: corte en `dd07383` | 100 % |
-| TH-01 | Auditar datos y motores | Inventario con firmas, conjuntos/variantes admitidos, commits/forks, dependencias, licencias/créditos y funciones declaradas frente a verificadas. Resolver detección de `PRE1.EXE` y carpeta mixta de Prehistorik 2. | TH-00 | En curso: revisiones, dependencias, licencias y fallos de carga auditados; pendientes variantes DOS/Amiga | 75 % |
-| TH-02 | Validar motores originales | Compilar y probar Jukebox Adventure, Prehistorik 2, OpenTitus y Olduvai por separado con nuestros datos. Registrar arranque, controles, audio, recorrido y salida de referencia. | TH-01 | En curso: Jukebox/P2 arrancan y cierran; Fox solo ensayo sin audio; Olduvai rechaza nuestro EXE; faltan partidas/audio/Windows | 25 % |
+| TH-01 | Auditar datos y motores | Inventario con firmas, conjuntos/variantes admitidos, commits/forks, dependencias, licencias/créditos y funciones declaradas frente a verificadas. Resolver detección de `PRE1.EXE` y carpeta mixta de Prehistorik 2. | TH-00 | Completada: variantes identificadas, preparación DIET demostrada, reglas de detección y bases/licencias documentadas | 100 % |
+| TH-02 | Validar motores originales | Compilar y probar Jukebox Adventure, Prehistorik 2, OpenTitus y Olduvai por separado con nuestros datos. Registrar arranque, controles, audio, recorrido y salida de referencia. | TH-01 | En curso: Jukebox/P2 arrancan; Prehistorik 1 carga siete niveles tras DIET; Fox solo ensayo sin audio; faltan partidas/audio/Windows | 35 % |
 | TH-03 | Definir arquitectura y transición | Contrato de motores, capacidades, catálogo/partidas, rutas configurables y organización C/C++/SDL. Plan de nombres/binarios/repositorio de Titus Engine con compatibilidad de Blues. Elegir estrategia de ejecución. | TH-01, TH-02 | Sin iniciar | 0 % |
 | TH-04 | Implementar catálogo y detección | Añadir, volver a localizar y quitar instalaciones sin borrar datos. Reconocer conjuntos, variantes y ambigüedad de carpetas mixtas; separar fuente ADF y edición extraída. Catálogo persistente con versiones de esquema. | TH-03 | Sin iniciar | 0 % |
 | TH-05 | Crear biblioteca global | Menú principal para juegos instalados, ficha, selector de instalación/DOS/Amiga, estados claros, teclado/mando y preferencias de selección. Verificar ventana y pantalla completa. | TH-04 | Sin iniciar | 0 % |

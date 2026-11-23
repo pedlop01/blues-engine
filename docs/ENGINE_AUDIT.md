@@ -4,6 +4,11 @@ Fecha: **23 de noviembre de 2026**. Corresponde a TH-01 y TH-02 del
 [plan de expansión](TITUS_PLATFORM_PLAN.md). Datos examinados en
 [GAME_INVENTORY.md](GAME_INVENTORY.md).
 
+**TH-01 cerrada:** variantes identificadas, estrategia de preparación comprobada
+y bases/dependencias/licencias documentadas. [Reglas de identificación](GAME_DETECTION_RULES.md)
+y [resultados estructurados](audit/th01-results.json). La validación de partidas
+y audio sigue abierta en TH-02.
+
 ## Alcance comprobado
 
 Entorno: Linux AArch64, GCC, SDL2 **2.30.0**; SDL 1.2 mediante
@@ -17,11 +22,12 @@ sus fuentes o binarios al repositorio. No se modificaron los originales.
 | Nuestra base: Jukebox Adventure DOS | Arranque y cierre correctos tras corregir lectura de nombres de recursos. Probado con originales en mayúsculas y alias en minúsculas. | Partida, controles, audio, salida al futuro lanzador y compilación Windows multijuego. |
 | Nuestra base: Prehistorik 2 DOS | Arranque, imagen no uniforme y cierre solicitado: correctos con la carpeta mixta actual. | Partida, controles, audio y compilación Windows multijuego. |
 | OpenTitus: Fox DOS | Compila con ajustes temporales; ensayo sin audio: una presentación SDL y salida limpia al recibir `SDL_QUIT`. | Audio desde fuentes, portabilidad, entrar en partida y recorrido; todavía no es un motor integrado. |
-| Olduvai: Prehistorik 1 DOS | Compila; nuestros datos no cargan. El nombre alternativo permite llegar al cargador, que rechaza las tablas del EXE. | Identificar/adaptar la variante `PRE1.EXE` antes de probar jugabilidad. |
+| Olduvai: Prehistorik 1 DOS | Compila y carga los siete niveles tras desempaquetar nuestro EXE DIET: 30 fotogramas y captura por nivel. | Integrar la preparación del EXE en el adaptador; comprobar recorridos, controles y audio. |
 
 Los ensayos nativos usan vídeo/audio `dummy`: comprueban carga inicial,
 contenido dibujado y liberación normal de recursos. **No verifican sonido audible,
 jugabilidad ni fidelidad visual**. No se ha validado todavía otro juego Amiga.
+El ensayo de Prehistorik 1 comprueba carga inicial de niveles, no campañas completas.
 
 ## Revisiones, dependencias y procedencia
 
@@ -66,7 +72,7 @@ En una carpeta temporal se enlazaron los cuatro FILES y se creó el alias
 Nuestro EXE mide **77839 bytes**, SHA-256
 `b03ce6913d07a4c5b66dfc4843d185ffdff6561e9bf91f3333b096016690406f`.
 
-El error observado con el alias fue:
+El error inicial, antes del desempaquetado, fue:
 
 ```text
 game data: EXE tables not installed (read past end of executable)
@@ -76,8 +82,34 @@ game: could not load level data ...
 
 El proceso devuelve **0 incluso cuando no carga el nivel**: un adaptador debe
 comprobar el diagnóstico de carga, no solo el código de salida. El alias por sí
-solo no resuelve la compatibilidad. Falta determinar el formato/variante y si
-necesita desempaquetado; no se atribuye todavía a un compresor concreto.
+solo no resuelve la compatibilidad.
+
+La investigación posterior identifica **DIET EXE v1.02–1.20**. Se compiló
+[Deark](https://github.com/jsummers/deark/tree/e294a6e8348bd93f9a9305bb5f67d0042db4b791)
+en la revisión `e294a6e8348bd93f9a9305bb5f67d0042db4b791`; su
+[módulo DIET](https://github.com/jsummers/deark/blob/e294a6e8348bd93f9a9305bb5f67d0042db4b791/modules/diet.c)
+reconoce el stub, confirma CRC informado/calculado **`2f77`** y genera un MZ de
+**164166 bytes**, SHA-256
+`5cea262f9610657af8b55c10b277ec30ffe99df35294d5f8c9f520a30e029c96`.
+
+Con el MZ resultante como `HISTORIK.EXE` en una carpeta privada, Olduvai carga
+los siete niveles, ejecuta el límite de 30 fotogramas solicitado y genera una
+captura por nivel. Se revisó visualmente la captura del nivel 1. No se distribuye
+el MZ ni se reescriben los originales. Su firma no está en la tabla de builds de
+Olduvai: se usa el layout canónico y el adaptador deberá reconocer explícitamente
+esta variante, sin dar por buenos otros ejecutables desconocidos.
+
+### Identificación de los conjuntos Amiga
+
+`prehistorik2-amiga/main` contiene el título **PREHISTORIK** y sus créditos.
+La comparación recursiva de archivos contra `Prehistorik.adf`, mediante amitools
+`521ce0525eb602e40df1a0cc894e76db84ce3ce2`, confirma **71 coincidencias byte a byte**,
+sin archivos ausentes o diferentes. El conjunto es **Prehistorik 1 Amiga**;
+se conserva su carpeta actual y se identificará por datos, no por nombre.
+
+La misma comprobación entre `fox-amiga` y `fox.adf` confirma **89 coincidencias**,
+incluidos subdirectorios. Ambos ADF mantienen su SHA-256. Estas comprobaciones
+identifican los datos y su fuente; todavía no hay motor Fox/Prehistorik Amiga.
 
 ### OpenTitus
 
@@ -130,6 +162,37 @@ XDG_CONFIG_HOME=/tmp/titus-engine-audit/xdg SDL_VIDEODRIVER=dummy SDL_AUDIODRIVE
   --display-mode cpu --play-frames 30 --sound-card off
 ```
 
+Ese comando **reproduce el fallo del archivo aún comprimido**. La comprobación
+actual, con descompresión, firma de salida, CRC y carga de los siete niveles es:
+
+```sh
+python3 tools/check_pre1_variant.py ../orig-games/prehistorik-dos \
+  --deark /tmp/titus-engine-audit/deark/deark \
+  --olduvai /tmp/titus-engine-audit/olduvai-build/olduvai
+```
+
+Requiere Deark compilado en la revisión fijada arriba (`make -j4` en su checkout).
+El script acepta solo el perfil conocido y los cuatro FILES verificados. Todo
+lo generado se elimina al salir; compara las firmas originales antes y después.
+También se puede usar `../orig-games/prehistorik2-dos`, que contiene ese mismo
+conjunto, o excluir `--olduvai` para comprobar solamente la preparación DIET.
+
+### Fuentes Amiga
+
+Con el checkout externo de amitools en la revisión indicada:
+
+```sh
+python3 tools/compare_amiga_source.py ../orig-games/Prehistorik.adf \
+  ../orig-games/prehistorik2-amiga --amitools ../tools/amitools
+python3 tools/compare_amiga_source.py ../orig-games/fox.adf \
+  ../orig-games/fox-amiga --amitools ../tools/amitools
+```
+
+Comparación recursiva de contenido con ADF abierto en modo de solo lectura,
+sin extraer recursos a disco; salida JSON y código distinto de cero si hay
+archivos diferentes/ausentes o ninguna coincidencia. No se exige que todos los
+archivos adicionales de una imagen estén presentes en una extracción parcial.
+
 ### OpenTitus
 
 El ensayo fue exploratorio: fuentes y cambios temporales permanecen en
@@ -144,8 +207,9 @@ convertirlo en un build mantenible con sonido y recorrido real.
 
 ## Siguiente paso
 
-Completar TH-01 con identificación de las variantes pendientes; continuar TH-02
-con partidas de referencia y audio. Resolver el EXE de Prehistorik 1 y el build
-completo de Fox antes de dar por admitidos esos juegos. TH-03 concretará el
+TH-01 está completada. Continuar TH-02 con partidas de referencia, controles,
+audio y Windows, incluido el build completo de Fox. TH-09 incorporará la
+preparación DIET demostrada, que hoy es una herramienta de auditoría externa.
+TH-03 concretará el
 contrato del lanzador, conservando estos motores como procesos separados en la
 primera etapa y las capacidades exclusivas de Blues dentro de su adaptador.

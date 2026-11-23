@@ -3,7 +3,8 @@
 Inspección de solo lectura: **23 de noviembre de 2026**.
 Raíz local: `../orig-games/`, externa al repositorio. Este informe conserva
 nombres, tamaños y firmas; no incluye los recursos de los juegos.
-Primera auditoría y pruebas de ejecución: [ENGINE_AUDIT.md](ENGINE_AUDIT.md).
+Auditoría TH-01 completada: [ENGINE_AUDIT.md](ENGINE_AUDIT.md).
+Reglas acordadas: [GAME_DETECTION_RULES.md](GAME_DETECTION_RULES.md).
 
 ## Fuentes encontradas
 
@@ -13,13 +14,13 @@ Primera auditoría y pruebas de ejecución: [ENGINE_AUDIT.md](ENGINE_AUDIT.md).
 | `blues-amiga/` | Blues Brothers Amiga | 58 | Mapas, máscaras, sprites y audio presentes; datos utilizados durante el desarrollo. | Continúa la campaña manual 17. |
 | `blues2-dos/` | Jukebox Adventure DOS | 32 | `JARDIN.EAT` de 24876 bytes coincide con la identificación del motor base. | Arranque/cierre Linux probados; faltan partida, audio y Windows. |
 | `prehistorik2-dos/` | Prehistorik 2 DOS y copia de recursos de Prehistorik 1 | 63 | `MOTIF.SQZ` de 9396 bytes coincide con la identificación del motor base; también están los cuatro `FILES*` y `PRE1.EXE`. | Distinguir dos instalaciones lógicas sin duplicar ni mezclar datos. |
-| `fox-dos/` | Titus the Fox DOS | 27 | `FOX.COM`, `SPREXP.SQZ` y `LEVEL*.SQZ` presentes; conjunto candidato para OpenTitus. | Confirmar versión, archivos requeridos, audio y funcionamiento. |
-| `prehistorik-dos/` | Prehistorik 1 DOS | 10 | Presentes los cuatro archivos `FILESA/B.CUR/VGA` y `PRE1.EXE`. | Olduvai compila, pero rechaza tablas de este EXE incluso con alias `HISTORIK.EXE`; adaptar variante. |
-| `fox-amiga/` | Titus the Fox Amiga, candidato | 89 | Conjunto extraído con `main`, `fox`, `LEVEL*.TBL`, `BRIK*.BIN` y arranque. | Identificar versión y motor; validar extracción/recursos y funcionamiento. |
-| `prehistorik2-amiga/` | Prehistorik Amiga; primera/segunda entrega por confirmar | 71 | Conjunto extraído con `main`, `H1.MAT`–`H4.MAT`, `L*SPR.MAT` y `LEVEL*.DUR`. | Identificar el título por contenido; no asumir Prehistorik 2 por el nombre de carpeta. |
+| `fox-dos/` | Titus the Fox DOS | 27 | `FOX.COM`, `SPREXP.SQZ` y `LEVEL*.SQZ` presentes; perfil de datos conocido para OpenTitus; revisión comercial exacta no atribuida. | Validar audio, controles, recorrido y Windows en TH-02. |
+| `prehistorik-dos/` | Prehistorik 1 DOS | 10 | Presentes los cuatro archivos `FILESA/B.CUR/VGA` y `PRE1.EXE` DIET v1.02–1.20; CRC y descompresión verificados; Olduvai carga siete niveles. | Integrar preparación privada en TH-09 y validar partidas/audio en TH-02. |
+| `fox-amiga/` | Titus the Fox Amiga | 89 | Los 89 archivos coinciden byte a byte con `fox.adf`, incluidos arranque/subdirectorios; revisión comercial exacta no atribuida. | Investigar motor Amiga en TH-13. |
+| `prehistorik2-amiga/` | Prehistorik 1 Amiga, identificado por contenido | 71 | Título/créditos de Prehistorik 1 y 71 archivos idénticos a `Prehistorik.adf`; conservar el nombre de carpeta actual. | Investigar motor Amiga en TH-13; no identificar como Prehistorik 2. |
 | `blues.adf` | Fuente Amiga de Blues Brothers | 901120 bytes | Cabecera `DOS\0`; edición ya disponible extraída en `blues-amiga/`. | Conservar como fuente; evitar registro duplicado por verla también como disco. |
-| `Prehistorik.adf` | Fuente candidata de Prehistorik Amiga | 901120 bytes | Cabecera `DOS\0`. | Confirmar título, edición y relación con el conjunto extraído. |
-| `fox.adf` | Fuente candidata de Titus the Fox Amiga | 901120 bytes | Cabecera `DOS\0`; apareció junto con la carpeta extraída durante la inspección. | Confirmar versión y correspondencia con `fox-amiga/`. |
+| `Prehistorik.adf` | Fuente de Prehistorik 1 Amiga | 901120 bytes | Cabecera `DOS\0`; 71 archivos coinciden con `prehistorik2-amiga/`. | Registrar la imagen y su extracción como fuentes del mismo perfil. |
+| `fox.adf` | Fuente de Titus the Fox Amiga | 901120 bytes | Cabecera `DOS\0`; los 89 archivos de `fox-amiga/` coinciden byte a byte. | Registrar imagen y extracción como fuentes del mismo perfil. |
 
 Los nombres de carpetas son pistas aportadas por la instalación local; los nuevos
 juegos no se declaran jugables solo por encontrar esos nombres o una firma de
@@ -37,9 +38,9 @@ entrada. La validación de un motor exige cargar recursos y comprobar el juego.
   lógicas; evitar elegir un juego solo por el primer ejecutable encontrado.
 - Preservar el nombre `PRE1.EXE`. Si el motor necesita otro nombre, investigar
   primero identificación por contenido y un adaptador; no renombrar originales.
-- El nombre `prehistorik2-amiga/` no sustituye la identificación del título y la
-  edición a partir de sus archivos. No registrar a la vez Prehistorik 1 y 2 sobre
-  ese conjunto sin una comprobación específica.
+- El conjunto `prehistorik2-amiga/` se identifica como **Prehistorik 1** por su
+  ejecutable y correspondencia byte a byte con el ADF. No registrar Prehistorik 2
+  sobre esos datos, ni renombrar la carpeta para que funcione la detección.
 - Importar una imagen ADF será una capacidad específica y de solo lectura. Tener
   un ADF no proporciona automáticamente un motor Amiga para ese juego.
 - Una imagen y su carpeta extraída pueden representar la misma edición. Su
@@ -62,9 +63,9 @@ entrada. La validación de un motor exige cargar recursos y comprobar el juego.
   contempla archivos originales DOS o `PREH.SQZ`, con distinta entrada para cada
   formato. Nuestro conjunto debe verificarse por contenido antes de adaptarlo.
 
-Estos commits identifican candidatos para la auditoría TH-01; no significan que
-ya se hayan integrado o elegido definitivamente esos motores. No se han importado
-sus fuentes en esta revisión.
+Estos commits fijan las bases elegidas para la integración DOS tras TH-01;
+no significan que ya se hayan integrado o validado completamente. No se han
+importado sus fuentes en esta revisión.
 
 ## Firmas de referencia
 
@@ -96,3 +97,9 @@ este inventario, no una lista exhaustiva de versiones admitidas por el detector.
 | `Prehistorik.adf` | 901120 | `20dfe5534106ab4bd14eca3077cd3cbb6a3ca2453dd9b6139dac3f9f60a1c3a2` |
 | `blues.adf` | 901120 | `2fba6446987049f69b0d786176fc230d76f080360abf9258a030b0298e81c1ea` |
 | `fox.adf` | 901120 | `b90d055d9c710ac1aae0043db037387e233a555a1cefdfcb30c6bb29106f2aaa` |
+
+La preparación DIET genera temporalmente un MZ de **164166 bytes**, SHA-256
+`5cea262f9610657af8b55c10b277ec30ffe99df35294d5f8c9f520a30e029c96`.
+No se incluye en Git ni se sustituye `PRE1.EXE`. `TITRE1.PC1` de Prehistorik
+Amiga coincide con el ADF: SHA-256
+`0d7c742c16af80ba3f9bd6550291018e136fb42ea61e27113706969ffed1683d`.

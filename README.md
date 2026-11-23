@@ -20,7 +20,8 @@ this transition.
 [Plan y seguimiento](PLAN.md) ·
 [Titus Engine: expansion plan](docs/TITUS_PLATFORM_PLAN.md) ·
 [Local game inventory](docs/GAME_INVENTORY.md) ·
-[Engine audit and startup checks](docs/ENGINE_AUDIT.md)
+[Engine audit and startup checks](docs/ENGINE_AUDIT.md) ·
+[Game detection rules](docs/GAME_DETECTION_RULES.md)
 
 ## What this extension adds
 
