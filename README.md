@@ -1,5 +1,5 @@
 
-# Blues Engine — extended edition
+# Titus Engine — expanding Blues Engine
 
 **An extension of [cyxx/blues](https://github.com/cyxx/blues), the engine
 reimplementation by [Gregory Montoir (cyxx)](https://github.com/cyxx) and its
@@ -7,11 +7,19 @@ contributors.** The original engine and reverse-engineering work are theirs;
 this repository preserves the upstream history and adds a new set of features
 focused on the first **Blues Brothers** game.
 
+**Titus Engine expansion has started with an inventory and engine audit.** The
+current Windows executable still runs Blues Brothers; the global library and new
+engine adapters are tracked in the expansion plan. Blues playtesting continues
+in parallel, and final Windows packaging follows the validated expansion. The
+existing repository, executable names and save paths remain in place during
+this transition.
+
 [Original project](https://github.com/cyxx/blues) ·
 [This extension](https://github.com/pedlop01/blues-engine) ·
 [Credits and lineage](CREDITS.md) ·
 [Plan y seguimiento](PLAN.md) ·
-[Plataforma Titus: propuesta futura](docs/TITUS_PLATFORM_PLAN.md)
+[Titus Engine: expansion plan](docs/TITUS_PLATFORM_PLAN.md) ·
+[Local game inventory](docs/GAME_INVENTORY.md)
 
 ## What this extension adds
 
@@ -42,7 +50,8 @@ adjustment has been confirmed in gameplay.
 
 ## Ideas and roadmap
 
-The remaining work covers the expanded regression campaign and Windows packaging.
+Blues regression testing continues alongside the Titus Engine expansion. Final
+Windows packaging is scheduled after the initial multi-engine catalog is validated.
 
 **These are planned features, not features already available.** Progress,
 dependencies and completion criteria are tracked in [PLAN.md](PLAN.md).

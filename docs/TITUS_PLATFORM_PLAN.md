@@ -1,26 +1,34 @@
-# Plataforma de juegos Titus: plan inicial
+# Titus Engine: plan de expansión
 
-Fecha: **22 de noviembre de 2026**.
+Actualización: **23 de noviembre de 2026**.
+Estado: **expansión autorizada; inventario realizado y auditoría inicial en curso**.
+Nombre de producto acordado: **Titus Engine** (`titus-engine`).
 
-Estado: **propuesta documentada; implementación sin iniciar**.
-Nombre de trabajo: **Plataforma Titus**. Nombre definitivo pendiente.
+## Prioridades y punto de partida
 
-## Objetivo y condición de inicio
+Crear una aplicación al estilo de ScummVM para reunir los juegos instalados de
+Titus bajo una biblioteca global, conservando la lógica y la presentación propias
+de cada motor. El usuario autoriza iniciar la expansión mientras prueba Blues
+Brothers y comunica errores de la tarea 17.
 
-Crear una aplicación al estilo de ScummVM para reunir juegos de Titus bajo una
-biblioteca y un menú principal comunes. Cada juego conservará su motor, lógica,
-recursos originales y presentación propia. La aplicación permitirá registrar
-carpetas de juegos, detectar las ediciones disponibles y elegir cuál ejecutar.
+Orden acordado el 23 de noviembre:
 
-**Primero se terminará blues-engine:** cerrar y validar las tareas 17 y 18 de
-[PLAN.md](../PLAN.md), incluida la campaña de jugabilidad y la distribución
-Windows probada desde una carpeta nueva. Conservar una versión estable y
-reproducible antes de iniciar esta ampliación.
+1. Mantener los arreglos actuales publicados y un punto recuperable anterior a la
+   expansión: commit `dd07383` y etiqueta `blues-baseline-2026-11-23`.
+2. Avanzar con inventario, auditoría de motores y desarrollo por etapas de Titus
+   Engine. La tarea 17 sigue abierta y sus errores se corregirán en paralelo.
+3. Posponer la tarea 18 hasta después de la primera expansión validada. Su paquete
+   final será el de Titus Engine con el catálogo inicial, no un lanzador exclusivo
+   de Blues Brothers. Cerrar 17 será también requisito de esa distribución.
 
-Este documento prepara el trabajo futuro. Su creación no inicia integraciones,
-migraciones, cambios de nombre, reorganización del repositorio ni nuevas tareas
-de programación. Las tareas actuales de blues-engine conservan su numeración,
-estado y prioridad.
+Este orden sustituye la condición del borrador anterior que exigía cerrar 17 y 18
+antes de empezar. El inventario inicial está en [GAME_INVENTORY.md](GAME_INVENTORY.md).
+
+Se conserva por ahora el repositorio, remoto y directorio `blues-engine`, junto
+con sus ejecutables y rutas de preferencias/guardado, para mantener la continuidad
+de las pruebas. El cambio de producto, binario y organización interna se hará en
+una tarea explícita; no se moverán originales ni se romperán partidas existentes.
+La etiqueta de recuperación no implica que la campaña 17 haya terminado.
 
 ## Catálogo candidato y versiones
 
@@ -32,9 +40,9 @@ que un motor pueda ejecutarla.
 |---|---|---|---|---|
 | The Blues Brothers | Nuestra extensión de cyxx/blues | Implementado y probado | Implementado; continúa la validación visual | Primer juego para integrar; conservar sus mejoras y datos actuales. |
 | Blues Brothers: Jukebox Adventure | Módulo `ja/` de cyxx/blues | Soportado por el proyecto base | Sin soporte verificado | Fuentes conservadas; pendiente probar ejecución y preparar Windows. |
-| Prehistorik 2 | Módulo `p2/` de cyxx/blues | Soportado por el proyecto base | Sin soporte verificado | Fuentes conservadas; pendiente probar ejecución y preparar Windows. |
-| Titus the Fox | OpenTitus o un fork evaluado | Declarado por OpenTitus | Sin soporte verificado | Candidato; todavía no compilado ni validado por nosotros. |
-| Prehistorik 1 | Olduvai | Declarado por Olduvai | Sin soporte verificado | Candidato; todavía no compilado ni validado por nosotros. |
+| Prehistorik 2 | Módulo `p2/` de cyxx/blues | Datos en `prehistorik2-dos/`; soportado por el proyecto base | `prehistorik2-amiga/` presente, título/edición por confirmar | Probar DOS; investigar el conjunto Amiga antes de atribuirlo a una entrega. |
+| Titus the Fox | OpenTitus o un fork evaluado | Datos en `fox-dos/`; pendiente probar motor | `fox-amiga/` y `fox.adf` disponibles; motor pendiente de investigar | Objetivo DOS inicial; edición Amiga sujeta a viabilidad. |
+| Prehistorik 1 | Olduvai | Datos en `prehistorik-dos/`; verificar `PRE1.EXE` | `Prehistorik.adf` disponible; confirmar identificación del conjunto extraído | Objetivo DOS inicial; edición Amiga sujeta a viabilidad. |
 | Moktar | OpenTitus | Declarado por OpenTitus | Sin soporte verificado | Posible ampliación posterior; fuera del mínimo inicial. |
 
 Fuentes consultadas: [cyxx/blues](https://github.com/cyxx/blues),
@@ -121,7 +129,7 @@ inexistente ni se mostrarán controles que el motor ignore.
 
 ### Estrategia de integración
 
-**Propuesta pendiente de auditoría:** construir primero la biblioteca con motores
+**Propuesta a confirmar en TH-03:** construir primero la biblioteca con motores
 ejecutables separados y un protocolo de arranque/salida sencillo. Esto permite
 comprobar cada juego en su motor original y limita los conflictos entre versiones
 de SDL, C/C++, bucles de eventos, audio y variables globales.
@@ -134,8 +142,9 @@ licencias y el cierre de cada motor. Los ejecutables separados podrán manteners
 para los motores cuya integración completa no aporte una ventaja suficiente.
 
 Conservar los motores de origen identificables, sus historiales/revisiones y las
-modificaciones propias separadas. Decidir repositorio, estructura y nombre después
-de la auditoría, manteniendo blues-engine estable como referencia de regresiones.
+modificaciones propias separadas. Usar Titus Engine como nombre de producto y
+decidir el cambio de binarios, estructura y repositorio en TH-03, conservando el punto de recuperación de Blues
+como referencia de regresiones.
 
 ## Preferencias, partidas y recursos
 
@@ -158,37 +167,52 @@ de la auditoría, manteniendo blues-engine estable como referencia de regresione
 
 ## Hitos y seguimiento inicial
 
-Los identificadores `TH-*` pertenecen a esta propuesta. El porcentaje mide
-implementación comprobada, no el tiempo invertido en escribir este plan. Todas
-las tareas nuevas permanecen **sin iniciar** hasta cerrar blues-engine.
+Los identificadores `TH-*` amplían el seguimiento sin renumerar las tareas
+01–18 de [PLAN.md](../PLAN.md). El porcentaje mide trabajo comprobado: el
+inventario no equivale a haber integrado o validado un nuevo juego.
 
 | ID | Tarea | Resultado y criterio de cierre | Depende de | Estado | Progreso |
 |---|---|---|---|---|---:|
-| TH-00 | Cerrar blues-engine | Tareas 17 y 18 cerradas, ejecutable/distribución Windows validados y versión estable identificada. | PLAN.md | Bloque previo; trabajo actual | — |
-| TH-01 | Auditar motores y ediciones | Registrar commits, forks, licencias/créditos, dependencias, formatos de datos y funciones declaradas frente a verificadas. Elegir bases y orden definitivo. | TH-00 | Sin iniciar | 0 % |
-| TH-02 | Establecer pruebas originales | Compilar y jugar Jukebox Adventure, Prehistorik 2, OpenTitus y Olduvai por separado con datos originales. Registrar fallos y recorrido de referencia. | TH-01 | Sin iniciar | 0 % |
-| TH-03 | Definir contrato y almacenamiento | Acordar identidad de instalaciones, capacidades, inicio/salida y aislamiento de preferencias/partidas. Decidir procesos separados e integración posterior. | TH-01, TH-02 | Sin iniciar | 0 % |
-| TH-04 | Implementar catálogo y detección | Añadir, localizar de nuevo y quitar instalaciones sin borrar datos; distinguir ediciones y rechazar carpetas incompletas o ambiguas. | TH-03 | Sin iniciar | 0 % |
-| TH-05 | Crear biblioteca global | Menú con teclado/mando, ficha de juego, selección de instalación/edición y estados claros; probar distintas ventanas y pantalla completa. | TH-04 | Sin iniciar | 0 % |
-| TH-06 | Integrar Blues Brothers | Arrancar DOS/Amiga desde biblioteca, conservar mejoras, saves y preferencias, y volver al menú sin entradas residuales ni audio activo. | TH-05 | Sin iniciar | 0 % |
-| TH-07 | Incorporar juegos del motor base | Jukebox Adventure y Prehistorik 2 ejecutables desde Windows/biblioteca; comportamiento y datos separados de Blues Brothers. | TH-02, TH-06 | Sin iniciar | 0 % |
-| TH-08 | Incorporar Titus the Fox | Adaptador OpenTitus con edición DOS detectada, arranque, controles, cierre y retorno comprobados. Moktar queda como ampliación opcional. | TH-02, TH-06 | Sin iniciar | 0 % |
-| TH-09 | Incorporar Prehistorik 1 | Adaptador Olduvai con datos DOS detectados, arranque, controles, cierre y retorno comprobados. | TH-02, TH-06 | Sin iniciar | 0 % |
-| TH-10 | Unificar opciones y catálogo de partidas | Preferencias globales/particulares, capacidades por motor y partidas correctamente asociadas; migración de Blues Brothers comprobada. | TH-07, TH-08, TH-09 | Sin iniciar | 0 % |
-| TH-11 | Evaluar integración en proceso | Piloto con un motor; comprobar ciclo SDL/audio/vídeo y comparar con la ejecución separada. Integrar solo los adaptadores aprobados por la auditoría técnica. | TH-03, TH-10 | Sin iniciar | 0 % |
-| TH-12 | Validar y distribuir | Matriz por juego/edición, regresiones de Blues Brothers y paquete Windows probado desde cero; manual y créditos de todos los motores. | TH-10; TH-11 si entra en esa entrega | Sin iniciar | 0 % |
+| TH-00 | Conservar el punto de recuperación | Código anterior publicado, árbol limpio, sin datos/binarios de usuario en Git y etiqueta `blues-baseline-2026-11-23` identificada. 17 sigue abierta y 18 queda pospuesta. | Arreglos actuales de Blues | Completada: corte en `dd07383` | 100 % |
+| TH-01 | Auditar datos y motores | Inventario con firmas, conjuntos/variantes admitidos, commits/forks, dependencias, licencias/créditos y funciones declaradas frente a verificadas. Resolver detección de `PRE1.EXE` y carpeta mixta de Prehistorik 2. | TH-00 | En curso: inventario y bases candidatas identificados; falta auditoría de código y compatibilidad | 25 % |
+| TH-02 | Validar motores originales | Compilar y probar Jukebox Adventure, Prehistorik 2, OpenTitus y Olduvai por separado con nuestros datos. Registrar arranque, controles, audio, recorrido y salida de referencia. | TH-01 | Sin iniciar | 0 % |
+| TH-03 | Definir arquitectura y transición | Contrato de motores, capacidades, catálogo/partidas, rutas configurables y organización C/C++/SDL. Plan de nombres/binarios/repositorio de Titus Engine con compatibilidad de Blues. Elegir estrategia de ejecución. | TH-01, TH-02 | Sin iniciar | 0 % |
+| TH-04 | Implementar catálogo y detección | Añadir, volver a localizar y quitar instalaciones sin borrar datos. Reconocer conjuntos, variantes y ambigüedad de carpetas mixtas; separar fuente ADF y edición extraída. Catálogo persistente con versiones de esquema. | TH-03 | Sin iniciar | 0 % |
+| TH-05 | Crear biblioteca global | Menú principal para juegos instalados, ficha, selector de instalación/DOS/Amiga, estados claros, teclado/mando y preferencias de selección. Verificar ventana y pantalla completa. | TH-04 | Sin iniciar | 0 % |
+| TH-06 | Integrar Blues Brothers | Arrancar DOS/Amiga desde biblioteca, conservar controles, HUD, ayudas, cámara, zoom, slots/miniaturas y rebobinado. Volver a biblioteca limpiamente y preservar las partidas actuales. | TH-05 | Sin iniciar | 0 % |
+| TH-07 | Incorporar motores del proyecto base | Jukebox Adventure y Prehistorik 2 desde Windows/biblioteca, con datos y preferencias separados. Comprobar que las opciones no implementadas no se anuncien como disponibles. | TH-02, TH-06 | Sin iniciar | 0 % |
+| TH-08 | Incorporar Titus the Fox DOS | Adaptador OpenTitus con nuestros archivos, controles/audio comprobados, configuración externa al original, cierre y retorno. Mantener créditos y revisión del motor de origen. | TH-02, TH-06 | Sin iniciar | 0 % |
+| TH-09 | Incorporar Prehistorik 1 DOS | Adaptador Olduvai con identificación del conjunto `FILES*`/`PRE1.EXE` por contenido, sin renombrar originales. Arranque, controles, audio, cierre y retorno comprobados. | TH-02, TH-06 | Sin iniciar | 0 % |
+| TH-10 | Unificar ajustes y partidas | Valores globales y particulares por juego/edición; capacidades reales, volúmenes, mandos y catálogo de partidas. Migración reversible de Blues, rechazo de saves ajenos y conservación de formatos por motor. | TH-07, TH-08, TH-09 | Sin iniciar | 0 % |
+| TH-11 | Evaluar integración en proceso | Piloto con un motor; propiedad y ciclo de SDL/audio/vídeo, errores y rendimiento comparados con procesos separados. Registrar qué adaptadores se integran y cuáles permanecen aislados. | TH-03, TH-10 | Sin iniciar | 0 % |
+| TH-12 | Validar la primera expansión | Matriz por juego/edición, arranque/salida repetidos, aislamiento de datos/ajustes, fallos recuperables, regresiones de Blues y documentación del catálogo realmente soportado. Habilita la tarea 18 tras cerrar también 17. | TH-10; decisión TH-11 | Sin iniciar | 0 % |
+| TH-13 | Investigar datos Amiga adicionales | Examinar imágenes y carpetas Amiga extraídas, identificar Prehistorik 1/2, formato de disco y recursos sin modificarlos. Reutilizar herramientas disponibles si son aplicables; identificar motores/código o trabajo de ingeniería inversa y entregar viabilidad por juego. | TH-01 | Sin iniciar | 0 % |
+| TH-14 | Añadir Titus the Fox Amiga | Si TH-13 confirma una vía viable, implementar su adaptador y verificar gráficos, física, niveles, audio y final. Registrar la edición en el selector tras validarla. | TH-13, TH-08 | Pendiente de viabilidad | 0 % |
+| TH-15 | Añadir Prehistorik 1 Amiga | Si TH-13 confirma una vía viable, implementar su adaptador y verificar gráficos, física, niveles, audio y final. Registrar la edición en el selector tras validarla. | TH-13, TH-09 | Pendiente de viabilidad | 0 % |
+| TH-16 | Añadir Prehistorik 2 Amiga si se confirma el conjunto | Tras identificar los recursos y la vía de motor, implementar el adaptador y verificar gráficos, física, niveles, audio y final. No confundirlo con Prehistorik 1 ni asumir compatibilidad del motor DOS. | TH-13, TH-07 | Pendiente de identificación/viabilidad | 0 % |
+
+La disponibilidad de ADF no permite dar TH-14/TH-15/TH-16 por implementadas. La primera
+expansión tiene como mínimo los cinco juegos DOS y Blues Brothers Amiga. Las
+ediciones Amiga adicionales tienen seguimiento propio y no bloquean esa primera
+entrega si la investigación determina que requieren un port independiente.
+
+La tarea **18** se mantiene en el plan principal: preparar después el paquete
+Windows de Titus Engine, con ejecutables/dependencias, lanzador, instrucciones,
+catálogo soportado y prueba desde una carpeta nueva. Evitar duplicarla en TH-12.
 
 ### Entregas propuestas
 
 1. **Primera entrega:** biblioteca y Blues Brothers DOS/Amiga; importar sus
-   instalaciones actuales y regresar al menú conservando la versión estable.
+   instalaciones actuales y regresar al menú conservando la versión de referencia.
 2. **Segunda entrega:** Jukebox Adventure y Prehistorik 2, sujetos al resultado de
    sus pruebas originales. No exigir todas las mejoras nuevas para incorporarlos.
 3. **Tercera entrega:** Titus the Fox y Prehistorik 1. Su orden podrá cambiar si la
    auditoría encuentra una base más sencilla o un bloqueo en alguno de ellos.
-4. **Evolución posterior:** integración más profunda de servicios, mejoras por
-   motor, otras ediciones y Moktar. Cualquier port Amiga adicional tendrá su
-   propio análisis y plan, además de recursos originales para verificarlo.
+4. **Ediciones Amiga adicionales:** investigar las imágenes y carpetas extraídas disponibles mediante
+   TH-13 y, cuando sea viable, incorporar Fox y las ediciones de Prehistorik
+   identificadas mediante TH-14/TH-15/TH-16.
+5. **Distribución:** tarea 18, después de la primera expansión validada y el cierre
+   de 17. Otras mejoras por motor y Moktar podrán plantearse en entregas posteriores.
 
 No se asignan fechas ni estimaciones de esfuerzo hasta completar TH-01 y TH-02.
 
@@ -205,14 +229,16 @@ No se asignan fechas ni estimaciones de esfuerzo hasta completar TH-01 y TH-02.
 | Rendimiento | Fluidez y latencia, memoria estable tras varias sesiones y ausencia de recursos o hilos de audio pendientes al volver al menú. |
 | Distribución | Windows limpio con dependencias completas, datos externos, preferencias por usuario, versiones identificadas y documentación de procedencia. |
 
-## Decisiones abiertas para el inicio futuro
+## Decisiones de la auditoría en curso
 
-- Nombre e identidad visual de la aplicación y ubicación/repositorio definitivos.
+- Identidad visual y transición de ejecutables/directorio/remoto al nombre ya
+  elegido `titus-engine`, conservando historial, créditos y rutas anteriores.
 - Motores/forks y commits seleccionados tras probarlos; no asumir equivalencia
   entre dos forks por compartir nombre.
 - Diseño visual final de la biblioteca y origen de sus imágenes opcionales.
 - Qué adaptadores merece la pena integrar en proceso y cuáles seguirán separados.
 - Qué mejoras adicionales recibirá cada juego después de asegurar su fidelidad.
 
-Ninguna de estas decisiones bloquea terminar blues-engine. El siguiente paso
-actual sigue siendo su validación y distribución, según [PLAN.md](../PLAN.md).
+Siguiente trabajo de expansión: completar TH-01 y preparar TH-02 con el inventario
+real. En paralelo, atender los errores que el usuario encuentre en la tarea 17.
+La distribución 18 se retoma después de la primera expansión validada.

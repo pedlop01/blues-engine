@@ -5,17 +5,20 @@
 Este documento recoge el plan acordado y su estado real. Los porcentajes se
 refieren a cada tarea; no representan una estimación del tiempo restante.
 
-La [propuesta de plataforma Titus](docs/TITUS_PLATFORM_PLAN.md) prepara una futura
-biblioteca de juegos y motores con selector de edición. Su implementación queda
-aplazada hasta cerrar las tareas 17 y 18 de este plan; no cambia el trabajo actual.
+La expansión a **Titus Engine** queda autorizada mientras el usuario continúa
+las pruebas de la tarea 17. La tarea 18 se pospone hasta después de la primera
+expansión validada. El detalle y seguimiento de las tareas TH-00–TH-16 está en el
+[plan de Titus Engine](docs/TITUS_PLATFORM_PLAN.md), y los datos disponibles en el
+[inventario de juegos](docs/GAME_INVENTORY.md).
 
 ## Estado general
 
 - Tareas completadas: **16 de 18**.
 - Completadas: **01–16**.
-- En curso: **17**. Pendiente: **18**.
+- Blues: **17 en curso** con las pruebas del usuario; **18 pospuesta** hasta la expansión.
+- Titus Engine: **TH-00 completada**, **TH-01 en curso (25 %)**; demás tareas pendientes.
 - Corrección de escaleras validada por el usuario.
-- Las demás tareas están pendientes de implementación.
+- El punto recuperable previo a la expansión es `dd07383`, etiqueta `blues-baseline-2026-11-23`.
 
 ## Base disponible
 
@@ -55,7 +58,7 @@ confirmado por el usuario: el audio DOS funciona correctamente en Windows.
 | 15 | Implementar el rebobinado | Mantener un historial acotado de unos segundos y mostrar la acción marcha atrás mientras se restauran estados completos. Al soltar, continuar desde ese punto sin duplicar objetos ni conservar un futuro inválido. | 13 | Completada: historial de ocho segundos, R/LB a 2×, estados completos y descarte del futuro. Verificados en el bucle real del juego, los seis niveles y ambas versiones, con AddressSanitizer. | 100 % |
 | 16 | Crear el efecto VHS | Durante el rebobinado, añadir bandas de ruido, distorsión y una indicación visual, manteniendo reconocible la acción que retrocede. El efecto desaparece al volver al juego normal. | 15 | Completada: ruido, scanlines, bandas de tracking, distorsión e indicador de tiempo. Encuadre y HUD DOS/Amiga comprobados por píxeles; capturas revisadas y efecto eliminado por completo al continuar. | 100 % |
 | 17 | Revisar fidelidad y regresiones | Recorrer los seis niveles y comprobar saltos, escaleras, enemigos, puertas, DOS/Amiga, ayudas, guardados y rebobinado. Mantener pruebas reproducibles para los errores encontrados. | Validación continua; cierre tras 03–16 | En curso: corregidos y reproducidos los bordes del scroll y el desplazamiento del degradado Amiga a 1×/60 Hz; continúa la campaña completa de jugabilidad. | 25 % |
-| 18 | Preparar la distribución Windows | Paquete con ejecutable y dependencias, lanzador para seleccionar ambas carpetas de datos e instrucciones breves. Verificarlo desde una carpeta nueva. | 01, 12, 14, 16, 17 | Pendiente | 0 % |
+| 18 | Preparar la distribución Windows de Titus Engine | Tras la expansión, paquete con motores/dependencias, biblioteca global, ediciones realmente soportadas e instrucciones. Verificarlo desde una carpeta nueva preservando los datos de Blues. | 17 cerrada; TH-12 validada | Pospuesta por el usuario hasta después de la primera expansión | 0 % |
 
 ## Cómo actualizar los porcentajes
 
@@ -82,7 +85,10 @@ distintos. Para el resumen se utiliza el número de tareas completadas.
 4. Implementar el estado guardable y los ocho slots con miniaturas: **13–14**.
 5. Reutilizar esa base para rebobinar y añadir el efecto VHS: **15–16**.
 6. Pulir cámara y HUD: **04–05**.
-7. Cerrar la campaña de pruebas y preparar la distribución: **17–18**.
+7. Continuar la campaña de Blues **17** mientras se desarrolla **TH-01–TH-12**.
+8. Investigar los ADF y conjuntos Amiga de Fox/Prehistorik en **TH-13** y sus adaptadores Amiga
+   **TH-14/TH-15/TH-16** si existe una vía viable.
+9. Preparar la distribución **18** tras validar la primera expansión y cerrar 17.
 
 La tarea 17 acompaña cada etapa; no se aplaza toda la validación hasta el final.
 
@@ -98,8 +104,15 @@ La tarea 17 acompaña cada etapa; no se aplaza toda la validación hasta el fina
 /home/plopez/proj/titus/
 ├── blues-engine/       # Repositorio y este plan
 ├── orig-games/
-│   ├── dos/
-│   └── amiga/
+│   ├── blues-dos/
+│   ├── blues-amiga/
+│   ├── blues2-dos/
+│   ├── prehistorik2-dos/
+│   ├── prehistorik2-amiga/  # Título/edición por identificar
+│   ├── fox-dos/
+│   ├── fox-amiga/
+│   ├── prehistorik-dos/
+│   └── *.adf            # Fuentes Amiga; ver inventario
 └── tools/
 ```
 
@@ -157,3 +170,4 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-22 | 17 | La captura del usuario permite reproducir la plataforma azul/negra del nivel 5. Corregido el fotograma de elevadores de Centro comercial/Ciudad: se conserva la silueta transparente del 146 y se usan los colores del gráfico nativo emparejado 147; en Ciudad coincide exactamente con la casilla BLK 0. La prueba anterior comparaba contra el propio fotograma de índices incorrectos; ahora usa esa referencia independiente y capturas reales antes/después. Píxeles en seis niveles/ambos HUD, AddressSanitizer y regresiones de guardado/rebobinado superados; Linux/Windows actualizados. | Validar la plataforma de la captura con el ejecutable actualizado. |
 | 2026-11-22 | 17 | La nueva captura corresponde a Concierto: la corrección por números de nivel omitía su plataforma, con fotogramas 160/161. La selección ahora deriva del tipo real de plataforma del nivel y cubre Centro comercial, Ciudad y Concierto. Reproducida la plataforma amarilla/naranja de la captura y revisada su imagen corregida; añadidos 60 pasos de movimiento/inversión con comparación de todos los píxeles intermedios, silueta y colores nativos en ambas opciones de HUD. Regresiones de guardado/rebobinado y AddressSanitizer superados; Linux/Windows actualizados. | Revalidar el ascensor de Concierto con el ejecutable actualizado. |
 | 2026-11-23 | 17 | Restauradas la nota musical y las marcas de progreso de la presentación entre niveles: composición persistente sobre el mapa y subida del bitmap antes de cada paso animado. Se conserva el comportamiento original del último destino; saltar completa la marca y salir interrumpe sin cargar el nivel. Pruebas de las seis pantallas DOS/Amiga, encuadre ampliado, CGA, píxeles y textura, saltar/salir y recorte superadas; capturas revisadas. AddressSanitizer y regresiones de estado/cambio de versión superados; Linux/Windows actualizados. | Confirmar la presentación y las animaciones al jugar en Windows; continúa la validación 17. |
+| 2026-11-23 | 17, 18, TH-00–TH-16 | El usuario autoriza empezar Titus Engine mientras continúa buscando errores en 17 y pospone 18 hasta después de la expansión. Código previo limpio/publicado y etiqueta recuperable en dd07383. Inventariadas ocho carpetas de juegos y tres ADF sin modificar originales; detectados PRE1.EXE y recursos duplicados de Prehistorik 1 dentro de la carpeta DOS de Prehistorik 2; el conjunto prehistorik2-amiga queda pendiente de identificación por contenido. Plan ampliado con biblioteca, detectores, motores, versiones, integración, validación y ediciones Amiga sujetas a viabilidad. | Completar auditoría TH-01 y pruebas originales TH-02; atender 17 en paralelo. |
