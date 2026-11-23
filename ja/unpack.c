@@ -138,9 +138,9 @@ static int unpack_eat(struct unpack_eat_t *u, uint8_t *output_buffer, int output
 	return output_size;
 }
 
-int unpack(const char *filename, uint8_t *dst, int size) {
+int unpack(const char *path, const char *filename, uint8_t *dst, int size) {
 	int uncompressed_size = 0;
-	FILE *fp = fopen(filename, "rb");
+	FILE *fp = fopen_nocase(path, filename);
 	if (fp) {
 		memset(&g_unpack, 0, sizeof(struct unpack_eat_t));
 		g_unpack.fp = fp;

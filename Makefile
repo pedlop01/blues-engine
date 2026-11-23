@@ -45,6 +45,10 @@ blues: $(APP_OBJS) $(GAME_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^ $(SDL_LIBS) $(MODPLUG_LIBS)
 
 VIEW_TEST_OBJS := $(filter-out bb/level.o,$(BB_SRCS:.c=.o)) mixer.o dos_audio.o third_party/nuked-opl3/opl3.o util.o
+build/tests/check_engine_startup: tests/check_engine_startup.c main.c sys_sdl2.c $(GAME_OBJS) mixer.o dos_audio.o third_party/nuked-opl3/opl3.o util.o
+	mkdir -p $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_engine_startup.c $(GAME_OBJS) mixer.o dos_audio.o third_party/nuked-opl3/opl3.o util.o $(SDL_LIBS) $(MODPLUG_LIBS)
+
 build/tests/check_viewport: tests/check_viewport.c bb/level.c sys_sdl2.c main.c $(VIEW_TEST_OBJS)
 	mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DBLUES_ONLY $(LDFLAGS) -o $@ tests/check_viewport.c $(VIEW_TEST_OBJS) $(SDL_LIBS) $(MODPLUG_LIBS)
@@ -71,6 +75,7 @@ build/tests/check_mixer_volumes: tests/check_mixer_volumes.c mixer.c audio_gain.
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_mixer_volumes.c util.o $(MODPLUG_LIBS)
 
 clean:
+	$(RM) build/tests/check_engine_startup build/tests/check_engine_startup.d
 	$(RM) build/tests/check_intermission build/tests/check_intermission.d
 	$(RM) $(OBJS) $(DEPS) $(APP_OBJS) $(APP_OBJS:.o=.d) $(GAME_OBJS) blues
 	$(RM) build/tests/check_preferences build/tests/check_preferences.d
@@ -83,6 +88,8 @@ clean:
 -include build/tests/check_sprite_interpolation.d
 
 -include build/tests/check_pause_menu.d
+
+-include build/tests/check_engine_startup.d
 
 -include build/tests/check_mixer_volumes.d
 

@@ -19,7 +19,8 @@ this transition.
 [Credits and lineage](CREDITS.md) ·
 [Plan y seguimiento](PLAN.md) ·
 [Titus Engine: expansion plan](docs/TITUS_PLATFORM_PLAN.md) ·
-[Local game inventory](docs/GAME_INVENTORY.md)
+[Local game inventory](docs/GAME_INVENTORY.md) ·
+[Engine audit and startup checks](docs/ENGINE_AUDIT.md)
 
 ## What this extension adds
 

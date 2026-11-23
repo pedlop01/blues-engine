@@ -3,6 +3,7 @@
 Inspección de solo lectura: **23 de noviembre de 2026**.
 Raíz local: `../orig-games/`, externa al repositorio. Este informe conserva
 nombres, tamaños y firmas; no incluye los recursos de los juegos.
+Primera auditoría y pruebas de ejecución: [ENGINE_AUDIT.md](ENGINE_AUDIT.md).
 
 ## Fuentes encontradas
 
@@ -10,10 +11,10 @@ nombres, tamaños y firmas; no incluye los recursos de los juegos.
 |---|---|---:|---|---|
 | `blues-dos/` | Blues Brothers DOS | 50 de juego + 50 metadatos Windows | `MAGASIN.BIN`, `SPRITE.SQV`, `1.EXE` presentes; datos utilizados durante el desarrollo. | Continúa la campaña manual 17. |
 | `blues-amiga/` | Blues Brothers Amiga | 58 | Mapas, máscaras, sprites y audio presentes; datos utilizados durante el desarrollo. | Continúa la campaña manual 17. |
-| `blues2-dos/` | Jukebox Adventure DOS | 32 | `JARDIN.EAT` de 24876 bytes coincide con la identificación del motor base. | Compilar/probar el juego y auditar el resto de recursos. |
+| `blues2-dos/` | Jukebox Adventure DOS | 32 | `JARDIN.EAT` de 24876 bytes coincide con la identificación del motor base. | Arranque/cierre Linux probados; faltan partida, audio y Windows. |
 | `prehistorik2-dos/` | Prehistorik 2 DOS y copia de recursos de Prehistorik 1 | 63 | `MOTIF.SQZ` de 9396 bytes coincide con la identificación del motor base; también están los cuatro `FILES*` y `PRE1.EXE`. | Distinguir dos instalaciones lógicas sin duplicar ni mezclar datos. |
 | `fox-dos/` | Titus the Fox DOS | 27 | `FOX.COM`, `SPREXP.SQZ` y `LEVEL*.SQZ` presentes; conjunto candidato para OpenTitus. | Confirmar versión, archivos requeridos, audio y funcionamiento. |
-| `prehistorik-dos/` | Prehistorik 1 DOS | 10 | Presentes los cuatro archivos `FILESA/B.CUR/VGA` y `PRE1.EXE`. | Comprobar el ejecutable y el cargador de Olduvai: documenta `HISTORIK.EXE`, no este nombre. |
+| `prehistorik-dos/` | Prehistorik 1 DOS | 10 | Presentes los cuatro archivos `FILESA/B.CUR/VGA` y `PRE1.EXE`. | Olduvai compila, pero rechaza tablas de este EXE incluso con alias `HISTORIK.EXE`; adaptar variante. |
 | `fox-amiga/` | Titus the Fox Amiga, candidato | 89 | Conjunto extraído con `main`, `fox`, `LEVEL*.TBL`, `BRIK*.BIN` y arranque. | Identificar versión y motor; validar extracción/recursos y funcionamiento. |
 | `prehistorik2-amiga/` | Prehistorik Amiga; primera/segunda entrega por confirmar | 71 | Conjunto extraído con `main`, `H1.MAT`–`H4.MAT`, `L*SPR.MAT` y `LEVEL*.DUR`. | Identificar el título por contenido; no asumir Prehistorik 2 por el nombre de carpeta. |
 | `blues.adf` | Fuente Amiga de Blues Brothers | 901120 bytes | Cabecera `DOS\0`; edición ya disponible extraída en `blues-amiga/`. | Conservar como fuente; evitar registro duplicado por verla también como disco. |
