@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "kind": "inspection",
+  "inspection_id": "66666666-6666-4666-8666-666666666666",
+  "profile_id": "11111111-1111-4111-8111-111111111111",
+  "game_id": "blues",
+  "engine_id": "blues-family",
+  "save_compatibility_id": "blues.full.1991",
+  "status": "ok",
+  "features": [
+    "return_to_library",
+    "native_pause",
+    "fullscreen",
+    "save_slots",
+    "save_thumbnails",
+    "rewind",
+    "dynamic_view",
+    "smooth_camera",
+    "hud_modes",
+    "invulnerability",
+    "lives_options",
+    "level_select",
+    "character_select",
+    "separate_volumes",
+    "audio_mode_selection",
+    "live_edition_switch"
+  ],
+  "save_slot_count": 8,
+  "preparation_ids": [],
+  "save_index": {
+    "schema_version": 1,
+    "kind": "save_index",
+    "profile_id": "11111111-1111-4111-8111-111111111111",
+    "game_id": "blues",
+    "engine_id": "blues-family",
+    "save_compatibility_id": "blues.full.1991",
+    "slot_count": 8,
+    "slots": [
+      {
+        "slot": 1,
+        "file": "saves/slot01.bbs",
+        "format_id": "blues.bbs",
+        "format_version": 2,
+        "edition_id": "dos",
+        "resource_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "native_resource_crc32": "1234abcd",
+        "payload_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "has_preview": true,
+        "status": "ready"
+      }
+    ]
+  },
+  "error": null
+}

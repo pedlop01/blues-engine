@@ -1,0 +1,54 @@
+{
+  "profile_id": "11111111-1111-4111-8111-111111111111",
+  "installation_id": "22222222-2222-4222-8222-222222222222",
+  "game_id": "blues",
+  "engine_id": "blues-family",
+  "edition_id": "dos",
+  "save_compatibility_id": "blues.full.1991",
+  "platform": "windows",
+  "sources": [
+    {
+      "installation_id": "22222222-2222-4222-8222-222222222222",
+      "game_id": "blues",
+      "edition_id": "dos",
+      "variant_id": "full-1991-dos",
+      "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "kind": "directory",
+      "location": {
+        "platform": "windows",
+        "path": "D:\\Juegos clásicos\\Blues DOS"
+      },
+      "read_only": true
+    },
+    {
+      "installation_id": "33333333-3333-4333-8333-333333333333",
+      "game_id": "blues",
+      "edition_id": "amiga",
+      "variant_id": "full-1991-amiga",
+      "fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "kind": "directory",
+      "location": {
+        "platform": "windows",
+        "path": "D:\\Juegos clásicos\\Blues Amiga"
+      },
+      "read_only": true
+    }
+  ],
+  "paths": {
+    "profile_directory": {
+      "platform": "windows",
+      "path": "C:\\Users\\Jugador\\AppData\\Roaming\\pedlop01\\titus-engine\\profiles\\11111111-1111-4111-8111-111111111111\\games\\blues\\blues.full.1991"
+    },
+    "work_directory": {
+      "platform": "windows",
+      "path": "C:\\Users\\Jugador\\AppData\\Roaming\\pedlop01\\titus-engine\\profiles\\11111111-1111-4111-8111-111111111111\\games\\blues\\blues.full.1991\\native\\blues-family"
+    },
+    "session_directory": {
+      "platform": "windows",
+      "path": "C:\\Users\\Jugador\\AppData\\Local\\pedlop01\\titus-engine\\cache\\sessions\\66666666-6666-4666-8666-666666666666"
+    }
+  },
+  "schema_version": 1,
+  "kind": "inspect_request",
+  "inspection_id": "66666666-6666-4666-8666-666666666666"
+}

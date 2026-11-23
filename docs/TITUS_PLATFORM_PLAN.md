@@ -1,7 +1,7 @@
 # Titus Engine: plan de expansión
 
 Actualización: **23 de noviembre de 2026**.
-Estado: **expansión autorizada; TH-01 y TH-02 completadas; preparada la definición de arquitectura TH-03**.
+Estado: **expansión autorizada; TH-00–TH-03 completadas; siguiente implementación TH-04**.
 Nombre de producto acordado: **Titus Engine** (`titus-engine`).
 
 ## Prioridades y punto de partida
@@ -94,7 +94,11 @@ Brothers ya la ofrece con F6. En los demás juegos se añadirá únicamente si s
 demuestra que sus recursos y estados permiten conservar la partida. La interfaz
 no prometerá esa función por tener ambas carpetas registradas.
 
-## Arquitectura propuesta
+## Arquitectura acordada en TH-03
+
+Decisión y contrato completos: [TITUS_ARCHITECTURE.md](TITUS_ARCHITECTURE.md).
+Esquema y ejemplos verificables: [contracts](../contracts/README.md).
+La definición está cerrada; el lanzador y sus adaptadores todavía no están implementados.
 
 ### Biblioteca y servicios comunes
 
@@ -115,7 +119,7 @@ para un mismo juego, y varias instalaciones de una misma edición.
 
 ### Contrato de los motores
 
-Definir un contrato pequeño antes de trasladar funciones comunes:
+El contrato v1 define, antes de trasladar funciones comunes:
 
 - Identificar recursos y anunciar capacidades disponibles.
 - Iniciar una sesión con instalación y ajustes explícitos.
@@ -132,8 +136,8 @@ inexistente ni se mostrarán controles que el motor ignore.
 
 ### Estrategia de integración
 
-**Propuesta a confirmar en TH-03:** construir primero la biblioteca con motores
-ejecutables separados y un protocolo de arranque/salida sencillo. Esto permite
+**Decisión TH-03:** construir primero la biblioteca con motores
+ejecutables separados y un protocolo v1 de request/eventos/comandos/resultado en archivos privados. Esto permite
 comprobar cada juego en su motor original y limita los conflictos entre versiones
 de SDL, C/C++, bucles de eventos, audio y variables globales.
 
@@ -145,9 +149,10 @@ licencias y el cierre de cada motor. Los ejecutables separados podrán manteners
 para los motores cuya integración completa no aporte una ventaja suficiente.
 
 Conservar los motores de origen identificables, sus historiales/revisiones y las
-modificaciones propias separadas. Usar Titus Engine como nombre de producto y
-decidir el cambio de binarios, estructura y repositorio en TH-03, conservando el punto de recuperación de Blues
-como referencia de regresiones.
+modificaciones propias separadas. El frontend será `titus-engine[.exe]`, C++17/SDL2;
+la CLI clásica `blues[.exe]`, el remoto y el directorio `blues-engine` se mantienen
+durante la expansión. La estructura nueva se introduce por tareas sin mover ahora
+`bb/ja/p2`. Conservar el punto de recuperación de Blues como referencia de regresiones.
 
 ## Preferencias, partidas y recursos
 
@@ -179,10 +184,10 @@ inventario no equivale a haber integrado o validado un nuevo juego.
 | TH-00 | Conservar el punto de recuperación | Código anterior publicado, árbol limpio, sin datos/binarios de usuario en Git y etiqueta `blues-baseline-2026-11-23` identificada. 17 sigue abierta y 18 queda pospuesta. | Arreglos actuales de Blues | Completada: corte en `dd07383` | 100 % |
 | TH-01 | Auditar datos y motores | Inventario con firmas, conjuntos/variantes admitidos, commits/forks, dependencias, licencias/créditos y funciones declaradas frente a verificadas. Resolver detección de `PRE1.EXE` y carpeta mixta de Prehistorik 2. | TH-00 | Completada: variantes identificadas, preparación DIET demostrada, reglas de detección y bases/licencias documentadas | 100 % |
 | TH-02 | Validar motores originales | Compilar y probar Jukebox Adventure, Prehistorik 2, OpenTitus y Olduvai por separado con nuestros datos. Registrar arranque, controles, audio, recorrido y salida de referencia. | TH-01 | Completada: cuatro motores compilan y pasan rutas cortas/control/audio/salida en Linux y Windows; límites registrados en ENGINE_REFERENCE_TESTS.md | 100 % |
-| TH-03 | Definir arquitectura y transición | Contrato de motores, capacidades, catálogo/partidas, rutas configurables y organización C/C++/SDL. Plan de nombres/binarios/repositorio de Titus Engine con compatibilidad de Blues. Elegir estrategia de ejecución. | TH-01, TH-02 | Sin iniciar | 0 % |
+| TH-03 | Definir arquitectura y transición | Contrato de motores, capacidades, catálogo/partidas, rutas configurables y organización C/C++/SDL. Plan de nombres/binarios/repositorio de Titus Engine con compatibilidad de Blues. Elegir estrategia de ejecución. | TH-01, TH-02 | Completada: C++17/SDL2, runtimes separados, contratos v1, perfiles/importación y transición documentados y comprobados como especificación | 100 % |
 | TH-04 | Implementar catálogo y detección | Añadir, volver a localizar y quitar instalaciones sin borrar datos. Reconocer conjuntos, variantes y ambigüedad de carpetas mixtas; separar fuente ADF y edición extraída. Catálogo persistente con versiones de esquema. | TH-03 | Sin iniciar | 0 % |
 | TH-05 | Crear biblioteca global | Menú principal para juegos instalados, ficha, selector de instalación/DOS/Amiga, estados claros, teclado/mando y preferencias de selección. Verificar ventana y pantalla completa. | TH-04 | Sin iniciar | 0 % |
-| TH-06 | Integrar Blues Brothers | Arrancar DOS/Amiga desde biblioteca, conservar controles, HUD, ayudas, cámara, zoom, slots/miniaturas y rebobinado. Volver a biblioteca limpiamente y preservar las partidas actuales. | TH-05 | Sin iniciar | 0 % |
+| TH-06 | Integrar Blues Brothers | Arrancar DOS/Amiga desde biblioteca, conservar controles, HUD, ayudas, cámara, zoom, slots/miniaturas y rebobinado. Volver a biblioteca limpiamente; importación inicial reversible de opciones/slots a perfil privado sin sobrescribir originales. | TH-05 | Sin iniciar | 0 % |
 | TH-07 | Incorporar motores del proyecto base | Jukebox Adventure y Prehistorik 2 desde Windows/biblioteca, con datos y preferencias separados. Comprobar que las opciones no implementadas no se anuncien como disponibles; revisar la saturación de mezcla observada en P2 sin afectar Blues. | TH-02, TH-06 | Sin iniciar | 0 % |
 | TH-08 | Incorporar Titus the Fox DOS | Adaptador OpenTitus con nuestros archivos, controles/audio comprobados, configuración externa al original, cierre y retorno. Mantener créditos y revisión del motor de origen. | TH-02, TH-06 | Sin iniciar | 0 % |
 | TH-09 | Incorporar Prehistorik 1 DOS | Adaptador Olduvai con identificación del conjunto `FILES*`/`PRE1.EXE` por contenido, sin renombrar originales. Arranque, controles, audio, cierre y retorno comprobados. | TH-02, TH-06 | Sin iniciar | 0 % |
@@ -217,7 +222,8 @@ catálogo soportado y prueba desde una carpeta nueva. Evitar duplicarla en TH-12
 5. **Distribución:** tarea 18, después de la primera expansión validada y el cierre
    de 17. Otras mejoras por motor y Moktar podrán plantearse en entregas posteriores.
 
-No se asignan fechas ni estimaciones de esfuerzo hasta completar TH-01 y TH-02.
+No se asignan fechas ni estimaciones de esfuerzo por haber completado las referencias;
+TH-04 inicia la implementación del catálogo definido en TH-03.
 
 ## Validación necesaria
 
@@ -232,16 +238,17 @@ No se asignan fechas ni estimaciones de esfuerzo hasta completar TH-01 y TH-02.
 | Rendimiento | Fluidez y latencia, memoria estable tras varias sesiones y ausencia de recursos o hilos de audio pendientes al volver al menú. |
 | Distribución | Windows limpio con dependencias completas, datos externos, preferencias por usuario, versiones identificadas y documentación de procedencia. |
 
-## Decisiones de la auditoría en curso
+## Decisiones cerradas y pendientes posteriores
 
-- Identidad visual y transición de ejecutables/directorio/remoto al nombre ya
-  elegido `titus-engine`, conservando historial, créditos y rutas anteriores.
-- Motores/forks y commits seleccionados tras probarlos; no asumir equivalencia
-  entre dos forks por compartir nombre.
+- TH-03 fija frontend `titus-engine`, runtimes separados y compatibilidad de CLI,
+  historial, créditos y rutas anteriores; no renombra ahora directorio/remoto.
+- TH-01/02 fijan motores, revisiones y límites comprobados; TH-06–09 implementan
+  los adaptadores, sin asumir que el motor de referencia ya hable el protocolo.
 - Diseño visual final de la biblioteca y origen de sus imágenes opcionales.
 - Qué adaptadores merece la pena integrar en proceso y cuáles seguirán separados.
 - Qué mejoras adicionales recibirá cada juego después de asegurar su fidelidad.
 
-Siguiente trabajo de expansión: completar TH-01 y preparar TH-02 con el inventario
-real. En paralelo, atender los errores que el usuario encuentre en la tarea 17.
+Siguiente trabajo de expansión: **TH-04**, implementar el core del catálogo y los
+detectores a partir del contrato TH-03 y del inventario real. En paralelo, atender
+los errores que el usuario encuentre en la tarea 17.
 La distribución 18 se retoma después de la primera expansión validada.

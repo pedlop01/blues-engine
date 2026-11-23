@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "kind": "event",
+  "session_id": "44444444-4444-4444-8444-444444444444",
+  "seq": 2,
+  "event": "ready",
+  "body": {
+    "features": [
+      "return_to_library",
+      "native_pause",
+      "fullscreen",
+      "save_slots",
+      "save_thumbnails",
+      "rewind",
+      "dynamic_view",
+      "smooth_camera",
+      "hud_modes",
+      "invulnerability",
+      "lives_options",
+      "level_select",
+      "character_select",
+      "separate_volumes",
+      "audio_mode_selection",
+      "live_edition_switch"
+    ],
+    "scene": "menu",
+    "save_slot_count": 8,
+    "audio_active": true
+  }
+}

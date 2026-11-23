@@ -17,11 +17,14 @@ DEPS := $(SRCS:.c=.d)
 APP_OBJS := main.o mixer.o dos_audio.o third_party/nuked-opl3/opl3.o sys_sdl2.o util.o
 GAME_OBJS := game_bb.o game_ja.o game_p2.o
 
-.PHONY: all clean
+.PHONY: all clean check-contracts
 
 CPPFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wpedantic -MMD $(SDL_CFLAGS) -I. -g
 
 all: blues
+
+check-contracts:
+	python3 tests/check_engine_contracts.py
 
 game_bb.o: CPPFLAGS += -fvisibility=hidden
 

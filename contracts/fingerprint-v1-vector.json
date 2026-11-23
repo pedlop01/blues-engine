@@ -1,0 +1,18 @@
+{
+  "role": "illustrative_partial_manifest_not_installation_validation",
+  "manifest": {
+    "version": 1,
+    "game_id": "blues",
+    "edition_id": "dos",
+    "variant_id": "full-1991-dos",
+    "files": [
+      {
+        "name": "magasin.bin",
+        "size": 2560,
+        "sha256": "72158766739aa3244bc05267144bf44d56003cdbb549a273f6fdc0d377140d79"
+      }
+    ]
+  },
+  "canonical_utf8": "{\"edition_id\":\"dos\",\"files\":[{\"name\":\"magasin.bin\",\"sha256\":\"72158766739aa3244bc05267144bf44d56003cdbb549a273f6fdc0d377140d79\",\"size\":2560}],\"game_id\":\"blues\",\"variant_id\":\"full-1991-dos\",\"version\":1}",
+  "sha256": "f477485be13bd74d0270e94c37fbc142017bf2fac8f7627b416e6c42db73f380"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "kind": "result",
+  "session_id": "44444444-4444-4444-8444-444444444444",
+  "game_id": "blues",
+  "engine_id": "blues-family",
+  "outcome": "returned",
+  "ready": true,
+  "native_exit_code": 0,
+  "error": null
+}

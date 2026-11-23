@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "kind": "engine_registry",
+  "role": "design",
+  "engines": [
+    {
+      "engine_id": "blues-family",
+      "adapter_state": "planned",
+      "expected_protocol": 1,
+      "source_revision": "61815e10002c5bf9a9f108e2794cb5d69bb52d43",
+      "executables": {
+        "linux": "engines/blues-family/blues-family-runtime",
+        "windows": "engines/blues-family/blues-family-runtime.exe"
+      },
+      "games": [
+        {
+          "game_id": "blues",
+          "editions": [
+            "dos",
+            "amiga"
+          ],
+          "reference_native_features": [
+            "native_pause",
+            "fullscreen",
+            "save_slots",
+            "save_thumbnails",
+            "rewind",
+            "dynamic_view",
+            "smooth_camera",
+            "hud_modes",
+            "invulnerability",
+            "lives_options",
+            "level_select",
+            "character_select",
+            "separate_volumes",
+            "audio_mode_selection",
+            "live_edition_switch"
+          ]
+        },
+        {
+          "game_id": "jukebox",
+          "editions": [
+            "dos"
+          ],
+          "reference_native_features": []
+        },
+        {
+          "game_id": "prehistorik2",
+          "editions": [
+            "dos"
+          ],
+          "reference_native_features": []
+        }
+      ]
+    },
+    {
+      "engine_id": "opentitus",
+      "adapter_state": "planned",
+      "expected_protocol": 1,
+      "source_revision": "6540e8f2867f99aff54ad1a710ae6379ecb9c590",
+      "executables": {
+        "linux": "engines/opentitus/opentitus-runtime",
+        "windows": "engines/opentitus/opentitus-runtime.exe"
+      },
+      "games": [
+        {
+          "game_id": "fox",
+          "editions": [
+            "dos"
+          ],
+          "reference_native_features": []
+        }
+      ]
+    },
+    {
+      "engine_id": "olduvai",
+      "adapter_state": "planned",
+      "expected_protocol": 1,
+      "source_revision": "a69e9204fc311c8810d696a6b799000d1bcd1642",
+      "executables": {
+        "linux": "engines/olduvai/olduvai-runtime",
+        "windows": "engines/olduvai/olduvai-runtime.exe"
+      },
+      "games": [
+        {
+          "game_id": "prehistorik",
+          "editions": [
+            "dos"
+          ],
+          "reference_native_features": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "kind": "event",
+  "session_id": "44444444-4444-4444-8444-444444444444",
+  "seq": 1,
+  "event": "hello",
+  "body": {
+    "engine_id": "blues-family",
+    "build_revision": "61815e10002c5bf9a9f108e2794cb5d69bb52d43",
+    "protocol": 1
+  }
+}

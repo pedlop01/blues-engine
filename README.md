@@ -22,7 +22,8 @@ this transition.
 [Local game inventory](docs/GAME_INVENTORY.md) ·
 [Engine audit and startup checks](docs/ENGINE_AUDIT.md) ·
 [Game detection rules](docs/GAME_DETECTION_RULES.md) ·
-[Reference engine validation](docs/ENGINE_REFERENCE_TESTS.md)
+[Reference engine validation](docs/ENGINE_REFERENCE_TESTS.md) ·
+[Architecture and v1 contracts](docs/TITUS_ARCHITECTURE.md)
 
 ## What this extension adds
 

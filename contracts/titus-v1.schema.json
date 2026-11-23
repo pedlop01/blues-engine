@@ -1,0 +1,1663 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:titus-engine:contracts:v1",
+  "title": "Titus Engine v1 design contracts",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/catalog"
+    },
+    {
+      "$ref": "#/$defs/engine_registry"
+    },
+    {
+      "$ref": "#/$defs/launch"
+    },
+    {
+      "$ref": "#/$defs/result"
+    },
+    {
+      "$ref": "#/$defs/event"
+    },
+    {
+      "$ref": "#/$defs/command"
+    },
+    {
+      "$ref": "#/$defs/save_index"
+    },
+    {
+      "$ref": "#/$defs/inspect_request"
+    },
+    {
+      "$ref": "#/$defs/inspection"
+    }
+  ],
+  "$defs": {
+    "location": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "enum": [
+            "linux",
+            "windows"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32767,
+          "pattern": "^[^\\u0000]+$",
+          "format": "titus-absolute-path"
+        }
+      },
+      "required": [
+        "platform",
+        "path"
+      ],
+      "additionalProperties": false
+    },
+    "profile": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "installation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "game_id": {
+          "enum": [
+            "blues",
+            "jukebox",
+            "prehistorik2",
+            "fox",
+            "prehistorik"
+          ]
+        },
+        "edition_id": {
+          "enum": [
+            "dos",
+            "amiga"
+          ]
+        },
+        "engine_id": {
+          "anyOf": [
+            {
+              "enum": [
+                "blues-family",
+                "opentitus",
+                "olduvai"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "variant_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]*$",
+          "maxLength": 80
+        },
+        "fingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "save_compatibility_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]*$",
+          "maxLength": 80
+        },
+        "status": {
+          "enum": [
+            "recognized",
+            "needs_preparation",
+            "incomplete",
+            "unverified",
+            "missing_engine"
+          ]
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "enum": [
+                  "directory",
+                  "adf"
+                ]
+              },
+              "location": {
+                "$ref": "#/$defs/location"
+              }
+            },
+            "required": [
+              "kind",
+              "location"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "preparation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9.-]*$",
+              "maxLength": 80
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "game_id",
+        "edition_id",
+        "engine_id",
+        "variant_id",
+        "fingerprint",
+        "save_compatibility_id",
+        "status",
+        "locations",
+        "preparation_id"
+      ],
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "installation_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "game_id": {
+          "enum": [
+            "blues",
+            "jukebox",
+            "prehistorik2",
+            "fox",
+            "prehistorik"
+          ]
+        },
+        "edition_id": {
+          "enum": [
+            "dos",
+            "amiga"
+          ]
+        },
+        "variant_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]*$",
+          "maxLength": 80
+        },
+        "fingerprint": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "kind": {
+          "const": "directory"
+        },
+        "location": {
+          "$ref": "#/$defs/location"
+        },
+        "read_only": {
+          "const": true
+        }
+      },
+      "required": [
+        "installation_id",
+        "game_id",
+        "edition_id",
+        "variant_id",
+        "fingerprint",
+        "kind",
+        "location",
+        "read_only"
+      ],
+      "additionalProperties": false
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "video": {
+          "type": "object",
+          "properties": {
+            "fullscreen": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "fullscreen"
+          ],
+          "additionalProperties": false
+        },
+        "audio": {
+          "type": "object",
+          "properties": {
+            "music_volume": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "effects_volume": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "music_volume",
+            "effects_volume"
+          ],
+          "additionalProperties": false
+        },
+        "blues": {
+          "type": "object",
+          "properties": {
+            "camera": {
+              "enum": [
+                "classic",
+                "smooth"
+              ]
+            },
+            "hud": {
+              "enum": [
+                "classic",
+                "fixed"
+              ]
+            },
+            "view_step": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8
+            },
+            "invulnerable": {
+              "type": "boolean"
+            },
+            "infinite_lives": {
+              "type": "boolean"
+            },
+            "lives_player1": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99
+            },
+            "lives_player2": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99
+            },
+            "start_level": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "sound_mode": {
+              "enum": [
+                "auto",
+                "dos",
+                "amiga"
+              ]
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "action": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "new_game",
+            "load_slot"
+          ]
+        },
+        "slot": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "load_slot"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "slot"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "slot"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "enum": [
+            "E_PROTOCOL",
+            "E_DATA_MISSING",
+            "E_DATA_VARIANT",
+            "E_PREPARATION",
+            "E_UNSUPPORTED_SETTING",
+            "E_SAVE_INCOMPATIBLE",
+            "E_STORAGE",
+            "E_ENGINE_INIT",
+            "E_ENGINE_RUNTIME"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "additionalProperties": false
+    },
+    "slot": {
+      "type": "object",
+      "properties": {
+        "slot": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "file": {
+          "type": "string",
+          "pattern": "^saves/slot0[1-8]\\.bbs$"
+        },
+        "format_id": {
+          "const": "blues.bbs"
+        },
+        "format_version": {
+          "anyOf": [
+            {
+              "enum": [
+                1,
+                2
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "edition_id": {
+          "anyOf": [
+            {
+              "enum": [
+                "dos",
+                "amiga"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "resource_fingerprint": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "native_resource_crc32": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{8}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "payload_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "has_preview": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "incompatible",
+            "damaged",
+            "unreadable"
+          ]
+        },
+        "summary": {
+          "type": "object",
+          "properties": {
+            "level": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "lives": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 99
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "infinite_lives": {
+              "type": "boolean"
+            },
+            "saved_at_unix": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "level",
+            "lives",
+            "infinite_lives",
+            "saved_at_unix"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "slot",
+        "file",
+        "format_id",
+        "format_version",
+        "edition_id",
+        "resource_fingerprint",
+        "native_resource_crc32",
+        "payload_sha256",
+        "has_preview",
+        "status"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "format_version": {
+                "const": 1
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "has_preview": {
+                "const": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "ready"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "format_version": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "edition_id": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "native_resource_crc32": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "payload_sha256": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "catalog": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "catalog"
+        },
+        "catalog_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/profile"
+          },
+          "minItems": 1
+        },
+        "installations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/installation"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "catalog_id",
+        "revision",
+        "profiles",
+        "installations"
+      ],
+      "additionalProperties": false
+    },
+    "engine_registry": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "engine_registry"
+        },
+        "role": {
+          "enum": [
+            "design",
+            "package"
+          ]
+        },
+        "engines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "engine_id": {
+                "enum": [
+                  "blues-family",
+                  "opentitus",
+                  "olduvai"
+                ]
+              },
+              "adapter_state": {
+                "enum": [
+                  "planned",
+                  "in_development",
+                  "validated"
+                ]
+              },
+              "expected_protocol": {
+                "const": 1
+              },
+              "source_revision": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$"
+              },
+              "executables": {
+                "type": "object",
+                "properties": {
+                  "linux": {
+                    "type": "string",
+                    "pattern": "^(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+(?:\\.exe)?$"
+                  },
+                  "windows": {
+                    "type": "string",
+                    "pattern": "^(?:[A-Za-z0-9_-]+/)*[A-Za-z0-9_-]+(?:\\.exe)?$"
+                  }
+                },
+                "required": [
+                  "linux",
+                  "windows"
+                ],
+                "additionalProperties": false
+              },
+              "games": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "game_id": {
+                      "enum": [
+                        "blues",
+                        "jukebox",
+                        "prehistorik2",
+                        "fox",
+                        "prehistorik"
+                      ]
+                    },
+                    "editions": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "dos",
+                          "amiga"
+                        ]
+                      },
+                      "minItems": 1,
+                      "uniqueItems": true
+                    },
+                    "reference_native_features": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "return_to_library",
+                          "native_pause",
+                          "remote_pause",
+                          "fullscreen",
+                          "save_slots",
+                          "save_thumbnails",
+                          "rewind",
+                          "dynamic_view",
+                          "smooth_camera",
+                          "hud_modes",
+                          "invulnerability",
+                          "lives_options",
+                          "level_select",
+                          "character_select",
+                          "separate_volumes",
+                          "audio_mode_selection",
+                          "live_edition_switch"
+                        ]
+                      },
+                      "minItems": 0,
+                      "uniqueItems": true
+                    }
+                  },
+                  "required": [
+                    "game_id",
+                    "editions",
+                    "reference_native_features"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "engine_id",
+              "adapter_state",
+              "expected_protocol",
+              "source_revision",
+              "executables",
+              "games"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "role",
+        "engines"
+      ],
+      "additionalProperties": false
+    },
+    "launch": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "launch"
+        },
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "profile_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "installation_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "game_id": {
+          "enum": [
+            "blues",
+            "jukebox",
+            "prehistorik2",
+            "fox",
+            "prehistorik"
+          ]
+        },
+        "engine_id": {
+          "enum": [
+            "blues-family",
+            "opentitus",
+            "olduvai"
+          ]
+        },
+        "edition_id": {
+          "enum": [
+            "dos",
+            "amiga"
+          ]
+        },
+        "save_compatibility_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]*$",
+          "maxLength": 80
+        },
+        "platform": {
+          "enum": [
+            "linux",
+            "windows"
+          ]
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          },
+          "minItems": 1,
+          "maxItems": 2
+        },
+        "paths": {
+          "type": "object",
+          "properties": {
+            "profile_directory": {
+              "$ref": "#/$defs/location"
+            },
+            "work_directory": {
+              "$ref": "#/$defs/location"
+            },
+            "session_directory": {
+              "$ref": "#/$defs/location"
+            }
+          },
+          "required": [
+            "profile_directory",
+            "work_directory",
+            "session_directory"
+          ],
+          "additionalProperties": false
+        },
+        "action": {
+          "$ref": "#/$defs/action"
+        },
+        "required_features": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "return_to_library",
+              "native_pause",
+              "remote_pause",
+              "fullscreen",
+              "save_slots",
+              "save_thumbnails",
+              "rewind",
+              "dynamic_view",
+              "smooth_camera",
+              "hud_modes",
+              "invulnerability",
+              "lives_options",
+              "level_select",
+              "character_select",
+              "separate_volumes",
+              "audio_mode_selection",
+              "live_edition_switch"
+            ]
+          },
+          "minItems": 0,
+          "uniqueItems": true,
+          "contains": {
+            "const": "return_to_library"
+          }
+        },
+        "settings": {
+          "$ref": "#/$defs/settings"
+        },
+        "allow_silent_audio": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "session_id",
+        "profile_id",
+        "installation_id",
+        "game_id",
+        "engine_id",
+        "edition_id",
+        "save_compatibility_id",
+        "platform",
+        "sources",
+        "paths",
+        "action",
+        "required_features",
+        "settings",
+        "allow_silent_audio"
+      ],
+      "additionalProperties": false
+    },
+    "result": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "result"
+        },
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "game_id": {
+          "enum": [
+            "blues",
+            "jukebox",
+            "prehistorik2",
+            "fox",
+            "prehistorik"
+          ]
+        },
+        "engine_id": {
+          "enum": [
+            "blues-family",
+            "opentitus",
+            "olduvai"
+          ]
+        },
+        "outcome": {
+          "enum": [
+            "returned",
+            "quit",
+            "cancelled",
+            "load_failed",
+            "runtime_failed",
+            "unsupported_protocol"
+          ]
+        },
+        "ready": {
+          "type": "boolean"
+        },
+        "native_exit_code": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/error"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "session_id",
+        "game_id",
+        "engine_id",
+        "outcome",
+        "ready",
+        "native_exit_code",
+        "error"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "enum": [
+                  "returned",
+                  "quit"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "ready": {
+                "const": true
+              },
+              "native_exit_code": {
+                "const": 0
+              },
+              "error": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "enum": [
+                  "load_failed",
+                  "runtime_failed",
+                  "unsupported_protocol"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error": {
+                "$ref": "#/$defs/error"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "const": "cancelled"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "event": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "event"
+        },
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "event": {
+          "enum": [
+            "hello",
+            "ready",
+            "progress",
+            "return_requested",
+            "closing",
+            "error",
+            "return_cancelled"
+          ]
+        },
+        "body": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "session_id",
+        "seq",
+        "event",
+        "body"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "event": {
+                "const": "hello"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "type": "object",
+                "properties": {
+                  "engine_id": {
+                    "enum": [
+                      "blues-family",
+                      "opentitus",
+                      "olduvai"
+                    ]
+                  },
+                  "build_revision": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1024
+                  },
+                  "protocol": {
+                    "const": 1
+                  }
+                },
+                "required": [
+                  "engine_id",
+                  "build_revision",
+                  "protocol"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event": {
+                "const": "ready"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "type": "object",
+                "properties": {
+                  "features": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "return_to_library",
+                        "native_pause",
+                        "remote_pause",
+                        "fullscreen",
+                        "save_slots",
+                        "save_thumbnails",
+                        "rewind",
+                        "dynamic_view",
+                        "smooth_camera",
+                        "hud_modes",
+                        "invulnerability",
+                        "lives_options",
+                        "level_select",
+                        "character_select",
+                        "separate_volumes",
+                        "audio_mode_selection",
+                        "live_edition_switch"
+                      ]
+                    },
+                    "minItems": 0,
+                    "uniqueItems": true
+                  },
+                  "scene": {
+                    "enum": [
+                      "title",
+                      "menu",
+                      "gameplay"
+                    ]
+                  },
+                  "save_slot_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 64
+                  },
+                  "audio_active": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "features",
+                  "scene",
+                  "save_slot_count",
+                  "audio_active"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event": {
+                "const": "progress"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "type": "object",
+                "properties": {
+                  "phase": {
+                    "enum": [
+                      "validate",
+                      "prepare",
+                      "initialize"
+                    ]
+                  },
+                  "percent": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "required": [
+                  "phase",
+                  "percent"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event": {
+                "const": "return_requested"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "type": "object",
+                "properties": {
+                  "confirmation_required": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "confirmation_required"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event": {
+                "const": "closing"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event": {
+                "const": "error"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "$ref": "#/$defs/error"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "event": {
+                "const": "return_cancelled"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "body": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "command": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "command"
+        },
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "command": {
+          "enum": [
+            "return_to_library",
+            "pause",
+            "resume"
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "session_id",
+        "seq",
+        "command"
+      ],
+      "additionalProperties": false
+    },
+    "save_index": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "save_index"
+        },
+        "profile_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "game_id": {
+          "const": "blues"
+        },
+        "engine_id": {
+          "const": "blues-family"
+        },
+        "save_compatibility_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]*$",
+          "maxLength": 80
+        },
+        "slot_count": {
+          "const": 8
+        },
+        "slots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/slot"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "profile_id",
+        "game_id",
+        "engine_id",
+        "save_compatibility_id",
+        "slot_count",
+        "slots"
+      ],
+      "additionalProperties": false
+    },
+    "inspect_request": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "inspect_request"
+        },
+        "inspection_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "profile_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "installation_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "game_id": {
+          "enum": [
+            "blues",
+            "jukebox",
+            "prehistorik2",
+            "fox",
+            "prehistorik"
+          ]
+        },
+        "engine_id": {
+          "enum": [
+            "blues-family",
+            "opentitus",
+            "olduvai"
+          ]
+        },
+        "edition_id": {
+          "enum": [
+            "dos",
+            "amiga"
+          ]
+        },
+        "save_compatibility_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]*$",
+          "maxLength": 80
+        },
+        "platform": {
+          "enum": [
+            "linux",
+            "windows"
+          ]
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source"
+          },
+          "minItems": 1,
+          "maxItems": 2
+        },
+        "paths": {
+          "type": "object",
+          "properties": {
+            "profile_directory": {
+              "$ref": "#/$defs/location"
+            },
+            "work_directory": {
+              "$ref": "#/$defs/location"
+            },
+            "session_directory": {
+              "$ref": "#/$defs/location"
+            }
+          },
+          "required": [
+            "profile_directory",
+            "work_directory",
+            "session_directory"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "inspection_id",
+        "profile_id",
+        "installation_id",
+        "game_id",
+        "engine_id",
+        "edition_id",
+        "save_compatibility_id",
+        "platform",
+        "sources",
+        "paths"
+      ],
+      "additionalProperties": false
+    },
+    "inspection": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "inspection"
+        },
+        "inspection_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "profile_id": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "game_id": {
+          "enum": [
+            "blues",
+            "jukebox",
+            "prehistorik2",
+            "fox",
+            "prehistorik"
+          ]
+        },
+        "engine_id": {
+          "enum": [
+            "blues-family",
+            "opentitus",
+            "olduvai"
+          ]
+        },
+        "save_compatibility_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]*$",
+          "maxLength": 80
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "preparation_required",
+            "failed"
+          ]
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "return_to_library",
+              "native_pause",
+              "remote_pause",
+              "fullscreen",
+              "save_slots",
+              "save_thumbnails",
+              "rewind",
+              "dynamic_view",
+              "smooth_camera",
+              "hud_modes",
+              "invulnerability",
+              "lives_options",
+              "level_select",
+              "character_select",
+              "separate_volumes",
+              "audio_mode_selection",
+              "live_edition_switch"
+            ]
+          },
+          "minItems": 0,
+          "uniqueItems": true
+        },
+        "save_slot_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 64
+        },
+        "preparation_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9.-]*$"
+          },
+          "uniqueItems": true
+        },
+        "save_index": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/save_index"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/error"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "kind",
+        "inspection_id",
+        "profile_id",
+        "game_id",
+        "engine_id",
+        "save_compatibility_id",
+        "status",
+        "features",
+        "save_slot_count",
+        "preparation_ids",
+        "save_index",
+        "error"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "failed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "error": {
+                "$ref": "#/$defs/error"
+              },
+              "save_index": {
+                "type": "null"
+              },
+              "features": {
+                "maxItems": 0
+              },
+              "save_slot_count": {
+                "const": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "error": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

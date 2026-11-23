@@ -1,0 +1,2 @@
+# Development-only schema validation; not a game/launcher runtime dependency.
+jsonschema>=4.10,<5
