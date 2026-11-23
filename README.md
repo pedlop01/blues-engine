@@ -51,6 +51,10 @@ The library now offers [layered settings and a native save browser](docs/SETTING
 global/game/edition/session options, supported controller bindings, and Blues
 eight-slot thumbnails/resume with reversible legacy reimport.
 
+The [TH-11 integration pilot](docs/INPROCESS_EVALUATION.md) compares a real engine
+inside an SDL host against child-process isolation. The production library keeps
+all engines in separate processes; the experimental target is opt-in and not installed.
+
 ## What this extension adds
 
 | Feature | Current implementation |

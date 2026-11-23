@@ -1,0 +1,757 @@
+{
+  "schema_version": 1,
+  "platform": "linux",
+  "backend": {
+    "video": "dummy",
+    "audio": "dummy"
+  },
+  "engine": "olduvai",
+  "engine_revision": "a69e9204fc311c8810d696a6b799000d1bcd1642",
+  "source_files_unchanged": 462,
+  "summary": {
+    "child": {
+      "samples": 3,
+      "median_ready_ms": 538.63,
+      "median_invocation_ms": 12030.52,
+      "median_engine_cpu_ms": 1834.51,
+      "host_peak_rss_bytes": 18878464,
+      "max_engine_peak_rss_bytes": 33845248,
+      "host_rebuilds": 0
+    },
+    "inline": {
+      "samples": 3,
+      "median_ready_ms": 544.98,
+      "median_invocation_ms": 11938.93,
+      "median_engine_cpu_ms": 1995.33,
+      "host_peak_rss_bytes": 35000320,
+      "max_engine_peak_rss_bytes": 34971648,
+      "host_rebuilds": 4
+    }
+  },
+  "experiments": {
+    "child_sequence": {
+      "active_fault": "normal",
+      "complete": true,
+      "host_before": {
+        "audio_subsystem": true,
+        "controller_hint": "1",
+        "controller_subsystem": true,
+        "drawable": true,
+        "host_audio_callbacks": 0,
+        "host_audio_playing": false,
+        "host_event_preserved": true,
+        "video": true
+      },
+      "host_peak_rss_bytes": 18878464,
+      "mode": "child",
+      "runs": [
+        {
+          "exit_code": 0,
+          "fault": "normal",
+          "host_after": {
+            "audio_subsystem": true,
+            "controller_hint": "1",
+            "controller_subsystem": true,
+            "drawable": true,
+            "host_audio_callbacks": 0,
+            "host_audio_playing": false,
+            "host_event_preserved": true,
+            "video": true
+          },
+          "host_cpu_ms": 24.948999999999998,
+          "host_rebuild_ms": 0.00341,
+          "host_rebuilt": false,
+          "host_recovered": true,
+          "invocation_ms": 12040.149856,
+          "native": {
+            "cpu_ms": 2088.5269999999996,
+            "engine_window_leaked": false,
+            "exit_code": 0,
+            "frames": 146,
+            "peak_rss_bytes": 33792000,
+            "ready": true,
+            "total_ms": 12029.545953
+          },
+          "observation": {
+            "clipped": 0,
+            "frames": 146,
+            "jump": 31,
+            "left": 128,
+            "nonzero": 667399,
+            "pause": true,
+            "peak": 25147,
+            "right": 156,
+            "samples": 909312
+          },
+          "ready_ms": 538.628817,
+          "result": {
+            "engine_id": "olduvai",
+            "error": null,
+            "game_id": "prehistorik",
+            "kind": "result",
+            "native_exit_code": 0,
+            "outcome": "returned",
+            "ready": true,
+            "schema_version": 1,
+            "session_id": "2d136fdb-fa0e-461d-bf3b-e32b21062f63"
+          }
+        },
+        {
+          "exit_code": 1,
+          "fault": "before_ready",
+          "host_after": {
+            "audio_subsystem": true,
+            "controller_hint": "1",
+            "controller_subsystem": true,
+            "drawable": true,
+            "host_audio_callbacks": 0,
+            "host_audio_playing": false,
+            "host_event_preserved": true,
+            "video": true
+          },
+          "host_cpu_ms": 1.0779999999999994,
+          "host_rebuild_ms": 0.0033,
+          "host_rebuilt": false,
+          "host_recovered": true,
+          "invocation_ms": 48.61648,
+          "native": {
+            "cpu_ms": 36.177,
+            "engine_window_leaked": false,
+            "exit_code": 1,
+            "frames": 0,
+            "peak_rss_bytes": 10584064,
+            "ready": false,
+            "total_ms": 39.90382
+          },
+          "observation": null,
+          "ready_ms": null,
+          "result": {
+            "engine_id": "olduvai",
+            "error": {
+              "code": "E_RUNTIME",
+              "message": "Deliberate Prehistorik load failure"
+            },
+            "game_id": "prehistorik",
+            "kind": "result",
+            "native_exit_code": 1,
+            "outcome": "runtime_failed",
+            "ready": false,
+            "schema_version": 1,
+            "session_id": "3d20dba3-2919-4d91-84af-ff481246e0aa"
+          }
+        },
+        {
+          "exit_code": 0,
+          "fault": "normal",
+          "host_after": {
+            "audio_subsystem": true,
+            "controller_hint": "1",
+            "controller_subsystem": true,
+            "drawable": true,
+            "host_audio_callbacks": 0,
+            "host_audio_playing": false,
+            "host_event_preserved": true,
+            "video": true
+          },
+          "host_cpu_ms": 27.708000000000006,
+          "host_rebuild_ms": 0.004789,
+          "host_rebuilt": false,
+          "host_recovered": true,
+          "invocation_ms": 12030.519682,
+          "native": {
+            "cpu_ms": 1834.513,
+            "engine_window_leaked": false,
+            "exit_code": 0,
+            "frames": 146,
+            "peak_rss_bytes": 33845248,
+            "ready": true,
+            "total_ms": 12023.109173
+          },
+          "observation": {
+            "clipped": 0,
+            "frames": 146,
+            "jump": 31,
+            "left": 128,
+            "nonzero": 683780,
+            "pause": true,
+            "peak": 25147,
+            "right": 156,
+            "samples": 937984
+          },
+          "ready_ms": 601.85873,
+          "result": {
+            "engine_id": "olduvai",
+            "error": null,
+            "game_id": "prehistorik",
+            "kind": "result",
+            "native_exit_code": 0,
+            "outcome": "returned",
+            "ready": true,
+            "schema_version": 1,
+            "session_id": "c172e821-5fb6-4a8c-a1eb-6a40510accad"
+          }
+        },
+        {
+          "exit_code": 1,
+          "fault": "pilot_throw",
+          "host_after": {
+            "audio_subsystem": true,
+            "controller_hint": "1",
+            "controller_subsystem": true,
+            "drawable": true,
+            "host_audio_callbacks": 0,
+            "host_audio_playing": false,
+            "host_event_preserved": true,
+            "video": true
+          },
+          "host_cpu_ms": 27.916000000000004,
+          "host_rebuild_ms": 0.003193,
+          "host_rebuilt": false,
+          "host_recovered": true,
+          "invocation_ms": 5812.741034,
+          "native": {
+            "cpu_ms": 988.2049999999999,
+            "engine_window_leaked": true,
+            "exit_code": 1,
+            "frames": 41,
+            "peak_rss_bytes": 29097984,
+            "ready": true,
+            "total_ms": 5802.331605
+          },
+          "observation": null,
+          "ready_ms": 634.491781,
+          "result": {
+            "engine_id": "olduvai",
+            "error": {
+              "code": "E_RUNTIME",
+              "message": "Injected exception after real gameplay"
+            },
+            "game_id": "prehistorik",
+            "kind": "result",
+            "native_exit_code": 1,
+            "outcome": "runtime_failed",
+            "ready": true,
+            "schema_version": 1,
+            "session_id": "fd48b709-126f-4755-95d8-363fbe42f070"
+          }
+        },
+        {
+          "exit_code": 0,
+          "fault": "normal",
+          "host_after": {
+            "audio_subsystem": true,
+            "controller_hint": "1",
+            "controller_subsystem": true,
+            "drawable": true,
+            "host_audio_callbacks": 0,
+            "host_audio_playing": false,
+            "host_event_preserved": true,
+            "video": true
+          },
+          "host_cpu_ms": 26.158,
+          "host_rebuild_ms": 0.004208,
+          "host_rebuilt": false,
+          "host_recovered": true,
+          "invocation_ms": 11985.156639,
+          "native": {
+            "cpu_ms": 1790.748,
+            "engine_window_leaked": false,
+            "exit_code": 0,
+            "frames": 146,
+            "peak_rss_bytes": 33824768,
+            "ready": true,
+            "total_ms": 11975.815035
+          },
+          "observation": {
+            "clipped": 0,
+            "frames": 146,
+            "jump": 31,
+            "left": 128,
+            "nonzero": 679687,
+            "pause": true,
+            "peak": 25147,
+            "right": 156,
+            "samples": 925696
+          },
+          "ready_ms": 529.087482,
+          "result": {
+            "engine_id": "olduvai",
+            "error": null,
+            "game_id": "prehistorik",
+            "kind": "result",
+            "native_exit_code": 0,
+            "outcome": "returned",
+            "ready": true,
+            "schema_version": 1,
+            "session_id": "a115746e-d529-462e-9799-e1586b5fca05"
+          }
+        }
+      ],
+      "scenario": "sequence",
+      "schema_version": 1,
+      "host_exit_code": 0
+    },
+    "child_audio": {
+      "active_fault": "normal",
+      "complete": true,
+      "host_before": {
+        "audio_subsystem": true,
+        "controller_hint": "1",
+        "controller_subsystem": true,
+        "drawable": true,
+        "host_audio_callbacks": 0,
+        "host_audio_playing": true,
+        "host_event_preserved": true,
+        "video": true
+      },
+      "host_peak_rss_bytes": 18935808,
+      "mode": "child",
+      "runs": [
+        {
+          "exit_code": 0,
+          "fault": "normal",
+          "host_after": {
+            "audio_subsystem": true,
+            "controller_hint": "1",
+            "controller_subsystem": true,
+            "drawable": true,
+            "host_audio_callbacks": 1040,
+            "host_audio_playing": true,
+            "host_event_preserved": true,
+            "video": true
+          },
+          "host_cpu_ms": 46.106,
+          "host_rebuild_ms": 0.003642,
+          "host_rebuilt": false,
+          "host_recovered": true,
+          "invocation_ms": 12100.616539,
+          "native": {
+            "cpu_ms": 2000.2430000000002,
+            "engine_window_leaked": false,
+            "exit_code": 0,
+            "frames": 146,
+            "peak_rss_bytes": 31748096,
+            "ready": true,
+            "total_ms": 12092.758789
+          },
+          "observation": {
+            "clipped": 0,
+            "frames": 146,
+            "jump": 31,
+            "left": 128,
+            "nonzero": 671495,
+            "pause": true,
+            "peak": 25147,
+            "right": 156,
+            "samples": 929792
+          },
+          "ready_ms": 644.474227,
+          "result": {
+            "engine_id": "olduvai",
+            "error": null,
+            "game_id": "prehistorik",
+            "kind": "result",
+            "native_exit_code": 0,
+            "outcome": "returned",
+            "ready": true,
+            "schema_version": 1,
+            "session_id": "660a607f-9a0a-4fa4-bbf5-58332edef9e7"
+          }
+        }
+      ],
+      "scenario": "audio",
+      "schema_version": 1,
+      "host_exit_code": 0
+    },
+    "child_crash": {
+      "active_fault": "pilot_crash",
+      "complete": true,
+      "host_before": {
+        "audio_subsystem": true,
+        "controller_hint": "1",
+        "controller_subsystem": true,
+        "drawable": true,
+        "host_audio_callbacks": 0,
+        "host_audio_playing": false,
+        "host_event_preserved": true,
+        "video": true
+      },
+      "host_peak_rss_bytes": 18944000,
+      "mode": "child",
+      "runs": [
+        {
+          "exit_code": 86,
+          "fault": "pilot_crash",
+          "host_after": {
+            "audio_subsystem": true,
+            "controller_hint": "1",
+            "controller_subsystem": true,
+            "drawable": true,
+            "host_audio_callbacks": 0,
+            "host_audio_playing": false,
+            "host_event_preserved": true,
+            "video": true
+          },
+          "host_cpu_ms": 34.59,
+          "host_rebuild_ms": 0.004177,
+          "host_rebuilt": false,
+          "host_recovered": true,
+          "invocation_ms": 5680.779342,
+          "native": {},
+          "observation": null,
+          "ready_ms": 609.014407,
+          "result": null
+        }
+      ],
+      "scenario": "crash",
+      "schema_version": 1,
+      "host_exit_code": 0
+    },
+    "inline_sequence": {
+      "active_fault": "normal",
+      "complete": true,
+      "host_before": {
+        "audio_subsystem": true,
+        "controller_hint": "1",
+        "controller_subsystem": true,
+        "drawable": true,
+        "host_audio_callbacks": 0,
+        "host_audio_playing": false,
+        "host_event_preserved": true,
+        "video": true
+      },
+      "host_peak_rss_bytes": 35000320,
+      "mode": "inline",
+      "runs": [
+        {
+          "exit_code": 0,
+          "fault": "normal",
+          "host_after": {
+            "audio_subsystem": false,
+            "controller_hint": null,
+            "controller_subsystem": false,
+            "drawable": false,
+            "host_audio_callbacks": 0,
+            "host_audio_playing": false,
+            "host_event_preserved": false,
+            "video": false
+          },
+          "host_cpu_ms": 2096.9100000000003,
+          "host_rebuild_ms": 2.385769,
+          "host_rebuilt": true,
+          "host_recovered": true,
+          "invocation_ms": 11998.082109,
+          "native": {
+            "cpu_ms": 2096.8740000000003,
+            "engine_window_leaked": false,
+            "exit_code": 0,
+            "frames": 146,
+            "peak_rss_bytes": 34013184,
+            "ready": true,
+            "total_ms": 11998.063792
+          },
+          "observation": {
+            "clipped": 0,
+            "frames": 146,
+            "jump": 31,
+            "left": 128,
+            "nonzero": 671495,
+            "pause": true,
+            "peak": 25147,
+            "right": 156,
+            "samples": 925696
+          },
+          "ready_ms": 623.7068,
+          "result": {
+            "engine_id": "olduvai",
+            "error": null,
+            "game_id": "prehistorik",
+            "kind": "result",
+            "native_exit_code": 0,
+            "outcome": "returned",
+            "ready": true,
+            "schema_version": 1,
+            "session_id": "8333fc76-8e5c-4ad4-9a78-772a1f2018e4"
+          }
+        },
+        {
+          "exit_code": 1,
+          "fault": "before_ready",
+          "host_after": {
+            "audio_subsystem": true,
+            "controller_hint": "1",
+            "controller_subsystem": true,
+            "drawable": true,
+            "host_audio_callbacks": 0,
+            "host_audio_playing": false,
+            "host_event_preserved": true,
+            "video": true
+          },
+          "host_cpu_ms": 39.409000000000106,
+          "host_rebuild_ms": 0.002785,
+          "host_rebuilt": false,
+          "host_recovered": true,
+          "invocation_ms": 42.232978,
+          "native": {
+            "cpu_ms": 39.27500000000009,
+            "engine_window_leaked": false,
+            "exit_code": 1,
+            "frames": 0,
+            "peak_rss_bytes": 34013184,
+            "ready": false,
+            "total_ms": 42.201055
+          },
+          "observation": null,
+          "ready_ms": null,
+          "result": {
+            "engine_id": "olduvai",
+            "error": {
+              "code": "E_RUNTIME",
+              "message": "Deliberate Prehistorik load failure"
+            },
+            "game_id": "prehistorik",
+            "kind": "result",
+            "native_exit_code": 1,
+            "outcome": "runtime_failed",
+            "ready": false,
+            "schema_version": 1,
+            "session_id": "64855914-ddfa-419a-86ca-c57079752553"
+          }
+        },
+        {
+          "exit_code": 0,
+          "fault": "normal",
+          "host_after": {
+            "audio_subsystem": false,
+            "controller_hint": null,
+            "controller_subsystem": false,
+            "drawable": false,
+            "host_audio_callbacks": 0,
+            "host_audio_playing": false,
+            "host_event_preserved": false,
+            "video": false
+          },
+          "host_cpu_ms": 1995.379,
+          "host_rebuild_ms": 2.543763,
+          "host_rebuilt": true,
+          "host_recovered": true,
+          "invocation_ms": 11900.461465,
+          "native": {
+            "cpu_ms": 1995.3339999999998,
+            "engine_window_leaked": false,
+            "exit_code": 0,
+            "frames": 146,
+            "peak_rss_bytes": 34836480,
+            "ready": true,
+            "total_ms": 11900.431734
+          },
+          "observation": {
+            "clipped": 0,
+            "frames": 146,
+            "jump": 31,
+            "left": 128,
+            "nonzero": 683780,
+            "pause": true,
+            "peak": 25147,
+            "right": 156,
+            "samples": 925696
+          },
+          "ready_ms": 544.979835,
+          "result": {
+            "engine_id": "olduvai",
+            "error": null,
+            "game_id": "prehistorik",
+            "kind": "result",
+            "native_exit_code": 0,
+            "outcome": "returned",
+            "ready": true,
+            "schema_version": 1,
+            "session_id": "5e7768c1-edd9-481d-85d0-63ab3393d40c"
+          }
+        },
+        {
+          "exit_code": 1,
+          "fault": "pilot_throw",
+          "host_after": {
+            "audio_subsystem": true,
+            "controller_hint": "1",
+            "controller_subsystem": true,
+            "drawable": true,
+            "host_audio_callbacks": 0,
+            "host_audio_playing": false,
+            "host_event_preserved": false,
+            "video": true
+          },
+          "host_cpu_ms": 937.2869999999994,
+          "host_rebuild_ms": 2.095168,
+          "host_rebuilt": true,
+          "host_recovered": true,
+          "invocation_ms": 5731.676634,
+          "native": {
+            "cpu_ms": 937.1790000000001,
+            "engine_window_leaked": true,
+            "exit_code": 1,
+            "frames": 41,
+            "peak_rss_bytes": 34840576,
+            "ready": true,
+            "total_ms": 5731.641443
+          },
+          "observation": null,
+          "ready_ms": 571.943221,
+          "result": {
+            "engine_id": "olduvai",
+            "error": {
+              "code": "E_RUNTIME",
+              "message": "Injected exception after real gameplay"
+            },
+            "game_id": "prehistorik",
+            "kind": "result",
+            "native_exit_code": 1,
+            "outcome": "runtime_failed",
+            "ready": true,
+            "schema_version": 1,
+            "session_id": "efa47896-aae8-48de-9e09-5ec8a584b28b"
+          }
+        },
+        {
+          "exit_code": 0,
+          "fault": "normal",
+          "host_after": {
+            "audio_subsystem": false,
+            "controller_hint": null,
+            "controller_subsystem": false,
+            "drawable": false,
+            "host_audio_callbacks": 0,
+            "host_audio_playing": false,
+            "host_event_preserved": false,
+            "video": false
+          },
+          "host_cpu_ms": 1838.1530000000002,
+          "host_rebuild_ms": 2.216844,
+          "host_rebuilt": true,
+          "host_recovered": true,
+          "invocation_ms": 11938.929245,
+          "native": {
+            "cpu_ms": 1838.103,
+            "engine_window_leaked": false,
+            "exit_code": 0,
+            "frames": 146,
+            "peak_rss_bytes": 34971648,
+            "ready": true,
+            "total_ms": 11938.89317
+          },
+          "observation": {
+            "clipped": 0,
+            "frames": 146,
+            "jump": 31,
+            "left": 128,
+            "nonzero": 671495,
+            "pause": true,
+            "peak": 25147,
+            "right": 156,
+            "samples": 921600
+          },
+          "ready_ms": 544.380692,
+          "result": {
+            "engine_id": "olduvai",
+            "error": null,
+            "game_id": "prehistorik",
+            "kind": "result",
+            "native_exit_code": 0,
+            "outcome": "returned",
+            "ready": true,
+            "schema_version": 1,
+            "session_id": "0b0d3caa-34d0-409e-b0f1-f1cc89d927ef"
+          }
+        }
+      ],
+      "scenario": "sequence",
+      "schema_version": 1,
+      "host_exit_code": 0
+    },
+    "inline_audio": {
+      "active_fault": "normal",
+      "complete": true,
+      "host_before": {
+        "audio_subsystem": true,
+        "controller_hint": "1",
+        "controller_subsystem": true,
+        "drawable": true,
+        "host_audio_callbacks": 0,
+        "host_audio_playing": true,
+        "host_event_preserved": true,
+        "video": true
+      },
+      "host_peak_rss_bytes": 18944000,
+      "mode": "inline",
+      "runs": [
+        {
+          "exit_code": 1,
+          "fault": "normal",
+          "host_after": {
+            "audio_subsystem": true,
+            "controller_hint": "0",
+            "controller_subsystem": true,
+            "drawable": true,
+            "host_audio_callbacks": 4,
+            "host_audio_playing": true,
+            "host_event_preserved": true,
+            "video": true
+          },
+          "host_cpu_ms": 48.94,
+          "host_rebuild_ms": 0.004595,
+          "host_rebuilt": false,
+          "host_recovered": true,
+          "invocation_ms": 52.322905,
+          "native": {
+            "cpu_ms": 48.822,
+            "engine_window_leaked": false,
+            "exit_code": 1,
+            "frames": 0,
+            "peak_rss_bytes": 18944000,
+            "ready": false,
+            "total_ms": 52.292237
+          },
+          "observation": null,
+          "ready_ms": null,
+          "result": {
+            "engine_id": "olduvai",
+            "error": {
+              "code": "E_RUNTIME",
+              "message": "Managed Olduvai requires an active audio device"
+            },
+            "game_id": "prehistorik",
+            "kind": "result",
+            "native_exit_code": 1,
+            "outcome": "runtime_failed",
+            "ready": false,
+            "schema_version": 1,
+            "session_id": "fcecb6e5-8c32-4ca5-9b3e-7c85a1faf196"
+          }
+        }
+      ],
+      "scenario": "audio",
+      "schema_version": 1,
+      "host_exit_code": 0
+    },
+    "inline_crash": {
+      "active_fault": "pilot_crash",
+      "complete": false,
+      "host_before": {
+        "audio_subsystem": true,
+        "controller_hint": "1",
+        "controller_subsystem": true,
+        "drawable": true,
+        "host_audio_callbacks": 0,
+        "host_audio_playing": false,
+        "host_event_preserved": true,
+        "video": true
+      },
+      "mode": "inline",
+      "runs": [],
+      "scenario": "crash",
+      "schema_version": 1,
+      "host_exit_code": 86
+    }
+  }
+}

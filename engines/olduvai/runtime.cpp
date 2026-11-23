@@ -10,6 +10,12 @@
 #include <fstream>
 #include <iostream>
 #include <thread>
+#ifdef TITUS_INPROCESS_PILOT
+#include "entry.hpp"
+#ifndef _WIN32
+#include <sys/resource.h>
+#endif
+#endif
 #ifdef _WIN32
 #include <windows.h>
 #include <io.h>
@@ -77,10 +83,18 @@ int run(const std::vector<std::string>& args){try{
     emit("closing");if(test_ms&&fault=="missing_result")return 0;result(ready?"returned":"cancelled",0);return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';if(events.is_open())try{Json error={{"code","E_RUNTIME"},{"message",e.what()}};emit("error",error);emit("closing");result("runtime_failed",1,error);}catch(...){}return 1;}}
 }
-void engine_ready(const char* scene,bool audio){if(ready)return;if(!audio)throw Error("E_AUDIO","Prehistorik audio device is not active");ready=true;ready_at=std::chrono::steady_clock::now();emit("ready",{{"features",runtime_features("prehistorik",false)},{"scene",scene},{"save_slot_count",0},{"audio_active",true}});}
+void engine_ready(const char* scene,bool audio){if(ready)return;if(!audio)throw Error("E_AUDIO","Prehistorik audio device is not active");ready=true;ready_at=std::chrono::steady_clock::now();
+#ifdef TITUS_INPROCESS_PILOT
+    if(titus_pilot::on_ready)titus_pilot::on_ready();
+#endif
+    emit("ready",{{"features",runtime_features("prehistorik",false)},{"scene",scene},{"save_slot_count",0},{"audio_active",true}});}
 void engine_playing(){playing=true;playing_at=std::chrono::steady_clock::now();}
 void engine_frame(int x,int y,bool is_paused){if(!playing)engine_playing();if(is_paused){pause_seen=true;return;}if(!probe)return;
-    int n=frames++;if(n==10)bx=rx=x;if(n>=10&&n<40)rx=std::max(rx,x);if(n==40)lstart=lx=x;if(n>=40&&n<65)lx=std::min(lx,x);if(n==65)by=jy=y;if(n>=65&&n<95)jy=std::min(jy,y);
+    int n=frames++;
+#ifdef TITUS_INPROCESS_PILOT
+    if(n==40){auto fault=environment_value("TITUS_TEST_FAULT").value_or("");if(fault=="pilot_throw")throw Error("E_PILOT","Injected exception after real gameplay");if(fault=="pilot_crash")std::_Exit(86);}
+#endif
+    if(n==10)bx=rx=x;if(n>=10&&n<40)rx=std::max(rx,x);if(n==40)lstart=lx=x;if(n>=40&&n<65)lx=std::min(lx,x);if(n==65)by=jy=y;if(n>=65&&n<95)jy=std::min(jy,y);
     int desired=n<10?0:n<40?SDLK_RIGHT:n<65?SDLK_LEFT:n<95?SDLK_UP:n<120?32:0;if(desired!=key){if(key)set_key(key,false);if(desired)set_key(desired,true);key=desired;}
     if(n==120)capture();if(n==145)push_key(SDLK_ESCAPE);
 }
@@ -97,7 +111,31 @@ void engine_tick(){
         if(c.size()!=5||c["schema_version"]!=1||c["kind"]!="command"||c["session_id"]!=request["session_id"]||c["seq"]!=++command_seq||c["command"]!="return_to_library")throw Error("E_PROTOCOL","Invalid Prehistorik command");request_quit();
     }
 }
+#ifdef TITUS_INPROCESS_PILOT
+namespace titus_pilot {
+void (*on_ready)()=nullptr;
+double cpu_ms(){
 #ifdef _WIN32
+    FILETIME created,exited,kernel,user;if(!GetProcessTimes(GetCurrentProcess(),&created,&exited,&kernel,&user))throw Error("E_PILOT","Cannot measure process CPU");ULARGE_INTEGER k{},u{};k.LowPart=kernel.dwLowDateTime;k.HighPart=kernel.dwHighDateTime;u.LowPart=user.dwLowDateTime;u.HighPart=user.dwHighDateTime;return (k.QuadPart+u.QuadPart)/10000.0;
+#else
+    rusage usage{};if(getrusage(RUSAGE_SELF,&usage))throw Error("E_PILOT","Cannot measure process CPU");return (usage.ru_utime.tv_sec+usage.ru_stime.tv_sec)*1000.0+(usage.ru_utime.tv_usec+usage.ru_stime.tv_usec)/1000.0;
+#endif
+}
+Json enter(const fs::path& file){
+    // Explicit bootstrap reset for the experiment; this is not an engine-state reset API.
+    events.close();events.clear();request=Json();session.clear();work.clear();
+    sequence=command_seq=test_ms=frames=bx=rx=lstart=lx=by=jy=key=0;command_offset=0;
+    ready=returning=probe=playing=pause_seen=paused=false;samples=nonzero=clipped=0;peak=0;
+    started=ready_at=playing_at=last_skip=std::chrono::steady_clock::now();
+    titus_old::on_tick=nullptr;titus_old::on_ready=nullptr;titus_old::on_frame=nullptr;titus_old::on_audio=nullptr;
+    titus_old::audio_ok=titus_old::quit_seen=false;titus_old::renderer=nullptr;titus_old::synthetic.fill(-1);
+    auto begin=std::chrono::steady_clock::now();auto cpu=cpu_ms();int code=run({"pilot-engine","--session-request",file.u8string()});
+    events.close();
+    bool leaked=false;if(SDL_WasInit(SDL_INIT_VIDEO)&&titus_old::renderer){for(Uint32 id=1;id<64;++id){auto window=SDL_GetWindowFromID(id);if(window&&SDL_GetRenderer(window)==titus_old::renderer){leaked=true;break;}}}
+    return {{"engine_window_leaked",leaked},{"exit_code",code},{"ready",ready},{"frames",frames},{"cpu_ms",cpu_ms()-cpu},{"total_ms",std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-begin).count()}};
+}
+}
+#elif defined(_WIN32)
 int wmain(int argc,wchar_t** argv){std::vector<std::string> args;for(int i=0;i<argc;++i)args.push_back(fs::path(argv[i]).u8string());return run(args);}
 #else
 int main(int argc,char** argv){return run(std::vector<std::string>(argv,argv+argc));}

@@ -21,7 +21,7 @@ no instalaciones registradas o ejecutables ya disponibles.
 | Progreso | Perfil estable por jugador/juego/grupo de compatibilidad, independiente de la ruta de instalación y de la edición de presentación cuando el motor lo permita. |
 | Originales | Solo lectura. Preparación nativa y recursos privados para cada runtime; nunca arrancar EXE/COM del juego como programa del sistema. |
 | Nombres | Producto/binario del frontend `Titus Engine` / `titus-engine[.exe]`. Conservar de momento remoto/directorio `blues-engine` y CLI `blues[.exe]`. |
-| Integración en proceso | Fuera de esta primera implementación; evaluar en TH-11 con datos de estabilidad/licencias, sin condicionar TH-04. |
+| Integración en proceso | TH-11 evaluada con piloto real Linux/Windows: mantener todos los adaptadores en procesos separados; ver INPROCESS_EVALUATION.md. |
 
 No se fija una fecha de entrega. TH-03 cierra estas decisiones; TH-04 comienza la
 implementación del core del catálogo.
@@ -508,3 +508,12 @@ recuperación, controles de mando por capacidad y el catálogo nativo de slots.
 Blues carga sin pasar por título/selección y restaura el payload después de
 reconstruir recursos y antes de simular. El índice es reconstruible y la
 segunda importación requiere comparación/confirmación con copia de perfil.
+
+## Decisión TH-11
+
+El [piloto de integración en proceso](INPROCESS_EVALUATION.md) compara el mismo
+motor Olduvai con recursos de host vivos, repetición, errores y caída controlada.
+La salida normal invalida SDL del host; la excepción deja una ventana del motor
+viva y la caída compartida termina el host. Se mantienen todos los adaptadores
+en procesos separados para TH-12. El piloto opcional no se instala, no aparece
+en el registro y no enlaza motores en el frontend de producción.
