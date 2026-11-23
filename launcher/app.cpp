@@ -53,7 +53,7 @@ class App {
     std::unique_ptr<Session> session;
     fs::path package_root;
     bool session_hidden=false,cancel_start=false;
-    bool test_play=false,test_family=false,test_fox=false;
+    bool test_play=false,test_family=false,test_fox=false,test_pre1=false;
     int play_test_stage=0;
     Uint32 play_test_started=0;
     bool smoke=false;
@@ -380,11 +380,12 @@ class App {
     void push_key(SDL_Keycode sym,SDL_Keymod mod=KMOD_NONE){SDL_Event e{};e.type=SDL_KEYDOWN;e.key.keysym.sym=sym;e.key.keysym.mod=mod;e.key.keysym.scancode=SDL_GetScancodeFromKey(sym);SDL_PushEvent(&e);}
     void play_test_tick(){
         if(!test_play)return;
-        if(SDL_GetTicks()-play_test_started>(test_fox?240000u:test_family?180000u:60000u))throw Error("E_UI_SESSION_TEST","Session UI probe timed out");
+        if(SDL_GetTicks()-play_test_started>(test_pre1?300000u:test_fox?240000u:test_family?180000u:60000u))throw Error("E_UI_SESSION_TEST","Session UI probe timed out");
         if(starting_session.valid()||session)return;
         std::vector<std::pair<std::string,std::string>> choices={{"blues","dos"}};
         if(test_family){choices.push_back({"jukebox","dos"});choices.push_back({"prehistorik2","dos"});}
         if(test_fox)choices.push_back({"fox","dos"});
+        if(test_pre1)choices.push_back({"prehistorik","dos"});
         choices.push_back({"blues","amiga"});
         if(play_test_stage%2==0){
             if(play_test_stage>0)check(!session_hidden&&(SDL_GetWindowFlags(window)&SDL_WINDOW_SHOWN),"library window restored after game");
@@ -443,7 +444,7 @@ class App {
     }
 public:
     App(Paths p,bool test,fs::path capture_path,fs::path initial_browse,fs::path import_source,int play_probe):paths(std::move(p)),library(paths),smoke(test),screenshot(std::move(capture_path)),workflow_source(std::move(import_source)){
-        test_play=play_probe!=0;test_family=play_probe>=2;test_fox=play_probe==3;play_test_started=SDL_GetTicks();
+        test_play=play_probe!=0;test_family=play_probe>=2;test_fox=play_probe>=3;test_pre1=play_probe==4;play_test_started=SDL_GetTicks();
         char* base=SDL_GetBasePath();if(!base)throw Error("E_PATH",SDL_GetError());package_root=fs::u8path(base);SDL_free(base);
         try{auto registry=parse_json(read_document(package_root/"engines/registry.json"));
             for(const auto& entry:registry.at("engines"))if(entry.at("adapter_state")=="validated"&&registry.at("role")=="package"){bool installed=fs::is_regular_file(package_root/fs::u8path(entry.at("executables").at(platform()).get<std::string>()));if(entry.at("engine_id")=="blues-family")library.blues_runtime_installed=installed;
@@ -478,6 +479,7 @@ int run(const std::vector<std::string>& args){
             else if(option=="--session-smoke-test")play_probe=1;
             else if(option=="--family-session-smoke-test")play_probe=2;
             else if(option=="--fox-session-smoke-test")play_probe=3;
+            else if(option=="--pre1-session-smoke-test")play_probe=4;
             else if(option=="--user-dir"||option=="--screenshot"||option=="--browse-dir"||option=="--test-import"){if(++i==args.size())throw Error("E_ARGUMENT","Missing option value");auto p=fs::u8path(args[i]);if(option=="--user-dir")user=p;else if(option=="--screenshot")screenshot=p;else if(option=="--browse-dir")browse=p;else import_source=p;}
             else if(option=="--help"){std::cout<<"titus-engine [--user-dir ABS] [--browse-dir PATH]\n  F11: fullscreen; Tab/arrows/Enter: navigation; A: add; Esc: cancel/quit\n  --smoke-test [--screenshot FILE.bmp]: bounded UI regression test\n";return 0;}
             else throw Error("E_ARGUMENT","Unknown option: "+option);}

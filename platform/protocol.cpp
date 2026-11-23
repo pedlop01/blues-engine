@@ -7,10 +7,10 @@ Json blues_features(bool dual){Json features=Json::array({"return_to_library","n
 Json runtime_features(const std::string& game,bool dual){
     if(game=="blues")return blues_features(dual);
     if(game=="jukebox"||game=="prehistorik2")return Json::array({"return_to_library","native_pause","fullscreen","separate_volumes"});
-    if(game=="fox")return Json::array({"return_to_library","native_pause","fullscreen"});
+    if(game=="fox"||game=="prehistorik")return Json::array({"return_to_library","native_pause","fullscreen"});
     throw Error("E_GAME","Unsupported engine game");
 }
-std::string runtime_engine(const Json& r){return r.at("game_id")=="fox"?"opentitus":"blues-family";}
+std::string runtime_engine(const Json& r){return r.at("game_id")=="fox"?"opentitus":r.at("game_id")=="prehistorik"?"olduvai":"blues-family";}
 int runtime_slot_count(const Json& r){return r.at("game_id")=="blues"?8:0;}
 namespace {
 void must(bool ok,const std::string& text,const char* code="E_REQUEST"){if(!ok)throw Error(code,text);}
@@ -111,7 +111,7 @@ void validate_runtime_result(const Json& d,const Json& r){fields(d,{"schema_vers
     if(outcome=="returned"||outcome=="quit")must(d["ready"]==true&&d["native_exit_code"]==0&&d["error"].is_null(),"Unsuccessful result claimed success","E_PROTOCOL");
 }
 void validate_runtime_inspection(const Json& d,const Json& r){fields(d,{"schema_version","kind","inspection_id","profile_id","game_id","engine_id","save_compatibility_id","status","features","save_slot_count","preparation_ids","save_index","error"});response_identity(d,r);
-    must(d["kind"]=="inspection"&&d["inspection_id"]==r["session_id"]&&(d["status"]=="ok"||(r["game_id"]=="fox"&&d["status"]=="preparation_required"))&&d["save_slot_count"]==runtime_slot_count(r)&&d["preparation_ids"].is_array()&&(d["preparation_ids"].empty()||(r["game_id"]=="fox"&&d["preparation_ids"]==Json::array({"fox-lzw-v1"})))&&d["error"].is_null(),"Failed or invalid inspection","E_PROTOCOL");features_valid(d["features"],r);
+    must(d["kind"]=="inspection"&&d["inspection_id"]==r["session_id"]&&(d["status"]=="ok"||((r["game_id"]=="fox"||r["game_id"]=="prehistorik")&&d["status"]=="preparation_required"))&&d["save_slot_count"]==runtime_slot_count(r)&&d["preparation_ids"].is_array()&&(d["preparation_ids"].empty()||((r["game_id"]=="fox"||r["game_id"]=="prehistorik")&&d["preparation_ids"]==Json::array({r["game_id"]=="fox"?"fox-lzw-v1":"pre1-diet-v1"})))&&d["error"].is_null(),"Failed or invalid inspection","E_PROTOCOL");features_valid(d["features"],r);
     must((d["status"]=="preparation_required")==!d["preparation_ids"].empty(),"Inspection preparation status mismatch","E_PROTOCOL");
     const auto& index=d["save_index"];if(runtime_slot_count(r)==0){must(index.is_null(),"This game has no native save index","E_PROTOCOL");return;}must(!index.is_null(),"Missing native save index","E_PROTOCOL");fields(index,{"schema_version","kind","profile_id","game_id","engine_id","save_compatibility_id","slot_count","slots"});response_identity(index,r);must(index["kind"]=="save_index"&&index["slot_count"]==runtime_slot_count(r)&&index["slots"].is_array()&&index["slots"].size()<=static_cast<size_t>(runtime_slot_count(r)),"Invalid save index","E_PROTOCOL");
     std::set<int> slots;for(const auto& slot:index["slots"]){fields(slot,{"slot","file","format_id","format_version","edition_id","resource_fingerprint","native_resource_crc32","payload_sha256","has_preview","status"});

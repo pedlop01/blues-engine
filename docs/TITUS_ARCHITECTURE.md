@@ -187,7 +187,7 @@ por haber arrancado un ejecutable antiguo.
 Preparadores de producto: C/C++ nativos, limitados a las variantes verificadas y
 contrastados con los hashes de TH-02. Deark/Unicorn/Python son herramientas de
 desarrollo, no requisitos que instalará el jugador. TH-08 implementa la vía
-nativa LZW para Fox; TH-09 añadirá DIET para Prehistorik 1. Solo se habilitan
+nativa LZW para Fox; TH-09 implementa DIET para Prehistorik 1. Solo se habilitan
 adaptadores cuya preparación y ejecución estén validadas.
 
 ## Capacidades y opciones
@@ -491,3 +491,11 @@ OpenTitus al frontend. Puente, fuentes GPL fijadas, caché privada verificada,
 rutas Unicode/largas y validación en [FOX_RUNTIME.md](FOX_RUNTIME.md).
 Los contratos de `save_index` de v1 siguen siendo de Blues: Jukebox/P2 también
 devuelven null en vez de un índice ficticio de cero slots.
+
+## Implementación TH-09
+
+Olduvai se enlaza con un bootstrap propio en proceso separado, con preparación
+DIET nativa y publicación verificada de la caché. Inspección sin SDL, ajustes e
+informes privados, ready tras presentación real y retorno supervisado siguen
+el contrato común. Ver [Prehistorik](PREHISTORIK_RUNTIME.md) para controles,
+capacidades, fuentes fijadas y límites de las pruebas.

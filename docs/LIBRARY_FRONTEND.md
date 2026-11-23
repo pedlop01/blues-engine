@@ -23,7 +23,7 @@ SDL2/C++17 de la biblioteca; utiliza el catálogo y los detectores de TH-04.
 importación inicial reversible y retorno a biblioteca; ver [runtime Blues](BLUES_RUNTIME.md).
 Desde [TH-07](FAMILY_RUNTIME.md), también están disponibles Jukebox Adventure y
 Prehistorik 2 DOS. [TH-08](FOX_RUNTIME.md) añade Titus the Fox DOS con preparación
-nativa privada. Prehistorik 1 permanece deshabilitado hasta TH-09. Las fuentes ADF se registran sin extraerse ni arrancarse.
+nativa privada. [TH-09](PREHISTORIK_RUNTIME.md) añade Prehistorik 1 DOS mediante Olduvai y DIET nativo. Las fuentes ADF se registran sin extraerse ni arrancarse.
 
 ## Abrir y añadir los juegos
 

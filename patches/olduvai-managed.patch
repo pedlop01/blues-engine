@@ -1,0 +1,416 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Managed hooks and private I/O against Olduvai a69e9204fc311c8810d696a6b799000d1bcd1642.
+--- a/src/prepare/game_files.cpp
++++ b/src/prepare/game_files.cpp
+@@ -1,3 +1,4 @@
++#include "managed_io.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ #include "formats/hash64.hpp"
+@@ -43,8 +44,9 @@
+ 
+ // Resolve a required name to an actual path inside `dir`, honouring case.
+ fs::path resolve(const fs::path& dir, const std::string& want) {
++    if(titus_old::io_file(dir/want))return dir/want;
+     std::error_code ec;
+-    for (const auto& it : fs::directory_iterator(dir, ec)) {
++    for (const auto& it : fs::directory_iterator(titus_old::io_path(dir), ec)) {
+         const std::string name = it.path().filename().string();
+         if (name_matches(name, want)) return it.path();
+     }
+@@ -55,7 +57,7 @@
+ // "PREH").  Returns "" when absent.
+ fs::path resolve_subdir(const fs::path& dir, const std::string& want) {
+     std::error_code ec;
+-    for (const auto& it : fs::directory_iterator(dir, ec)) {
++    for (const auto& it : fs::directory_iterator(titus_old::io_path(dir), ec)) {
+         if (!it.is_directory(ec)) continue;
+         const std::string name = it.path().filename().string();
+         if (name_matches(name, want)) return it.path();
+@@ -73,7 +75,7 @@
+ // lives in prepare/ because that is the lowest layer every caller
+ // (presentation, app) may legally include.
+ std::vector<std::uint8_t> slurp_file(const fs::path& p) {
+-    std::ifstream in(p, std::ios::binary);
++    std::ifstream in(titus_old::io_path(p), std::ios::binary);
+     if (!in) return {};
+     return {std::istreambuf_iterator<char>(in),
+             std::istreambuf_iterator<char>()};
+@@ -90,7 +92,7 @@
+                            std::uintmax_t& size) {
+     ok = false;
+     size = 0;
+-    std::ifstream in(path, std::ios::binary);
++    std::ifstream in(titus_old::io_path(path), std::ios::binary);
+     if (!in) return 0;
+     formats::Hash64 h;
+     std::array<char, 1 << 16> buf{};
+--- a/src/presentation/audio/audio.cpp
++++ b/src/presentation/audio/audio.cpp
+@@ -1,3 +1,4 @@
++#include "managed_old.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ #include "presentation/audio/audio.hpp"
+@@ -623,6 +624,7 @@
+ void sdl_callback(void* userdata, Uint8* stream, int len) {
+     auto* self = static_cast<SdlAudio*>(userdata);
+     self->mix(reinterpret_cast<std::int16_t*>(stream), len / 4);
++    if(titus_old::on_audio)titus_old::on_audio(reinterpret_cast<const Sint16*>(stream),len/2);
+ }
+ 
+ // Catalog SFX note events (channel, note, velocity, program, ms) for the MIDI
+--- a/src/presentation/boss/boss_pause.cpp
++++ b/src/presentation/boss/boss_pause.cpp
+@@ -1,3 +1,4 @@
++#include "managed_old.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ #include "presentation/boss/boss_pause.hpp"
+@@ -14,7 +15,7 @@
+                                         ? gamepad::Context::kMenu
+                                         : gamepad::Context::kPlay);
+     SDL_Event ev;
+-    while (SDL_PollEvent(&ev)) {
++    while (titus_old::poll(&ev)) {
+         if (handle_fullscreen_toggle(ev, win)) continue;
+         if (ev.type == SDL_QUIT) {
+             res.quit = true;
+--- a/src/presentation/diag/bug_capture.cpp
++++ b/src/presentation/diag/bug_capture.cpp
+@@ -1,3 +1,4 @@
++#include "managed_io.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ #include "presentation/diag/bug_capture.hpp"
+@@ -339,7 +340,7 @@
+ void write_report_md(const fs::path& path, const BugReport& r,
+                      const std::vector<const core::Entity*>& ents,
+                      const std::string& captured_at) {
+-    std::ofstream f(path);
++    std::ofstream f(titus_old::io_path(path));
+     if (!f) return;
+     md_summary(f, r.state, ents.size(), r.display_level, r.internal_level,
+                captured_at, r.ann, r.boss);
+@@ -376,17 +377,7 @@
+     g_bug_report_dir = expand_tilde(dir);
+ }
+ 
+-std::string bug_report_root() {
+-    if (const char* env = std::getenv("OLDUVAI_BUG_DIR");
+-        env != nullptr && *env != '\0') {
+-        return expand_tilde(env);
+-    }
+-    if (!g_bug_report_dir.empty()) return g_bug_report_dir;
+-    const std::string home = home_dir();
+-    if (!home.empty())
+-        return (fs::path(home) / "olduvai" / "bug_reports").string();
+-    return "bug_reports";   // no resolvable home: last-resort cwd-relative
+-}
++std::string bug_report_root() { return titus_old::report_root.u8string(); }
+ 
+ std::string write_bug_report(const BugReport& r) {
+     const systems::SystemsState& state = r.state;
+@@ -394,27 +385,14 @@
+     const std::string ts = timestamp_dir();
+     const std::string iso = timestamp_iso();
+ 
+-    fs::path root = fs::path(bug_report_root()) /
++    fs::path root = fs::u8path(bug_report_root()) /
+                     (ts + "_L" + std::to_string(r.display_level) + "_S" +
+                      std::to_string(state.current_screen));
+     std::error_code ec;
+-    fs::create_directories(root, ec);
+-    if (ec) {
+-        // resolved root not writable: fall back to the config dir, which the
+-        // save/config paths already resolve robustly.
+-        const char* xdg = std::getenv("XDG_CONFIG_HOME");
+-        const char* home = std::getenv("HOME");
+-        const std::string cfg_base =
+-            (xdg != nullptr && *xdg != '\0')
+-                ? std::string(xdg)
+-                : std::string(home != nullptr ? home : ".") + "/.config";
+-        root = fs::path(cfg_base) / "olduvai" / "bug_reports" / root.filename();
+-        ec.clear();
+-        fs::create_directories(root, ec);
+-    }
++    titus_old::io_mkdir(root, ec);
+     if (ec) {
+         std::fprintf(stderr, "bug capture: could not create %s: %s\n",
+-                     root.string().c_str(), ec.message().c_str());
++                     root.u8string().c_str(), ec.message().c_str());
+         return std::string();
+     }
+ 
+@@ -425,7 +403,7 @@
+     const int shot_scale = std::max(1, base_frame.w / 320);
+ 
+     // 1. Clean gameplay frame.
+-    save_fb_png(base_frame, (root / "screenshot.png").string());
++    save_fb_png(base_frame, (root / "screenshot.png").u8string());
+ 
+     // 2-3. The collision and entity overlays read the platform level's
+     // bitmap and entity table; a boss arena has neither, so they are skipped.
+@@ -434,21 +412,21 @@
+         {
+             FrameBuffer copy = base_frame;
+             draw_debug_collision(copy, state, shot_scale);
+-            save_fb_png(copy, (root / "screenshot_collision.png").string());
++            save_fb_png(copy, (root / "screenshot_collision.png").u8string());
+         }
+         // 3. Entity overlay.
+         {
+             FrameBuffer copy = base_frame;
+             draw_debug_entities(copy, state, r.entity_sprites, shot_scale);
+-            save_fb_png(copy, (root / "screenshot_entities.png").string());
++            save_fb_png(copy, (root / "screenshot_entities.png").u8string());
+         }
+     }
+ 
+     write_report_md(root / "report.md", r, ents, iso);
+ 
+-    std::printf("bug report: %s\n", root.string().c_str());
++    std::printf("bug report: %s\n", root.u8string().c_str());
+     std::fflush(stdout);
+-    return root.string();
++    return root.u8string();
+ }
+ 
+ void write_bug_report_as_shown(const BugReport& r, SDL_Renderer* ren,
+--- a/src/presentation/game_app.cpp
++++ b/src/presentation/game_app.cpp
+@@ -1,3 +1,4 @@
++#include "managed_old.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ #include "presentation/input/frame_input.hpp"   // gather_frame_inputs
+@@ -180,7 +181,7 @@
+         form.open() || pause.open() || cheats.open() ? gamepad::Context::kMenu
+                                                      : gamepad::Context::kPlay);
+     SDL_Event ev;
+-    while (SDL_PollEvent(&ev)) {
++    while (titus_old::poll(&ev)) {
+         if (handle_fullscreen_toggle(ev, win)) continue;
+         if (ev.type == SDL_QUIT) return true;
+         if (form.open()) {
+@@ -256,7 +257,7 @@
+     Loaded g;
+     if (!load_level_data(g, opts, internal, carry, restore_in, god_active,
+                          display.surface().use_hd_text()))
+-        return LevelOutcome::kQuit;
++        throw std::runtime_error("Managed Olduvai could not load level data");
+     // --level is the display level; level rules use the internal one (slots 3
+     // and 5 swap, kGameLevelOrder).  Log both so a capture names what it shows.
+     std::fprintf(stderr, "game: level %d (internal %d)\n", display_level,
+@@ -382,6 +383,7 @@
+     int end_px = 0;
+     int end_py = 0;
+     while (running) {
++        titus_old::frame(g.state.player.x,g.state.player.y,pause.open());
+         // Bound per frame: a reinit replaces both, then starts the next one.
+         const LevelSurface& surface = display.surface();
+         LevelView& view = display.view();
+--- a/src/presentation/game_session.cpp
++++ b/src/presentation/game_session.cpp
+@@ -1,3 +1,4 @@
++#include "managed_old.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ // run_game: the session, from the title through the levels to the endings.
+@@ -114,6 +115,7 @@
+         try {
+             install_exe_game_data(prepare::load_game_executable(opts_.game_dir));
+         } catch (const std::exception& e) {
++            throw;
+             std::fprintf(stderr, "game data: EXE tables not installed (%s)\n",
+                          e.what());
+         }
+@@ -148,6 +150,8 @@
+         setup.midi_port = rt_.midi_port;
+         audio_ = std::make_unique<SdlAudio>(setup);
+         audio_->set_mix_balance(rt_.enhanced);
++        titus_old::audio_ok=audio_->ok();
++        if(!titus_old::audio_ok)throw std::runtime_error("Managed Olduvai requires an active audio device");
+         // Non-fatal: no SFX; the level loader reports the real error.
+         try {
+             const prepare::GameArchives archives(opts_.game_dir);
+@@ -222,6 +226,8 @@
+             open_audio();
+         } else if (style_changed) {
+             audio_->set_mix_balance(rt_.enhanced);
++        titus_old::audio_ok=audio_->ok();
++        if(!titus_old::audio_ok)throw std::runtime_error("Managed Olduvai requires an active audio device");
+         }
+         if (new_scale == hd_scale_ && !aspect_changed) return true;
+         hd_ = hd_active(rt_.enhanced, rt_.hd_profile);
+--- a/src/presentation/input/actions.cpp
++++ b/src/presentation/input/actions.cpp
+@@ -1,3 +1,4 @@
++#include "managed_old.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ #include "presentation/input/actions.hpp"
+@@ -71,7 +72,7 @@
+ }
+ 
+ bool key_held(Action a) {
+-    const Uint8* keys = SDL_GetKeyboardState(nullptr);
++    const Uint8* keys = titus_old::keys(nullptr);
+     if (keys == nullptr) return false;
+     const auto& scans = live().scans[index_of(a)];
+     return std::any_of(scans.begin(), scans.end(),
+--- a/src/presentation/render/frame_presenter.cpp
++++ b/src/presentation/render/frame_presenter.cpp
+@@ -1,3 +1,4 @@
++#include "managed_old.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ #include "presentation/render/frame_presenter.hpp"
+@@ -130,6 +131,7 @@
+     if (do_present) {
+         FrameStats::Timer sw(stats, &FrameStats::swap_ms);   // the vsync block
+         present_output(surface->ren());
++        titus_old::ready("gameplay",surface->ren());
+     }
+ }
+ 
+--- a/src/presentation/sequence/end_sequence.cpp
++++ b/src/presentation/sequence/end_sequence.cpp
+@@ -1,3 +1,4 @@
++#include "managed_old.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ #include "prepare/game_files.hpp"
+@@ -77,7 +78,7 @@
+     for (int f = 0; f < kHoldFrames; ++f) {
+         SDL_Event ev;
+         bool abort = false;
+-        while (SDL_PollEvent(&ev)) {
++        while (titus_old::poll(&ev)) {
+             if (handle_fullscreen_toggle(ev, sw.win)) continue;
+             if (ev.type == SDL_QUIT ||
+                 (ev.type == SDL_KEYDOWN &&
+@@ -225,7 +226,7 @@
+     int rise_step = 0;
+     const auto render_at = [&](int y, Uint32 delay_ms) -> Rise {
+         SDL_Event ev;
+-        while (SDL_PollEvent(&ev)) {
++        while (titus_old::poll(&ev)) {
+             if (handle_fullscreen_toggle(ev, sw.win)) continue;
+             if (ev.type == SDL_QUIT) return Rise::kQuit;
+             if (ev.type == SDL_KEYDOWN &&
+@@ -303,7 +304,7 @@
+     const Uint32 start = SDL_GetTicks();
+     for (int frame = 0; frame <= kEndingFadeFrames; ++frame) {
+         SDL_Event ev;
+-        while (SDL_PollEvent(&ev))
++        while (titus_old::poll(&ev))
+             if (ev.type == SDL_QUIT) return;
+         audio.set_music_fade(1.0f - static_cast<float>(frame) /
+                                         kEndingFadeFrames);
+--- a/src/presentation/sequence/l3_end_level.cpp
++++ b/src/presentation/sequence/l3_end_level.cpp
+@@ -1,3 +1,4 @@
++#include "managed_old.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ // L3 trunk-descent end-level sequence: FUN_2276_0282 (Phase 1) and
+@@ -231,7 +232,7 @@
+         // Drain SDL events (ESC is inert during the descent; window-close
+         // aborts).
+         SDL_Event ev;
+-        while (SDL_PollEvent(&ev)) {
++        while (titus_old::poll(&ev)) {
+             if (ev.type == SDL_QUIT) { p.state.game_over = true; return false; }
+             // ESC is inert (no menu here); only SDL_QUIT above stops the
+             // descent.
+@@ -346,7 +347,7 @@
+ 
+         // Drain SDL events.
+         SDL_Event ev;
+-        while (SDL_PollEvent(&ev)) {
++        while (titus_old::poll(&ev)) {
+             if (ev.type == SDL_QUIT) { p.state.game_over = true; return false; }
+             // ESC is inert (no menu here); only SDL_QUIT above stops the
+             // descent.
+--- a/src/presentation/sequence/level_end.cpp
++++ b/src/presentation/sequence/level_end.cpp
+@@ -1,3 +1,4 @@
++#include "managed_old.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ #include "presentation/sequence/level_end.hpp"
+@@ -76,7 +77,7 @@
+         dump_level_fade(wf.px, wsp.native_w(), 200);
+         wsp.present_transition(wf.px, /*with_hud=*/false);
+         SDL_Event e2;
+-        while (SDL_PollEvent(&e2)) {
++        while (titus_old::poll(&e2)) {
+             if (handle_fullscreen_toggle(e2, win)) continue;
+             if (e2.type == SDL_QUIT) { running = false; quit = true; }
+         }
+--- a/src/presentation/sequence/screens.cpp
++++ b/src/presentation/sequence/screens.cpp
+@@ -1,3 +1,4 @@
++#include "managed_old.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ #include "enhance/parallel_rows.hpp"
+@@ -39,7 +40,7 @@
+ // post-win tally must never abort).
+ TallyKey poll_tally_key() {
+     SDL_Event ev;
+-    while (SDL_PollEvent(&ev)) {
++    while (titus_old::poll(&ev)) {
+         if (ev.type == SDL_QUIT) return TallyKey::Quit;
+         if (ev.type == SDL_KEYDOWN) {
+             const SDL_Keycode sym = ev.key.keysym.sym;
+--- a/src/presentation/title_menu_flow.cpp
++++ b/src/presentation/title_menu_flow.cpp
+@@ -1,3 +1,4 @@
++#include "managed_old.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ // The intro/title sequence and the interactive main menu.  Coverage caveat:
+@@ -58,7 +59,7 @@
+     bool present(const FrameBuffer& f) {
+         cursor_autohide_frame();
+         SDL_Event ev;
+-        while (SDL_PollEvent(&ev)) {
++        while (titus_old::poll(&ev)) {
+             if (handle_fullscreen_toggle(ev, ctx.pipe.sw.win)) continue;
+             if (ev.type == SDL_QUIT) {
+                 ctx.quit_requested = true;
+@@ -244,6 +245,7 @@
+                 want_quit_ = true;
+             }
+             present_output(ctx_.pipe.sw.ren);
++            titus_old::ready("menu",ctx_.pipe.sw.ren);
+             pace_delay(kFrameMs);
+             if (want_start_ || want_quit_) break;
+         }
+@@ -323,7 +325,7 @@
+ 
+     void poll() {
+         SDL_Event ev;
+-        while (SDL_PollEvent(&ev)) {
++        while (titus_old::poll(&ev)) {
+             if (handle_fullscreen_toggle(ev, ctx_.pipe.sw.win)) continue;
+             if (ev.type == SDL_QUIT) {
+                 want_quit_ = true;
+--- a/src/presentation/window_util.cpp
++++ b/src/presentation/window_util.cpp
+@@ -1,3 +1,4 @@
++#include "managed_old.hpp"
+ // SPDX-License-Identifier: GPL-3.0-or-later
+ // Copyright (C) 2026 Krzysztof Sokołowski
+ #include "presentation/window_util.hpp"
+@@ -355,7 +356,7 @@
+ 
+ bool poll_screen_events(SDL_Window* win) {
+     SDL_Event ev;
+-    while (SDL_PollEvent(&ev)) {
++    while (titus_old::poll(&ev)) {
+         if (handle_fullscreen_toggle(ev, win)) continue;
+         if (ev.type == SDL_QUIT) return false;
+     }

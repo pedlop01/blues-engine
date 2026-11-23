@@ -247,3 +247,7 @@ reserva margen por bus antes de sumar música y efectos; la misma ruta clásica
 de 140 pasos registra `peak=17952`, `clipped=0`. Las nuevas rutas gestionadas
 en Linux y Windows también verifican cero muestras saturadas, sin modificar la
 mezcla de Blues/Jukebox. Detalles y límites en [FAMILY_RUNTIME.md](FAMILY_RUNTIME.md).
+
+TH-09 incorpora ahora la preparación DIET nativa y el runtime gestionado de
+Prehistorik 1 DOS; las herramientas externas de referencia no son dependencias
+del jugador. Ver [PREHISTORIK_RUNTIME.md](PREHISTORIK_RUNTIME.md).

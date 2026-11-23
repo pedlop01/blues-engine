@@ -37,13 +37,15 @@ The new `titus-engine` frontend lists installed games and DOS/Amiga releases,
 remembers per-game selections and provides a folder/ADF browser, verification
 and installation management. Keyboard, mouse, controller and fullscreen are
 supported. **Blues Brothers DOS/Amiga, Jukebox Adventure DOS, Prehistorik 2 DOS and Titus
-the Fox DOS now launch from the library**, with a clean return and per-game preferences.
+the Fox DOS and Prehistorik 1 DOS now launch from the library**, with a clean return and per-game preferences.
 Blues also imports classic preferences and saves reversibly. Fox uses a separate OpenTitus runtime with native private data preparation.
-Prehistorik 1 remains scheduled for TH-09. See the [family runtime](docs/FAMILY_RUNTIME.md),
+Prehistorik 1 uses Olduvai with native private DIET preparation ([guide](docs/PREHISTORIK_RUNTIME.md)). See the [family runtime](docs/FAMILY_RUNTIME.md),
 [Blues runtime](docs/BLUES_RUNTIME.md), [Fox runtime](docs/FOX_RUNTIME.md) and [library](docs/LIBRARY_FRONTEND.md) guides.
 Build with `-DTITUS_BUILD_LAUNCHER=ON`, Python 3 and SDL2/SDL2_ttf/libmodplug
 development files. Fox additionally needs `TITUS_BUILD_FOX_RUNTIME=ON` and the
-pinned SDL 1.2/OPL source setup in its guide. The classic game executable still works.
+pinned SDL 1.2/OPL source setup in its guide. Prehistorik 1 needs
+`TITUS_BUILD_PRE1_RUNTIME=ON` and its pinned Olduvai source export.
+The classic game executable still works.
 
 ## What this extension adds
 
@@ -141,7 +143,7 @@ Compared to the original DOS executables, the rewritten engines feature:
 Adventure and Prehistorik 2 together in `build/windows-x64-multigame/blues.exe`.
 The default Windows build remains Blues-only in `build/windows-x64/`.
 Use `--datapath` to select the game data; the global Titus library is still
-planned. Fox and Prehistorik 1 currently have separate reference builds.
+planned. Fox and Prehistorik 1 have separate managed native runtimes.
 See [TH-02 reference checks](docs/ENGINE_REFERENCE_TESTS.md) for builds,
 controls/audio results, source patches and known limitations.
 

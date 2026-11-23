@@ -1,0 +1,23 @@
+{
+  "engine_id": "olduvai",
+  "adapter_state": "validated",
+  "expected_protocol": 1,
+  "source_revision": "a69e9204fc311c8810d696a6b799000d1bcd1642",
+  "executables": {
+    "linux": "engines/olduvai/olduvai-runtime",
+    "windows": "engines/olduvai/olduvai-runtime.exe"
+  },
+  "games": [
+    {
+      "game_id": "prehistorik",
+      "editions": [
+        "dos"
+      ],
+      "reference_native_features": [
+        "return_to_library",
+        "native_pause",
+        "fullscreen"
+      ]
+    }
+  ]
+}

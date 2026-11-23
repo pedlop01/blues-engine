@@ -18,7 +18,7 @@ void channel(const fs::path& p){std::ofstream out(filesystem_path(p),std::ios::b
 Session::Session(Paths paths,const fs::path& root,const Json& old_catalog,const std::string& installation_id,SessionOptions options):paths_(std::move(paths)),options_(std::move(options)){
     auto catalog=CatalogStore(paths_).load();ensure(catalog.at("revision")==old_catalog.at("revision"),"El catálogo cambió; actualiza la biblioteca.","E_REVISION");
     const Json* primary=nullptr;for(const auto& i:catalog["installations"])if(i["id"]==installation_id)primary=&i;
-    ensure(primary&&(primary->at("game_id")=="blues"||primary->at("game_id")=="jukebox"||primary->at("game_id")=="prehistorik2"||primary->at("game_id")=="fox")&&(primary->at("status")=="recognized"||primary->at("status")=="needs_preparation"),"Esta instalación no está disponible para jugar.","E_DATA_VARIANT");
+    ensure(primary&&(primary->at("game_id")=="blues"||primary->at("game_id")=="jukebox"||primary->at("game_id")=="prehistorik2"||primary->at("game_id")=="fox"||primary->at("game_id")=="prehistorik")&&(primary->at("status")=="recognized"||primary->at("status")=="needs_preparation"),"Esta instalación no está disponible para jugar.","E_DATA_VARIANT");
     auto selected=options_.primary_source.is_null()?directory_location(*primary):options_.primary_source;
     ensure(!selected.is_null()&&selected["kind"]=="directory"&&selected["location"]["platform"]==platform()&&std::find(primary->at("locations").begin(),primary->at("locations").end(),selected)!=primary->at("locations").end(),"Elige una carpeta disponible; los ADF requieren extracción.","E_DATA_MISSING");
     auto package=normalized_path(root);while(package.filename().empty()&&package.parent_path()!=package)package=package.parent_path();auto registry=parse_json(read_document(package/"engines/registry.json"));
@@ -63,7 +63,7 @@ void Session::start_inspection(bool prepare){
     process_=std::make_unique<Process>();
     std::map<std::string,std::string> env={{"TITUS_TEST_RUNTIME_MS",std::to_string(options_.test_ms)},{"TITUS_TEST_FAULT",options_.test_fault}};
     process_->start(executable_,{prepare?"--prepare-request":"--inspect-request",(directory_/"request.json").u8string()},executable_.parent_path(),env,directory_,*lock_);
-    state=prepare?State::Preparing:State::Inspecting;started_=last_event_=std::chrono::steady_clock::now();message_=prepare?"Preparando los datos de Fox…":"Comprobando datos y perfil…";
+    state=prepare?State::Preparing:State::Inspecting;started_=last_event_=std::chrono::steady_clock::now();message_=prepare?"Preparando los datos del juego…":"Comprobando datos y perfil…";
 }
 void Session::migrate(){
     if(request_["game_id"]!="blues"){ensure_directory(profile_/fs::u8path("native/"+request_["engine_id"].get<std::string>()));return;}

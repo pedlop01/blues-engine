@@ -121,7 +121,7 @@ std::string Library::data_status() const {
     return "Conjunto de archivos verificado";
 }
 bool Library::can_play() const {
-    auto i=selected();if(!i||!(runtime_games.count(i->at("game_id"))||(blues_runtime_installed&&i->at("game_id")=="blues"))||(i->at("status")!="recognized"&&!(i->at("game_id")=="fox"&&i->at("status")=="needs_preparation"))||!source_available()||source()->at("kind")!="directory")return false;
+    auto i=selected();if(!i||!(runtime_games.count(i->at("game_id"))||(blues_runtime_installed&&i->at("game_id")=="blues"))||(i->at("status")!="recognized"&&!((i->at("game_id")=="fox"||i->at("game_id")=="prehistorik")&&i->at("status")=="needs_preparation"))||!source_available()||source()->at("kind")!="directory")return false;
     if(i->at("game_id")!="blues"&&i->at("edition_id")!="dos")return false;
     if(i->at("game_id")=="blues"&&i->at("edition_id")=="amiga"){
         for(const auto& other:catalog.at("installations"))if(other.at("game_id")=="blues"&&other.at("edition_id")=="dos"&&other.at("status")=="recognized"&&other.at("save_compatibility_id")==i->at("save_compatibility_id"))
@@ -138,6 +138,7 @@ std::string Library::launch_reason() const {
     if(i->at("status")=="missing_engine")return "Esta edición Amiga todavía no tiene un motor compatible.";
     if(i->at("status")=="incomplete"||i->at("status")=="unverified")return "Revisa los archivos antes de iniciar este juego.";
     if(source()->at("kind")=="adf")return "Esta imagen de disco requiere una extracción compatible.";
+    if(can_play()&&i->at("game_id")=="prehistorik")return "Flechas: mover/saltar. Espacio: atacar. Esc: pausa. Cerrar ventana: biblioteca.";
     if(can_play()&&i->at("game_id")=="fox")return "Flechas: mover/saltar. Espacio: accion. P: pausa. Esc: biblioteca.";
     if(can_play()&&i->at("game_id")!="blues")return "Flechas: mover. Shift: saltar. Espacio: accion. P: pausa. Esc: biblioteca.";
     if(i->at("game_id")=="blues"&&blues_runtime_installed){

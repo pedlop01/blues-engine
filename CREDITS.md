@@ -54,10 +54,11 @@ licenses. The compiled SDL2 DLL and other build products are not committed.
 The expansion selects [OpenTitus](https://github.com/stople/OpenTitus) (Eirik
 Stople and contributors, GPL-3.0-or-later) for Fox DOS and
 [Olduvai](https://github.com/ksokolowski/olduvai) (Krzysztof Sokołowski,
-GPL-3.0-or-later source) for Prehistorik DOS. They have been tested externally;
-their sources, binaries and bundled game resources have not been imported.
+GPL-3.0-or-later source) for Prehistorik DOS. They were audited externally and now have separate managed runtimes.
+Pinned source exports and binaries stay under ignored build directories;
+commercial game resources are not imported.
 Olduvai's notices distinguish its source license from the GPL-3.0 combined
-binary because of xBRZ. Their dependency notices must be retained if integrated.
+binary because of xBRZ. Their dependency notices accompany the managed builds.
 
 [Deark](https://github.com/jsummers/deark), by Jason Summers (MIT-style license),
 was used externally to unpack the user's DIET-compressed executable for audit.
@@ -68,7 +69,7 @@ verified Fox COM decompressor; it is not a game runtime dependency.
 Chocolate Doom 1.6.0 OPL (Simon Howard and contributors, GPL-2.0-or-later),
 with OpenTitus DBOPL (DOSBox Team, GPL-2.0-or-later), is rebuilt externally for
 Fox. SDL 1.2 compatibility and SDL_mixer reference SDKs also remain external.
-The two patches under `patches/` retain GPL-3.0-or-later for their respective
+The engine patches under `patches/` retain GPL-3.0-or-later for their respective
 external engine changes; they do not assign a license to the inherited base.
 Our audit scripts contain no original game data or copies
 of these tools. Pinned revisions, preparation and distribution constraints are
@@ -118,6 +119,16 @@ managed bridge retain their GPL declarations. No commercial upstream `bin/`
 assets or precompiled OPL code are included; data is prepared from the user's COM.
 The frontend does not link this external engine. Final redistribution and
 corresponding-source packaging remain task 18.
+
+## Managed Prehistorik DOS runtime
+
+Prehistorik 1 uses [Olduvai](https://github.com/ksokolowski/olduvai), revision
+`a69e9204fc311c8810d696a6b799000d1bcd1642`, by Krzysztof Sokołowski (2026).
+Its GPL-3.0-or-later source links GPL3-only xBRZ; the combined binary is GPL3.
+Nuked OPL3 and stb retain their upstream notices. The native DIET decoder adapts
+MIT-licensed Deark code by Jason Summers. Full provenance and build/license
+requirements: [runtime notices](engines/olduvai/NOTICE.md) and
+[managed guide](docs/PREHISTORIK_RUNTIME.md). Commercial data remains external.
 
 ## License information
 

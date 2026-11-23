@@ -4,7 +4,7 @@ using namespace titus;
 int main(){try{
     auto check=[](bool b){if(!b)throw Error("E_TEST","Invalid family protocol acceptance");};
     auto rejected=[&](auto fn){try{fn();}catch(const std::exception&){return;}check(false);};
-    for(const auto& game:{"blues","jukebox","prehistorik2","fox"}){
+    for(const auto& game:{"blues","jukebox","prehistorik2","fox","prehistorik"}){
         Json request={{"game_id",game},{"session_id",uuid()},{"profile_id",uuid()},{"save_compatibility_id",std::string(game)+".test"},{"sources",Json::array({Json::object()})}};
         auto features=runtime_features(game,false);int count=std::string(game)=="blues"?8:0;
         Json ready={{"schema_version",1},{"kind","event"},{"session_id",request["session_id"]},{"seq",2},{"event","ready"},{"body",{{"features",features},{"scene","menu"},{"save_slot_count",count},{"audio_active",true}}}};
@@ -14,6 +14,6 @@ int main(){try{
         Json result={{"schema_version",1},{"kind","result"},{"session_id",request["session_id"]},{"game_id",game},{"engine_id",runtime_engine(request)},{"outcome","returned"},{"ready",true},{"native_exit_code",0},{"error",nullptr}};
         validate_runtime_result(result,request);result["game_id"]=std::string(game)=="fox"?"blues":"fox";rejected([&]{validate_runtime_result(result,request);});
     }
-    rejected([&]{runtime_features("prehistorik",false);});
+    rejected([&]{runtime_features("unknown",false);});
     std::cout<<"family protocol: per-game capabilities, slot counts and response identities passed\n";return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}
