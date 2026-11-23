@@ -17,7 +17,7 @@ DEPS := $(SRCS:.c=.d)
 APP_OBJS := main.o mixer.o dos_audio.o third_party/nuked-opl3/opl3.o sys_sdl2.o util.o
 GAME_OBJS := game_bb.o game_ja.o game_p2.o
 
-.PHONY: all clean check-contracts check-catalog
+.PHONY: all clean check-contracts check-catalog check-launcher
 
 CPPFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wpedantic -MMD $(SDL_CFLAGS) -I. -g
 
@@ -29,6 +29,13 @@ check-catalog:
 	cmake --build build/core --parallel 2
 	ctest --test-dir build/core --output-on-failure
 	python3 tests/check_catalog_cli.py --binary build/core/titus-catalog
+
+# SDL2/SDL2_ttf development files are required for the graphical frontend.
+check-launcher:
+	cmake -S . -B build/launcher -DTITUS_BUILD_LAUNCHER=ON
+	cmake --build build/launcher --parallel 2
+	ctest --test-dir build/launcher --output-on-failure
+	python3 tests/check_launcher.py --binary build/launcher/titus-engine
 
 check-contracts:
 	python3 tests/check_engine_contracts.py

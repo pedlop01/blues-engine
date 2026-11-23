@@ -14,7 +14,7 @@ no instalaciones registradas o ejecutables ya disponibles.
 | Área | Decisión |
 |---|---|
 | Primera integración | Lanzador y motores en procesos separados; una sesión de juego activa por instancia. |
-| Frontend/core | C++17; core sin SDL, frontend SDL2. SDL_ttf 2.x para texto de biblioteca se incorporará en TH-05, sin modificar HUD/fuentes de los juegos. |
+| Frontend/core | C++17; core sin SDL, frontend SDL2. SDL_ttf 2.x para texto de biblioteca incorporado en TH-05, sin modificar HUD/fuentes de los juegos. |
 | Motores | Conservar C en Blues/Jukebox/P2 y OpenTitus, C++17 en Olduvai; puente C/C++ pequeño por runtime. No convertir física o recursos al core común. |
 | JSON | UTF-8, esquema v1. Parser: nlohmann/json 3.11.3, incorporado con su licencia en TH-04. Validación estricta de tipos, duplicados, límites y referencias. |
 | IPC | Request JSON, eventos/comandos JSONL en directorio privado de sesión, resultado JSON atómico. stdout/stderr son logs, nunca el protocolo. |
@@ -82,19 +82,19 @@ tools/, tests/            # utilidades y comprobaciones de desarrollo
 
 Estos directorios de implementación se crearán cuando empiece su tarea, no como
 stubs que aparenten funcionalidad. TH-04 incorpora CMake para `titus_core`,
-`titus-catalog` y sus pruebas; TH-05 añadirá `titus-engine`. Se conservan Makefile/Makefile.win para
+`titus-catalog` y sus pruebas; TH-05 incorpora `titus-engine`. Se conservan Makefile/Makefile.win para
 el ejecutable clásico y las regresiones. Los motores externos tendrán builds
 separados y reproducibles; el build común no descargará juegos o componentes al
 iniciar una partida.
 
 Dependencias del frontend: C++17, SDL2 ≥2.30.0 de la rama 2, parser JSON aislado
-y, en TH-05, texto SDL_ttf 2.x con una fuente de licencia explícita. No se
+y texto SDL_ttf 2.x con DejaVu Sans y su licencia explícita desde TH-05. No se
 introducen libmodplug/SDL 1.2/OPL en el core. La referencia Windows usa SDL2
 2.30.11; OpenTitus mantendrá su SDK SDL 1.2 compatible y SDL_mixer en su carpeta.
 El parser elegido tiene una
 [revisión fijada y checksum del header publicados](https://github.com/nlohmann/json/releases/tag/v3.11.3):
 `json.hpp` SHA-256 `9bea4c8066ef4a1c206b2be5a36302f8926f7fdc6087af5d20b417d0cf103ea6`.
-No se ha añadido todavía ese header ni se afirma usar la última versión.
+El header se incorpora desde TH-04; no se afirma usar la última versión.
 
 Paquete objetivo (no construido por TH-03):
 
@@ -447,4 +447,12 @@ El core y la CLI `titus-catalog` ya implementan detección y catálogo v1; véas
 `incomplete`/`unverified` también pueden describir daños de ediciones Amiga sin
 motor, manteniendo `engine_id=null`; `missing_engine` corresponde a sus conjuntos
 completos. Ninguno de esos estados habilita un motor DOS para datos Amiga.
-El frontend y los adaptadores siguen las tareas TH-05–09.
+El frontend se incorpora en TH-05; los adaptadores siguen TH-06–09.
+
+## Biblioteca global (TH-05)
+
+`launcher/` implementa la biblioteca SDL2 y su modelo independiente de SDL.
+[LIBRARY_FRONTEND.md](LIBRARY_FRONTEND.md) describe compilación, controles,
+preferencias atómicas en `config/library.json`, explorador y pruebas.
+El texto usa SDL_ttf/DejaVu; no comparte fuentes/HUD o estados de los juegos.
+Jugar continúa deshabilitado hasta la inspección e integración de cada motor.

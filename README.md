@@ -7,7 +7,7 @@ contributors.** The original engine and reverse-engineering work are theirs;
 this repository preserves the upstream history and adds a new set of features
 focused on the first **Blues Brothers** game.
 
-**Titus Engine now has a persistent C++17 catalog and game detection CLI.** The
+**Titus Engine now has an SDL2 game library, persistent catalog and detection CLI.** The
 current Windows executable still runs Blues Brothers; the global library and new
 engine adapters are tracked in the expansion plan. Blues playtesting continues
 in parallel, and final Windows packaging follows the validated expansion. The
@@ -24,13 +24,21 @@ this transition.
 [Game detection rules](docs/GAME_DETECTION_RULES.md) ·
 [Reference engine validation](docs/ENGINE_REFERENCE_TESTS.md) ·
 [Architecture and v1 contracts](docs/TITUS_ARCHITECTURE.md) ·
-[Catalog core: build, commands and tests](docs/CATALOG_CORE.md)
+[Catalog core: build, commands and tests](docs/CATALOG_CORE.md) ·
+[Global library: build, controls and tests](docs/LIBRARY_FRONTEND.md)
 
 The independent `titus-catalog` tool recognizes the eight audited DOS/Amiga
 resource sets, links known ADF sources and manages installation references without
 changing game files. It does not launch engines yet. Build and test it with
 `make check-catalog`; [TH-04 documentation](docs/CATALOG_CORE.md) covers optional
 read-only checks against user-supplied games and the Windows build.
+
+The new `titus-engine` frontend lists installed games and DOS/Amiga releases,
+remembers per-game selections and provides a folder/ADF browser, verification
+and installation management. Keyboard, mouse, controller and fullscreen are
+supported. **Launching games from this library starts with TH-06.** Build it with
+`-DTITUS_BUILD_LAUNCHER=ON` and SDL2/SDL2_ttf development files; see the
+[library guide](docs/LIBRARY_FRONTEND.md). The classic game executable still works.
 
 ## What this extension adds
 

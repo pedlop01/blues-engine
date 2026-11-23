@@ -49,6 +49,8 @@ class CatalogStore {
 public:
     explicit CatalogStore(Paths paths, Detector detector = Detector());
     Json load() const;
+    Json load_library_preferences() const;
+    void save_library_preferences(const Json& preferences);
     Json init(long long expected = -1);
     Json add(const fs::path& source, bool recursive = false, long long expected = -1);
     Json relocate(const std::string& id, const fs::path& source, long long expected = -1);

@@ -85,6 +85,21 @@ provenance are under `third_party/nlohmann-json`. The core adds no SDL or
 original game resources; SHA-256 and catalog/detection code are part of this
 extension. The inherited game implementation remains credited above.
 
+## Global library frontend
+
+The SDL2 library frontend uses [SDL_ttf 2.22.0](https://github.com/libsdl-org/SDL_ttf),
+by Sam Lantinga and contributors (zlib license), with FreeType and HarfBuzz.
+Portions of this software are copyright © 2013 The FreeType Project
+(www.freetype.org). All rights reserved. Dependency SDKs are external and their
+notices must accompany binary distribution.
+
+[DejaVu Sans 2.37](https://dejavu-fonts.github.io/) is bundled unchanged for
+library text, with the [Bitstream Vera license and DejaVu public-domain notices](assets/fonts/LICENSE-DejaVu.txt).
+Its source/checksum are recorded in [assets/fonts/README.md](assets/fonts/README.md).
+No original game fonts or artwork are used by the frontend. Native game HUDs
+retain their resource sets and authorship. See the [frontend guide](docs/LIBRARY_FRONTEND.md)
+for pinned dependencies and validation.
+
 ## License information
 
 The inherited upstream snapshot does not include a top-level license file.

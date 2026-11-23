@@ -362,6 +362,42 @@ Json CatalogStore::load() const {
     require(fs::exists(paths_.catalog()),"Catalog not initialized","E_CATALOG_NOT_FOUND");
     auto c=parse_json(read(paths_.catalog()));validate_catalog(c);return c;
 }
+namespace {
+void validate_library_preferences(const Json& p) {
+    keys(p,{"schema_version","kind","selected_game","selected_installations","selected_locations","fullscreen","window_width","window_height","browse_path"});
+    require(p["schema_version"]==1&&p["kind"]=="library_preferences","Unsupported library preferences; preserved unchanged","E_SCHEMA_VERSION");
+    const std::set<std::string> games={"blues","jukebox","fox","prehistorik","prehistorik2"};
+    require(p["selected_game"].is_string()&&(p["selected_game"]==""||games.count(p["selected_game"].get<std::string>())),"Invalid selected game");
+    require(p["selected_installations"].is_object()&&p["selected_installations"].size()<=5,"Invalid selection map");
+    for(auto it=p["selected_installations"].begin();it!=p["selected_installations"].end();++it) {
+        require(games.count(it.key()),"Unknown selected game");uuid_value(it.value());
+    }
+    require(p["selected_locations"].is_object()&&p["selected_locations"].size()<=1024,"Invalid source map");
+    for(auto it=p["selected_locations"].begin();it!=p["selected_locations"].end();++it) {
+        uuid_value(it.key());string_pattern(it.value(),"[0-9a-f]{64}");
+    }
+    require(p["fullscreen"].is_boolean(),"Invalid fullscreen setting");
+    require(p["window_width"].is_number_integer()&&p["window_width"]>=920&&p["window_width"]<=7680,"Invalid window width");
+    require(p["window_height"].is_number_integer()&&p["window_height"]>=640&&p["window_height"]<=4320,"Invalid window height");
+    require(p["browse_path"].is_string()&&p["browse_path"].get<std::string>().size()<=32768&&p["browse_path"].get<std::string>().find('\0')==std::string::npos,"Invalid browser path");
+}
+}
+Json CatalogStore::load_library_preferences() const {
+    auto file=paths_.config/"library.json";
+    if(!fs::exists(file))return nullptr;
+    auto p=parse_json(read(file));validate_library_preferences(p);return p;
+}
+void CatalogStore::save_library_preferences(const Json& preferences) {
+    validate_library_preferences(preferences);
+    auto catalog=load();
+    for(const auto& i:catalog["installations"])for(const auto& l:i["locations"])
+        if(l["location"]["platform"]==platform())paths_.protect_source(fs::u8path(l["location"]["path"].get<std::string>()));
+    Lock lock(paths_.config/"catalog.lock");
+    auto previous=load_library_preferences(); // Never overwrite corrupt or future preferences.
+    if(previous==preferences)return;
+    if(!previous.is_null())atomic_write(paths_.config/"library.json.bak",previous.dump(2)+"\n");
+    atomic_write(paths_.config/"library.json",preferences.dump(2)+"\n");
+}
 Json CatalogStore::mutate(const std::function<bool(Json&)>& change,long long expected) {
     // Check known sources before creating lock/temporary files.
     if(fs::exists(paths_.catalog())) {
