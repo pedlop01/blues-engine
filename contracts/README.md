@@ -29,3 +29,7 @@ TH-10 implementa la acción `load_slot` para Blues y amplía las capacidades con
 `controller_bindings` y el grupo `settings.input` para los botones nativos
 soportados. El frontend filtra defaults globales por capacidad y el runtime
 rechaza opciones ajenas. Los ejemplos siguen siendo fixtures de diseño.
+
+TH-12 unifica los errores emitidos por los tres runtimes con el enum v1; C++
+y JSON rechazan códigos internos ajenos al contrato. La matriz valida también
+los paquetes de fallo y su arranque posterior, no solo las salidas correctas.

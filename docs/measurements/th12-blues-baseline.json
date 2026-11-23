@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "platform": "linux",
+  "cases_passed": [
+    "build",
+    "check_sprite_interpolation",
+    "check_pause_menu",
+    "check_preferences",
+    "check_mixer_volumes",
+    "intermission-dos-normal",
+    "intermission-dos-wide",
+    "zoom-dos-classic-classic",
+    "zoom-dos-classic-fixed",
+    "zoom-dos-smooth-classic",
+    "zoom-dos-smooth-fixed",
+    "camera-dos",
+    "intermission-amiga-normal",
+    "intermission-amiga-wide",
+    "zoom-amiga-classic-classic",
+    "zoom-amiga-classic-fixed",
+    "zoom-amiga-smooth-classic",
+    "zoom-amiga-smooth-fixed",
+    "camera-amiga",
+    "check_scroll_launches.py",
+    "check_amiga_layers.py",
+    "check_state_launches.py",
+    "check_rewind_launches.py"
+  ],
+  "original_files_unchanged": 462,
+  "status": "passed"
+}

@@ -1,13 +1,13 @@
 # Plan de mejoras y seguimiento
 
-Última actualización: **23 de noviembre de 2026**.
+Última actualización: **24 de noviembre de 2026**.
 
 Este documento recoge el plan acordado y su estado real. Los porcentajes se
 refieren a cada tarea; no representan una estimación del tiempo restante.
 
 La expansión a **Titus Engine** queda autorizada mientras el usuario continúa
 las pruebas de la tarea 17. La tarea 18 se pospone hasta después de la primera
-expansión validada. El detalle y seguimiento de las tareas TH-00–TH-16 está en el
+expansión validada. El detalle de TH-00–TH-16 y la fase de paridad PX-01–PX-08 está en el
 [plan de Titus Engine](docs/TITUS_PLATFORM_PLAN.md), y los datos disponibles en el
 [inventario de juegos](docs/GAME_INVENTORY.md).
 
@@ -16,7 +16,8 @@ expansión validada. El detalle y seguimiento de las tareas TH-00–TH-16 está 
 - Tareas completadas: **16 de 18**.
 - Completadas: **01–16**.
 - Blues: **17 en curso** con las pruebas del usuario; **18 pospuesta** hasta la expansión.
-- Titus Engine: **TH-00–TH-11 completadas (100 %)**; siguiente tarea **TH-12**.
+- Titus Engine: **TH-00–TH-11 completadas (100 %)**; **TH-12 al 90 %**, automática Linux/Windows superada y pasada manual pendiente.
+- Paridad Fox/Prehistorik: **PX-01–PX-08 planificadas (0 %)**, con scroll, cámara y encuadre primero.
 - Corrección de escaleras validada por el usuario.
 - El punto recuperable previo a la expansión es `dd07383`, etiqueta `blues-baseline-2026-11-23`.
 
@@ -186,3 +187,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-23 | TH-10 | El usuario valida TH-09. Opciones globales/juego/edición/sesión con herencia, revisión y diario de recuperación; botones de mando por capacidad y cambios nativos recogidos tras el cierre. Catálogo de ocho slots Blues con previews/resumen, carga nativa del frame y edición guardados y rechazo de estados ajenos/dañados. Comparación e importación explícita del legado con copia completa del perfil. Jukebox reserva margen al sumar audio. Pruebas Linux/Windows, mando virtual y originales intactos; ver docs/SETTINGS_AND_SAVES.md. | TH-11: evaluar integración en proceso. Mandos físicos/campañas en TH-12/17; 18 pospuesta. |
 
 | 2026-11-23 | TH-11 | El usuario valida TH-10. Piloto Olduvai real en host SDL compartido frente al mismo bootstrap en proceso hijo, Linux/Windows: tres entradas, movimiento/salto/pausa/audio, errores y caída controlada. Compartir proceso invalida recursos SDL del host en retornos normales y deja una ventana viva en la excepción; la caída termina el host completo. Mediciones de arranque/CPU/memoria y evidencia reproducible en docs/INPROCESS_EVALUATION.md. Decisión: mantener todos los adaptadores separados; piloto opcional sin instalación/registro. Originales intactos. | TH-12: validación completa de la expansión. 17 abierta y 18 pospuesta. |
+
+| 2026-11-24 | TH-12 | Batería automática Linux/Windows completada: cinco juegos/seis arranques, tres aperturas correctas por combinación, errores/reinicio, opciones y perfiles aislados, BBS Linux→Windows, cachés/importación/índice/UI y rutas largas Unicode. Error interno traducido al enum v1 y slot cero rechazado. Regresión clásica Blues en los seis niveles/ediciones para scroll, capas/ascensores, cámaras/HUD, estados y rewind. 462 originales intactos; informes y checklist en docs/EXPANSION_VALIDATION.md. Paridad PX documentada. | 90 %: completar campañas/escucha/mando y pantalla reales del bloque manual. No se cierran 17 ni 18; PX-01/02 tendrán prioridad después de esta validación. |

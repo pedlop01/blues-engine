@@ -25,6 +25,7 @@ def main():
     parser.add_argument('--orig-games', type=Path)
     parser.add_argument('--windows', action='store_true')
     parser.add_argument('--visible', action='store_true')
+    parser.add_argument('--headless', action='store_true')
     args = parser.parse_args()
 
     def native(p):
@@ -46,8 +47,10 @@ def main():
         if args.orig_games:
             command += ['--test-import', native(args.orig_games)]
         env = os.environ.copy()
-        if not args.windows and not args.visible:
+        if (not args.windows and not args.visible) or args.headless:
             env['SDL_VIDEODRIVER'] = 'dummy'
+        if args.windows and args.headless:
+            env['WSLENV'] = ':'.join(filter(None,env.get('WSLENV','').split(':')+['SDL_VIDEODRIVER']))
         result = subprocess.run(command, capture_output=True, text=True, encoding='utf-8', env=env, timeout=120)
         assert result.returncode == 0, (result.stdout, result.stderr)
         report = loads(result.stdout)

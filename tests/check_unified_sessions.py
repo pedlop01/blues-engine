@@ -29,6 +29,8 @@ def main():
   path=profile/'saves'/f"slot{chosen['slot']:02}.bbs";original=path.read_bytes();path.write_bytes(b'foreign game save');bad=run(extra=['--load-slot',str(chosen['slot']),'--test-ms','100'],code=1);assert not bad['ready'];assert path.read_bytes()==b'foreign game save';path.write_bytes(original)
   # Both editions share the eight native slots, and the saved edition is restored.
   report=run(amiga['id'],['--load-slot',str(chosen['slot']),'--test-ms','200']);assert report['ready']
+  # A missing index is rebuilt from the native slots, without changing a payload.
+  saved_bytes=snap(profile/'saves');(profile/'save-index.json').unlink();run(extra=['--inspect-only']);rebuilt=json.loads((profile/'save-index.json').read_text());assert len(rebuilt['slots'])==8 and snap(profile/'saves')==saved_bytes
   # An explicit second import retains the entire current profile, including a changed slot.
   path.write_bytes(b'managed state retained in backup');report=run(extra=['--inspect-only','--import-legacy']);assert not report['ready'];backups=list(profile.parent.glob('blues.full.1991.before-import-*'));assert len(backups)==1;assert (backups[0]/'saves'/path.name).read_bytes()==b'managed state retained in backup';assert path.read_bytes()==original;assert snap(legacy)==legacy_before
   # Other games reject foreign slots and unsupported volume controls before opening a window.

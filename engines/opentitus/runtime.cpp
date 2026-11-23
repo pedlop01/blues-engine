@@ -54,11 +54,11 @@ int run(const std::vector<std::string>& args){try{
     fox_set_data_root(fox_prepared_directory(request).u8string().c_str());
     started=std::chrono::steady_clock::now();
     int code=fox_run();
-    if(code){auto e=Json({{"code","E_NATIVE"},{"message","OpenTitus reported an error: "+std::to_string(code)}});emit("error",e);emit("closing");result("runtime_failed",1,e);return 1;}
+    if(code){auto e=runtime_error(Error("E_NATIVE","OpenTitus reported an error: "+std::to_string(code)),ready);emit("error",e);emit("closing");result("runtime_failed",1,e);return 1;}
     write_document(prefs,{{"schema_version",1},{"fullscreen",full}});
     if(probe){unsigned long long samples,nonzero,clipped;int peak;fox_audio_stats(&samples,&nonzero,&clipped,&peak);write_document(session/"probe-observation.json",{{"frames",frames},{"right",rx-bx},{"left",lstart-lx},{"jump",by-jy},{"pause",pause_seen},{"samples",samples},{"nonzero",nonzero},{"clipped",clipped},{"peak",peak}});}
     emit("closing");if(test_ms&&fault=="missing_result")return 0;result(ready?"returned":"cancelled",0);return 0;
-}catch(const std::exception& e){std::cerr<<e.what()<<'\n';if(events.is_open())try{Json error={{"code","E_RUNTIME"},{"message",e.what()}};emit("error",error);emit("closing");result("runtime_failed",1,error);}catch(...){}return 1;}}
+}catch(const std::exception& e){std::cerr<<e.what()<<'\n';if(events.is_open())try{Json error=runtime_error(e,ready);emit("error",error);emit("closing");result("runtime_failed",1,error);}catch(...){}return 1;}}
 }
 extern "C" void fox_ready(){if(ready)return;if(!fox_audio_active())throw Error("E_AUDIO","Fox audio device is not active");ready=true;ready_at=std::chrono::steady_clock::now();emit("ready",{{"features",runtime_features("fox",false)},{"scene","menu"},{"save_slot_count",0},{"audio_active",true}});}
 extern "C" void fox_playing(){playing=true;playing_at=std::chrono::steady_clock::now();}

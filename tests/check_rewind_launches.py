@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Production timeline/game-loop and VHS regressions with real release data."""
 import os
+from blues_test_paths import data_path
 from pathlib import Path
 import subprocess
 
@@ -18,8 +19,8 @@ for mode in ('dos', 'amiga'):
         if two:
             env['BLUES_TEST_REWIND_TWO'] = '1'
             env['BLUES_TEST_REWIND_ODD_SIZE'] = '1'
-        args = [binary, f'--datapath=../orig-games/{mode}',
-                '--dos-datapath=../orig-games/dos', '--amiga-datapath=../orig-games/amiga',
+        args = [binary, '--datapath='+str(data_path(mode)),
+                '--dos-datapath='+str(data_path('dos')), '--amiga-datapath='+str(data_path('amiga')),
                 '--cheats=7', f'--level={level}', f'--scrollrate={(30, 60, 120)[level % 3]}',
                 f'--hud={"fixed" if fixed else "classic"}',
                 f'--camera={"classic" if fixed else "smooth"}']

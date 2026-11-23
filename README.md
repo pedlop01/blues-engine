@@ -55,6 +55,11 @@ The [TH-11 integration pilot](docs/INPROCESS_EVALUATION.md) compares a real engi
 inside an SDL host against child-process isolation. The production library keeps
 all engines in separate processes; the experimental target is opt-in and not installed.
 
+The [TH-12 validation matrix](docs/EXPANSION_VALIDATION.md) passes automated Linux/Windows
+checks; full campaigns, listening and physical devices remain on the manual checklist.
+[Fox/Prehistorik feature parity](docs/EXPERIENCE_PARITY_PLAN.md) is planned separately,
+starting with smooth scrolling, camera and dynamic framing.
+
 ## What this extension adds
 
 | Feature | Current implementation |

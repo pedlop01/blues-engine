@@ -15,7 +15,7 @@ int run(const std::vector<std::string>& args){try{
         else if(a=="--inspect-only")options.inspect_only=true;
         else if(a=="--return-on-ready")request_return=true;
         else if(a=="--user-dir"||a=="--installation"||a=="--legacy-root"||a=="--test-ms"||a=="--test-fault"||a=="--settings"||a=="--load-slot"){
-            if(++i==args.size())throw Error("E_ARGUMENT","Missing argument");if(a=="--settings")options.settings=parse_json(read_document(fs::u8path(args[i])));else if(a=="--load-slot")options.load_slot=std::stoi(args[i]);else if(a=="--user-dir")root=fs::u8path(args[i]);else if(a=="--installation")id=args[i];else if(a=="--legacy-root")legacy=fs::u8path(args[i]);else if(a=="--test-fault")options.test_fault=args[i];else options.test_ms=std::stoi(args[i]);
+            if(++i==args.size())throw Error("E_ARGUMENT","Missing argument");if(a=="--settings")options.settings=parse_json(read_document(fs::u8path(args[i])));else if(a=="--load-slot"){options.load_slot=std::stoi(args[i]);if(options.load_slot<1||options.load_slot>8)throw Error("E_ARGUMENT","Save slot must be between 1 and 8");}else if(a=="--user-dir")root=fs::u8path(args[i]);else if(a=="--installation")id=args[i];else if(a=="--legacy-root")legacy=fs::u8path(args[i]);else if(a=="--test-fault")options.test_fault=args[i];else options.test_ms=std::stoi(args[i]);
         }else throw Error("E_ARGUMENT","Unknown option");}
     if(id.empty())throw Error("E_ARGUMENT","--installation UUID is required");
     SDL_SetMainReady();char* base=SDL_GetBasePath();if(!base)throw Error("E_PATH",SDL_GetError());fs::path package=fs::u8path(base);SDL_free(base);

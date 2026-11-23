@@ -115,11 +115,11 @@ int run(const std::vector<std::string>& args){bool inspecting=false;bool loaded=
             observations["amiga"]=bool(info.amiga);observations["camera"]=info.camera;observations["hud"]=info.hud;observations["view_step"]=info.view;write_document(directory/"probe-observation.json",observations);
         }
         if(fault=="missing_result")return 0;
-        if(fault=="failed_zero"){write_document(directory/"result.json",{{"schema_version",1},{"kind","result"},{"session_id",request["session_id"]},{"game_id",request["game_id"]},{"engine_id","blues-family"},{"outcome","load_failed"},{"ready",ready},{"native_exit_code",0},{"error",{{"code","E_TEST_LOAD"},{"message","Deliberate load failure with exit zero"}}}});return 0;}
+        if(fault=="failed_zero"){write_document(directory/"result.json",{{"schema_version",1},{"kind","result"},{"session_id",request["session_id"]},{"game_id",request["game_id"]},{"engine_id","blues-family"},{"outcome","load_failed"},{"ready",ready},{"native_exit_code",0},{"error",{{"code","E_ENGINE_INIT"},{"message","Deliberate load failure with exit zero"}}}});return 0;}
         write_document(directory/"result.json",{{"schema_version",1},{"kind","result"},{"session_id",request["session_id"]},{"game_id",request["game_id"]},{"engine_id","blues-family"},{"outcome",ready?"returned":"cancelled"},{"ready",ready},{"native_exit_code",code},{"error",nullptr}});return code;
     }catch(const std::exception& e){std::cerr<<e.what()<<'\n';
         // Failure before validation may target an untrusted path: never write there.
-        if(events.is_open())try{Json error={{"code","E_RUNTIME"},{"message",e.what()}};emit("error",error);emit("closing");write_document(directory/"result.json",{{"schema_version",1},{"kind","result"},{"session_id",request["session_id"]},{"game_id",request["game_id"]},{"engine_id","blues-family"},{"outcome","runtime_failed"},{"ready",ready},{"native_exit_code",1},{"error",error}});}catch(...){}
+        if(events.is_open())try{Json error=runtime_error(e,ready);emit("error",error);emit("closing");write_document(directory/"result.json",{{"schema_version",1},{"kind","result"},{"session_id",request["session_id"]},{"game_id",request["game_id"]},{"engine_id","blues-family"},{"outcome","runtime_failed"},{"ready",ready},{"native_exit_code",1},{"error",error}});}catch(...){}
         (void)loaded;return 1;
     }
 }

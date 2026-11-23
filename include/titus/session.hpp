@@ -3,6 +3,7 @@
 #include <chrono>
 namespace titus {
 Json blues_features(bool dual);
+Json runtime_error(const std::exception& error,bool ready);
 std::string runtime_engine(const Json& request);
 Json runtime_features(const std::string& game,bool dual);
 int runtime_slot_count(const Json& request);

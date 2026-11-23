@@ -77,11 +77,11 @@ int run(const std::vector<std::string>& args){try{
     started=std::chrono::steady_clock::now();SDL_SetMainReady();
     int code=olduvai::presentation::run_game(options);
     if(!ready&&!returning&&!titus_old::quit_seen&&code==0)throw Error("E_NATIVE_LOAD","Olduvai exited without loading a playable scene");
-    if(code){auto e=Json({{"code","E_NATIVE"},{"message","Olduvai reported an error: "+std::to_string(code)}});emit("error",e);emit("closing");result("runtime_failed",1,e);return 1;}
+    if(code){auto e=runtime_error(Error("E_NATIVE","Olduvai reported an error: "+std::to_string(code)),ready);emit("error",e);emit("closing");result("runtime_failed",1,e);return 1;}
     Json values=Json::object();for(const auto& kv:cfg)values[kv.first]=kv.second;write_document(prefs,{{"schema_version",1},{"fullscreen",full},{"settings",values}});
     if(probe){write_document(session/"probe-observation.json",{{"frames",frames},{"right",rx-bx},{"left",lstart-lx},{"jump",by-jy},{"pause",pause_seen},{"samples",samples},{"nonzero",nonzero},{"clipped",clipped},{"peak",peak}});}
     emit("closing");if(test_ms&&fault=="missing_result")return 0;result(ready?"returned":"cancelled",0);return 0;
-}catch(const std::exception& e){std::cerr<<e.what()<<'\n';if(events.is_open())try{Json error={{"code","E_RUNTIME"},{"message",e.what()}};emit("error",error);emit("closing");result("runtime_failed",1,error);}catch(...){}return 1;}}
+}catch(const std::exception& e){std::cerr<<e.what()<<'\n';if(events.is_open())try{Json error=runtime_error(e,ready);emit("error",error);emit("closing");result("runtime_failed",1,error);}catch(...){}return 1;}}
 }
 void engine_ready(const char* scene,bool audio){if(ready)return;if(!audio)throw Error("E_AUDIO","Prehistorik audio device is not active");ready=true;ready_at=std::chrono::steady_clock::now();
 #ifdef TITUS_INPROCESS_PILOT

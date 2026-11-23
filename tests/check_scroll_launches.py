@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Pixel regressions for guarded scrolling and screen-fixed Amiga copper."""
 import os
+from blues_test_paths import data_path
 from pathlib import Path
 import subprocess
 
@@ -11,8 +12,8 @@ base = dict(os.environ, SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy',
 for mode in ('amiga', 'dos'):
     for level in range(6):
         for hud in ('classic', 'fixed'):
-            args = [binary, f'--datapath=../orig-games/{mode}',
-                    '--dos-datapath=../orig-games/dos', '--amiga-datapath=../orig-games/amiga',
+            args = [binary, '--datapath='+str(data_path(mode)),
+                    '--dos-datapath='+str(data_path('dos')), '--amiga-datapath='+str(data_path('amiga')),
                     f'--level={level}', f'--hud={hud}', '--scrollrate=60']
             result = subprocess.run(args, cwd=root, env=base, capture_output=True, text=True, timeout=90)
             if result.returncode:

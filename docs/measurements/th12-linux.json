@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "task": "TH-12",
+  "platform": "linux",
+  "binaries_sha256": {
+    "titus-catalog": "d0514e74612ba777cc941959c78b7b7bc1ca4bc961f28b87c9f288656740d3d4",
+    "titus-engine": "3eee7ef8606131b57957228cb5c50ce7ee15f0d065f37e01f0be243b86e3eca2",
+    "titus-session": "4efec30a20af7a94cd0b47590daeed751c6e0014ed3f49d59744d48c620253e1",
+    "engines/blues-family/blues-family-runtime": "78bf32bca6ad25e764892f7a2776e928a5bef5e0c7fd29428b23e8beb03ff232",
+    "engines/opentitus/opentitus-runtime": "618bf9050274fc6ef0037886b7c65143617911552aeba2f52254e5158a89b656",
+    "engines/olduvai/olduvai-runtime": "1d7641d583b3507a634dfa475d5ba76ea6b85712c31cef3a83145935a916bed0"
+  },
+  "source_worktree_modified": true,
+  "source_revision": "afaef1ee2e7bd24ae239ee3e6c53644260ffe720",
+  "video_backend": "dummy",
+  "audio_backend": "dummy",
+  "automatic_status": "passed",
+  "manual_status": "pending",
+  "original_files": 462,
+  "cases": [
+    {
+      "id": "cpp-contracts-settings-process",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.47,
+      "log_sha256": "af49c039d7b9b852c76fb2a601e94bd080e98be863a24bf180218afd58993fe4"
+    },
+    {
+      "id": "catalog-cli",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.16,
+      "log_sha256": "4c82ef0659641e5cb4243667460d2adf39e22c0e9a7efe7b052cba468fb4ec1c"
+    },
+    {
+      "id": "json-contracts",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 0.22,
+      "log_sha256": "d7b4b0e2c3201263ba5049a6220e4e025e00a716383fc00d0fcde763c528bb67"
+    },
+    {
+      "id": "blues-migration-slots-camera-rewind",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 15.01,
+      "log_sha256": "5fda2ec8e6f75091d1528791b391a92589fc9a60d26cd1d82f224cf0877c8e0e"
+    },
+    {
+      "id": "unified-settings-native-resume",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 5.68,
+      "log_sha256": "899ad1460e720ede76e3304606dce5ea99783b6e0ed9d73b6e940df6f0916437"
+    },
+    {
+      "id": "family-keyboard-controller-pcm",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 41.02,
+      "log_sha256": "2903ff59bc318939bc9a80bc10e3f3f09099273695566adad4707965946365af"
+    },
+    {
+      "id": "fox-preparation-gameplay-recovery",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 14.62,
+      "log_sha256": "7ea468f8713dcc5277fab929d7818ae163bd55a427df2da311fb526cf26c9aeb"
+    },
+    {
+      "id": "prehistorik-preparation-gameplay-recovery",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 16.82,
+      "log_sha256": "a2604e5822a095b8e643b513d8e898983f6a976624256ee55d4fa15e30334577"
+    },
+    {
+      "id": "six-game-restarts-isolation-recovery",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 54.2,
+      "log_sha256": "42bc3ab4bea8e2c895dec845b4255435b194f30df3c48799ef6f5323fd287e7b"
+    },
+    {
+      "id": "library-management-keyboard-controller",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 2.52,
+      "log_sha256": "26fc880d8a822e1e6d730e08697fad8f182f9f615a43ad49e763b5caedc214d1"
+    },
+    {
+      "id": "library-six-play-returns",
+      "status": "passed",
+      "exit_code": 0,
+      "seconds": 20.12,
+      "log_sha256": "b1224fd178910937647d9c3d22b21c72a80685b1725cdc961578be9f7c40e2ff"
+    }
+  ],
+  "binaries_unchanged": true,
+  "originals_unchanged": true
+}

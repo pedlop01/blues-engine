@@ -517,3 +517,13 @@ La salida normal invalida SDL del host; la excepción deja una ventana del motor
 viva y la caída compartida termina el host. Se mantienen todos los adaptadores
 en procesos separados para TH-12. El piloto opcional no se instala, no aparece
 en el registro y no enlaza motores en el frontend de producción.
+
+## Validación TH-12 y siguiente fase
+
+La [matriz automática](EXPANSION_VALIDATION.md) pasa Linux/Windows con seis
+combinaciones jugables, aislamiento, errores normalizados al contrato v1 y
+regresiones de Blues. TH-12 permanece al 90 % por campañas, escucha y dispositivos
+reales pendientes; no cierra 17 ni habilita aún la distribución 18.
+La [paridad PX](EXPERIENCE_PARITY_PLAN.md) adapta Fox y Prehistorik 1 para ofrecer
+la experiencia de Blues, priorizando scroll/cámara/encuadre dentro de cada motor
+sin cambiar la decisión de procesos separados.

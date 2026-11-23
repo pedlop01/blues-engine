@@ -3,6 +3,24 @@
 #include <set>
 #include <regex>
 namespace titus {
+namespace {
+const std::set<std::string> protocol_errors={"E_PROTOCOL","E_DATA_MISSING","E_DATA_VARIANT","E_PREPARATION","E_UNSUPPORTED_SETTING","E_SAVE_INCOMPATIBLE","E_STORAGE","E_ENGINE_INIT","E_ENGINE_RUNTIME"};
+}
+Json runtime_error(const std::exception& error,bool ready){
+    auto native=dynamic_cast<const Error*>(&error);std::string code=native?native->code:"";
+    if(!protocol_errors.count(code)){
+        if(code=="E_PREFERENCES"||code=="E_SETTINGS")code="E_UNSUPPORTED_SETTING";
+        else if(code=="E_SAVE")code="E_SAVE_INCOMPATIBLE";
+        else if(code=="E_READ"||code=="E_WRITE"||code=="E_PATH"||code=="E_IMPORT"||code=="E_LIMIT")code="E_STORAGE";
+        else if(code=="E_ARGUMENT"||code=="E_REQUEST"||code=="E_GAME"||code=="E_PROFILE_LOCK")code="E_PROTOCOL";
+        else code=ready?"E_ENGINE_RUNTIME":"E_ENGINE_INIT";
+    }
+    // Preserve a usable UTF-8 message even when a native exception used a local encoding.
+    std::string message=Json::parse(Json(error.what()).dump(-1,' ',false,Json::error_handler_t::replace)).get<std::string>();
+    if(message.empty())message="Native engine failure";
+    if(message.size()>1024){size_t end=1021;while(end&&(static_cast<unsigned char>(message[end])&0xc0)==0x80)--end;message.resize(end);message+="...";}
+    return {{"code",code},{"message",message}};
+}
 Json blues_features(bool dual){Json features=Json::array({"return_to_library","native_pause","fullscreen","save_slots","save_thumbnails","rewind","dynamic_view","smooth_camera","hud_modes","invulnerability","lives_options","level_select","character_select","separate_volumes","audio_mode_selection","controller_bindings"});if(dual)features.push_back("live_edition_switch");return features;}
 Json runtime_features(const std::string& game,bool dual){
     if(game=="blues")return blues_features(dual);
@@ -95,7 +113,7 @@ namespace {
 void features_valid(const Json& list,const Json& r){must(list.is_array(),"Features must be an array","E_PROTOCOL");std::set<std::string> unique;auto available=runtime_features(r.at("game_id"),r.at("sources").size()==2);
     for(const auto& f:list)must(f.is_string()&&std::find(available.begin(),available.end(),f)!=available.end()&&unique.insert(f.get<std::string>()).second,"Invalid/duplicate capability","E_PROTOCOL");
 }
-void error_valid(const Json& e){fields(e,{"code","message"});must(e["code"].is_string()&&std::regex_match(e["code"].get<std::string>(),std::regex("[A-Z][A-Z0-9_]{0,63}"))&&e["message"].is_string()&&!e["message"].get<std::string>().empty()&&e["message"].get<std::string>().size()<=1024,"Invalid protocol error","E_PROTOCOL");}
+void error_valid(const Json& e){fields(e,{"code","message"});must(e["code"].is_string()&&protocol_errors.count(e["code"].get<std::string>())&&e["message"].is_string()&&!e["message"].get<std::string>().empty()&&e["message"].get<std::string>().size()<=1024,"Invalid protocol error","E_PROTOCOL");}
 void response_identity(const Json& d,const Json& r){must(d["schema_version"]==1&&d["game_id"]==r["game_id"]&&d["engine_id"]==runtime_engine(r),"Runtime response identity mismatch","E_PROTOCOL");if(d.contains("profile_id"))must(d["profile_id"]==r["profile_id"]&&d["save_compatibility_id"]==r["save_compatibility_id"],"Runtime response belongs to another profile","E_PROTOCOL");}
 }
 void validate_runtime_event(const Json& e,const Json& r){

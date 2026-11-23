@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Full-state regression matrix and save portability across fresh processes."""
 import os
+from blues_test_paths import data_path
 from pathlib import Path
 import subprocess
 import tempfile
@@ -13,7 +14,7 @@ with tempfile.TemporaryDirectory(prefix='blues-state-') as directory:
     env = dict(os.environ, SDL_VIDEODRIVER='dummy', SDL_AUDIODRIVER='dummy', BLUES_CONFIG_FILE='', BLUES_SAVE_DIR=str(saves))
 
     def run(mode, level, options=(), settings=None):
-        args = [binary, f'--datapath=../orig-games/{mode}', '--dos-datapath=../orig-games/dos', '--amiga-datapath=../orig-games/amiga', '--cheats=7', f'--level={level}'] + list(options)
+        args = [binary, '--datapath='+str(data_path(mode)), '--dos-datapath='+str(data_path('dos')), '--amiga-datapath='+str(data_path('amiga')), '--cheats=7', f'--level={level}'] + list(options)
         result = subprocess.run(args, cwd=root, env=dict(env, **(settings or {})), capture_output=True, text=True, timeout=90)
         if result.returncode:
             raise AssertionError(f'{mode}/{level} {settings}: {result.returncode}\n{result.stdout}\n{result.stderr}')
