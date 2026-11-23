@@ -215,20 +215,20 @@ static void do_select_player() {
 	} while (!quit && !g_sys.input.quit);
 }
 
-static void do_inter_screen_helper(int xpos, int ypos, int c) {
-	for (int i = 0; i < 40; ++i) {
-		screen_add_sprite(xpos + 20 - 1 - i, ypos - 20 + 1 + i, 125);
-		if (c != 0) {
-			screen_vsync();
+static void present_inter_screen() {
+	g_sys.copy_bitmap(g_res.vga,320,200);
+	g_sys.update_screen();
+}
+static void do_inter_screen_helper(int xpos, int ypos, int animate) {
+	for(int stroke=0;stroke<2;++stroke)for(int i=0;i<40;++i) {
+		if(g_sys.input.quit)return;
+		const int x=stroke==0 ? xpos+19-i : xpos-19+i;
+		screen_stamp_inter_sprite(x,ypos-19+i,125);
+		if(animate && !g_sys.input.space) {
+			present_inter_screen();
+			g_sys.sleep(20);
+			update_input();
 		}
-		screen_clear_sprites(1);
-	}
-	for (int i = 0; i < 40; ++i) {
-		screen_add_sprite(xpos - 20 + 1 + i, ypos - 20 + 1 + i, 125);
-		if (c != 0) {
-			screen_vsync();
-		}
-		screen_clear_sprites(1);
 	}
 }
 
@@ -245,23 +245,26 @@ static void do_inter_screen() {
 	if (g_vars.level == MAX_LEVELS - 1) {
 		do_inter_screen_helper(xpos[g_vars.level], ypos[g_vars.level], 0);
 	}
+	present_inter_screen();
 	g_sys.fade_in_palette();
 	if (g_vars.level > 0 && g_vars.level < MAX_LEVELS - 1) {
 		do_inter_screen_helper(xpos[g_vars.level - 1], ypos[g_vars.level - 1], 1);
 	}
+	if(g_sys.input.quit)return;
 	// screen_do_transition2();
-	g_sys.update_screen();
+	present_inter_screen();
 	if (g_vars.level < MAX_LEVELS - 1) {
 		play_sound(SOUND_2);
-		screen_add_sprite(xpos[g_vars.level], ypos[g_vars.level], 126);
+		screen_stamp_inter_sprite(xpos[g_vars.level], ypos[g_vars.level], 126);
 	}
-	g_sys.update_screen();
+	present_inter_screen();
 	const uint32_t timestamp = g_sys.get_timestamp() + 4 * 1000;
 	do {
 		update_input();
 		if (g_sys.input.space || g_sys.input.quit) {
 			break;
 		}
+		g_sys.sleep(10);
 	} while (g_sys.get_timestamp() < timestamp);
 	fade_out_palette();
 }
@@ -359,6 +362,7 @@ static void game_run() {
 		while (!g_sys.input.quit && g_vars.play_level_flag) {
 			if (!g_vars.game_over_flag) {
 				do_inter_screen();
+				if(g_sys.input.quit)break;
 			}
 			load_level_data(g_vars.level);
 			do_level();

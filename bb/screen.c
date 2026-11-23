@@ -69,6 +69,32 @@ void screen_add_sprite(int x, int y, int frame) {
 	add_game_sprite(x, y, frame, 0);
 }
 
+/* Intermission owns a native 320x200 canvas, centered by copy_bitmap even
+ * with a larger gameplay viewport. Stamps survive sprite-list clears. */
+void screen_stamp_inter_sprite(int x,int y,int frame) {
+	uint8_t pixels[48*34];int w,h;
+	assert(frame==125 || frame==126);
+	if(g_res.amiga_data) {
+		extern const uint8_t spr71a6_amiga[],spr71da_amiga[];
+		w=frame==125 ? 16 : 48;h=frame==125 ? 6 : 34;
+		memset(pixels,0,sizeof(pixels));
+		decode_amiga_gfx(pixels,w,w,h,4,frame==125 ? spr71a6_amiga : spr71da_amiga,w,0,0xffff);
+	} else {
+		const uint8_t *src=g_res.spr_frames[frame];
+		if(!src)return;
+		w=READ_LE_UINT16(src-2);h=READ_LE_UINT16(src-4);
+		assert(w*h<=(int)sizeof(pixels));
+		decode_spr(src,w,w,h,4,pixels,w,0,0,false);
+	}
+	for(int yy=0;yy<h;++yy)for(int xx=0;xx<w;++xx) {
+		const int dx=x-w/2+xx,dy=y-h+yy;
+		uint8_t color=pixels[yy*w+xx];
+		if(!color || dx<0 || dx>=320 || dy<0 || dy>=200)continue;
+		if(g_options.cga_colors)color=g_res.cga_lut_sqv[(yy&1)*16+color];
+		g_res.vga[dy*320+dx]=color;
+	}
+}
+
 void screen_redraw_sprites() {
 }
 

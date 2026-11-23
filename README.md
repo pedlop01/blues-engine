@@ -681,6 +681,29 @@ matching player sprite/atlas dimensions after each switch, and safe rejection
 when the alternate resources are missing. It can start in
 either mode and run against each of the six levels.
 
+### Level presentation and progress marks
+
+The inter-level map keeps completed-level marks on a native 320×200 canvas,
+animates the new crossed-out location and displays the next destination's musical
+note. Each animation step uploads the changed bitmap before presentation, and
+Space skips the remaining animation without leaving a partial mark. The original
+final-stage behavior is retained. The canvas stays centered for larger gameplay
+viewports; markers retain the original DOS/Amiga artwork and DOS CGA dithering.
+
+```
+make build/tests/check_intermission
+build/tests/check_intermission ../orig-games/blues-amiga
+build/tests/check_intermission ../orig-games/blues-dos
+build/tests/check_intermission ../orig-games/blues-amiga wide
+build/tests/check_intermission ../orig-games/blues-dos wide cga
+```
+
+Replace the data paths with your own installations. The test runs the production
+presentation for all six destinations and independently decodes the brush/note
+pixels. It checks accumulated marks, progressive rendering, actual texture
+uploads, centering, skip/quit handling and clipped stamps. Set
+`BLUES_VIEW_TEST_OUTPUT` to an existing directory for BMP captures.
+
 ### Amiga foreground, background and lift graphics
 
 ```

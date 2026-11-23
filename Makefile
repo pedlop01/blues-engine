@@ -49,6 +49,11 @@ build/tests/check_viewport: tests/check_viewport.c bb/level.c sys_sdl2.c main.c 
 	mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DBLUES_ONLY $(LDFLAGS) -o $@ tests/check_viewport.c $(VIEW_TEST_OBJS) $(SDL_LIBS) $(MODPLUG_LIBS)
 
+INTER_TEST_OBJS := $(filter-out bb/game.o,$(BB_SRCS:.c=.o)) mixer.o dos_audio.o third_party/nuked-opl3/opl3.o util.o
+build/tests/check_intermission: tests/check_intermission.c bb/game.c sys_sdl2.c $(INTER_TEST_OBJS)
+	mkdir -p $(@D)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_intermission.c $(INTER_TEST_OBJS) $(SDL_LIBS) $(MODPLUG_LIBS)
+
 build/tests/check_sprite_interpolation: tests/check_sprite_interpolation.c sys_sdl2.c util.o
 	mkdir -p $(@D)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_sprite_interpolation.c util.o $(SDL_LIBS)
@@ -66,6 +71,7 @@ build/tests/check_mixer_volumes: tests/check_mixer_volumes.c mixer.c audio_gain.
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/check_mixer_volumes.c util.o $(MODPLUG_LIBS)
 
 clean:
+	$(RM) build/tests/check_intermission build/tests/check_intermission.d
 	$(RM) $(OBJS) $(DEPS) $(APP_OBJS) $(APP_OBJS:.o=.d) $(GAME_OBJS) blues
 	$(RM) build/tests/check_preferences build/tests/check_preferences.d
 	$(RM) build/tests/check_mixer_volumes build/tests/check_mixer_volumes.d
@@ -81,3 +87,5 @@ clean:
 -include build/tests/check_mixer_volumes.d
 
 -include build/tests/check_preferences.d
+
+-include build/tests/check_intermission.d
