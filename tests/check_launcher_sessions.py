@@ -20,6 +20,7 @@ def main():
     parser.add_argument('--windows', action='store_true')
     parser.add_argument('--headless', action='store_true')
     parser.add_argument('--family', action='store_true')
+    parser.add_argument('--fox', action='store_true')
     args = parser.parse_args()
     binary = args.bin_dir.resolve()
     suffix = '.exe' if args.windows else ''
@@ -44,13 +45,13 @@ def main():
         c = subprocess.run([str(binary/('titus-catalog'+suffix)),'--user-dir',native(user),'add',native(originals),'--recursive'],capture_output=True,text=True,encoding='utf-8',env=env,timeout=60)
         assert c.returncode==0,c.stderr
         capture = ROOT/'build'/('library-session-windows.bmp' if args.windows else 'library-session-linux.bmp')
-        r = subprocess.run([str(binary/('titus-engine'+suffix)),'--user-dir',native(user),'--family-session-smoke-test' if args.family else '--session-smoke-test','--screenshot',native(capture)],capture_output=True,text=True,encoding='utf-8',env=env,timeout=210 if args.family else 90)
+        r = subprocess.run([str(binary/('titus-engine'+suffix)),'--user-dir',native(user),'--fox-session-smoke-test' if args.fox else '--family-session-smoke-test' if args.family else '--session-smoke-test','--screenshot',native(capture)],capture_output=True,text=True,encoding='utf-8',env=env,timeout=270 if args.fox else 210 if args.family else 90)
         if r.returncode:
             for p in user.rglob('stderr.log'):
                 print(p,p.read_text(errors='replace')[-2000:],file=sys.stderr)
         assert r.returncode==0,(r.stdout,r.stderr)
         report = loads(r.stdout)
-        expected=4 if args.family else 2
+        expected=5 if args.fox else 4 if args.family else 2
         assert report['sessions']==expected and report['session_ui_checks']==expected*2 and report['selected_edition']=='amiga'
         count=0
         for folder in (user/'cache/sessions').iterdir():

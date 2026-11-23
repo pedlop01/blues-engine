@@ -186,8 +186,9 @@ por haber arrancado un ejecutable antiguo.
 
 Preparadores de producto: C/C++ nativos, limitados a las variantes verificadas y
 contrastados con los hashes de TH-02. Deark/Unicorn/Python son herramientas de
-desarrollo, no requisitos que instalará el jugador. TH-08 implementará la vía
-nativa para Fox y TH-09 la DIET; hasta validarlas, esos adaptadores no se habilitan.
+desarrollo, no requisitos que instalará el jugador. TH-08 implementa la vía
+nativa LZW para Fox; TH-09 añadirá DIET para Prehistorik 1. Solo se habilitan
+adaptadores cuya preparación y ejecución estén validadas.
 
 ## Capacidades y opciones
 
@@ -478,3 +479,15 @@ juego. Jukebox/P2 DOS tienen cero slots y preferencias JSON privadas v1, sin
 importar datos de Blues. Se mantienen procesos separados del frontend; esto no
 adelanta el piloto de integración en proceso de TH-11. Validación y controles en
 [FAMILY_RUNTIME.md](FAMILY_RUNTIME.md).
+
+## Implementación TH-08
+
+El supervisor selecciona `blues-family` u `opentitus` por el catálogo y el registro
+del paquete. La verificación del bloqueo heredado es común. Fox añade una
+inspección pura, un job de preparación nativa LZW y una segunda inspección antes
+de lanzar; el proceso nativo declara menú/audio cargados y resultado de salida.
+Las capacidades y contador cero/índice null son particulares de Fox, sin enlazar
+OpenTitus al frontend. Puente, fuentes GPL fijadas, caché privada verificada,
+rutas Unicode/largas y validación en [FOX_RUNTIME.md](FOX_RUNTIME.md).
+Los contratos de `save_index` de v1 siguen siendo de Blues: Jukebox/P2 también
+devuelven null en vez de un índice ficticio de cero slots.

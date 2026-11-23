@@ -1,7 +1,7 @@
 # Titus Engine: plan de expansión
 
 Actualización: **23 de noviembre de 2026**.
-Estado: **expansión autorizada; TH-00–TH-07 completadas; siguiente implementación TH-08**.
+Estado: **expansión autorizada; TH-00–TH-08 completadas; siguiente implementación TH-09**.
 Nombre de producto acordado: **Titus Engine** (`titus-engine`).
 
 ## Prioridades y punto de partida
@@ -44,8 +44,8 @@ que un motor pueda ejecutarla.
 | The Blues Brothers | Nuestra extensión de cyxx/blues | Implementado y probado | Implementado; continúa la validación visual | Primer juego para integrar; conservar sus mejoras y datos actuales. |
 | Blues Brothers: Jukebox Adventure | Módulo `ja/` de cyxx/blues | Soportado por el proyecto base | Sin soporte verificado | Ruta corta, controles/audio y cierre comprobados en Linux y Windows x64 sobre ARM64; integración pendiente. |
 | Prehistorik 2 | Módulo `p2/` de cyxx/blues | Datos en `prehistorik2-dos/`; soportado por el proyecto base | Datos Amiga identificados como Prehistorik 1, no 2 | Ruta corta y audio comprobados en Linux/Windows; saturación registrada para TH-07. Sin datos Amiga de esta entrega identificados. |
-| Titus the Fox | OpenTitus, revisión fijada en auditoría | Datos y audio del COM preparados; recorrido de referencia Linux/Windows comprobado | `fox-amiga/` y `fox.adf` idénticos; motor pendiente | Objetivo DOS inicial; edición Amiga sujeta a viabilidad. |
-| Prehistorik 1 | Olduvai | DIET preparado; siete cargas y ruta/audio Linux/Windows comprobados | `Prehistorik.adf` y `prehistorik2-amiga/` coinciden: Prehistorik 1 | Objetivo DOS inicial; edición Amiga sujeta a viabilidad. |
+| Titus the Fox | OpenTitus, revisión fijada en auditoría | Datos y audio del COM preparados; recorrido de referencia Linux/Windows comprobado | `fox-amiga/` y `fox.adf` idénticos; motor pendiente | DOS integrado en TH-08; edición Amiga sujeta a viabilidad. |
+| Prehistorik 1 | Olduvai | DIET preparado; siete cargas y ruta/audio Linux/Windows comprobados | `Prehistorik.adf` y `prehistorik2-amiga/` coinciden: Prehistorik 1 | DOS integrado en TH-08; edición Amiga sujeta a viabilidad. |
 | Moktar | OpenTitus | Declarado por OpenTitus | Sin soporte verificado | Posible ampliación posterior; fuera del mínimo inicial. |
 
 Fuentes consultadas: [cyxx/blues](https://github.com/cyxx/blues),
@@ -189,7 +189,7 @@ inventario no equivale a haber integrado o validado un nuevo juego.
 | TH-05 | Crear biblioteca global | Menú principal para juegos instalados, ficha, selector de instalación/DOS/Amiga, estados claros, teclado/mando y preferencias de selección. Verificar ventana y pantalla completa. | TH-04 | Completada: biblioteca SDL2, fichas/selectores, explorador Unicode, gestión de instalaciones, teclado/mando y preferencias; pruebas Linux/Windows en LIBRARY_FRONTEND.md | 100 % |
 | TH-06 | Integrar Blues Brothers | Arrancar DOS/Amiga desde biblioteca, conservar controles, HUD, ayudas, cámara, zoom, slots/miniaturas y rebobinado. Volver a biblioteca limpiamente; importación inicial reversible de opciones/slots a perfil privado sin sobrescribir originales. | TH-05 | Completada: runtime DOS/Amiga, importación inicial reversible, bloqueo heredado y retorno; pruebas Linux/Windows en BLUES_RUNTIME.md | 100 % |
 | TH-07 | Incorporar motores del proyecto base | Jukebox Adventure y Prehistorik 2 desde Windows/biblioteca, con datos y preferencias separados. Comprobar que las opciones no implementadas no se anuncien como disponibles; revisar la saturación de mezcla observada en P2 sin afectar Blues. | TH-02, TH-06 | Completada: Jukebox/P2 DOS desde biblioteca, capacidades y preferencias por juego, mezcla P2 sin saturación; pruebas Linux/Windows en FAMILY_RUNTIME.md | 100 % |
-| TH-08 | Incorporar Titus the Fox DOS | Adaptador OpenTitus con nuestros archivos, controles/audio comprobados, configuración externa al original, cierre y retorno. Mantener créditos y revisión del motor de origen. | TH-02, TH-06 | Sin iniciar | 0 % |
+| TH-08 | Incorporar Titus the Fox DOS | Adaptador OpenTitus con nuestros archivos, controles/audio comprobados, configuración externa al original, cierre y retorno. Mantener créditos y revisión del motor de origen. | TH-02, TH-06 | Completada: OpenTitus DOS separado, preparación LZW nativa verificada, caché/perfil privados, audio/controles/pausa y retorno Linux/Windows; ver FOX_RUNTIME.md | 100 % |
 | TH-09 | Incorporar Prehistorik 1 DOS | Adaptador Olduvai con identificación del conjunto `FILES*`/`PRE1.EXE` por contenido, sin renombrar originales. Arranque, controles, audio, cierre y retorno comprobados. | TH-02, TH-06 | Sin iniciar | 0 % |
 | TH-10 | Unificar ajustes y partidas | Valores globales y particulares por juego/edición; capacidades reales, volúmenes, mandos y catálogo de partidas. Migración reversible de Blues, rechazo de saves ajenos y conservación de formatos por motor. | TH-07, TH-08, TH-09 | Sin iniciar | 0 % |
 | TH-11 | Evaluar integración en proceso | Piloto con un motor; propiedad y ciclo de SDL/audio/vídeo, errores y rendimiento comparados con procesos separados. Registrar qué adaptadores se integran y cuáles permanecen aislados. | TH-03, TH-10 | Sin iniciar | 0 % |
@@ -248,7 +248,7 @@ TH-04 completa el catálogo definido en TH-03; [implementación y pruebas](CATAL
 - Qué adaptadores merece la pena integrar en proceso y cuáles seguirán separados.
 - Qué mejoras adicionales recibirá cada juego después de asegurar su fidelidad.
 
-Siguiente trabajo de expansión: **TH-08**, incorporar Titus the Fox DOS mediante
-el adaptador OpenTitus con datos, controles, audio y retorno comprobados. En paralelo, atender
+Siguiente trabajo de expansión: **TH-09**, incorporar Prehistorik 1 DOS mediante
+Olduvai y preparación DIET nativa con datos propios. En paralelo, atender
 los errores que el usuario encuentre en la tarea 17.
 La distribución 18 se retoma después de la primera expansión validada.

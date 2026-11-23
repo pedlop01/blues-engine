@@ -27,7 +27,8 @@ DOS/Amiga ni ayudas de Blues. El protocolo rechaza ajustes de Blues y capacidade
 no disponibles. Los índices de guardados tienen cero slots.
 
 Los datos Amiga identificados como Prehistorik son **Prehistorik 1**. TH-07 no
-habilita una edición Amiga de P2 ni añade todavía Fox/Prehistorik 1.
+habilita una edición Amiga de P2. Fox DOS se añade mediante OpenTitus en
+[TH-08](FOX_RUNTIME.md); Prehistorik 1 sigue pendiente.
 
 ## Preferencias y datos separados
 

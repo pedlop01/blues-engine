@@ -1,0 +1,86 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Managed hooks against the pinned engine plus opentitus-reference.patch.
+--- a/src/common.c
++++ b/src/common.c
+@@ -32,6 +32,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include "SDL/SDL.h"
++#include "managed_fox.h"
+ #include "definitions.h"
+ #include "common.h"
+ #include "audio.h"
+@@ -44,6 +45,7 @@
+ }
+ 
+ int titus_sleep() {
++    fox_tick();
+ 	//refreshaudio();
+     SDL_Delay(1);
+ }
+--- a/src/menu.c
++++ b/src/menu.c
+@@ -30,6 +30,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include "SDL/SDL.h"
++#include "managed_fox.h"
+ #include "sqz.h"
+ #include "backbuffer.h"
+ #include "menu.h"
+@@ -201,6 +202,7 @@
+     }
+ 
+     beforemenuloop:
++    fox_ready();
+ 
+     while (menuloop) { //View the menu
+ 
+--- a/src/player.c
++++ b/src/player.c
+@@ -29,6 +29,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include "SDL/SDL.h"
++#include "managed_fox.h"
+ #include "level.h"
+ #include "player.h"
+ #include "globals.h"
+@@ -70,6 +71,7 @@
+     
+     //Part 1: Check keyboard input
+     SDL_PumpEvents(); //Update keyboard state
++    fox_actor(level->player.sprite.x,level->player.sprite.y);
+     keystate = SDL_GetKeyState(NULL);
+ 
+     while(SDL_PollEvent(&event)) { //Check all events
+@@ -387,6 +389,7 @@
+     TITUS_sprite tmp;
+     //tmp.buffer = NULL;
+ 
++    fox_pause_begin();
+     TFR_SCREENM(); //Draw tiles
+     copysprite(level, &(tmp), &(player->sprite));
+     updatesprite(level, &(player->sprite), 29, true); //Pause tile
+@@ -399,10 +402,10 @@
+         keystate = SDL_GetKeyState(NULL);
+         while(SDL_PollEvent(&event)) { //Check all events
+             if (event.type == SDL_QUIT) {
+-                return TITUS_ERROR_QUIT;
++                return fox_pause_end(TITUS_ERROR_QUIT);
+             } else if (event.type == SDL_KEYDOWN) {
+                 if (event.key.keysym.sym == KEY_ESC) {
+-                    return TITUS_ERROR_QUIT;
++                    return fox_pause_end(TITUS_ERROR_QUIT);
+                 } else if (event.key.keysym.sym == KEY_MUSIC) {
+ 					AUDIOMODE++;
+ 					if (AUDIOMODE > 1) {
+@@ -412,7 +415,7 @@
+ 						startmusic();
+ 					}
+                 } else if (event.key.keysym.sym == KEY_P) {
+-                    return 0;
++                    return fox_pause_end(0);
+                 }
+             }
+         }

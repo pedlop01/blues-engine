@@ -38,7 +38,7 @@ def main():
         for game in ['jukebox','prehistorik2']:
             installation=next(i for i in catalog['installations'] if i['game_id']==game)
             command=['--user-dir',native(user),'--installation',installation['id'],'--legacy-root',native(legacy)]
-            inspected=invoke('titus-session',command+['--inspect-only']);folder=local(inspected['directory']);req=loads((folder/'request.json').read_text());validate(req)
+            inspected=invoke('titus-session',command+['--inspect-only']);folder=local(inspected['directory']);req=loads((folder/'request.json').read_text());validate(req);validate(loads((folder/'inspection.json').read_text()))
             profile=local(req['paths']['profile_directory']['path']);work=local(req['paths']['work_directory']['path']);workspaces.append(work)
             assert profile.parent.name==game and not (profile/'migration-receipt.json').exists()
             prefs={'schema_version':1,'fullscreen':False,'music_volume':73 if game=='jukebox' else 61,'effects_volume':100}
@@ -51,7 +51,7 @@ def main():
             ready=next(e['body'] for e in events if e['event']=='ready')
             assert ready['save_slot_count']==0 and set(ready['features'])=={'return_to_library','native_pause','fullscreen','separate_volumes'}
             observation=loads((folder/'probe-observation.json').read_text())
-            assert observation['gameplay'] and observation['pause'] and observation['frames']>=140
+            assert observation['gameplay'] and observation['pause'] and observation['frames']>=146
             assert observation['right']>40 and observation['left']>20 and observation['jump']>20,observation
             assert observation['samples']>10000 and observation['nonzero']>1000 and observation['effects']>0 and observation['peak']>1000,observation
             assert observation['clipped']==0,observation

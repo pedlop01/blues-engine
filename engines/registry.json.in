@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "kind": "engine_registry",
+  "role": "package",
+  "engines": [
+@TITUS_FAMILY_REGISTRY_ENTRY@@TITUS_REGISTRY_COMMA@@TITUS_FOX_REGISTRY_ENTRY@
+  ]
+}

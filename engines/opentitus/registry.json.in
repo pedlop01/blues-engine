@@ -1,0 +1,23 @@
+{
+  "engine_id": "opentitus",
+  "adapter_state": "validated",
+  "expected_protocol": 1,
+  "source_revision": "6540e8f2867f99aff54ad1a710ae6379ecb9c590",
+  "executables": {
+    "linux": "engines/opentitus/opentitus-runtime",
+    "windows": "engines/opentitus/opentitus-runtime.exe"
+  },
+  "games": [
+    {
+      "game_id": "fox",
+      "editions": [
+        "dos"
+      ],
+      "reference_native_features": [
+        "return_to_library",
+        "native_pause",
+        "fullscreen"
+      ]
+    }
+  ]
+}

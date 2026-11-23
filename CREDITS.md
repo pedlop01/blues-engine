@@ -106,6 +106,19 @@ the original game. Its process/profile bridge is documented in
 [BLUES_RUNTIME.md](docs/BLUES_RUNTIME.md) and [FAMILY_RUNTIME.md](docs/FAMILY_RUNTIME.md).
 Original game resources remain external.
 
+## Managed Titus the Fox runtime
+
+Fox DOS now uses a separate [OpenTitus runtime](docs/FOX_RUNTIME.md), derived from
+[OpenTitus](https://github.com/stople/OpenTitus) at
+`6540e8f2867f99aff54ad1a710ae6379ecb9c590`, Copyright (C) 2008–2011 The OpenTitus
+team, including Eirik Stople (GPL-3.0-or-later). OPL uses the pinned Chocolate
+Doom interface and DOSBox DBOPL noted in the [runtime notices](engines/opentitus/NOTICE.md).
+Full GPL and SDK notices accompany the local engine package. Patches and the
+managed bridge retain their GPL declarations. No commercial upstream `bin/`
+assets or precompiled OPL code are included; data is prepared from the user's COM.
+The frontend does not link this external engine. Final redistribution and
+corresponding-source packaging remain task 18.
+
 ## License information
 
 The inherited upstream snapshot does not include a top-level license file.

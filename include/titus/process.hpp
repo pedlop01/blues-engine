@@ -3,6 +3,7 @@
 #include <memory>
 #include <map>
 namespace titus {
+void verify_profile_lock(const Json& request);
 class ProfileLock {
     struct Impl;
     std::unique_ptr<Impl> impl;

@@ -22,7 +22,8 @@ SDL2/C++17 de la biblioteca; utiliza el catálogo y los detectores de TH-04.
 **Jugar está disponible para Blues Brothers DOS y Amiga** desde TH-06, con
 importación inicial reversible y retorno a biblioteca; ver [runtime Blues](BLUES_RUNTIME.md).
 Desde [TH-07](FAMILY_RUNTIME.md), también están disponibles Jukebox Adventure y
-Prehistorik 2 DOS. Fox y Prehistorik 1 mantienen Jugar deshabilitado hasta TH-08–09. Las fuentes ADF se registran sin extraerse ni arrancarse.
+Prehistorik 2 DOS. [TH-08](FOX_RUNTIME.md) añade Titus the Fox DOS con preparación
+nativa privada. Prehistorik 1 permanece deshabilitado hasta TH-09. Las fuentes ADF se registran sin extraerse ni arrancarse.
 
 ## Abrir y añadir los juegos
 

@@ -36,13 +36,14 @@ read-only checks against user-supplied games and the Windows build.
 The new `titus-engine` frontend lists installed games and DOS/Amiga releases,
 remembers per-game selections and provides a folder/ADF browser, verification
 and installation management. Keyboard, mouse, controller and fullscreen are
-supported. **Blues Brothers DOS/Amiga, Jukebox Adventure DOS and Prehistorik 2 DOS
-now launch from the library**, with a clean return and per-game preferences.
-Blues also imports classic preferences and saves reversibly. Fox and Prehistorik 1
-remain scheduled for TH-08–09. See the [family runtime](docs/FAMILY_RUNTIME.md),
-[Blues runtime](docs/BLUES_RUNTIME.md) and [library](docs/LIBRARY_FRONTEND.md) guides.
+supported. **Blues Brothers DOS/Amiga, Jukebox Adventure DOS, Prehistorik 2 DOS and Titus
+the Fox DOS now launch from the library**, with a clean return and per-game preferences.
+Blues also imports classic preferences and saves reversibly. Fox uses a separate OpenTitus runtime with native private data preparation.
+Prehistorik 1 remains scheduled for TH-09. See the [family runtime](docs/FAMILY_RUNTIME.md),
+[Blues runtime](docs/BLUES_RUNTIME.md), [Fox runtime](docs/FOX_RUNTIME.md) and [library](docs/LIBRARY_FRONTEND.md) guides.
 Build with `-DTITUS_BUILD_LAUNCHER=ON`, Python 3 and SDL2/SDL2_ttf/libmodplug
-development files. The classic game executable still works.
+development files. Fox additionally needs `TITUS_BUILD_FOX_RUNTIME=ON` and the
+pinned SDL 1.2/OPL source setup in its guide. The classic game executable still works.
 
 ## What this extension adds
 

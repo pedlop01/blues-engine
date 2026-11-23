@@ -1110,7 +1110,7 @@ static void sdl2_process_events() {
 			if (prev != paused) {
 				SDL_PauseAudio(paused || _rewind_active);
 #ifdef TITUS_MANAGED
-                titus_runtime_probe_paused(paused);
+                titus_runtime_probe_paused(paused&&ev.type==SDL_KEYUP&&ev.key.keysym.sym==SDLK_p);
 #endif
 			}
 		}

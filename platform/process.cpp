@@ -9,11 +9,28 @@
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <cerrno>
 #include <signal.h>
 #endif
 namespace titus {
+void verify_profile_lock(const Json& request){auto text=std::getenv("TITUS_PROFILE_LOCK");if(!text||!*text)throw Error("E_PROFILE_LOCK","Runtime must inherit its profile lock");
+    auto handle=std::stoll(text);auto profile=fs::u8path(request["paths"]["profile_directory"]["path"].get<std::string>());auto root=profile;for(int i=0;i<5;++i)root=root.parent_path();
+    auto group=request["save_compatibility_id"].get<std::string>(),profile_name=profile.filename().u8string();
+    if(profile_name!=group&&!(request["kind"]=="inspect_request"&&profile_name.rfind("."+group+".import-",0)==0))throw Error("E_PROFILE_LOCK","Profile compatibility directory mismatch");
+    if(profile.parent_path().filename().u8string()!=request["game_id"]||profile.parent_path().parent_path().filename()!="games"||profile.parent_path().parent_path().parent_path().filename().u8string()!=request["profile_id"]||root/"profiles"!=profile.parent_path().parent_path().parent_path().parent_path())throw Error("E_PROFILE_LOCK","Invalid managed profile hierarchy");
+    auto expected=root/"profile-locks"/fs::u8path(request["profile_id"].get<std::string>()+"."+request["game_id"].get<std::string>()+"."+request["save_compatibility_id"].get<std::string>()+".lock");
+#ifdef _WIN32
+    HANDLE native=reinterpret_cast<HANDLE>(static_cast<intptr_t>(handle));DWORD count=GetFinalPathNameByHandleW(native,nullptr,0,FILE_NAME_NORMALIZED);if(!count)throw Error("E_PROFILE_LOCK","Invalid inherited profile handle");
+    std::wstring name(count,L'\0');auto n=GetFinalPathNameByHandleW(native,name.data(),count,FILE_NAME_NORMALIZED);if(!n||n>=count)throw Error("E_PROFILE_LOCK","Invalid inherited profile handle");name.resize(n);
+    if(name.rfind(L"\\\\?\\UNC\\",0)==0)name=L"\\\\"+name.substr(8);else if(name.rfind(L"\\\\?\\",0)==0)name=name.substr(4);
+    auto path=normalized_path(expected.parent_path())/expected.filename();if(_wcsicmp(path.c_str(),name.c_str()))throw Error("E_PROFILE_LOCK","Profile handle identity mismatch");
+#else
+    struct stat actual{},wanted{};if(fstat(static_cast<int>(handle),&actual)||stat(expected.c_str(),&wanted)||actual.st_dev!=wanted.st_dev||actual.st_ino!=wanted.st_ino||!S_ISREG(actual.st_mode))throw Error("E_PROFILE_LOCK","Profile descriptor identity mismatch");
+#endif
+}
+
 std::string read_document(const fs::path& file,size_t limit){
     std::ifstream in(filesystem_path(file),std::ios::binary);if(!in)throw Error("E_READ","Cannot read "+file.u8string());
     std::string bytes;char buffer[8192];while(in){in.read(buffer,sizeof buffer);bytes.append(buffer,static_cast<size_t>(in.gcount()));if(bytes.size()>limit)throw Error("E_LIMIT","Document size limit exceeded");}

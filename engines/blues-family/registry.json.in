@@ -1,67 +1,60 @@
 {
-  "schema_version": 1,
-  "kind": "engine_registry",
-  "role": "package",
-  "engines": [
+  "engine_id": "blues-family",
+  "adapter_state": "validated",
+  "expected_protocol": 1,
+  "source_revision": "@TITUS_RUNTIME_REV@",
+  "executables": {
+    "linux": "engines/blues-family/blues-family-runtime",
+    "windows": "engines/blues-family/blues-family-runtime.exe"
+  },
+  "games": [
     {
-      "engine_id": "blues-family",
-      "adapter_state": "validated",
-      "expected_protocol": 1,
-      "source_revision": "@TITUS_RUNTIME_REV@",
-      "executables": {
-        "linux": "engines/blues-family/blues-family-runtime",
-        "windows": "engines/blues-family/blues-family-runtime.exe"
-      },
-      "games": [
-        {
-          "game_id": "blues",
-          "editions": [
-            "dos",
-            "amiga"
-          ],
-          "reference_native_features": [
-            "return_to_library",
-            "native_pause",
-            "fullscreen",
-            "save_slots",
-            "save_thumbnails",
-            "rewind",
-            "dynamic_view",
-            "smooth_camera",
-            "hud_modes",
-            "invulnerability",
-            "lives_options",
-            "level_select",
-            "character_select",
-            "separate_volumes",
-            "audio_mode_selection",
-            "live_edition_switch"
-          ]
-        },
-        {
-          "game_id": "jukebox",
-          "editions": [
-            "dos"
-          ],
-          "reference_native_features": [
-            "return_to_library",
-            "native_pause",
-            "fullscreen",
-            "separate_volumes"
-          ]
-        },
-        {
-          "game_id": "prehistorik2",
-          "editions": [
-            "dos"
-          ],
-          "reference_native_features": [
-            "return_to_library",
-            "native_pause",
-            "fullscreen",
-            "separate_volumes"
-          ]
-        }
+      "game_id": "blues",
+      "editions": [
+        "dos",
+        "amiga"
+      ],
+      "reference_native_features": [
+        "return_to_library",
+        "native_pause",
+        "fullscreen",
+        "save_slots",
+        "save_thumbnails",
+        "rewind",
+        "dynamic_view",
+        "smooth_camera",
+        "hud_modes",
+        "invulnerability",
+        "lives_options",
+        "level_select",
+        "character_select",
+        "separate_volumes",
+        "audio_mode_selection",
+        "live_edition_switch"
+      ]
+    },
+    {
+      "game_id": "jukebox",
+      "editions": [
+        "dos"
+      ],
+      "reference_native_features": [
+        "return_to_library",
+        "native_pause",
+        "fullscreen",
+        "separate_volumes"
+      ]
+    },
+    {
+      "game_id": "prehistorik2",
+      "editions": [
+        "dos"
+      ],
+      "reference_native_features": [
+        "return_to_library",
+        "native_pause",
+        "fullscreen",
+        "separate_volumes"
       ]
     }
   ]

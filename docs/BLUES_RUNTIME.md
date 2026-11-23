@@ -2,8 +2,8 @@
 
 La biblioteca ya permite **Jugar** con Blues Brothers DOS y Amiga mediante un
 runtime nativo separado. Desde [TH-07](FAMILY_RUNTIME.md), Jukebox Adventure y
-Prehistorik 2 DOS también se ejecutan desde la biblioteca. Fox y Prehistorik 1
-esperan a TH-08–09. El ejecutable clásico sigue disponible.
+Prehistorik 2 DOS también se ejecutan desde la biblioteca. [Fox DOS](FOX_RUNTIME.md) se incorpora en TH-08; Prehistorik 1
+espera a TH-09. El ejecutable clásico sigue disponible.
 
 ## Uso y comprobación manual
 
