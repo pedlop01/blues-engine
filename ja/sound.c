@@ -33,6 +33,8 @@ static void repeat_sound_cb(const uint8_t **data, uint32_t *size) {
 }
 
 void sound_init() {
+	/* Music and effects can both reach full scale; reserve margin before summing. */
+	g_mix.set_headroom(48);
 	uint16_t offset = 0;
 	for (int i = 0; i < MAX_SOUNDS; ++i) {
 		const int num = i;

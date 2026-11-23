@@ -42,14 +42,14 @@ def main():
             profile=local(req['paths']['profile_directory']['path']);work=local(req['paths']['work_directory']['path']);workspaces.append(work)
             assert profile.parent.name==game and not (profile/'migration-receipt.json').exists()
             prefs={'schema_version':1,'fullscreen':False,'music_volume':73 if game=='jukebox' else 61,'effects_volume':100}
-            (work/'preferences.json').write_text(json.dumps(prefs))
+            prefs.update(action_button=2,jump_button=3);(work/'preferences.json').write_text(json.dumps(prefs))
             # Route uses full volume for the saturation assertion, then confirms persisted volumes.
             full=dict(prefs,music_volume=100);(work/'preferences.json').write_text(json.dumps(full))
-            report=invoke('titus-session',command+['--test-ms','5500','--gameplay-probe']);assert report['state']=='done' and report['ready']
+            report=invoke('titus-session',command+['--test-ms','5500','--gameplay-probe','--test-fault','controller']);assert report['state']=='done' and report['ready']
             folder=local(report['directory']);req=loads((folder/'request.json').read_text());validate(req)
             events=[loads(x) for x in (folder/'events.jsonl').read_text().splitlines()];result=loads((folder/'result.json').read_text());assert validate_session(req,events,result,0)
             ready=next(e['body'] for e in events if e['event']=='ready')
-            assert ready['save_slot_count']==0 and set(ready['features'])=={'return_to_library','native_pause','fullscreen','separate_volumes'}
+            assert ready['save_slot_count']==0 and set(ready['features'])=={'return_to_library','native_pause','fullscreen','separate_volumes','controller_bindings'}
             observation=loads((folder/'probe-observation.json').read_text())
             assert observation['gameplay'] and observation['pause'] and observation['frames']>=146
             assert observation['right']>40 and observation['left']>20 and observation['jump']>20,observation

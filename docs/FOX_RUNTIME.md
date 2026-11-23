@@ -28,8 +28,8 @@ del juego, lo que dejaría zonas negras. El modo de desarrollo está desactivado
 
 Se anuncian retorno a biblioteca, pausa nativa y pantalla completa. No se anuncian
 slots, miniaturas, rebobinado, ayudas, cámara/zoom, mando propio del adaptador ni
-volúmenes separados: el OPL original mezcla música y efectos. Los mandos físicos
-y su unificación corresponden a TH-10/12; esta entrega valida teclado.
+volúmenes separados: el OPL original mezcla música y efectos. Los mandos
+físicos corresponden a TH-12; este adaptador mantiene su distribución nativa.
 
 ## Preparación nativa y almacenamiento
 
@@ -75,7 +75,7 @@ No hay renombrado de originales, enlaces privilegiados ni rutas con espacios
 introducidas en el parser antiguo de `titus.conf`.
 
 `preferences.json` contiene `{"schema_version":1,"fullscreen":false}`. Puede
-editarse con el juego cerrado; el formulario global llegará en TH-10. Una versión
+editarse con el juego cerrado; TH-10 incorpora el [formulario por capas](SETTINGS_AND_SAVES.md). Una versión
 futura se rechaza sin sobrescribirla. No se importan preferencias ni saves de
 Blues. La inspección devuelve índice de slots `null` y contador cero.
 

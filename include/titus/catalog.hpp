@@ -29,6 +29,7 @@ bool path_is_empty(const fs::path& path);
 uint64_t path_file_size(const fs::path& path);
 void copy_file_exact(const fs::path& from,const fs::path& to);
 void move_directory(const fs::path& from,const fs::path& to);
+void remove_regular_file(const fs::path& path); // Missing is allowed; never removes a directory.
 void remove_empty_directory(const fs::path& path);
 void ensure_directory(const fs::path& path);
 fs::path filesystem_path(const fs::path& path); // Native I/O spelling; keep normalized paths in JSON.

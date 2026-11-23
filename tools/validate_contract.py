@@ -122,6 +122,7 @@ def validate(document):
         settings = document["settings"]
         require("video" not in settings or "fullscreen" in features, "Video setting requires fullscreen capability")
         require("audio" not in settings or "separate_volumes" in features, "Volumes require separate_volumes capability")
+        require("input" not in settings or "controller_bindings" in features,"Bindings require controller_bindings capability")
         if "blues" in settings:
             require(document["game_id"] == "blues", "Blues settings leaked to another game")
             gates = {"camera": "smooth_camera", "hud": "hud_modes", "view_step": "dynamic_view",

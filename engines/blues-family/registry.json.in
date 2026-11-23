@@ -28,6 +28,7 @@
         "lives_options",
         "level_select",
         "character_select",
+        "controller_bindings",
         "separate_volumes",
         "audio_mode_selection",
         "live_edition_switch"
@@ -42,6 +43,7 @@
         "return_to_library",
         "native_pause",
         "fullscreen",
+        "controller_bindings",
         "separate_volumes"
       ]
     },
@@ -54,6 +56,7 @@
         "return_to_library",
         "native_pause",
         "fullscreen",
+        "controller_bindings",
         "separate_volumes"
       ]
     }

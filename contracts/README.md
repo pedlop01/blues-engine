@@ -24,3 +24,8 @@ Python de desarrollo. No se requiere Python/jsonschema en el producto previsto.
 El validador comprueba también relaciones entre documentos; los contratos no se
 reducen a la forma JSON. La implementación C++ deberá pasar los mismos casos al
 incorporarse y añadir pruebas reales de archivos, procesos y migración.
+
+TH-10 implementa la acción `load_slot` para Blues y amplía las capacidades con
+`controller_bindings` y el grupo `settings.input` para los botones nativos
+soportados. El frontend filtra defaults globales por capacidad y el runtime
+rechaza opciones ajenas. Los ejemplos siguen siendo fixtures de diseño.

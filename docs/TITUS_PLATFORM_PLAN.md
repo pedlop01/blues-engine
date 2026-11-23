@@ -1,7 +1,7 @@
 # Titus Engine: plan de expansión
 
 Actualización: **23 de noviembre de 2026**.
-Estado: **expansión autorizada; TH-00–TH-09 completadas; siguiente implementación TH-10**.
+Estado: **expansión autorizada; TH-00–TH-10 completadas; siguiente implementación TH-11**.
 Nombre de producto acordado: **Titus Engine** (`titus-engine`).
 
 ## Prioridades y punto de partida
@@ -191,7 +191,7 @@ inventario no equivale a haber integrado o validado un nuevo juego.
 | TH-07 | Incorporar motores del proyecto base | Jukebox Adventure y Prehistorik 2 desde Windows/biblioteca, con datos y preferencias separados. Comprobar que las opciones no implementadas no se anuncien como disponibles; revisar la saturación de mezcla observada en P2 sin afectar Blues. | TH-02, TH-06 | Completada: Jukebox/P2 DOS desde biblioteca, capacidades y preferencias por juego, mezcla P2 sin saturación; pruebas Linux/Windows en FAMILY_RUNTIME.md | 100 % |
 | TH-08 | Incorporar Titus the Fox DOS | Adaptador OpenTitus con nuestros archivos, controles/audio comprobados, configuración externa al original, cierre y retorno. Mantener créditos y revisión del motor de origen. | TH-02, TH-06 | Completada: OpenTitus DOS separado, preparación LZW nativa verificada, caché/perfil privados, audio/controles/pausa y retorno Linux/Windows; ver FOX_RUNTIME.md | 100 % |
 | TH-09 | Incorporar Prehistorik 1 DOS | Adaptador Olduvai con identificación del conjunto `FILES*`/`PRE1.EXE` por contenido, sin renombrar originales. Arranque, controles, audio, cierre y retorno comprobados. | TH-02, TH-06 | Completada: Olduvai DOS separado, DIET nativo verificado, caché/perfil privados y controles/audio/pausa/retorno Linux/Windows; ver PREHISTORIK_RUNTIME.md | 100 % |
-| TH-10 | Unificar ajustes y partidas | Valores globales y particulares por juego/edición; capacidades reales, volúmenes, mandos y catálogo de partidas. Migración reversible de Blues, rechazo de saves ajenos y conservación de formatos por motor. | TH-07, TH-08, TH-09 | Sin iniciar | 0 % |
+| TH-10 | Unificar ajustes y partidas | Valores globales y particulares por juego/edición; capacidades reales, volúmenes, mandos y catálogo de partidas. Migración reversible de Blues, rechazo de saves ajenos y conservación de formatos por motor. | TH-07, TH-08, TH-09 | Completada: opciones por capas y capacidades, persistencia/recuperación, mandos virtuales y catálogo/carga nativos de Blues; reimportación comparada con copia reversible. Ver SETTINGS_AND_SAVES.md | 100 % |
 | TH-11 | Evaluar integración en proceso | Piloto con un motor; propiedad y ciclo de SDL/audio/vídeo, errores y rendimiento comparados con procesos separados. Registrar qué adaptadores se integran y cuáles permanecen aislados. | TH-03, TH-10 | Sin iniciar | 0 % |
 | TH-12 | Validar la primera expansión | Matriz por juego/edición, arranque/salida repetidos, aislamiento de datos/ajustes, fallos recuperables, regresiones de Blues y documentación del catálogo realmente soportado. Habilita la tarea 18 tras cerrar también 17. | TH-10; decisión TH-11 | Sin iniciar | 0 % |
 | TH-13 | Investigar datos Amiga adicionales | Examinar imágenes y carpetas Amiga extraídas, identificar Prehistorik 1/2, formato de disco y recursos sin modificarlos. Reutilizar herramientas disponibles si son aplicables; identificar motores/código o trabajo de ingeniería inversa y entregar viabilidad por juego. | TH-01 | Sin iniciar | 0 % |
@@ -248,7 +248,7 @@ TH-04 completa el catálogo definido en TH-03; [implementación y pruebas](CATAL
 - Qué adaptadores merece la pena integrar en proceso y cuáles seguirán separados.
 - Qué mejoras adicionales recibirá cada juego después de asegurar su fidelidad.
 
-Siguiente trabajo de expansión: **TH-10**, unificar ajustes y partidas según
-las capacidades reales de cada motor. En paralelo, atender
+Siguiente trabajo de expansión: **TH-11**, evaluar un piloto de integración
+en proceso y comparar su ciclo de SDL/audio/vídeo con los procesos separados. En paralelo, atender
 los errores que el usuario encuentre en la tarea 17.
 La distribución 18 se retoma después de la primera expansión validada.

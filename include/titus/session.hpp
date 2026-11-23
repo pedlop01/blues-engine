@@ -1,5 +1,5 @@
 #pragma once
-#include "titus/process.hpp"
+#include "titus/settings.hpp"
 #include <chrono>
 namespace titus {
 Json blues_features(bool dual);
@@ -11,7 +11,7 @@ void validate_runtime_result(const Json& result,const Json& request);
 void validate_runtime_inspection(const Json& result,const Json& request);
 void validate_engine_request(const Json& request,const fs::path& request_file);
 struct LegacySources {fs::path preferences,saves;};
-struct SessionOptions {LegacySources legacy;int test_ms=0;bool test_gameplay=false;std::string test_fault;bool inspect_only=false;Json primary_source=nullptr;};
+struct SessionOptions {LegacySources legacy;int test_ms=0;bool test_gameplay=false;std::string test_fault;bool inspect_only=false;bool legacy_import=false;Json primary_source=nullptr;Json settings=Json::object();int load_slot=0;};
 class Session {
     Paths paths_;fs::path executable_,directory_,profile_,staging_;
     std::unique_ptr<ProfileLock> lock_;
@@ -39,5 +39,6 @@ public:
     const std::string& error()const{return failure_;}
     const fs::path& directory()const{return directory_;}
     const Json& request()const{return request_;}
+    const Json& inspection()const{return inspection_;}
 };
 }

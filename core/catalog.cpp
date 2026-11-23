@@ -230,6 +230,13 @@ void move_directory(const fs::path& from,const fs::path& to){
     fs::rename(from,to);
 #endif
 }
+void remove_regular_file(const fs::path& path){
+#ifdef _WIN32
+    if(DeleteFileW(filesystem_path(path).c_str()))return;auto error=GetLastError();require(error==ERROR_FILE_NOT_FOUND||error==ERROR_PATH_NOT_FOUND,"Cannot remove private file: "+path.u8string(),"E_WRITE");
+#else
+    if(unlink(path.c_str())==0)return;require(errno==ENOENT,"Cannot remove private file: "+path.u8string(),"E_WRITE");
+#endif
+}
 void remove_empty_directory(const fs::path& path){
 #ifdef _WIN32
     require(RemoveDirectoryW(filesystem_path(path).c_str()),"Cannot replace empty profile directory","E_IMPORT");

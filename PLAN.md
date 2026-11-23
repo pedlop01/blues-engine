@@ -16,7 +16,7 @@ expansión validada. El detalle y seguimiento de las tareas TH-00–TH-16 está 
 - Tareas completadas: **16 de 18**.
 - Completadas: **01–16**.
 - Blues: **17 en curso** con las pruebas del usuario; **18 pospuesta** hasta la expansión.
-- Titus Engine: **TH-00–TH-09 completadas (100 %)**; siguiente tarea **TH-10**.
+- Titus Engine: **TH-00–TH-10 completadas (100 %)**; siguiente tarea **TH-11**.
 - Corrección de escaleras validada por el usuario.
 - El punto recuperable previo a la expansión es `dd07383`, etiqueta `blues-baseline-2026-11-23`.
 
@@ -182,3 +182,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-23 | TH-08 | El usuario valida TH-07. Fox DOS integrado con OpenTitus/OPL en proceso separado y fuentes GPL fijadas; preparación LZW nativa de FOX.COM con hashes de referencia, SQZ privados, publicación atómica y reparación de caché. Rutas largas/Unicode mediante I/O relativa redirigida; lienzo 320×200 y ventana 2×, preferencias propias, capacidades reales sin slots ni volumen separado. Pruebas Linux/Windows de datos/audio/pausa/retorno y cinco juegos desde GUI; originales intactos. Ver docs/FOX_RUNTIME.md. | TH-09: Prehistorik 1 DOS/Olduvai y DIET nativo. Campañas y escucha siguen en TH-12/17; 18 pospuesta. |
 
 | 2026-11-23 | TH-09 | El usuario valida TH-08. Prehistorik 1 DOS integrado mediante Olduvai separado, preparación DIET nativa con CRC/hash, caché atómica y preferencias/informes privados. Pruebas Linux/Windows de controles, pausa, audio y fallos; originales intactos. Ver docs/PREHISTORIK_RUNTIME.md. | TH-10: ajustes y partidas. Campañas/mandos en TH-12; 17 abierta y 18 pospuesta. |
+
+| 2026-11-23 | TH-10 | El usuario valida TH-09. Opciones globales/juego/edición/sesión con herencia, revisión y diario de recuperación; botones de mando por capacidad y cambios nativos recogidos tras el cierre. Catálogo de ocho slots Blues con previews/resumen, carga nativa del frame y edición guardados y rechazo de estados ajenos/dañados. Comparación e importación explícita del legado con copia completa del perfil. Jukebox reserva margen al sumar audio. Pruebas Linux/Windows, mando virtual y originales intactos; ver docs/SETTINGS_AND_SAVES.md. | TH-11: evaluar integración en proceso. Mandos físicos/campañas en TH-12/17; 18 pospuesta. |

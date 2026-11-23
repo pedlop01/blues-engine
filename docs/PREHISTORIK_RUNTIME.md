@@ -15,7 +15,7 @@ continúa pendiente de viabilidad.
 Se conservan las pantallas, menús y renderizado nativos. Las capacidades
 anunciadas son retorno, pausa y pantalla completa. No hay slots gestionados
 (contador cero, índice null), rebobinado ni ayudas heredadas de Blues. La ruta
-de quicksave permanece vacía. Los ajustes globales corresponden a TH-10 y la
+de quicksave permanece vacía. Los [ajustes globales de TH-10](SETTINGS_AND_SAVES.md) ya están disponibles; la
 comprobación de mandos físicos/campañas completas a TH-12.
 
 ## Preparación y aislamiento

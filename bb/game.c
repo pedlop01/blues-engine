@@ -343,9 +343,16 @@ static void game_run() {
 	screen_init();
 	g_vars.start_level = 0;
 	load_common_graphics();
-	do_title_screen();
+#ifdef TITUS_MANAGED
+    bool managed_resume=titus_native_load_slot()!=0;
+    if(managed_resume){int level=titus_native_prepare_load(titus_native_load_slot());if(level<0)titus_runtime_load_failed();g_vars.level=level;g_vars.play_level_flag=1;g_vars.game_over_flag=0;}
+    else do_title_screen();
+#else
+    bool managed_resume=false;
+    do_title_screen();
+#endif
 	while (!g_sys.input.quit) {
-		if (!g_vars.level_completed_flag) {
+		if (!g_vars.level_completed_flag && !managed_resume) {
 			g_vars.game_over_flag = 0;
 			g_vars.play_level_flag = 1;
 			/* New runs may start at any level. Initialize stats here rather
@@ -366,12 +373,13 @@ static void game_run() {
 			screen_unk5();
 		}
 		while (!g_sys.input.quit && g_vars.play_level_flag) {
-			if (!g_vars.game_over_flag) {
+			if (!g_vars.game_over_flag && !managed_resume) {
 				do_inter_screen();
 				if(g_sys.input.quit)break;
 			}
 			load_level_data(g_vars.level);
 			do_level();
+            managed_resume=false;
 			if (!g_sys.input.quit && g_vars.requested_level >= 0) {
 				const bool select_character = g_vars.requested_character;
 				start_selected_level(g_vars.requested_level);

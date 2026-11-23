@@ -19,7 +19,7 @@
 using namespace titus;
 namespace {
 int actor_frames=0,baseline_x=0,baseline_y=0,right_max=0,left_start=0,left_min=0,jump_min=0;
-SDL_Keycode actor_key=0;
+SDL_Keycode actor_key=0;SDL_Joystick* virtual_pad=nullptr;
 Json request,features;fs::path directory;std::ofstream events;
 int sequence=0,command_seq=0,test_ms=0;size_t command_offset=0;bool ready=false,returning=false;Uint32 ready_at=0,gameplay_at=0,last_skip=0;bool gameplay=false,gameplay_probe=false,saved_probe=false,cancelled_probe=false,skip_down=false;int probe_step=0;bool rewind_seen=false,pause_seen=false;
 void emit(const char* name,const Json& body=Json::object()){
@@ -27,6 +27,7 @@ void emit(const char* name,const Json& body=Json::object()){
     events<<event.dump()<<'\n';events.flush();if(!events)throw Error("E_PROTOCOL","Cannot write runtime event");
 }
 titus_native_options options(){titus_native_options o{};o.game=request["game_id"]=="jukebox"?1:request["game_id"]=="prehistorik2"?2:0;o.probe=std::getenv("TITUS_TEST_GAMEPLAY")&&std::string(std::getenv("TITUS_TEST_GAMEPLAY"))=="1";o.edition=request["edition_id"]=="amiga";
+    o.action_button=o.jump_button=-1;o.load_slot=request.contains("action")&&request["action"]["type"]=="load_slot"?request["action"]["slot"].get<int>():0;
     o.fullscreen=o.music=o.effects=o.camera=o.hud=o.view=o.invulnerable=o.infinite_lives=o.lives1=o.lives2=o.level=o.sound=-1;
     static std::string dos,amiga;dos.clear();amiga.clear();for(const auto& s:request["sources"]){auto& value=s["edition_id"]=="dos"?dos:amiga;value=s["location"]["path"].get<std::string>();}o.dos=dos.empty()?nullptr:dos.c_str();o.amiga=amiga.empty()?nullptr:amiga.c_str();
     if(o.game){
@@ -37,25 +38,30 @@ titus_native_options options(){titus_native_options o{};o.game=request["game_id"
             if(o.music<0||o.music>100||o.effects<0||o.effects>100)throw Error("E_PREFERENCES","Invalid volume");
         }
     }
+    if(o.game){auto config=fs::u8path(request["paths"]["work_directory"]["path"].get<std::string>())/"preferences.json";if(path_exists(config)){auto p=parse_json(read_document(config,8192));o.action_button=p.value("action_button",0);o.jump_button=p.value("jump_button",1);}}
     if(!request.contains("settings"))return o;
     for(auto group=request["settings"].begin();group!=request["settings"].end();++group)for(auto item=group.value().begin();item!=group.value().end();++item){auto key=item.key();const auto& v=item.value();
-        if(key=="fullscreen")o.fullscreen=v.get<bool>();else if(key=="music_volume")o.music=v;else if(key=="effects_volume")o.effects=v;
+        if(key=="action_button")o.action_button=v;else if(key=="jump_button")o.jump_button=v;else if(key=="fullscreen")o.fullscreen=v.get<bool>();else if(key=="music_volume")o.music=v;else if(key=="effects_volume")o.effects=v;
         else if(key=="camera")o.camera=v=="smooth";else if(key=="hud")o.hud=v=="fixed";else if(key=="view_step")o.view=v;
         else if(key=="invulnerable")o.invulnerable=v.get<bool>();else if(key=="infinite_lives")o.infinite_lives=v.get<bool>();
         else if(key=="lives_player1")o.lives1=v;else if(key=="lives_player2")o.lives2=v;else if(key=="start_level")o.level=v;
         else if(key=="sound_mode")o.sound=v=="dos"?1:v=="amiga"?2:0;
     }return o;
 }
-Json inspect_saves(){Json slots=Json::array();auto profile=fs::u8path(request["paths"]["profile_directory"]["path"].get<std::string>());
+Json inspect_saves(){Json slots=Json::array(),details=Json::array();auto profile=fs::u8path(request["paths"]["profile_directory"]["path"].get<std::string>());
     for(int slot=1;slot<=runtime_slot_count(request);++slot){char name[32];snprintf(name,sizeof name,"saves/slot%02d.bbs",slot);auto path=profile/name;if(!path_exists(path))continue;
         Json item={{"slot",slot},{"file",name},{"format_id","blues.bbs"},{"format_version",nullptr},{"edition_id",nullptr},{"resource_fingerprint",nullptr},{"native_resource_crc32",nullptr},{"payload_sha256",nullptr},{"has_preview",false},{"status","unreadable"}};
         try{auto data=read_document(path,128*1024);item["payload_sha256"]=sha256(data);titus_slot_info info{};titus_native_inspect(reinterpret_cast<const uint8_t*>(data.data()),data.size(),&info);
             item["status"]=info.version==-1?"incompatible":"damaged";if(info.decoded){item["format_version"]=info.version;item["edition_id"]=info.amiga?"amiga":"dos";item["has_preview"]=bool(info.preview);item["status"]=info.compatible?"ready":"incompatible";
+                Json detail={{"slot",slot},{"payload_sha256",item["payload_sha256"]},{"level",info.level},{"x",info.x},{"y",info.y},{"frame",info.frame},{"camera",info.camera},{"hud",info.hud},{"view",info.view},{"lives1",info.lives1},{"lives2",info.lives2},{"timestamp",info.timestamp},{"preview_rgb",nullptr}};
+                uint8_t rgb[128*80*3];if(info.preview&&titus_native_preview(reinterpret_cast<const uint8_t*>(data.data()),data.size(),rgb)){std::string hex;const char* digits="0123456789abcdef";hex.reserve(sizeof(rgb)*2);for(auto b:rgb){hex+=digits[b>>4];hex+=digits[b&15];}detail["preview_rgb"]=hex;}details.push_back(detail);
+
                 std::ostringstream hex;hex<<std::hex<<std::setfill('0')<<std::setw(8)<<info.resources;item["native_resource_crc32"]=hex.str();
                 for(const auto& source:request["sources"])if(source["edition_id"]==item["edition_id"])item["resource_fingerprint"]=source["fingerprint"];
             }
         }catch(const std::exception&){}slots.push_back(item);
     }
+    write_document(directory/"save-details.json",{{"schema_version",1},{"slots",details}});
     return {{"schema_version",1},{"kind","save_index"},{"profile_id",request["profile_id"]},{"game_id",request["game_id"]},{"engine_id","blues-family"},{"save_compatibility_id",request["save_compatibility_id"]},{"slot_count",runtime_slot_count(request)},{"slots",slots}};
 }
 void set_storage(){auto work=fs::u8path(request["paths"]["work_directory"]["path"].get<std::string>());auto profile=fs::u8path(request["paths"]["profile_directory"]["path"].get<std::string>());
@@ -87,7 +93,7 @@ int run(const std::vector<std::string>& args){bool inspecting=false;bool loaded=
         if(request.at("engine_id")!="blues-family")throw Error("E_GAME","Wrong runtime executable");
         validate_engine_request(request,file);verify_profile_lock(request);features=runtime_features(request["game_id"],request["sources"].size()==2);set_storage();
         auto native=options();titus_native_options_init(&native,1);
-        if(inspecting){Json result={{"schema_version",1},{"kind","inspection"},{"inspection_id",request["inspection_id"]},{"profile_id",request["profile_id"]},{"game_id",request["game_id"]},{"engine_id","blues-family"},{"save_compatibility_id",request["save_compatibility_id"]},{"status","ok"},{"features",features},{"save_slot_count",runtime_slot_count(request)},{"preparation_ids",Json::array()},{"save_index",request["game_id"]=="blues"?inspect_saves():Json(nullptr)},{"error",nullptr}};write_document(directory/"inspection.json",result);return 0;}
+        if(inspecting){if(request["game_id"]=="blues")native_settings(request);Json result={{"schema_version",1},{"kind","inspection"},{"inspection_id",request["inspection_id"]},{"profile_id",request["profile_id"]},{"game_id",request["game_id"]},{"engine_id","blues-family"},{"save_compatibility_id",request["save_compatibility_id"]},{"status","ok"},{"features",features},{"save_slot_count",runtime_slot_count(request)},{"preparation_ids",Json::array()},{"save_index",request["game_id"]=="blues"?inspect_saves():Json(nullptr)},{"error",nullptr}};write_document(directory/"inspection.json",result);return 0;}
         events.open(filesystem_path(directory/"events.jsonl"),std::ios::binary|std::ios::app);emit("hello",{{"engine_id","blues-family"},{"build_revision",TITUS_BUILD_REVISION},{"protocol",1}});emit("progress",{{"phase","initialize"},{"percent",90}});
         auto probe=std::getenv("TITUS_TEST_GAMEPLAY");gameplay_probe=probe&&std::string(probe)=="1";
         auto test=std::getenv("TITUS_TEST_RUNTIME_MS");if(test)test_ms=std::max(0,std::min(10000,std::atoi(test)));
@@ -95,10 +101,10 @@ int run(const std::vector<std::string>& args){bool inspecting=false;bool loaded=
         if(fault=="before_ready")throw Error("E_TEST_LOAD","Deliberate failure before ready");
         if(fault=="wrong_session"){Json wrong={{"schema_version",1},{"kind","event"},{"session_id",uuid()},{"seq",3},{"event","ready"},{"body",{{"features",features},{"scene","title"},{"save_slot_count",runtime_slot_count(request)},{"audio_active",true}}}};events<<wrong.dump()<<'\n';events.flush();return 0;}
         if(fault=="log_flood")std::cout<<std::string(2*1024*1024,'x')<<std::flush;
-        SDL_SetMainReady();int code=titus_native_run();
+        SDL_SetMainReady();if(test_ms&&gameplay_probe&&fault=="controller"){SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS,"1");if(SDL_Init(SDL_INIT_GAMECONTROLLER))throw Error("E_TEST_PAD",SDL_GetError());int device=SDL_JoystickAttachVirtual(SDL_JOYSTICK_TYPE_GAMECONTROLLER,SDL_CONTROLLER_AXIS_MAX,SDL_CONTROLLER_BUTTON_MAX,0);if(device<0||(virtual_pad=SDL_JoystickOpen(device))==nullptr)throw Error("E_TEST_PAD",SDL_GetError());}int code=titus_native_run();
         if(request["game_id"]!="blues"){
-            int full,music,effects;titus_native_preferences(&full,&music,&effects);
-            write_document(fs::u8path(request["paths"]["work_directory"]["path"].get<std::string>())/"preferences.json",{{"schema_version",1},{"fullscreen",bool(full)},{"music_volume",music},{"effects_volume",effects}});
+            int action,jump;titus_native_buttons(&action,&jump);int full,music,effects;titus_native_preferences(&full,&music,&effects);
+            write_document(fs::u8path(request["paths"]["work_directory"]["path"].get<std::string>())/"preferences.json",{{"schema_version",1},{"fullscreen",bool(full)},{"music_volume",music},{"effects_volume",effects},{"action_button",action},{"jump_button",jump}});
             if(gameplay_probe){uint64_t samples,audible,clipped;int peak,effects;titus_native_audio_stats(&samples,&audible,&clipped,&peak,&effects);
                 write_document(directory/"probe-observation.json",{{"gameplay",gameplay},{"pause",pause_seen},{"frames",actor_frames},{"right",right_max-baseline_x},{"left",left_start-left_min},{"jump",baseline_y-jump_min},{"samples",samples},{"nonzero",audible},{"clipped",clipped},{"peak",peak},{"effects",effects}});}
 
@@ -130,7 +136,8 @@ extern "C" void titus_runtime_actor(int x,int y){
     if(n==65)baseline_y=jump_min=y;
     if(n>=65&&n<95)jump_min=std::min(jump_min,y);
     auto desired=n<10?0:n<40?SDLK_RIGHT:n<65?SDLK_LEFT:n<95?SDLK_LSHIFT:n<120?SDLK_SPACE:0;
-    if(actor_key!=desired){SDL_Event e{};if(actor_key){e.type=SDL_KEYUP;e.key.keysym.sym=actor_key;SDL_PushEvent(&e);}if(desired){e.type=SDL_KEYDOWN;e.key.keysym.sym=desired;SDL_PushEvent(&e);}actor_key=desired;}
+    if(virtual_pad&&actor_key!=desired){int action,jump;titus_native_buttons(&action,&jump);if(actor_key==SDLK_LSHIFT||actor_key==SDLK_SPACE)SDL_JoystickSetVirtualButton(virtual_pad,actor_key==SDLK_SPACE?action:jump,0);if(desired==SDLK_LSHIFT||desired==SDLK_SPACE)SDL_JoystickSetVirtualButton(virtual_pad,desired==SDLK_SPACE?action:jump,1);}
+    if(actor_key!=desired){SDL_Event e{};if(actor_key&&(!virtual_pad||(actor_key!=SDLK_LSHIFT&&actor_key!=SDLK_SPACE))){e.type=SDL_KEYUP;e.key.keysym.sym=actor_key;SDL_PushEvent(&e);}if(desired&&(!virtual_pad||(desired!=SDLK_LSHIFT&&desired!=SDLK_SPACE))){e.type=SDL_KEYDOWN;e.key.keysym.sym=desired;SDL_PushEvent(&e);}actor_key=desired;}
 }
 extern "C" void titus_runtime_probe_paused(int paused){if(gameplay_probe&&paused&&SDL_GetAudioStatus()==SDL_AUDIO_PAUSED)pause_seen=true;}
 extern "C" void titus_runtime_probe_rewind(int active){if(active&&gameplay_probe)rewind_seen=true;}
@@ -165,8 +172,8 @@ extern "C" int titus_runtime_poll(void){
     }return requested;
 }
 extern "C" void titus_runtime_return_request(int confirmation){if(ready)emit("return_requested",{{"confirmation_required",bool(confirmation)}});
-    if(test_ms&&gameplay_probe&&confirmation){SDL_Event event{};
-        if(!cancelled_probe){event.type=SDL_KEYUP;event.key.keysym.sym=SDLK_ESCAPE;cancelled_probe=true;SDL_PushEvent(&event);}
+    if(test_ms&&confirmation){SDL_Event event{};
+        if(gameplay_probe&&!cancelled_probe){event.type=SDL_KEYUP;event.key.keysym.sym=SDLK_ESCAPE;cancelled_probe=true;SDL_PushEvent(&event);}
         else{event.type=SDL_KEYDOWN;event.key.keysym.sym=SDLK_DOWN;SDL_PushEvent(&event);event.key.keysym.sym=SDLK_RETURN;SDL_PushEvent(&event);}
     }
 }
@@ -176,3 +183,7 @@ int wmain(int argc,wchar_t** argv){std::vector<std::string> args;for(int i=0;i<a
 #else
 int main(int argc,char** argv){return run(std::vector<std::string>(argv,argv+argc));}
 #endif
+
+extern "C" void titus_runtime_load_failed(void){throw Error("E_SAVE","Native save validation or restoration failed");}
+
+extern "C" void titus_runtime_restored(int level,int x,int y,int frame,int camera,int hud,int view){titus_runtime_ready("gameplay");write_document(directory/"restored-state.json",{{"level",level},{"x",x},{"y",y},{"frame",frame},{"camera",camera},{"hud",hud},{"view",view}});}

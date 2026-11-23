@@ -468,7 +468,7 @@ no incorpora todavía Jukebox/P2. La biblioteca lanza DOS/Amiga y recupera su
 ventana al terminar. La migración inicial usa staging, inspección nativa, recibo
 y snapshot; el bloqueo se hereda al hijo. Ver [uso y validación](BLUES_RUNTIME.md).
 Los ocho slots siguen en el menú nativo; `load_slot` desde biblioteca queda para
-TH-10 y se rechaza explícitamente mientras tanto.
+TH-10, ya implementada mediante inspección y restauración nativas.
 
 ## Implementación TH-07
 
@@ -499,3 +499,12 @@ DIET nativa y publicación verificada de la caché. Inspección sin SDL, ajustes
 informes privados, ready tras presentación real y retorno supervisado siguen
 el contrato común. Ver [Prehistorik](PREHISTORIK_RUNTIME.md) para controles,
 capacidades, fuentes fijadas y límites de las pruebas.
+
+## Implementación TH-10
+
+[Opciones y partidas](SETTINGS_AND_SAVES.md) documenta la resolución global,
+juego, edición y sesión; propiedad secuencial de preferencias, diario de
+recuperación, controles de mando por capacidad y el catálogo nativo de slots.
+Blues carga sin pasar por título/selección y restaura el payload después de
+reconstruir recursos y antes de simular. El índice es reconstruible y la
+segunda importación requiere comparación/confirmación con copia de perfil.

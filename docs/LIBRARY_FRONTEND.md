@@ -197,3 +197,7 @@ capturas de la ventana, explorador, confirmación, redimensionado y pantalla com
 Las capturas BMP quedan en `build/library-linux*.bmp` / `build/library-windows*.bmp`.
 No son recursos incluidos en el producto. Campañas, mandos físicos y distribución
 limpia de todo el conjunto siguen las tareas TH-12/17/18.
+
+TH-10 añade **Opciones** por capas y **Partidas**, con ocho previews/carga nativa
+de Blues y comparación/importación explícita del legado. Los juegos sin slots
+lo indican sin simular guardados. Ver [ajustes y partidas](SETTINGS_AND_SAVES.md).

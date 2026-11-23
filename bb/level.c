@@ -2525,6 +2525,8 @@ static void rewind_clear();
 #include "level_state.h"
 #ifdef TITUS_MANAGED
 #include "engines/blues-family/native.h"
+int titus_native_prepare_load(int slot){return prepare_game_load(slot-1)?_prepared_state->vars.level:-1;}
+int titus_native_preview(const uint8_t *data,size_t size,uint8_t *rgb){const uint8_t *p=bb_state_preview(data,size);if(!p)return 0;memcpy(rgb,p,SAVE_PREVIEW_BYTES);return 1;}
 void titus_native_inspect(const uint8_t *data,size_t size,struct titus_slot_info *info) {
     memset(info,0,sizeof(*info));
     if(size>=24&&!memcmp(data,"BBSAVE\r\n",8)&&((READ_LE_UINT32(data+8)!=1&&READ_LE_UINT32(data+8)!=2)||READ_LE_UINT32(data+20)!=0x42423031)){info->version=-1;return;}
@@ -2534,7 +2536,7 @@ void titus_native_inspect(const uint8_t *data,size_t size,struct titus_slot_info
         info->decoded=1;info->compatible=state_resources_available(state);
         info->version=READ_LE_UINT32(data+8);info->amiga=state->amiga;info->preview=bb_state_preview(data,size)!=NULL;
         info->camera=state->camera_mode;info->hud=state->hud_mode;info->view=state->input_view_step;
-        info->level=state->vars.level;info->resources=state->resources;info->timestamp=state->timestamp;
+        info->x=state->vars.objects[OBJECT_NUM_PLAYER1].xpos;info->y=state->vars.objects[OBJECT_NUM_PLAYER1].ypos;info->frame=state->vars.level_loop_counter;info->level=state->vars.level;info->resources=state->resources;info->timestamp=state->timestamp;
         info->lives1=state->vars.objects[OBJECT_NUM_PLAYER1].lifes_count;info->lives2=state->vars.objects[OBJECT_NUM_PLAYER2].lifes_count;
     }
     free(state);
@@ -2591,13 +2593,17 @@ void do_level() {
 	configure_level_hud();
 	g_sys.set_pause_menu_enabled(true);
 #ifdef TITUS_MANAGED
-    titus_runtime_gameplay();
+    /* The ready callback follows restoration below. */
 #endif
 	update_assist_status();
 	bool screen_transition_flag = true;
 	int frame_duration_remainder = 0;
 	_state_view=&view;_state_view_step=&view_step;_state_frame_remainder=&frame_duration_remainder;
 	_state_base_w=&base_w;_state_base_h=&base_h;_state_initial_transition=&screen_transition_flag;
+#ifdef TITUS_MANAGED
+    if(_prepared_state){if(!apply_prepared_game())titus_runtime_load_failed();titus_runtime_restored(g_vars.level,g_vars.objects[OBJECT_NUM_PLAYER1].xpos,g_vars.objects[OBJECT_NUM_PLAYER1].ypos,g_vars.level_loop_counter,g_options.camera_mode,g_options.hud_mode,g_sys.input.view_step);}
+    titus_runtime_gameplay();
+#endif
 	do {
 		update_input();
 		if (_rewind_running && (!g_sys.input.rewind || g_sys.input.menu || g_sys.input.quit)) {

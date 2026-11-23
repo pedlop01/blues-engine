@@ -65,7 +65,7 @@ int run(const std::vector<std::string>& args){try{
     olduvai::app::CliArgs native_args;native_args.game_dir=pre1_prepared_directory(request);native_args.play=true;native_args.play_level=probe?1:0;native_args.play_fullscreen=full;
     olduvai::presentation::GameOptions options;auto built=olduvai::app::build_game_options(native_args,ps,options);if(!built.ok)throw Error("E_PREFERENCES",built.error);
     titus_old::report_root=work/"reports";if(normalized_path(titus_old::report_root)!=titus_old::report_root.lexically_normal())throw Error("E_PATH","Report directory contains an alias");ensure_directory(titus_old::report_root);
-    options.save_path.clear();options.persist=[&](const std::string& k,const std::string& v){cfg[k]=v;Json values=Json::object();for(const auto& kv:cfg)values[kv.first]=kv.second;write_document(prefs,{{"schema_version",1},{"fullscreen",full},{"settings",values}});};
+    options.save_path.clear();options.persist=[&](const std::string& k,const std::string& v){cfg[k]=v;if(k=="fullscreen")full=v=="1";Json values=Json::object();for(const auto& kv:cfg)values[kv.first]=kv.second;write_document(prefs,{{"schema_version",1},{"fullscreen",full},{"settings",values}});};
     titus_old::on_ready=engine_ready;titus_old::on_tick=engine_tick;titus_old::on_frame=engine_frame;titus_old::on_audio=engine_audio;
     titus_old::capture_path=(session/"gameplay.bmp").u8string();
     started=std::chrono::steady_clock::now();SDL_SetMainReady();

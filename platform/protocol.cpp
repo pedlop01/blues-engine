@@ -3,10 +3,10 @@
 #include <set>
 #include <regex>
 namespace titus {
-Json blues_features(bool dual){Json features=Json::array({"return_to_library","native_pause","fullscreen","save_slots","save_thumbnails","rewind","dynamic_view","smooth_camera","hud_modes","invulnerability","lives_options","level_select","character_select","separate_volumes","audio_mode_selection"});if(dual)features.push_back("live_edition_switch");return features;}
+Json blues_features(bool dual){Json features=Json::array({"return_to_library","native_pause","fullscreen","save_slots","save_thumbnails","rewind","dynamic_view","smooth_camera","hud_modes","invulnerability","lives_options","level_select","character_select","separate_volumes","audio_mode_selection","controller_bindings"});if(dual)features.push_back("live_edition_switch");return features;}
 Json runtime_features(const std::string& game,bool dual){
     if(game=="blues")return blues_features(dual);
-    if(game=="jukebox"||game=="prehistorik2")return Json::array({"return_to_library","native_pause","fullscreen","separate_volumes"});
+    if(game=="jukebox"||game=="prehistorik2")return Json::array({"return_to_library","native_pause","fullscreen","separate_volumes","controller_bindings"});
     if(game=="fox"||game=="prehistorik")return Json::array({"return_to_library","native_pause","fullscreen"});
     throw Error("E_GAME","Unsupported engine game");
 }
@@ -62,15 +62,20 @@ void validate_engine_request(const Json& r,const fs::path& file){
     must(game!="blues"||!editions.count("amiga")||editions.count("dos"),"Blues Amiga requires its verified DOS supplement for Concert","E_DATA_MISSING");
     if(inspect)return;
     must(r["allow_silent_audio"].is_boolean(),"Invalid audio policy");
-    must(r["action"].is_object()&&r["action"].value("type",std::string())=="new_game",game=="blues"?"Global load is not implemented; use native eight-slot menu":"This game does not implement save slots","E_UNSUPPORTED_SETTING");fields(r["action"],{"type"});
+    must(r["action"].is_object(),"Invalid action");auto action=r["action"].value("type",std::string());
+    if(action=="load_slot"){fields(r["action"],{"type","slot"});must(game=="blues"&&r["action"]["slot"].is_number_integer()&&r["action"]["slot"]>=1&&r["action"]["slot"]<=8,"Unsupported save slot","E_UNSUPPORTED_SETTING");}
+    else {must(action=="new_game","Unsupported action","E_UNSUPPORTED_SETTING");fields(r["action"],{"type"});}
     auto available=runtime_features(game,editions.size()==2);std::set<std::string> required;
     must(r["required_features"].is_array(),"Invalid required features");for(const auto& f:r["required_features"]){must(f.is_string()&&std::find(available.begin(),available.end(),f)!=available.end(),"Unsupported required feature","E_UNSUPPORTED_SETTING");must(required.insert(f).second,"Duplicate feature");}
+    if(action=="load_slot")must(required.count("save_slots"),"Load requires save_slots","E_UNSUPPORTED_SETTING");
     must(r["settings"].is_object(),"Invalid settings");
+    validate_settings_values(r["settings"],game);
     const std::map<std::string,std::string> gates={{"camera","smooth_camera"},{"hud","hud_modes"},{"view_step","dynamic_view"},{"invulnerable","invulnerability"},{"infinite_lives","lives_options"},{"lives_player1","lives_options"},{"lives_player2","lives_options"},{"start_level","level_select"},{"sound_mode","audio_mode_selection"}};
-    for(auto group=r["settings"].begin();group!=r["settings"].end();++group){must(group.key()=="video"||group.key()=="audio"||group.key()=="blues","Unknown settings group","E_UNSUPPORTED_SETTING");must(group.value().is_object(),"Invalid settings group");
+    for(auto group=r["settings"].begin();group!=r["settings"].end();++group){must(group.key()=="video"||group.key()=="audio"||group.key()=="blues"||group.key()=="input","Unknown settings group","E_UNSUPPORTED_SETTING");must(group.value().is_object(),"Invalid settings group");
         for(auto v=group.value().begin();v!=group.value().end();++v){auto key=v.key();const auto& value=v.value();
             if(group.key()=="video"){must(key=="fullscreen"&&value.is_boolean()&&required.count("fullscreen"),"Unsupported video setting","E_UNSUPPORTED_SETTING");}
             else if(group.key()=="audio"){must((key=="music_volume"||key=="effects_volume")&&value.is_number_integer()&&value>=0&&value<=100&&required.count("separate_volumes"),"Unsupported volume setting","E_UNSUPPORTED_SETTING");}
+            else if(group.key()=="input"){must((key=="action_button"||key=="jump_button")&&value.is_number_integer()&&(value==0||value==1||value==2||value==3||value==7||value==8||value==10)&&required.count("controller_bindings"),"Unsupported controller binding","E_UNSUPPORTED_SETTING");}
             else if(group.key()=="blues"){
                 must(game=="blues","Blues settings do not apply to this game","E_UNSUPPORTED_SETTING");
                 must(gates.count(key)&&required.count(gates.at(key)),"Unsupported Blues setting","E_UNSUPPORTED_SETTING");

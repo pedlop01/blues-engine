@@ -44,11 +44,12 @@ data/profiles/<uuid>/games/prehistorik2/prehistorik2.full.audited/native/blues-f
 Por ahora se guardan pantalla completa y volúmenes en un archivo v1 independiente:
 
 ```json
-{"schema_version":1,"fullscreen":false,"music_volume":100,"effects_volume":100}
+{"schema_version":1,"fullscreen":false,"music_volume":100,"effects_volume":100,"action_button":0,"jump_button":1}
 ```
 
 Los valores de volumen van de 0 a 100. Se pueden editar con el juego cerrado;
-el formulario global de ajustes corresponde a TH-10. Los ajustes explícitos de
+TH-10 incorpora el [formulario de opciones por capas](SETTINGS_AND_SAVES.md)
+y los botones de acción/salto por capacidad. Los ajustes explícitos de
 una petición tienen prioridad. Una versión futura o un valor inválido impide el
 inicio y conserva el archivo. Jukebox/P2 no importan opciones ni slots de Blues,
 ni crean guardados ficticios. La importación de Blues permanece igual.

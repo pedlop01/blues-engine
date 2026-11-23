@@ -872,7 +872,13 @@ static void handle_controllerbutton(int button, bool pressed, struct input_t *in
 	if (_pause_menu_enabled && button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER) {
 		_rewind_button=pressed;input->rewind=_rewind_key || _rewind_button;return;
 	}
-	if (_pause_menu_enabled && handle_bound_button(button, pressed, input)) return;
+	if (
+#ifdef TITUS_MANAGED
+        true
+#else
+        _pause_menu_enabled
+#endif
+        ) {if(handle_bound_button(button,pressed,input))return;if(button==SDL_CONTROLLER_BUTTON_A||button==SDL_CONTROLLER_BUTTON_B)return;}
 	switch (button) {
 	case SDL_CONTROLLER_BUTTON_A:
 		input->space = pressed;
@@ -1366,4 +1372,9 @@ void titus_native_capture(const char *path){
     if(SDL_RenderReadPixels(_renderer,0,image->format->format,image->pixels,image->pitch)!=0||SDL_SaveBMP(image,path)!=0)print_error("Cannot capture native gameplay");
     SDL_FreeSurface(image);
 }
+#endif
+
+#ifdef TITUS_MANAGED
+void titus_native_set_buttons(int action,int jump){if(action>=0)_game_buttons[0]=action;if(jump>=0)_game_buttons[1]=jump;}
+void titus_native_buttons(int *action,int *jump){*action=_game_buttons[0];*jump=_game_buttons[1];}
 #endif

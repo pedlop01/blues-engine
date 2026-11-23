@@ -47,6 +47,10 @@ pinned SDL 1.2/OPL source setup in its guide. Prehistorik 1 needs
 `TITUS_BUILD_PRE1_RUNTIME=ON` and its pinned Olduvai source export.
 The classic game executable still works.
 
+The library now offers [layered settings and a native save browser](docs/SETTINGS_AND_SAVES.md):
+global/game/edition/session options, supported controller bindings, and Blues
+eight-slot thumbnails/resume with reversible legacy reimport.
+
 ## What this extension adds
 
 | Feature | Current implementation |

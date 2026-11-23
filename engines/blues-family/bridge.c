@@ -5,6 +5,8 @@
 struct options_t g_options;
 extern struct game_t game_bb,game_ja,game_p2;
 static struct game_t *game;
+static int load_slot;
+int titus_native_load_slot(void){return load_slot;}
 static int probe_enabled,effect_count,peak;
 static uint64_t samples,nonzero,clipped;
 static void (*start_audio)(sys_audio_cb,void *);
@@ -21,7 +23,7 @@ static void observe_sound(const uint8_t *data,uint32_t size,int freq,mix_repeat_
 void titus_native_audio_stats(uint64_t *count,uint64_t *audible,uint64_t *clips,int *max,int *effects){*count=samples;*audible=nonzero;*clips=clipped;*max=peak;*effects=effect_count;}
 
 void titus_native_options_init(const struct titus_native_options *o,int preferences){
-    probe_enabled=o->probe;
+    probe_enabled=o->probe;load_slot=o->load_slot;
     game=o->game==1?&game_ja:o->game==2?&game_p2:&game_bb;
     memset(&g_options,0,sizeof g_options);
     g_options.initial_lives[0]=g_options.initial_lives[1]=3;g_options.preferred_amiga=-1;
@@ -29,6 +31,7 @@ void titus_native_options_init(const struct titus_native_options *o,int preferen
     g_options.music_volume=g_options.effects_volume=100;g_options.camera_mode=CAMERA_SMOOTH;
     g_options.amiga_copper_bars=g_options.amiga_colors=true;g_options.screen_w=320;g_options.screen_h=200;
     if(!o->game&&preferences&&g_sys.load_preferences)g_sys.load_preferences();
+    titus_native_set_buttons(o->action_button,o->jump_button);
     if(o->game){g_options.camera_mode=CAMERA_CLASSIC;g_options.jump_button=true;}
     g_options.dos_datapath=o->dos;g_options.amiga_datapath=o->amiga;g_options.preferred_amiga=o->edition;
     if(o->fullscreen>=0)g_options.fullscreen=o->fullscreen;

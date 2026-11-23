@@ -6,9 +6,17 @@ extern "C" {
 #endif
 struct titus_native_options {
     const char *dos,*amiga;
+    int action_button,jump_button,load_slot;
     int game,probe,edition,fullscreen,music,effects,camera,hud,view,invulnerable,infinite_lives,lives1,lives2,level,sound;
 };
-struct titus_slot_info {int decoded,compatible,version,amiga,preview,level,lives1,lives2,camera,hud,view;uint32_t resources;uint64_t timestamp;};
+struct titus_slot_info {int decoded,compatible,version,amiga,preview,x,y,frame,level,lives1,lives2,camera,hud,view;uint32_t resources;uint64_t timestamp;};
+int titus_native_load_slot(void);
+int titus_native_prepare_load(int slot);
+int titus_native_preview(const uint8_t *data,size_t size,uint8_t *rgb);
+void titus_runtime_load_failed(void);
+void titus_runtime_restored(int level,int x,int y,int frame,int camera,int hud,int view);
+void titus_native_buttons(int *action,int *jump);
+void titus_native_set_buttons(int action,int jump);
 void titus_native_options_init(const struct titus_native_options *options,int preferences);
 int titus_native_run(void);
 void titus_native_preferences(int *fullscreen,int *music,int *effects);

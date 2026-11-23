@@ -23,9 +23,10 @@ Amiga necesita también una instalación DOS reconocida para los recursos de
 Concierto. El supervisor comprueba de nuevo los hashes antes de iniciar. Los ADF
 son fuentes de archivo: no se extraen ni ejecutan desde la biblioteca.
 
-La carga de slots se hace en el menú **Partida** del juego. La selección global
-de guardados desde la biblioteca corresponde a TH-10; este runtime rechaza una
-acción `load_slot` en vez de ignorarla.
+La carga de slots se hace en el menú **Partida** del juego y, desde TH-10,
+también en **Partidas** de la biblioteca. `load_slot` usa inspección y restauración
+nativas, conservando BBS v1/v2 y la edición del payload. Ver
+[opciones y partidas](SETTINGS_AND_SAVES.md).
 
 ## Perfil e importación reversible
 

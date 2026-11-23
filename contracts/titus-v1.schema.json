@@ -325,6 +325,37 @@
           },
           "required": [],
           "additionalProperties": false
+        },
+        "input": {
+          "type": "object",
+          "properties": {
+            "action_button": {
+              "type": "integer",
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                7,
+                8,
+                10
+              ]
+            },
+            "jump_button": {
+              "type": "integer",
+              "enum": [
+                0,
+                1,
+                2,
+                3,
+                7,
+                8,
+                10
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "minProperties": 1
         }
       },
       "required": [],
@@ -734,7 +765,8 @@
                           "character_select",
                           "separate_volumes",
                           "audio_mode_selection",
-                          "live_edition_switch"
+                          "live_edition_switch",
+                          "controller_bindings"
                         ]
                       },
                       "minItems": 0,
@@ -880,7 +912,8 @@
               "character_select",
               "separate_volumes",
               "audio_mode_selection",
-              "live_edition_switch"
+              "live_edition_switch",
+              "controller_bindings"
             ]
           },
           "minItems": 0,
@@ -1167,7 +1200,8 @@
                         "character_select",
                         "separate_volumes",
                         "audio_mode_selection",
-                        "live_edition_switch"
+                        "live_edition_switch",
+                        "controller_bindings"
                       ]
                     },
                     "minItems": 0,
@@ -1568,7 +1602,8 @@
               "character_select",
               "separate_volumes",
               "audio_mode_selection",
-              "live_edition_switch"
+              "live_edition_switch",
+              "controller_bindings"
             ]
           },
           "minItems": 0,
