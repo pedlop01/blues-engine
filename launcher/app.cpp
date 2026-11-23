@@ -53,7 +53,7 @@ class App {
     std::unique_ptr<Session> session;
     fs::path package_root;
     bool session_hidden=false,cancel_start=false;
-    bool test_play=false;
+    bool test_play=false,test_family=false;
     int play_test_stage=0;
     Uint32 play_test_started=0;
     bool smoke=false;
@@ -115,7 +115,7 @@ class App {
     }
     void begin_play(){
         if(!library.can_play()||session||starting_session.valid()||job.valid())return;
-        library.persist();SessionOptions options;options.legacy=legacy_sources();options.primary_source=*library.source();if(test_play)options.test_ms=500;
+        library.persist();SessionOptions options;if(library.selected()->at("game_id")=="blues")options.legacy=legacy_sources();options.primary_source=*library.source();if(test_play)options.test_ms=500;
         auto storage=paths;auto root=package_root;auto catalog=library.catalog;auto id=library.selected()->at("id").get<std::string>();
         modal="session";focus="cancel-session";notice.clear();cancel_start=false;
         starting_session=std::async(std::launch::async,[storage,root,catalog,id,options](){return std::make_unique<Session>(storage,root,catalog,id,options);});
@@ -380,11 +380,17 @@ class App {
     void push_key(SDL_Keycode sym,SDL_Keymod mod=KMOD_NONE){SDL_Event e{};e.type=SDL_KEYDOWN;e.key.keysym.sym=sym;e.key.keysym.mod=mod;e.key.keysym.scancode=SDL_GetScancodeFromKey(sym);SDL_PushEvent(&e);}
     void play_test_tick(){
         if(!test_play)return;
-        if(SDL_GetTicks()-play_test_started>60000)throw Error("E_UI_SESSION_TEST","Session UI probe timed out");
+        if(SDL_GetTicks()-play_test_started>(test_family?180000u:60000u))throw Error("E_UI_SESSION_TEST","Session UI probe timed out");
         if(starting_session.valid()||session)return;
-        if(play_test_stage==0){library.choose_game("blues");library.select_edition("dos");check(library.can_play(),"DOS play enabled");focus="play";draw();push_key(SDLK_RETURN);play_test_stage=1;}
-        else if(play_test_stage==2){check(!session_hidden&&(SDL_GetWindowFlags(window)&SDL_WINDOW_SHOWN),"library restored after DOS");library.select_edition("amiga");check(library.can_play(),"Amiga play enabled");focus="play";draw();push_key(SDLK_RETURN);play_test_stage=3;}
-        else if(play_test_stage==4){check(!session_hidden&&(SDL_GetWindowFlags(window)&SDL_WINDOW_SHOWN),"library restored after Amiga");library.persist();capture();std::cout<<Json({{"session_ui_checks",smoke_checks},{"sessions",2},{"selected_edition",library.selected()->at("edition_id")},{"notice",notice}}).dump()<<'\n';running=false;}
+        std::vector<std::pair<std::string,std::string>> choices={{"blues","dos"}};
+        if(test_family){choices.push_back({"jukebox","dos"});choices.push_back({"prehistorik2","dos"});}
+        choices.push_back({"blues","amiga"});
+        if(play_test_stage%2==0){
+            if(play_test_stage>0)check(!session_hidden&&(SDL_GetWindowFlags(window)&SDL_WINDOW_SHOWN),"library window restored after game");
+            size_t next=static_cast<size_t>(play_test_stage/2);
+            if(next==choices.size()){library.persist();capture();std::cout<<Json({{"session_ui_checks",smoke_checks},{"sessions",choices.size()},{"selected_edition",library.selected()->at("edition_id")},{"notice",notice}}).dump()<<'\n';running=false;return;}
+            library.choose_game(choices[next].first);library.select_edition(choices[next].second);check(library.can_play(),"native game play enabled");focus="play";draw();push_key(SDLK_RETURN);++play_test_stage;
+        }
     }
     void smoke_report(){capture();library.persist();check(library.preference_error.empty(),"preferences saved");std::cout<<Json({{"ui_checks",smoke_checks},{"games",library.games.size()},{"installations",library.catalog["installations"].size()},{"selected_game",library.preferences["selected_game"]},{"fullscreen",library.preferences["fullscreen"]}}).dump()<<'\n';running=false;}
     void smoke_tick(){
@@ -435,11 +441,12 @@ class App {
         ++smoke_step;
     }
 public:
-    App(Paths p,bool test,fs::path capture_path,fs::path initial_browse,fs::path import_source,bool play_probe):paths(std::move(p)),library(paths),smoke(test),screenshot(std::move(capture_path)),workflow_source(std::move(import_source)){
-        test_play=play_probe;play_test_started=SDL_GetTicks();
+    App(Paths p,bool test,fs::path capture_path,fs::path initial_browse,fs::path import_source,int play_probe):paths(std::move(p)),library(paths),smoke(test),screenshot(std::move(capture_path)),workflow_source(std::move(import_source)){
+        test_play=play_probe!=0;test_family=play_probe==2;play_test_started=SDL_GetTicks();
         char* base=SDL_GetBasePath();if(!base)throw Error("E_PATH",SDL_GetError());package_root=fs::u8path(base);SDL_free(base);
         try{auto registry=parse_json(read_document(package_root/"engines/registry.json"));
-            for(const auto& entry:registry.at("engines"))if(entry.at("engine_id")=="blues-family"&&entry.at("adapter_state")=="validated"&&registry.at("role")=="package")library.blues_runtime_installed=fs::is_regular_file(package_root/fs::u8path(entry.at("executables").at(platform()).get<std::string>()));
+            for(const auto& entry:registry.at("engines"))if(entry.at("engine_id")=="blues-family"&&entry.at("adapter_state")=="validated"&&registry.at("role")=="package"){bool installed=fs::is_regular_file(package_root/fs::u8path(entry.at("executables").at(platform()).get<std::string>()));library.blues_runtime_installed=installed;
+                if(installed)for(const auto& g:entry.at("games"))for(const auto& edition:g.at("editions"))if(edition=="dos")library.runtime_games.insert(g.at("game_id"));}
         }catch(const std::exception&){}
         if(!initial_browse.empty()){library.preferences["browse_path"]=normalized_path(initial_browse).u8string();library.dirty=true;}
         if(smoke)SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS,"1");
@@ -465,9 +472,10 @@ public:
         }library.persist();return 0;}
 };
 int run(const std::vector<std::string>& args){
-    try{fs::path user,screenshot,browse,import_source;bool smoke=false,play_probe=false;
+    try{fs::path user,screenshot,browse,import_source;bool smoke=false;int play_probe=0;
         for(size_t i=1;i<args.size();++i){auto option=args[i];if(option=="--smoke-test")smoke=true;
-            else if(option=="--session-smoke-test")play_probe=true;
+            else if(option=="--session-smoke-test")play_probe=1;
+            else if(option=="--family-session-smoke-test")play_probe=2;
             else if(option=="--user-dir"||option=="--screenshot"||option=="--browse-dir"||option=="--test-import"){if(++i==args.size())throw Error("E_ARGUMENT","Missing option value");auto p=fs::u8path(args[i]);if(option=="--user-dir")user=p;else if(option=="--screenshot")screenshot=p;else if(option=="--browse-dir")browse=p;else import_source=p;}
             else if(option=="--help"){std::cout<<"titus-engine [--user-dir ABS] [--browse-dir PATH]\n  F11: fullscreen; Tab/arrows/Enter: navigation; A: add; Esc: cancel/quit\n  --smoke-test [--screenshot FILE.bmp]: bounded UI regression test\n";return 0;}
             else throw Error("E_ARGUMENT","Unknown option: "+option);}

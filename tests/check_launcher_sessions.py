@@ -19,6 +19,7 @@ def main():
     parser.add_argument('--orig-games', type=Path, required=True)
     parser.add_argument('--windows', action='store_true')
     parser.add_argument('--headless', action='store_true')
+    parser.add_argument('--family', action='store_true')
     args = parser.parse_args()
     binary = args.bin_dir.resolve()
     suffix = '.exe' if args.windows else ''
@@ -43,13 +44,14 @@ def main():
         c = subprocess.run([str(binary/('titus-catalog'+suffix)),'--user-dir',native(user),'add',native(originals),'--recursive'],capture_output=True,text=True,encoding='utf-8',env=env,timeout=60)
         assert c.returncode==0,c.stderr
         capture = ROOT/'build'/('library-session-windows.bmp' if args.windows else 'library-session-linux.bmp')
-        r = subprocess.run([str(binary/('titus-engine'+suffix)),'--user-dir',native(user),'--session-smoke-test','--screenshot',native(capture)],capture_output=True,text=True,encoding='utf-8',env=env,timeout=90)
+        r = subprocess.run([str(binary/('titus-engine'+suffix)),'--user-dir',native(user),'--family-session-smoke-test' if args.family else '--session-smoke-test','--screenshot',native(capture)],capture_output=True,text=True,encoding='utf-8',env=env,timeout=210 if args.family else 90)
         if r.returncode:
             for p in user.rglob('stderr.log'):
                 print(p,p.read_text(errors='replace')[-2000:],file=sys.stderr)
         assert r.returncode==0,(r.stdout,r.stderr)
         report = loads(r.stdout)
-        assert report['sessions']==2 and report['session_ui_checks']==4 and report['selected_edition']=='amiga'
+        expected=4 if args.family else 2
+        assert report['sessions']==expected and report['session_ui_checks']==expected*2 and report['selected_edition']=='amiga'
         count=0
         for folder in (user/'cache/sessions').iterdir():
             req=loads((folder/'request.json').read_text());validate(req)
@@ -58,7 +60,7 @@ def main():
                 result=loads((folder/'result.json').read_text())
                 assert validate_session(req,events,result,0)
                 count+=1
-        assert count==2
+        assert count==expected
         profile=next((user/'data/profiles').glob('*/games/blues/blues.full.1991'))
         ini=(profile/'native/blues-family/preferences.ini').read_text()
         assert all(x in ini for x in ('camera=classic','hud=fixed','music_volume=42','view_step=2'))
@@ -67,7 +69,7 @@ def main():
         assert capture.read_bytes()[:2]==b'BM'
         print(json.dumps(report,ensure_ascii=False))
     assert snapshot(originals)==before
-    print(f'Originals and legacy preserved: {len(before)} game files; native window/selection restored twice')
+    print(f'Originals and legacy preserved: {len(before)} game files; native window/selection restored after every game')
 
 
 if __name__=='__main__':

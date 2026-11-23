@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Namespace a linked MinGW game module, including its COMDAT data references.
+"""Namespace a linked game module (ELF or MinGW COFF), including COMDAT references.
 
 COFF has no ELF hidden-symbol visibility. Localising .refptr COMDATs can break
 references from other objects, while leaving private ones shared binds engines

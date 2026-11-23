@@ -1,6 +1,9 @@
 
 #include <time.h>
 #include "game.h"
+#ifdef TITUS_MANAGED
+#include "engines/blues-family/native.h"
+#endif
 #include "resource.h"
 #include "sys.h"
 #include "util.h"
@@ -208,6 +211,9 @@ static bool do_menu() {
 		g_sys.set_screen_palette(data, 0, 256, 6);
 		update_screen_img(data + 768, 0);
 		g_sys.fade_in_palette();
+#ifdef TITUS_MANAGED
+		titus_runtime_ready("menu");
+#endif
 		free(data);
 		const uint32_t start = g_sys.get_timestamp();
 		while (!g_sys.input.quit) {

@@ -1109,6 +1109,9 @@ static void sdl2_process_events() {
 			}
 			if (prev != paused) {
 				SDL_PauseAudio(paused || _rewind_active);
+#ifdef TITUS_MANAGED
+                titus_runtime_probe_paused(paused);
+#endif
 			}
 		}
 		if (!paused || g_sys.input.quit || g_sys.input.menu) {
@@ -1354,3 +1357,13 @@ struct sys_t g_sys = {
 	.begin_sprite_frame = sdl2_begin_sprite_frame,
 	.set_sprite_owner = sdl2_set_sprite_owner,
 };
+
+#ifdef TITUS_MANAGED
+void titus_native_capture(const char *path){
+    int w,h;SDL_GetRendererOutputSize(_renderer,&w,&h);
+    SDL_Surface *image=SDL_CreateRGBSurfaceWithFormat(0,w,h,32,SDL_PIXELFORMAT_ARGB8888);
+    if(!image)print_error("Cannot allocate probe screenshot");
+    if(SDL_RenderReadPixels(_renderer,0,image->format->format,image->pixels,image->pitch)!=0||SDL_SaveBMP(image,path)!=0)print_error("Cannot capture native gameplay");
+    SDL_FreeSurface(image);
+}
+#endif

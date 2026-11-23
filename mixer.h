@@ -15,6 +15,7 @@ struct mixer_t {
 	void (*play_music)(const uint8_t *data, uint32_t size);
 	void (*set_music_callback)(mix_music_cb callback, void *context, mix_volume_cb volumes);
 	void (*set_volumes)(int music, int effects);
+	void (*set_headroom)(int percent);
 };
 
 extern struct mixer_t g_mix;

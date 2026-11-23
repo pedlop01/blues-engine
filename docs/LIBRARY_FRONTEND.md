@@ -21,8 +21,8 @@ SDL2/C++17 de la biblioteca; utiliza el catálogo y los detectores de TH-04.
 
 **Jugar está disponible para Blues Brothers DOS y Amiga** desde TH-06, con
 importación inicial reversible y retorno a biblioteca; ver [runtime Blues](BLUES_RUNTIME.md).
-TH-07–09 incorporarán los demás motores, que mantienen Jugar deshabilitado con
-su motivo. Las fuentes ADF se registran sin extraerse ni arrancarse.
+Desde [TH-07](FAMILY_RUNTIME.md), también están disponibles Jukebox Adventure y
+Prehistorik 2 DOS. Fox y Prehistorik 1 mantienen Jugar deshabilitado hasta TH-08–09. Las fuentes ADF se registran sin extraerse ni arrancarse.
 
 ## Abrir y añadir los juegos
 
@@ -116,7 +116,8 @@ la comprobación por hashes que hace el adaptador Blues antes de arrancar.
 
 ## Compilar
 
-El core y sus pruebas siguen sin necesitar SDL. La GUI se habilita explícitamente:
+El core y sus pruebas siguen sin necesitar SDL. El runtime usa Python 3 para
+separar los símbolos privados de los módulos al compilar. La GUI se habilita explícitamente:
 
 ```sh
 # Desarrollo Linux: SDL2 >= 2.30, SDL2_ttf 2.x y libmodplug, con headers.

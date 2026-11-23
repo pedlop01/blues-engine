@@ -100,10 +100,11 @@ No original game fonts or artwork are used by the frontend. Native game HUDs
 retain their resource sets and authorship. See the [frontend guide](docs/LIBRARY_FRONTEND.md)
 for pinned dependencies and validation.
 
-The managed Blues runtime in `engines/blues-family/` calls the same inherited
-Blues code and the extension above; it is not a replacement implementation of
+The managed family runtime in `engines/blues-family/` calls the same inherited
+Blues, Jukebox Adventure and Prehistorik 2 code and the extension above; it is not a replacement implementation of
 the original game. Its process/profile bridge is documented in
-[BLUES_RUNTIME.md](docs/BLUES_RUNTIME.md). Original game resources remain external.
+[BLUES_RUNTIME.md](docs/BLUES_RUNTIME.md) and [FAMILY_RUNTIME.md](docs/FAMILY_RUNTIME.md).
+Original game resources remain external.
 
 ## License information
 

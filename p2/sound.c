@@ -37,6 +37,8 @@ static int _music_num;
 static uint16_t sound_offsets_tbl[MAX_SOUNDS];
 
 void sound_init() {
+	/* Two full-scale buses need headroom before summation. Leave Blues/JA unchanged. */
+	g_mix.set_headroom(48);
 	uint16_t offset = 0;
 	for (int i = 0; i < MAX_SOUNDS; ++i) {
 		sound_offsets_tbl[i] = offset;

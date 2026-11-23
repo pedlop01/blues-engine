@@ -20,6 +20,8 @@ static ModPlugFile *_mpf;
 static mix_music_cb _music_callback;
 static void *_music_context;
 static mix_volume_cb _volume_callback;
+static int _headroom = 65536;
+static void set_headroom(int percent) { _headroom = audio_volume(percent) * 65536 / 100; }
 static int _music_volume = 100, _effects_volume = 100;
 static struct audio_gain _music_gain = {65536,65536,0}, _effects_gain = {65536,65536,0};
 
@@ -40,6 +42,7 @@ static void mix(void *param, uint8_t *buf, int len) {
 		int sample = *(int16_t *)(buf + i);
 		/* A combined native callback owns its two buses before summation. */
 		if (!_volume_callback) sample = audio_gain_apply(sample,music_gain);
+		sample = audio_gain_apply(sample,_headroom);
 		if (_channel.data) {
 			int pos = _channel.pos >> 16;
 			if (pos >= _channel.size) {
@@ -48,7 +51,7 @@ static void mix(void *param, uint8_t *buf, int len) {
 				if (_channel.data) _channel.pos = pos = 0;
 			}
 			if (_channel.data) {
-				sample += audio_gain_apply(((int8_t)_channel.data[pos])*256,effects_gain);
+				sample += audio_gain_apply(audio_gain_apply(((int8_t)_channel.data[pos])*256,effects_gain),_headroom);
 				_channel.pos += _channel.step;
 			}
 		}
@@ -80,6 +83,7 @@ static void mixer_fini() {
 	_music_context = 0;
 	_volume_callback = 0;
 	memset(&_channel, 0, sizeof(_channel));
+	_headroom = 65536;
 }
 
 static void play_sound(const uint8_t *data, uint32_t size, int freq, mix_repeat_sound_cb repeat_cb) {
@@ -137,4 +141,5 @@ struct mixer_t g_mix = {
 	.play_music = play_music,
 	.set_music_callback = set_music_callback,
 	.set_volumes = set_volumes,
+	.set_headroom = set_headroom,
 };

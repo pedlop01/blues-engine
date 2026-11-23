@@ -2,6 +2,9 @@
 /* level main loop */
 
 #include "game.h"
+#ifdef TITUS_MANAGED
+#include "engines/blues-family/native.h"
+#endif
 #include "resource.h"
 #include "sys.h"
 #include "util.h"
@@ -3901,6 +3904,10 @@ void do_level() {
 	g_vars.monster.type0_hdir = 0;
 	random_reset();
 	while (!g_sys.input.quit) {
+#ifdef TITUS_MANAGED
+		titus_runtime_gameplay();
+		titus_runtime_actor(g_vars.objects_tbl[1].x_pos,g_vars.objects_tbl[1].y_pos);
+#endif
 		level_update_objects_hit_animation();
 		level_update_objects_axe();
 		level_update_objects_monsters();

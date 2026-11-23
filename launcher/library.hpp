@@ -1,5 +1,6 @@
 #pragma once
 #include "titus/catalog.hpp"
+#include <set>
 
 namespace titus {
 struct GameInfo { const char* id; const char* title; const char* initials; const char* description; unsigned color; };
@@ -11,6 +12,7 @@ struct Library {
     Json catalog, preferences;
     std::vector<std::string> games;
     std::string error, preference_error;
+    std::set<std::string> runtime_games;
     bool dirty=false, healthy=false,blues_runtime_installed=false;
     explicit Library(Paths paths, Detector detector=Detector());
     void reload();

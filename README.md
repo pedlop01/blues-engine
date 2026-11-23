@@ -36,11 +36,13 @@ read-only checks against user-supplied games and the Windows build.
 The new `titus-engine` frontend lists installed games and DOS/Amiga releases,
 remembers per-game selections and provides a folder/ADF browser, verification
 and installation management. Keyboard, mouse, controller and fullscreen are
-supported. **Blues Brothers DOS/Amiga now launch from the library**, with a clean return
-and initial reversible import of classic preferences and saves. Other engines
-remain scheduled for TH-07–09. See the [Blues runtime guide](docs/BLUES_RUNTIME.md). Build it with
-`-DTITUS_BUILD_LAUNCHER=ON` and SDL2/SDL2_ttf/libmodplug development files; see the
-[library guide](docs/LIBRARY_FRONTEND.md). The classic game executable still works.
+supported. **Blues Brothers DOS/Amiga, Jukebox Adventure DOS and Prehistorik 2 DOS
+now launch from the library**, with a clean return and per-game preferences.
+Blues also imports classic preferences and saves reversibly. Fox and Prehistorik 1
+remain scheduled for TH-08–09. See the [family runtime](docs/FAMILY_RUNTIME.md),
+[Blues runtime](docs/BLUES_RUNTIME.md) and [library](docs/LIBRARY_FRONTEND.md) guides.
+Build with `-DTITUS_BUILD_LAUNCHER=ON`, Python 3 and SDL2/SDL2_ttf/libmodplug
+development files. The classic game executable still works.
 
 ## What this extension adds
 

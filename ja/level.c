@@ -2,6 +2,9 @@
 /* level main loop */
 
 #include "game.h"
+#ifdef TITUS_MANAGED
+#include "engines/blues-family/native.h"
+#endif
 #include "resource.h"
 #include "sys.h"
 #include "util.h"
@@ -3009,6 +3012,10 @@ static bool change_level(bool first_level) {
 void do_level() {
 	change_level(true);
 	while (!g_sys.input.quit) {
+#ifdef TITUS_MANAGED
+		titus_runtime_gameplay();
+		titus_runtime_actor(g_vars.players_table[0].obj.x_pos,g_vars.players_table[0].obj.y_pos);
+#endif
 		g_vars.timestamp = g_sys.get_timestamp();
 		update_input();
 		level_update_palette();

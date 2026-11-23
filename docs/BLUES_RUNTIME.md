@@ -1,8 +1,9 @@
 # TH-06: Blues desde Titus Engine
 
 La biblioteca ya permite **Jugar** con Blues Brothers DOS y Amiga mediante un
-runtime nativo separado. Los demás juegos conservan la detección, pero sus
-botones de juego esperan a TH-07–09. El ejecutable clásico sigue disponible.
+runtime nativo separado. Desde [TH-07](FAMILY_RUNTIME.md), Jukebox Adventure y
+Prehistorik 2 DOS también se ejecutan desde la biblioteca. Fox y Prehistorik 1
+esperan a TH-08–09. El ejecutable clásico sigue disponible.
 
 ## Uso y comprobación manual
 

@@ -3,10 +3,12 @@
 #include <chrono>
 namespace titus {
 Json blues_features(bool dual);
+Json family_features(const std::string& game,bool dual);
+int family_slot_count(const Json& request);
 void validate_runtime_event(const Json& event,const Json& request);
 void validate_runtime_result(const Json& result,const Json& request);
 void validate_runtime_inspection(const Json& result,const Json& request);
-void validate_blues_request(const Json& request,const fs::path& request_file);
+void validate_family_request(const Json& request,const fs::path& request_file);
 struct LegacySources {fs::path preferences,saves;};
 struct SessionOptions {LegacySources legacy;int test_ms=0;bool test_gameplay=false;std::string test_fault;bool inspect_only=false;Json primary_source=nullptr;};
 class Session {

@@ -468,3 +468,13 @@ ventana al terminar. La migración inicial usa staging, inspección nativa, reci
 y snapshot; el bloqueo se hereda al hijo. Ver [uso y validación](BLUES_RUNTIME.md).
 Los ocho slots siguen en el menú nativo; `load_slot` desde biblioteca queda para
 TH-10 y se rechaza explícitamente mientras tanto.
+
+## Implementación TH-07
+
+El supervisor y el runtime `blues-family` despachan Blues, Jukebox y P2 por
+identidad verificada del catálogo. Los módulos JA/P2 se enlazan con símbolos
+privados separados en ELF/COFF; el paquete declara ediciones y capacidades por
+juego. Jukebox/P2 DOS tienen cero slots y preferencias JSON privadas v1, sin
+importar datos de Blues. Se mantienen procesos separados del frontend; esto no
+adelanta el piloto de integración en proceso de TH-11. Validación y controles en
+[FAMILY_RUNTIME.md](FAMILY_RUNTIME.md).

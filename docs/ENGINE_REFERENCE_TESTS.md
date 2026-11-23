@@ -239,3 +239,11 @@ determinismo del motor de referencia, no una comparación con un DOS emulado.
 - **Tarea 18:** empaquetado, avisos/fuentes/licencias y dependencias del producto.
   Los parches externos conservan GPL-3.0-or-later; no relicencian el código
   heredado. Los binarios/datos de referencia no forman un paquete distribuible.
+
+## Resolución en TH-07
+
+El hallazgo de saturación de P2 anterior describe la referencia previa. TH-07
+reserva margen por bus antes de sumar música y efectos; la misma ruta clásica
+de 140 pasos registra `peak=17952`, `clipped=0`. Las nuevas rutas gestionadas
+en Linux y Windows también verifican cero muestras saturadas, sin modificar la
+mezcla de Blues/Jukebox. Detalles y límites en [FAMILY_RUNTIME.md](FAMILY_RUNTIME.md).

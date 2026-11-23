@@ -37,6 +37,30 @@
             "audio_mode_selection",
             "live_edition_switch"
           ]
+        },
+        {
+          "game_id": "jukebox",
+          "editions": [
+            "dos"
+          ],
+          "reference_native_features": [
+            "return_to_library",
+            "native_pause",
+            "fullscreen",
+            "separate_volumes"
+          ]
+        },
+        {
+          "game_id": "prehistorik2",
+          "editions": [
+            "dos"
+          ],
+          "reference_native_features": [
+            "return_to_library",
+            "native_pause",
+            "fullscreen",
+            "separate_volumes"
+          ]
         }
       ]
     }

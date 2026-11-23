@@ -2,6 +2,9 @@
 /* game screens */
 
 #include "game.h"
+#ifdef TITUS_MANAGED
+#include "engines/blues-family/native.h"
+#endif
 #include "resource.h"
 #include "sys.h"
 
@@ -201,6 +204,9 @@ static int do_menu_screen() {
 	load_file("menu.eat");
 	video_copy_vga(0x7D00);
 	g_sys.fade_in_palette();
+#ifdef TITUS_MANAGED
+	titus_runtime_ready("menu");
+#endif
 	memset(g_vars.input_keystate, 0, sizeof(g_vars.input_keystate));
 	g_vars.level_time = 0;
 	while (!g_sys.input.quit) {
