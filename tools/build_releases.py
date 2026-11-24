@@ -43,10 +43,11 @@ def build(platform, args):
     if platform == 'windows':
         sdl = deps / 'SDL2-2.30.12/x86_64-w64-mingw32'
         ttf = deps / 'SDL2_ttf-2.22.0/x86_64-w64-mingw32'
-        required = [sdl / 'lib/cmake/SDL2/SDL2Config.cmake',
+        required = [sdl / 'lib/cmake/SDL2/sdl2-config.cmake',
                     ttf / 'include/SDL2/SDL_ttf.h', ttf / 'bin/SDL2_ttf.dll',
                     deps / 'libmodplug-windows/lib/libmodplug.a']
         if any(not p.is_file() for p in required):
+            shutil.rmtree(work)
             raise SystemExit(f'Missing cached Windows SDK/dependencies in {deps}')
         options += [
             '-DCMAKE_SYSTEM_NAME=Windows',

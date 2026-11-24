@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-24",
+  "layout": [
+    "build/linux",
+    "build/windows"
+  ],
+  "fresh_builds": true,
+  "unit_tests": {
+    "linux": 8,
+    "windows": 8
+  },
+  "startup_sessions": {
+    "linux": [
+      {
+        "notice": "De vuelta en tu biblioteca.",
+        "selected_edition": "amiga",
+        "session_ui_checks": 12,
+        "sessions": 6
+      },
+      {
+        "notice": "De vuelta en tu biblioteca.",
+        "selected_edition": "amiga",
+        "session_ui_checks": 2,
+        "sessions": 1
+      },
+      {
+        "notice": "De vuelta en tu biblioteca.",
+        "selected_edition": "amiga",
+        "session_ui_checks": 2,
+        "sessions": 1
+      }
+    ],
+    "windows": [
+      {
+        "notice": "De vuelta en tu biblioteca.",
+        "selected_edition": "amiga",
+        "session_ui_checks": 12,
+        "sessions": 6
+      },
+      {
+        "notice": "De vuelta en tu biblioteca.",
+        "selected_edition": "amiga",
+        "session_ui_checks": 2,
+        "sessions": 1
+      },
+      {
+        "notice": "De vuelta en tu biblioteca.",
+        "selected_edition": "amiga",
+        "session_ui_checks": 2,
+        "sessions": 1
+      }
+    ]
+  },
+  "previous_windows_saves": {
+    "family_save_ui_checks": 5,
+    "loaded_games": 2
+  },
+  "preserved_state_records": 520,
+  "original_files_unchanged": 462,
+  "compiler_work_remaining": 0,
+  "artifacts": {
+    "linux": {
+      "bytes": 13261869,
+      "engines": 5,
+      "title_images": 5,
+      "registry_revisions": [
+        "d5197cf6ba16166672e36760e160be2dccd70e85",
+        "6540e8f2867f99aff54ad1a710ae6379ecb9c590",
+        "a69e9204fc311c8810d696a6b799000d1bcd1642",
+        "d5197cf6ba16166672e36760e160be2dccd70e85",
+        "d5197cf6ba16166672e36760e160be2dccd70e85"
+      ],
+      "binaries": [
+        {
+          "path": "build/linux/bin/titus-session",
+          "bytes": 856160,
+          "sha256": "47254ff5edd95f38d03c06bd34a330e2b037d5659e59e8d19706db4988c49ab4"
+        },
+        {
+          "path": "build/linux/bin/titus-catalog",
+          "bytes": 462232,
+          "sha256": "9d589d7fe250f40c4bfc25a4004c579befa0e73978b17ec22b2b5d59d8301e61"
+        },
+        {
+          "path": "build/linux/bin/titus-engine",
+          "bytes": 1118584,
+          "sha256": "b41e3aaa5bb0991d9505eb65cbfa38e6a8903839b9f36ad81a1c8971ad2a27e4"
+        },
+        {
+          "path": "build/linux/bin/engines/pre1_amiga/titus-pre1-amiga",
+          "bytes": 1249536,
+          "sha256": "f115ad84510ce2a9008c7e2dec762b6f6f61fc569d920dd5a7aeee9e64f2f9ed"
+        },
+        {
+          "path": "build/linux/bin/engines/fox_amiga/titus-fox-amiga",
+          "bytes": 1183856,
+          "sha256": "fd190df154efc3dbee8cb0b9532ed69acb406679b4cf1a7b34715697d2aa846c"
+        },
+        {
+          "path": "build/linux/bin/engines/blues-family/blues-family-runtime",
+          "bytes": 1329496,
+          "sha256": "7c65251a5bc155f6fcd945e8d6a7cddc39fc1ae9e1fc9c6fda16c51c171cdc40"
+        },
+        {
+          "path": "build/linux/bin/engines/opentitus/opentitus-runtime",
+          "bytes": 1118776,
+          "sha256": "8f181d9043cb80290d5e4b9b572f5b8dfe4276b62956aa94e52b663d5c4fe3b5"
+        },
+        {
+          "path": "build/linux/bin/engines/olduvai/olduvai-runtime",
+          "bytes": 1380728,
+          "sha256": "784de3adfdc3672423a7fc3c2af92a8dc5a205d3ad29abbcd2cfa3bddf1477a4"
+        }
+      ]
+    },
+    "windows": {
+      "bytes": 35247389,
+      "engines": 5,
+      "title_images": 5,
+      "registry_revisions": [
+        "d5197cf6ba16166672e36760e160be2dccd70e85",
+        "6540e8f2867f99aff54ad1a710ae6379ecb9c590",
+        "a69e9204fc311c8810d696a6b799000d1bcd1642",
+        "d5197cf6ba16166672e36760e160be2dccd70e85",
+        "d5197cf6ba16166672e36760e160be2dccd70e85"
+      ],
+      "binaries": [
+        {
+          "path": "build/windows/bin/SDL2.dll",
+          "bytes": 1765376,
+          "sha256": "848f0eca529eb106347b3e55ec1b299e02460fac9a9351d33d7e66a9acfd38bf"
+        },
+        {
+          "path": "build/windows/bin/titus-catalog.exe",
+          "bytes": 1562624,
+          "sha256": "1f9c0e90a87038b009160506492c41202ca41f7fa2a16770fc0bb8667bad0f11"
+        },
+        {
+          "path": "build/windows/bin/SDL2_ttf.dll",
+          "bytes": 1803988,
+          "sha256": "8b1c465a8bd6d5f2c4dc5059fb34f9a06baef848313bfbf24fec4aa49e90e6e5"
+        },
+        {
+          "path": "build/windows/bin/titus-engine.exe",
+          "bytes": 2280960,
+          "sha256": "ffe2f163cf50e67c92184de71b4ad897a220559e191f517a46a1fb9e0429c4ef"
+        },
+        {
+          "path": "build/windows/bin/titus-session.exe",
+          "bytes": 1984512,
+          "sha256": "82f7ae864631253b53009ce2b5b7b9f966703b5cb8d8eb5dae25e9d4aea4baac"
+        },
+        {
+          "path": "build/windows/bin/engines/pre1_amiga/SDL2.dll",
+          "bytes": 1765376,
+          "sha256": "848f0eca529eb106347b3e55ec1b299e02460fac9a9351d33d7e66a9acfd38bf"
+        },
+        {
+          "path": "build/windows/bin/engines/pre1_amiga/titus-pre1-amiga.exe",
+          "bytes": 2404864,
+          "sha256": "1d84039d9a755ba263ead82d508450ef83a115d9ded7ac6ffa7a61d528a3ffa6"
+        },
+        {
+          "path": "build/windows/bin/engines/fox_amiga/SDL2.dll",
+          "bytes": 1765376,
+          "sha256": "848f0eca529eb106347b3e55ec1b299e02460fac9a9351d33d7e66a9acfd38bf"
+        },
+        {
+          "path": "build/windows/bin/engines/fox_amiga/titus-fox-amiga.exe",
+          "bytes": 2379264,
+          "sha256": "6139e7f2d22b32a1eb0d1d658dace9cf3f04b3a576419329de359352bef8654e"
+        },
+        {
+          "path": "build/windows/bin/engines/blues-family/SDL2.dll",
+          "bytes": 1765376,
+          "sha256": "848f0eca529eb106347b3e55ec1b299e02460fac9a9351d33d7e66a9acfd38bf"
+        },
+        {
+          "path": "build/windows/bin/engines/blues-family/blues-family-runtime.exe",
+          "bytes": 2785280,
+          "sha256": "7acde2c2f0202c47d589c8ba541921a217f79ebac5d67ca9b5dfb2399fd87efc"
+        },
+        {
+          "path": "build/windows/bin/engines/opentitus/SDL2.dll",
+          "bytes": 1765376,
+          "sha256": "848f0eca529eb106347b3e55ec1b299e02460fac9a9351d33d7e66a9acfd38bf"
+        },
+        {
+          "path": "build/windows/bin/engines/opentitus/opentitus-runtime.exe",
+          "bytes": 2299904,
+          "sha256": "341a6f7f3920229e809cca71de33512569d0294dd16969e48119d8bbd6908d26"
+        },
+        {
+          "path": "build/windows/bin/engines/olduvai/SDL2.dll",
+          "bytes": 1765376,
+          "sha256": "848f0eca529eb106347b3e55ec1b299e02460fac9a9351d33d7e66a9acfd38bf"
+        },
+        {
+          "path": "build/windows/bin/engines/olduvai/olduvai-runtime.exe",
+          "bytes": 2591232,
+          "sha256": "c59d70ec81b4967c2cdc392853619b6508840ff79f9518bf74015246a9749043"
+        }
+      ]
+    }
+  }
+}

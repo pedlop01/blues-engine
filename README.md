@@ -29,6 +29,11 @@ this transition.
 [Global library: build, controls and tests](docs/LIBRARY_FRONTEND.md) ·
 [Local workspace cleanup](docs/WORKSPACE_CLEANUP.md)
 
+Current local deliveries are `build/linux/bin/titus-engine` and
+`build/windows/bin/titus-engine.exe`. Rebuild both from scratch with
+`python3 tools/build_releases.py --replace`; SDK caches and compiler output stay
+outside `build/`. See [build layout and cleanup](docs/WORKSPACE_CLEANUP.md).
+
 The independent `titus-catalog` tool recognizes the eight audited DOS/Amiga
 resource sets, links known ADF sources and manages installation references without
 changing game files. It manages the catalog; the graphical frontend launches games. Build and test it with
