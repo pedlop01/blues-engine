@@ -42,7 +42,7 @@ Blues also imports classic preferences and saves reversibly. Fox DOS uses a sepa
 Fox Amiga uses our independent [native C++/SDL2 runtime](docs/FOX_AMIGA_RUNTIME.md),
 with smooth camera/dynamic framing, original/fixed HUD, assists, level selection,
 independent volumes, controller bindings, VHS rewind and eight thumbnail saves.
-TH-14 is implemented at 95%, awaiting user gameplay review before acceptance.
+TH-14 was accepted by the user and completed on 24 November 2026.
 Prehistorik 1 uses Olduvai with native private DIET preparation ([guide](docs/PREHISTORIK_RUNTIME.md)). See the [family runtime](docs/FAMILY_RUNTIME.md),
 [Blues runtime](docs/BLUES_RUNTIME.md), [Fox runtime](docs/FOX_RUNTIME.md) and [library](docs/LIBRARY_FRONTEND.md) guides.
 Build with `-DTITUS_BUILD_LAUNCHER=ON`, Python 3 and SDL2/SDL2_ttf/libmodplug
@@ -52,6 +52,8 @@ pinned SDL 1.2/OPL source setup in its guide. Prehistorik 1 needs
 Fox Amiga is enabled with the launcher by default, or explicitly with
 `TITUS_BUILD_FOX_AMIGA_RUNTIME=ON`; it needs SDL2 and user-supplied Amiga files,
 without OpenTitus, Unicorn or an Amiga emulator.
+Prehistorik 1 Amiga is [under development](docs/PREHISTORIK_AMIGA_RUNTIME.md):
+resource diagnostics are available, but the edition is not playable yet.
 The classic game executable still works.
 
 The library now offers [layered settings and a native save browser](docs/SETTINGS_AND_SAVES.md):

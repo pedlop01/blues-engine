@@ -1,10 +1,10 @@
 # TH-14: Titus the Fox Amiga
 
-Estado: **implementada, 95 %, pendiente de revisión del usuario**. La biblioteca
+Estado: **completada, 100 %, aceptada por el usuario el 24 de noviembre de 2026**. La biblioteca
 abre la edición Amiga mediante `fox-amiga-native`, un proceso C++/SDL2 propio.
 Incluye simulación, render, campaña y final, música y efectos, opciones comunes,
-rebobinado y ocho guardados con miniaturas. El 5 % restante corresponde a la
-aceptación jugable del usuario; las pruebas automáticas no sustituyen esa revisión.
+rebobinado y ocho guardados con miniaturas. El cierre incorpora la aceptación jugable del usuario; las pruebas automáticas
+no certifican por sí solas todas las rutas ni dispositivos físicos.
 
 ## Progreso
 
@@ -15,8 +15,8 @@ aceptación jugable del usuario; las pruebas automáticas no sustituyen esa revi
 | Simulación e interacciones | Personaje, objetos, agarre/lanzamiento de enemigos, 19 comportamientos, proyectiles, plataformas, daño y vidas | 10/10 |
 | Audio | 11 canciones PAT, cuatro canales Paula, cinco efectos, volúmenes independientes y pausa | 20/20 |
 | Adaptador y opciones | Protocolo gestionado, biblioteca, preferencias, mando, cámaras/HUD, zoom, ayudas, slots y rebobinado | 20/20 |
-| Validación | Linux, Windows, sanitizadores y regresión automática; revisión jugable pendiente | 15/20 |
-| **Total** | **No marcar 100 % antes de la revisión del usuario** | **95/100** |
+| Validación | Linux, Windows, sanitizadores, regresión automática y aceptación del usuario | 20/20 |
+| **Total** | **Cerrada tras la aceptación del usuario** | **100/100** |
 
 ## Abrir y jugar
 
@@ -141,7 +141,8 @@ Las imágenes, PCM, trazas y snapshots comerciales permanecen solo en `build/`.
 
 Para revisión: jugar con y sin ayudas, probar salas/objetos/enemigos/elevadores,
 comparar cámara y HUD, guardar/cargar, rebobinar, escuchar música/efectos y revisar
-el final. Solo después de la aceptación del usuario se cierra TH-14 al 100 %.
+el final. El usuario ha aceptado TH-14 y autorizado su cierre al 100 %; se
+conservan los límites de cobertura automática descritos arriba.
 La paridad PX de los otros motores sigue pendiente; TH-15 y Blues 17 permanecen
 abiertas, TH-16 está cancelada porque Prehistorik 2 no salió para Amiga.
 

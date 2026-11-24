@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "task": "TH-14",
-  "state": "implemented_pending_user_review",
-  "progress_percent": 95,
+  "state": "complete_user_accepted",
+  "progress_percent": 100,
   "playable_catalog": true,
   "engine_id": "fox-amiga-native",
   "save_compatibility_id": "fox.amiga.full.audited",
@@ -114,12 +114,6 @@
     "session_ready": true,
     "result": "done"
   },
-  "manual_review_pending": [
-    "full human playthrough and all routes",
-    "music and effects listening",
-    "physical controllers and target Windows hardware",
-    "user acceptance before 100 percent"
-  ],
   "regression": {
     "linux": {
       "blues-dos-amiga": "passed",
@@ -138,5 +132,11 @@
       "fox-amiga-library-play-button": "passed"
     }
   },
-  "previous_checkpoint": "th14-actors-validation.json"
+  "previous_checkpoint": "th14-actors-validation.json",
+  "user_accepted": "2026-11-24",
+  "manual_coverage_limits": [
+    "full human playthrough and all routes",
+    "music and effects listening",
+    "physical controllers and target Windows hardware"
+  ]
 }

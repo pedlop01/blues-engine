@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task": "TH-15",
+  "progress_percent": 5,
+  "playable": false,
+  "counts": {
+    "mat": 22,
+    "sprites": 997,
+    "pc1": 10,
+    "samples": 13
+  },
+  "original_files_in_edition": 71,
+  "original_files_all_games": 462,
+  "originals_unchanged": true,
+  "native_resource_unit_checks": 75,
+  "builds": [
+    "linux-arm64-release",
+    "windows-x86_64-release",
+    "linux-arm64-asan-ubsan"
+  ],
+  "all_native_reports_identical": true,
+  "python_readers_match": true,
+  "reference_scope": "Reader consistency only, no original simulation or final sprite palette assignment",
+  "visual_inspection": [
+    "TITRE1.PC1",
+    "L1SPR.MAT diagnostic grayscale atlas"
+  ],
+  "pending": [
+    "sprite palette assignment and original rendering comparison",
+    "DAT/DUR maps and collisions",
+    "simulation, interactions, campaign and ending",
+    "PAT sequencer and integrated audio",
+    "managed adapter and common options",
+    "playable Linux/Windows review"
+  ]
+}

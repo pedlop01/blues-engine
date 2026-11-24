@@ -5,6 +5,10 @@ Amiga nuevo ni cambia las capacidades del catálogo. Los originales se leen, nun
 se ejecutan ni se redistribuyen. La viabilidad es una evaluación por etapas, no
 una promesa de que el motor DOS pueda cargar directamente estos datos.
 
+Nota de seguimiento: este documento conserva el resultado histórico de TH-13.
+TH-14 ya está [completada](FOX_AMIGA_RUNTIME.md); TH-15 ha comenzado con
+[lectores y diagnóstico de Prehistorik Amiga](PREHISTORIK_AMIGA_RUNTIME.md).
+
 ## Resultado por juego
 
 | Juego | Evidencia local | Decisión y primer hito |
