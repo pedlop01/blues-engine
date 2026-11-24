@@ -20,6 +20,16 @@ std::string lower(std::string s) {
     c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
   return s;
 }
+void remember_positions(std::vector<olduvai::core::Entity> &entities) {
+  for (auto &e : entities) {
+    e.prev_x = e.x;
+    e.prev_y = e.y;
+    e.prev_current_y = e.current_y;
+    e.prev_throw_x = e.throw_x;
+    e.prev_throw_y = e.throw_y;
+    e.prev_draw_dy = e.draw_dy;
+  }
+}
 int word(const Bytes &b, unsigned p) {
   unsigned v = (unsigned(b.at(p)) << 8) | b.at(p + 1);
   return v < 32768 ? int(v) : int(v) - 65536;
@@ -299,9 +309,11 @@ void Game::start(Assets &a, unsigned level, int lives, long score,
   state.player.lives = lives;
   olduvai::core::global_rng().reseed(rng);
   auto spawn = [&](const ObjectScreens &screens, int base, bool cave) {
-    for (unsigned s = 0; s < screens.size(); ++s)
+    for (unsigned s = 0; s < screens.size(); ++s) {
       store[base + s] = olduvai::systems::spawn_screen_entities(
           records(screens[s]), a.monsters, cave ? int(s) : -1);
+      remember_positions(store[base + s]);
+    }
   };
   spawn(assets.surface.objects, 0, false);
   spawn(a.secrets, 2000, false);
@@ -359,6 +371,53 @@ void Game::connect(Assets &a) {
   }
   state.collision.neighbors(left, right);
 }
+namespace {
+void step_neighbours(Assets &a, Game &g, int frame, int phase) {
+  auto &s = g.state;
+  if (!s.continuous_world || s.cave_flag || s.secret_flag ||
+      s.current_screen >= 19 || s.time_stopped)
+    return;
+  auto &l = a.level(s.current_level);
+  int screen = s.current_screen, lo = screen, hi = screen;
+  // Fixed simulation horizon covers the maximum 3x framing plus a guard.
+  // It depends on the player, never on render frames, zoom or camera lag.
+  while (lo > 0 && screen - lo < 3 &&
+         olduvai::systems::seam_contiguous(s.current_level, lo - 1, lo))
+    --lo;
+  while (hi < 18 && hi - screen < 3 &&
+         olduvai::systems::seam_contiguous(s.current_level, hi, hi + 1))
+    ++hi;
+  for (int n = lo; n <= hi; ++n) {
+    if (n == screen)
+      continue;
+    auto found = g.store.find(n);
+    if (found == g.store.end())
+      continue;
+    olduvai::core::CollisionBitmap collision;
+    collision.restore(l.scenes[n].collision);
+    collision.neighbors(
+        olduvai::systems::continuous_walk_seam(s.current_level, n, n - 1)
+            ? &l.scenes[n - 1].collision
+            : nullptr,
+        olduvai::systems::continuous_walk_seam(s.current_level, n, n + 1)
+            ? &l.scenes[n + 1].collision
+            : nullptr);
+    olduvai::systems::EntityTick tick;
+    tick.player_x = s.player.x + (screen - n) * 320;
+    tick.player_y = s.player.y;
+    tick.frame = frame;
+    tick.collision = &collision;
+    tick.l3a_phase_counter = phase;
+    tick.axe_powered = s.halo_flight_flag != 0;
+    tick.player_invulnerable = s.player.hit_counter != 0;
+    tick.continuous_world = true;
+    // Fireballs and contacts belong to the player's current scene. Individual
+    // creature projectiles and animations remain in their entity records.
+    tick.fireball_active = true;
+    olduvai::systems::update_entities(found->second, tick);
+  }
+}
+} // namespace
 void Game::tick(Assets &a, const olduvai::systems::FrameInputs &input,
                 bool invulnerable, bool infinite_lives) {
   if (ending || state.game_over)
@@ -408,16 +467,15 @@ void Game::tick(Assets &a, const olduvai::systems::FrameInputs &input,
     state.player.prev_y = state.player.y;
     state.player.prev_dx = state.player.dx;
     state.player.prev_dy = state.player.dy;
-    for (auto &e : state.entities) {
-      e.prev_x = e.x;
-      e.prev_y = e.y;
-      e.prev_current_y = e.current_y;
-      e.prev_throw_x = e.throw_x;
-      e.prev_throw_y = e.throw_y;
-      e.prev_draw_dy = e.draw_dy;
-    }
+    remember_positions(state.entities);
+    for (auto &item : store)
+      if (item.first >= 0 && item.first < 19)
+        remember_positions(item.second);
     olduvai::systems::wrap_frame_counter(state, false);
+    const int entity_frame = state.frame_counter,
+              entity_phase = state.l3a_phase_counter;
     olduvai::systems::run_tick(state, input, false);
+    step_neighbours(a, *this, entity_frame, entity_phase);
     club_phase = state.player.club_flag;
     if (state.player.death_counter || state.player.cave_warp_freeze)
       state.player.club_flag = club_phase = 0;

@@ -393,7 +393,7 @@ Frame render(Assets &a, const Game &g, const View &view) {
       else {
         auto it = g.store.find(screen);
         if (it != g.store.end())
-          entities(c, l, palette(a, l, copy), it->second, offset, 1);
+          entities(c, l, palette(a, l, copy), it->second, offset, alpha);
       }
     }
     auto p = palette(a, l, st);

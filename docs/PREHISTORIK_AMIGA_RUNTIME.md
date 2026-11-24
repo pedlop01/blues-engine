@@ -140,11 +140,34 @@ reconstruye desde los recursos. Ver [evidencia de las correcciones](measurements
 
 ## Actualizar el paquete de revisión en Windows
 
-Extraer **todo** `Titus-Engine-TH15-r2-completo.zip` en una carpeta nueva y abrir
+Extraer **todo** el ZIP completo de la revisión entregada en una carpeta nueva y abrir
 `INICIAR-TITUS.cmd`. Copiar solo `titus-engine.exe` no actualiza los motores:
 el lanzador de los dos paquetes tiene el mismo hash, y las correcciones están
-en `bin/engines/pre1_amiga/titus-pre1-amiga.exe`. La r2 corregida debe emitir
+en `bin/engines/pre1_amiga/titus-pre1-amiga.exe`. Como referencia, la r2 corregida emite
 `build_revision: 1eee7c5edef08ca0de32264ac134c93fc3d0bb4a` en el evento `hello`;
 `10178b8` corresponde al motor anterior. Se comprueba también el ZIP extraído,
 con un perfil privado, antes de entregarlo. Los perfiles habituales no se
 incluyen ni se reemplazan con el paquete.
+
+## r3: actores de los tramos vecinos
+
+Los enemigos, plataformas y animaciones de los tramos contiguos se actualizan
+aunque el personaje siga en otro tramo. Se usa un horizonte fijo de hasta tres
+tramos por lado, con las mismas barreras de continuidad del render; cubre el
+encuadre máximo más un margen. El zoom y la frecuencia de dibujo no cambian
+qué simulación avanza ni el orden de llamadas al RNG. Se conserva la cadencia
+seleccionada (20 / 12,5 pasos/s) y se interpolan también los actores vecinos.
+
+La posición del jugador se transforma a las coordenadas de cada tramo para la
+IA. El modo continuo permite activar un enemigo a la derecha aunque esa
+coordenada local sea negativa; el modo de referencia conserva la condición
+original. Las cuevas, teletransportes y secuencias especiales no activan
+escenarios desconectados. Los contactos y el proyectil global permanecen
+ligados al tramo actual; los proyectiles contenidos en cada entidad avanzan
+con ella. No se cambia el formato de los guardados: sus listas de actores,
+posiciones anteriores y RNG ya conservan lo necesario para cargar o rebobinar.
+
+Comprobaciones específicas: activación y movimiento de un enemigo vecino,
+plataforma/interpolación/guardado, un único paso al cruzar, separación por
+teletransporte y separación de una cueva respecto al exterior. Evidencia:
+[th15-neighbour-validation.json](measurements/th15-neighbour-validation.json).

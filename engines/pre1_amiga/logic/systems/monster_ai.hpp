@@ -35,6 +35,7 @@ struct EntityTick {
     bool axe_powered = false;    // halo flight: a club hit knocks out at once
     bool fireball_active = false;
     bool player_invulnerable = false;
+    bool continuous_world = false;
 };
 
 UpdateEntitiesResult update_entities(std::vector<core::Entity>& entities,
@@ -52,7 +53,7 @@ void refresh_entity_sprites_on_screen_bind(
 // RESET's step: a hidden monster appears (SPAWN, its first emerge frame)
 // once the player is level with it, y within [e.y - 30, e.y + 15); one in
 // a cave wall stays hidden until then.  True when it appeared.
-bool appear_if_player_level(core::Entity& e, int px, int py);
+bool appear_if_player_level(core::Entity& e, int px, int py, bool continuous_world=false);
 
 // Individual handlers (exposed for scenario tests).
 void update_monster(core::Entity& e, const EntityTick& t);

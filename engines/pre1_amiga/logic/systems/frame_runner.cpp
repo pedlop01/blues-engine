@@ -65,6 +65,7 @@ void run_frame(SystemsState& state, const FrameInputs& inputs) {
     tick.axe_powered = state.halo_flight_flag != 0;
     tick.fireball_active = state.fireball_flag != 0;
     tick.player_invulnerable = state.player.hit_counter != 0;
+    tick.continuous_world = state.continuous_world;
     const auto res = update_entities(state.entities, tick);
     state.l3a_phase_counter = res.l3a_phase_counter;
     state.screen_clear_of_monsters = res.screen_clear_of_monsters;

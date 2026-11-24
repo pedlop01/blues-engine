@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "core/rng.hpp"
 #include "systems/cave_logic.hpp"
+#include "systems/monster_ai.hpp"
 #include "systems/screen_topology.hpp"
 #include "systems/secret.hpp"
 #include "systems/transitions.hpp"
@@ -15,6 +16,120 @@ int main(int argc, char **argv) {
     if (argc != 2 && argc != 3)
       throw std::runtime_error("Usage: pre1-game-probe DATAPATH");
     titus::pre1_amiga::Assets a(std::filesystem::u8path(argv[1]));
+    auto platform = []() {
+      olduvai::core::Entity e;
+      e.obj_type = olduvai::core::ObjType::Platform;
+      e.x = e.prev_x = 100;
+      e.y = e.prev_y = e.current_y = e.prev_current_y = 100;
+      e.y_top = 40;
+      e.y_bottom = 160;
+      e.speed = 2;
+      return e;
+    };
+    {
+      titus::pre1_amiga::Game g;
+      g.start(a);
+      g.state.entities.clear();
+      for (auto &item : g.store)
+        item.second.clear();
+      g.store[1] = {platform()};
+      g.tick(a, {}, true, true);
+      if (g.state.current_screen != 0 || g.store[1][0].current_y != 98 ||
+          g.store[1][0].prev_current_y != 100)
+        throw std::runtime_error("Neighbour platform stopped or ticked twice");
+      titus::pre1_amiga::View v;
+      v.width = 320;
+      v.height = 200;
+      v.x = 300;
+      v.alpha = 0;
+      auto before = titus::pre1_amiga::render(a, g, v);
+      v.alpha = 1;
+      auto after = titus::pre1_amiga::render(a, g, v);
+      if (before.pixels == after.pixels)
+        throw std::runtime_error("Neighbour interpolation stopped");
+      auto restored = titus::pre1_amiga::restore_game(
+          a, titus::pre1_amiga::save_game(g, "probe"), "probe");
+      for (int i = 0; i < 8; ++i) {
+        g.tick(a, {}, true, true);
+        restored.tick(a, {}, true, true);
+      }
+      if (titus::pre1_amiga::save_game(g, "probe") !=
+          titus::pre1_amiga::save_game(restored, "probe"))
+        throw std::runtime_error("Neighbour save/replay diverged");
+    }
+    {
+      titus::pre1_amiga::Game g;
+      g.start(a);
+      g.state.entities.clear();
+      for (auto &item : g.store)
+        item.second.clear();
+      g.store[1] = {platform()};
+      g.state.player.x = 319;
+      g.state.player.y = 60;
+      g.state.player.gravity_flag = 1;
+      olduvai::systems::FrameInputs in;
+      in.right = true;
+      g.tick(a, in, true, true);
+      if (g.state.current_screen != 1 || g.state.entities[0].current_y != 98)
+        throw std::runtime_error(
+            "Incoming actors skipped or doubled their seam tick");
+    }
+    {
+      titus::pre1_amiga::Game g;
+      g.start(a, 3);
+      g.state.current_screen = 9;
+      g.bind(a);
+      g.state.entities.clear();
+      for (auto &item : g.store)
+        item.second.clear();
+      g.store[8] = {platform()};
+      g.store[10] = {platform()};
+      g.tick(a, {}, true, true);
+      if (g.store[8][0].current_y != 98 || g.store[10][0].current_y != 100)
+        throw std::runtime_error("Neighbour simulation crossed a warp");
+    }
+    {
+      titus::pre1_amiga::Game g;
+      g.start(a);
+      g.store[1] = {platform()};
+      olduvai::systems::enter_cave(g.state, 0);
+      g.bind(a);
+      g.tick(a, {}, true, true);
+      if (g.store[1][0].current_y != 100)
+        throw std::runtime_error("A cave animated the disconnected surface");
+    }
+    {
+      titus::pre1_amiga::Game g;
+      g.start(a);
+      auto donor =
+          std::find_if(g.store[1].begin(), g.store[1].end(), [](const auto &e) {
+            return olduvai::systems::is_monster(e.obj_type);
+          });
+      if (donor == g.store[1].end())
+        throw std::runtime_error("Missing neighbour monster fixture");
+      auto monster = *donor;
+      monster.state = 0;
+      monster.visible = false;
+      monster.prev_x = monster.x;
+      monster.prev_y = monster.y;
+      g.state.entities.clear();
+      for (auto &item : g.store)
+        item.second.clear();
+      g.store[1] = {monster};
+      g.state.player.y = monster.y;
+      g.tick(a, {}, true, true);
+      if (!g.store[1][0].visible || g.store[1][0].state != 1)
+        throw std::runtime_error("Right-hand neighbour monster could not "
+                                 "activate with negative local player x");
+      bool moved = false;
+      for (int i = 0; i < 24; ++i) {
+        g.state.player.y = g.store[1][0].y;
+        g.tick(a, {}, true, true);
+        moved |= g.store[1][0].x != monster.x;
+      }
+      if (!moved)
+        throw std::runtime_error("Neighbour monster activated but never moved");
+    }
     unsigned seam_cases = 0;
     for (unsigned level : {1u, 3u, 5u, 7u})
       for (int screen = 0; screen < 18; ++screen) {
@@ -387,6 +502,7 @@ int main(int argc, char **argv) {
     }
     std::cout << titus::Json({{"levels", report},
                               {"seam_cases", seam_cases},
+                              {"neighbour_fixtures", 5},
                               {"render_hashes", render_hashes},
                               {"exit_fixtures", exits},
                               {"room_fixtures", checked_rooms},

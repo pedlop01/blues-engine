@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "task": "TH-15",
+  "revision": "r3",
+  "progress_percent": 95,
+  "state": "implemented_pending_user_review",
+  "change": "simulate and interpolate neighbouring entities in continuous Amiga worlds",
+  "simulation_horizon_each_side": 3,
+  "independent_of_zoom_and_render_rate": true,
+  "logic_rates_hz": [
+    20,
+    12.5
+  ],
+  "save_format_changed": false,
+  "neighbour_fixtures": [
+    "offscreen platform advances and interpolates; save/replay retains state",
+    "incoming actors tick once across a seam",
+    "warp stops neighbour simulation",
+    "cave does not animate disconnected surface",
+    "right-hand monster activates with negative local player coordinate and walks"
+  ],
+  "validation": {
+    "neighbour_fixtures_passed": 5,
+    "full_state_and_42_render_hashes_match": [
+      "linux-arm64",
+      "windows-x86_64",
+      "linux-asan-ubsan"
+    ],
+    "existing_seam_fixtures": 126,
+    "classic_actor_oracle_cases": 116,
+    "classic_actor_oracle_ticks": 13920,
+    "linux_ctest_passed": 8,
+    "all_original_files_unchanged": 462,
+    "managed_sessions": {
+      "linux": {
+        "schema_version": 1,
+        "platform": "linux",
+        "checks": [
+          "eight native slots, payload/preview hashes and library thumbnails",
+          "library load and return command",
+          {
+            "gameplay_audio_pause_rewind": {
+              "clipped": 0,
+              "frames": 1792,
+              "jump": 93,
+              "left": 128,
+              "level": 1,
+              "logic_hz": 20.0,
+              "nonzero": 389859,
+              "pause": true,
+              "peak": 5632,
+              "rewind_steps": 8,
+              "right": 142,
+              "samples": 407552,
+              "ticks": 79
+            }
+          },
+          "edition options, bindings and temporary override recovery",
+          "20 Hz default and persistent 12.5 Hz original menu option",
+          "future preferences, load failure, missing result and subsequent recovery",
+          "damaged and incompatible saves are preserved and isolated"
+        ],
+        "originals_unchanged": true,
+        "original_files": 71
+      },
+      "windows": {
+        "schema_version": 1,
+        "platform": "windows",
+        "checks": [
+          "eight native slots, payload/preview hashes and library thumbnails",
+          "library load and return command",
+          {
+            "gameplay_audio_pause_rewind": {
+              "clipped": 0,
+              "frames": 983,
+              "jump": 93,
+              "left": 134,
+              "level": 1,
+              "logic_hz": 20.0,
+              "nonzero": 477558,
+              "pause": true,
+              "peak": 7701,
+              "rewind_steps": 7,
+              "right": 136,
+              "samples": 497664,
+              "ticks": 81
+            }
+          },
+          "edition options, bindings and temporary override recovery",
+          "20 Hz default and persistent 12.5 Hz original menu option",
+          "future preferences, load failure, missing result and subsequent recovery",
+          "damaged and incompatible saves are preserved and isolated"
+        ],
+        "originals_unchanged": true,
+        "original_files": 71
+      }
+    }
+  },
+  "scope": "nearby entity simulation and render; player contacts/global fireball remain owned by current scene; disconnected rooms/warps stay isolated",
+  "private_evidence": {
+    "build/th15-r3-game-linux-final.json": "38aa665ff382a1021adc01c5710c327607201394e9c8163706e6afbb7cc5f0fa",
+    "build/th15-r3-game-windows/report.json": "38aa665ff382a1021adc01c5710c327607201394e9c8163706e6afbb7cc5f0fa",
+    "build/th15-r3-game-sanitize/report.json": "38aa665ff382a1021adc01c5710c327607201394e9c8163706e6afbb7cc5f0fa",
+    "build/th15-r3-actors-original/report.json": "b8a3696ef69a372c1323aa64af922a176782f46d91e6a765f67afcc761ecd996",
+    "build/th15-r3-sessions-linux/report.json": "fcd5e012ff78d0b936896f6801c72b7855f7e24f71f0dbde1b3919bf4677714d",
+    "build/th15-r3-sessions-windows/report.json": "382dedcf1c76c74b2218fee97ac5a8c4413c38ea08e98da7407d7b41dd682d85"
+  },
+  "review_package": "Titus-Engine-TH15-r3-completo.zip"
+}

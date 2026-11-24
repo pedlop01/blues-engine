@@ -63,6 +63,7 @@ struct MonsterCtx {
     bool fireball_active;
     bool player_invulnerable;
     int di;   // e.probe_di, hoisted once by the dispatcher
+    bool continuous_world;
     int si;   // e.probe_si
 };
 
@@ -100,7 +101,7 @@ void tick_ko(Entity& e, const MonsterCtx& c) {
 
 // ── RESET: activate when the player is near the monster's Y ──
 void tick_reset(Entity& e, const MonsterCtx& c) {
-    appear_if_player_level(e, c.px, c.py);
+    appear_if_player_level(e, c.px, c.py, c.continuous_world);
 }
 
 // ── SPAWN: 2-frame spawn animation ──
@@ -265,8 +266,8 @@ bool tick_fish_arc(Entity& e, bool mark_visible) {
 
 }  // namespace
 
-bool appear_if_player_level(Entity& e, int px, int py) {
-    if (px <= 2) return false;
+bool appear_if_player_level(Entity& e, int px, int py, bool continuous_world) {
+    if (px <= 2 && !continuous_world) return false;
     if (py + 30 <= e.y || py - 15 >= e.y) return false;
     e.state = static_cast<int>(MonsterState::Spawn);
     e.state_counter = 0;
@@ -282,7 +283,7 @@ void update_monster(Entity& e, const EntityTick& t) {
     // `return`, so this dispatch is the same control flow it replaced.
     const MonsterCtx c{t.player_x, t.player_y, t.frame, t.collision,
                        t.l3a_phase_counter, t.axe_powered, t.fireball_active,
-                       t.player_invulnerable,e.probe_di, e.probe_si};
+                       t.player_invulnerable,e.probe_di, t.continuous_world, e.probe_si};
 
     const int st = state_of(e);
     if (st >= static_cast<int>(MonsterState::Dead))          tick_dead(e);
