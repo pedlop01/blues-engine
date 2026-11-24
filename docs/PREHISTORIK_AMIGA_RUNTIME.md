@@ -1,7 +1,7 @@
 # TH-15: Prehistorik 1 Amiga
 
-Estado: **implementada y validada automáticamente; 95 %, pendiente de revisión
-jugando por el usuario**. No se marca al 100 % hasta esa revisión.
+Estado: **completada y aceptada por el usuario; 100 %**, el 24 de noviembre
+de 2026, tras revisar las correcciones r2–r4. Runtime aceptado: `ce51a15`.
 
 La biblioteca permite iniciar Prehistorik 1 Amiga con simulación y render C++
 nativos, campaña de siete etapas y final, música PAT y efectos. Incluye cámara
@@ -93,9 +93,11 @@ Los originales, volcados de investigación, imágenes y PCM quedan únicamente e
 
 Las pruebas de salidas posicionan al jugador o preparan el golpe final: **no
 sustituyen una campaña completada manualmente**. Las trazas de actores no
-certifican todas las combinaciones de contacto con el jugador. Quedan para la
-revisión del usuario la jugabilidad continuada, escucha, mando físico y acabado
-visual; el 95 % refleja esa revisión pendiente.
+certifican todas las combinaciones de contacto con el jugador. El usuario
+ha aceptado el resultado y autorizado el cierre; esa aceptación no añade
+recorridos completos ni pruebas de dispositivos a la evidencia automática.
+Los informes parciales conservan el porcentaje histórico de su momento;
+el resumen final registra el cierre al 100 %.
 
 Existe una corrección de audio deliberada: arpegios fuera de las 36 entradas de
 la tabla original podían leer memoria ajena a la tabla. Se extiende el período

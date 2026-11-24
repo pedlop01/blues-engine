@@ -56,7 +56,8 @@ Prehistorik 1 Amiga has a [native C++/SDL2 runtime](docs/PREHISTORIK_AMIGA_RUNTI
 with an isolated GPL Olduvai simulation adaptation, Amiga data readers and PAT audio.
 Its seven-stage campaign/finale, smooth camera, dynamic framing, original/fixed HUD,
 menu, assists, eight thumbnail saves and VHS rewind are implemented and automatically
-validated on Linux/Windows. TH-15 remains at 95% pending the user's play review.
+validated on Linux/Windows. TH-15 was accepted by the user and completed on
+24 November 2026, after the r2–r4 scrolling, neighbouring actor and intro fixes.
 It is enabled with the launcher, or `TITUS_BUILD_PRE1_AMIGA_RUNTIME=ON`, without
 a DOS source export, Python, Unicorn or an Amiga emulator.
 The classic game executable still works.

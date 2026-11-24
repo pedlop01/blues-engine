@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "task": "TH-15",
-  "state": "implemented_pending_user_play_review",
-  "progress_percent": 95,
+  "state": "complete_user_accepted",
+  "progress_percent": 100,
   "date": "2026-11-24",
   "engine_id": "pre1-amiga-native",
   "save_compatibility_id": "prehistorik.amiga.full.audited",
@@ -241,13 +241,6 @@
       "sha256": "b1224fd178910937647d9c3d22b21c72a80685b1725cdc961578be9f7c40e2ff"
     }
   },
-  "pending_user_review": [
-    "continuous campaign play",
-    "listening",
-    "physical controller",
-    "camera and framing feel",
-    "visual polish"
-  ],
   "distribution": "No commercial resources, extracted tables, private original code snapshots or PCM in Git/packages; user supplies original files.",
   "runtime_source_revision": "10178b829d748df2c95cd06b645b6690fc536674",
   "review_packages": {
@@ -262,5 +255,24 @@
     },
     "source_package_revision": "10178b829d748df2c95cd06b645b6690fc536674"
   },
-  "follow_up_review_fixes": "th15-scroll-review-fixes.json"
+  "follow_up_review_fixes": "th15-scroll-review-fixes.json",
+  "initial_review_checklist": [
+    "continuous campaign play",
+    "listening",
+    "physical controller",
+    "camera and framing feel",
+    "visual polish"
+  ],
+  "user_acceptance": {
+    "date": "2026-11-24",
+    "message": "está perfecto! Gracias! Podemos cerrar TH-15",
+    "accepted_runtime_revision": "ce51a15285de1364e61c5e31389853d824e5375f",
+    "review_package": "r4",
+    "scope": "user acceptance of the delivered implementation and review fixes; no additional automated or exhaustive manual test claims"
+  },
+  "follow_up_validations": [
+    "th15-scroll-review-fixes.json",
+    "th15-neighbour-validation.json",
+    "th15-intro-validation.json"
+  ]
 }

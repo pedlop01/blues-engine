@@ -16,7 +16,7 @@ expansión validada. El detalle de TH-00–TH-16 y la fase de paridad PX-01–PX
 - Tareas completadas: **16 de 18**.
 - Completadas: **01–16**.
 - Blues: **17 en curso** con las pruebas del usuario; **18 pospuesta** hasta la expansión.
-- Titus Engine: **TH-00–TH-13 completadas (100 %)**; TH-12 cerrada por el usuario y TH-13 documentada en [viabilidad Amiga](docs/AMIGA_FEASIBILITY.md). **TH-14 completada y aceptada (100 %)**. **TH-15 implementada (95 %)**: Prehistorik 1 Amiga nativo, campaña/final, audio y opciones comunes; pendiente revisión del usuario. Ver [runtime Amiga](docs/PREHISTORIK_AMIGA_RUNTIME.md).
+- Titus Engine: **TH-00–TH-13 completadas (100 %)**; TH-12 cerrada por el usuario y TH-13 documentada en [viabilidad Amiga](docs/AMIGA_FEASIBILITY.md). **TH-14 completada y aceptada (100 %)**. **TH-15 completada y aceptada (100 %)** el 24-11-2026: Prehistorik 1 Amiga nativo, campaña/final, audio y opciones comunes, con las correcciones de revisión r2–r4. Ver [runtime Amiga](docs/PREHISTORIK_AMIGA_RUNTIME.md).
 - Paridad Fox/Prehistorik: **PX-01–PX-08 planificadas (0 %)**, con scroll, cámara y encuadre primero.
 - Corrección de escaleras validada por el usuario.
 - El punto recuperable previo a la expansión es `dd07383`, etiqueta `blues-baseline-2026-11-23`.
@@ -213,3 +213,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-24 | TH-15 | Primera revisión: cruces continuos sin recolocación, colisiones de tramos vecinos y recorte de tiles/fondos antes de actores. Ritmo normal 20 pasos/s aprobado por el usuario y opción Amiga 12,5 persistente. 126 cruces, 33 encuadres junto a cuevas y validación Linux/Windows/ASan, con guardados anteriores compatibles. | 95 %: paquete r2 listo para nueva revisión; cierre pendiente. |
 
 | 2026-11-24 | TH-15 | r3: enemigos y plataformas de tramos vecinos avanzan con interpolación; activación de IA con posición global transformada, sin depender del zoom. Pruebas de guardado/rebobinado, cruce sin doble paso y aislamiento de cuevas/teletransportes. | 95 %: revisión jugando pendiente; entregar ZIP completo. |
+
+| 2026-11-24 | TH-15 | El usuario acepta el resultado tras comprobar las correcciones de scroll, actores vecinos e introducción: «está perfecto! Gracias! Podemos cerrar TH-15». | 100 %: tarea cerrada; runtime aceptado r4 (`ce51a15`). |
