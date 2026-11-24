@@ -3,6 +3,7 @@
 #include "titus/session.hpp"
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <SDL_syswm.h>
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -62,7 +63,7 @@ class App {
     void compare_legacy(){legacy_comparison.clear();try{auto sources=legacy_sources();auto id=identity();auto profile=paths.profile_directory(id["profile_id"],id["game_id"],id["save_compatibility_id"]);for(int n=0;n<=8;++n){char name[32];snprintf(name,sizeof name,"slot%02d.bbs",n);auto from=n?sources.saves/name:sources.preferences;auto to=n?profile/"saves"/name:profile/"native/blues-family/preferences.ini";std::string label=n?"Slot "+std::to_string(n):"Opciones";legacy_comparison.push_back(label+": "+(!path_exists(from)?"sin archivo legado":!path_exists(to)?"nuevo":file_sha256(from)==file_sha256(to)?"idéntico":"diferente"));}set_modal("legacy");}catch(const std::exception& e){notice=e.what();}}
     Json identity()const{auto r=*library.selected();r["profile_id"]=library.catalog["profiles"][0]["id"];return r;}
     void clear_previews(){for(auto& x:save_previews)SDL_DestroyTexture(x.second);save_previews.clear();}
-    std::string value_label(const Setting& spec,const Json& v){if(v.is_boolean())return v.get<bool>()?"Sí":"No";if(spec.group=="input"){const std::map<int,std::string> names={{0,"A"},{1,"B"},{2,"X"},{3,"Y"},{7,"L3"},{8,"R3"},{10,"RB"}};return names.at(v.get<int>());}if(v.is_number_integer()){int n=v.get<int>();return std::to_string(spec.key=="start_level"&&spec.group=="blues"?n+1:n)+(spec.group=="audio"?" %":"");}auto str=v.get<std::string>();if(str=="classic")return "Original";if(str=="smooth")return "Suavizada";if(str=="fixed")return "Fijo";if(str=="auto")return "Automático";return str=="dos"?"DOS":"Amiga";}
+    std::string value_label(const Setting& spec,const Json& v){if(v.is_boolean())return v.get<bool>()?"Sí":"No";if(spec.group=="input"){const std::map<int,std::string> names={{0,"A"},{1,"B"},{2,"X"},{3,"Y"},{7,"L3"},{8,"R3"},{10,"RB"}};return names.at(v.get<int>());}if(v.is_number_integer()){int n=v.get<int>();if(spec.key=="view_step")return n==0?"Original · 1×":"Más área · "+std::to_string(n)+" / 8";return std::to_string(spec.key=="start_level"&&spec.group=="blues"?n+1:n)+(spec.group=="audio"?" %":"");}auto str=v.get<std::string>();if(str=="classic")return "Original";if(str=="smooth")return "Suavizada";if(str=="fixed")return "Fijo";if(str=="auto")return "Automático";return str=="dos"?"DOS":"Amiga";}
     void open_settings(){try{settings_doc=SettingsStore(paths).load();settings_scope="game";settings_page=0;settings_error.clear();settings_draft=SettingsStore(paths).scope(settings_doc,identity(),settings_scope);set_modal("settings");}catch(const std::exception& e){notice=friendly_error(e);}}
     void settings_tab(const std::string& scope){settings_scope=scope;settings_page=0;settings_error.clear();settings_draft=scope=="session"?session_settings.count(library.selected()->at("id").get<std::string>())?session_settings.at(library.selected()->at("id").get<std::string>()):Json::object():SettingsStore(paths).scope(settings_doc,identity(),scope);}
     void cycle_setting(const Setting& spec){auto& group=settings_draft[spec.group];if(!group.contains(spec.key))group[spec.key]=spec.values[0];else{auto it=std::find(spec.values.begin(),spec.values.end(),group[spec.key]);if(it==spec.values.end()||++it==spec.values.end())group.erase(spec.key);else group[spec.key]=*it;}if(group.empty())settings_draft.erase(spec.group);settings_error.clear();}
@@ -153,11 +154,27 @@ class App {
         notice=success?session->message():session->error();
         if(browsing_saves){browsing_saves=false;clear_previews();save_preparation_required=session->inspection().value("status",std::string())=="preparation_required";save_index=session->inspection().value("save_index",Json(nullptr));save_details=Json::object();auto details=session->directory()/"save-details.json";if(success&&path_exists(details))try{save_details=parse_json(read_document(details));}catch(const std::exception& e){notice=e.what();}session.reset();if(success){set_modal("slots");focus="cancel";}else modal.clear();return;}
         session.reset();modal.clear();
-        if(session_hidden)SDL_ShowWindow(window);SDL_RaiseWindow(window);SDL_SetWindowInputFocus(window);SDL_ShowCursor(SDL_ENABLE);session_hidden=false;
+        restore_library_window();SDL_ShowCursor(SDL_ENABLE);session_hidden=false;
         focused=true;int count=0;auto keys=SDL_GetKeyboardState(&count);for(int i=0;i<count&&i<SDL_NUM_SCANCODES;++i)blocked[i]=keys[i]!=0;
         for(int i=0;i<SDL_NumJoysticks();++i)open_controller(i);reset_controller_input();focus=library.selected()?"game:"+std::string(library.info().id):"add";
         if(test_play){if(!success)throw Error("E_UI_SESSION_TEST",notice);++play_test_stage;}
         if(pending_quit)running=false;
+    }
+    void restore_library_window(){
+        SDL_ShowWindow(window);
+        if(SDL_GetWindowFlags(window)&SDL_WINDOW_MINIMIZED)SDL_RestoreWindow(window);
+        SDL_RaiseWindow(window);
+        SDL_SetWindowInputFocus(window);
+#ifdef _WIN32
+        SDL_SysWMinfo info{};SDL_VERSION(&info.version);
+        if(SDL_GetWindowWMInfo(window,&info)){
+            auto hwnd=info.info.win.window;
+            // Respect Windows foreground restrictions; notify if another app owns focus.
+            if(!SetForegroundWindow(hwnd)){
+                FLASHWINFO flash{sizeof(flash),hwnd,FLASHW_TRAY,3,0};FlashWindowEx(&flash);
+            }
+        }
+#endif
     }
     void open_controller(int device){if(session_hidden||controller||!SDL_IsGameController(device))return;controller=SDL_GameControllerOpen(device);reset_controller_input();}
     void toggle_fullscreen(){bool target=(SDL_GetWindowFlags(window)&SDL_WINDOW_FULLSCREEN_DESKTOP)==0;
@@ -226,6 +243,7 @@ class App {
             }
             if(dx>0)browser_enter();if(dx<0&&!browse_dir.empty())read_browser(browse_dir.parent_path());return;
         }
+        if(modal.empty()&&gallery&&focus.rfind("game:",0)==0&&dx){library.select_game(dx);focus="game:"+std::string(library.info().id);return;}
         if(modal.empty()&&focus.rfind("game:",0)==0){
             if(dy){library.select_game(dy);focus="game:"+std::string(library.info().id);}
             if(dx>0)focus="edition";return;
@@ -268,7 +286,8 @@ class App {
         if(e.type==SDL_DROPFILE){fs::path p=fs::u8path(e.drop.file);SDL_free(e.drop.file);if(focused&&!job.valid()){browse(false);read_browser(p);}return;}
         if(!focused)return;
         if(e.type==SDL_TEXTINPUT&&modal=="browser"&&path_edit&&(path_select_all?0:path_text.size())+std::char_traits<char>::length(e.text.text)<=32768){if(path_select_all)path_text.clear();path_select_all=false;path_text+=e.text.text;}
-        if(e.type==SDL_MOUSEBUTTONDOWN&&e.button.button==SDL_BUTTON_LEFT){float x,y;SDL_RenderWindowToLogical(renderer,e.button.x,e.button.y,&x,&y);
+        if(e.type==SDL_MOUSEBUTTONDOWN&&e.button.button==SDL_BUTTON_LEFT){// SDL_RenderSetLogicalSize already maps mouse events, including letterboxing and DPI.
+            const int x=e.button.x,y=e.button.y;
             for(const auto& w:widgets)if(x>=w.rect.x&&x<w.rect.x+w.rect.w&&y>=w.rect.y&&y<w.rect.y+w.rect.h){focus=w.id;auto id=w.id;auto fn=w.action;fn();if(e.button.clicks>=2&&id.rfind("entry:",0)==0)browser_enter();break;}}
         if(e.type==SDL_MOUSEWHEEL&&modal=="browser"&&focus=="files")navigate(0,-e.wheel.y);
         if(!controller)return;
@@ -289,7 +308,65 @@ class App {
             if(neutral[axis]&&std::abs(int(e.caxis.value))>22000&&SDL_GetTicks()-last_axis>120){neutral[axis]=false;last_axis=SDL_GetTicks();int d=e.caxis.value>0?1:-1;navigate(axis==SDL_CONTROLLER_AXIS_LEFTX?d:0,axis==SDL_CONTROLLER_AXIS_LEFTY?d:0);}
         }
     }
+    std::map<std::string,SDL_Texture*> covers;
+    bool gallery=true;
+    void cover(const GameInfo& g,SDL_Rect rect){
+        std::string id=g.id;
+        if(!covers.count(id)){
+            auto file=package_root/"assets/covers"/fs::u8path(id+".bmp");
+            auto surface=SDL_LoadBMP(file.u8string().c_str());
+            covers[id]=surface?SDL_CreateTextureFromSurface(renderer,surface):nullptr;
+            if(surface)SDL_FreeSurface(surface);
+        }
+        panel(rect,color(0x213146),8);
+        if(auto texture=covers[id]){
+            int w,h;SDL_QueryTexture(texture,nullptr,nullptr,&w,&h);
+            double scale=std::min(double(rect.w)/w,double(rect.h)/h);
+            SDL_Rect dest{rect.x+(rect.w-int(w*scale))/2,rect.y+(rect.h-int(h*scale))/2,int(w*scale),int(h*scale)};
+            SDL_RenderCopy(renderer,texture,nullptr,&dest);
+        }else{
+            fill({rect.x+10,rect.y+10,rect.w-20,4},color(g.color));
+            text(g.initials,rect.x+16,rect.y+rect.h/3,std::min(48,rect.w/3),color(g.color),rect.w-24);
+            if(rect.w>=100)text(g.title,rect.x+12,rect.y+rect.h-44,14,ink,rect.w-24);
+        }
+    }
     void main_page(){
+        if(!gallery){manage_page();button("view","Carátulas",{30,610,270,32},[this](){gallery=true;});return;}
+        fill({0,0,W,H},color(0x0d1521));fill({0,0,W,86},color(0x162333));
+        text("TITUS",34,22,30);text("ENGINE",137,31,18,aqua);
+        button("add","+ Añadir juegos",{352,24,180,42},[this](){browse(false);},library.healthy,true);
+        button("view","Gestionar",{544,24,136,42},[this](){gallery=false;});
+        button("settings","Opciones",{692,24,116,42},[this](){open_settings();},library.selected()!=nullptr);
+        button("screen","Pantalla",{820,24,118,42},[this](){toggle_fullscreen();});
+        button("exit","Salir",{950,24,116,42},[this](){set_modal("quit");});
+        if(!library.healthy||!library.selected()){manage_page();return;}
+        const auto& g=library.info();auto i=library.selected();
+        cover(g,{52,108,238,326});
+        text("TU COLECCIÓN  /  "+std::to_string(library.games.size())+" JUEGOS",326,112,13,aqua);
+        text(g.title,324,145,36,ink,724);text(g.description,326,200,17,muted,720);
+        bool dos=false,amiga=false;auto choices=library.installations();
+        for(const auto& c:choices){dos|=c["edition_id"]=="dos";amiga|=c["edition_id"]=="amiga";}
+        text("VERSIÓN",326,248,12,muted);
+        button("dos","DOS",{326,273,112,42},[this](){library.select_edition("dos");},dos,i->at("edition_id")=="dos");
+        button("amiga","Amiga",{450,273,112,42},[this](){library.select_edition("amiga");},amiga,i->at("edition_id")=="amiga");
+        button("edition","Instalación  ›",{578,273,210,42},[this](){library.select_installation(1);},choices.size()>1);
+        text(library.data_status(),326,332,16,library.can_play()?aqua:gold,710);
+        button("play","▶ Jugar",{326,376,208,48},[this](){begin_play();},library.can_play(),true);
+        button("saves","Partidas",{548,376,160,48},[this](){open_saves();},library.can_play());
+        text("ELIGE TU PRÓXIMA AVENTURA",52,458,12,muted);
+        int n=0;
+        for(const auto& id:library.games){
+            const auto& item=*std::find_if(game_info.begin(),game_info.end(),[&](const GameInfo& v){return id==v.id;});
+            SDL_Rect card{52+n*202,486,184,176};bool selected=id==g.id;
+            panel(card,color(selected?0x30475b:0x182636),10);
+            cover(item,{card.x+8,card.y+8,72,116});
+            text(item.title,card.x+90,card.y+18,14,ink,84,true);
+            text(selected?"SELECCIONADO":"",card.x+10,card.y+145,10,aqua,164);
+            if(selected||focus=="game:"+id)outline({card.x-2,card.y-2,card.w+4,card.h+4},selected?aqua:muted);
+            widget("game:"+id,card,[this,id](){library.choose_game(id);});++n;
+        }
+    }
+    void manage_page(){
         fill({0,0,W,H},color(0x101823));fill({0,0,326,H},color(0x151f2c));fill({0,0,6,H},aqua);
         text("TITUS",30,24,30,ink);text("ENGINE",133,32,18,aqua);text("TU COLECCIÓN, EN UN SOLO LUGAR",30,67,12,muted);
         text("BIBLIOTECA",30,119,13,muted);text(std::to_string(library.games.size())+" juegos",237,118,13,muted);
@@ -340,12 +417,12 @@ class App {
         if(modal=="settings"){
             panel({200,80,700,570},color(0x213146));text("Opciones · "+std::string(library.info().title),228,101,24,ink,640);
             const char* labels[]={"Globales","Juego","Edición","Esta sesión"};const char* scopes[]={"global","game","edition","session"};for(int n=0;n<4;++n){std::string scope=scopes[n];button("scope:"+scope,labels[n],{228+n*160,147,150,36},[this,scope](){settings_tab(scope);},true,settings_scope==scope);}
-            text("Heredar usa el valor de la capa anterior. Cambia de pestaña tras guardar.",228,198,13,muted,640);
+            text("Prioridad: sesión > edición > juego > globales. Heredar conserva la capa anterior.",228,198,13,muted,640);
             auto specs=game_settings(settings_scope=="global"?"blues":library.info().id);if(settings_scope!="global" && library.selected() && library.selected()->at("game_id")=="fox" && library.selected()->at("edition_id")=="dos")specs=game_settings("prehistorik");Json effective;
             try{effective=SettingsStore(paths).preview(settings_doc,identity(),settings_scope,settings_draft);}catch(const std::exception& e){settings_error=e.what();}
             const int per_page=5;for(int n=settings_page*per_page;n<std::min(int(specs.size()),(settings_page+1)*per_page);++n){auto spec=specs[n];int y=232+(n%per_page)*52;text(spec.label,228,y+9,17,ink,270);bool explicit_value=settings_draft.contains(spec.group)&&settings_draft[spec.group].contains(spec.key);auto val=explicit_value?settings_draft[spec.group][spec.key]:effective.contains(spec.group)&&effective[spec.group].contains(spec.key)?effective[spec.group][spec.key]:spec.initial;button("option:"+spec.key,(explicit_value?"":"Heredar · ")+value_label(spec,val),{530,y,340,40},[this,spec](){cycle_setting(spec);});}
             button("previous","‹",{228,500,52,36},[this](){--settings_page;},settings_page>0);text(std::to_string(settings_page+1)+" / "+std::to_string((specs.size()+4)/5),298,508,16,muted);button("next","›",{378,500,52,36},[this](){++settings_page;},(settings_page+1)*5<int(specs.size()));
-            text(settings_error.empty()?"Mando: nombres de botones SDL. Fox DOS y Prehistorik mantienen sus controles nativos.":settings_error,228,546,14,settings_error.empty()?muted:gold,640,true);
+            text(settings_error.empty()?"Cámara: Original sigue el juego clásico; Suavizada evita saltos. HUD: Original escala con el encuadre; Fijo mantiene su tamaño.":settings_error,228,546,14,settings_error.empty()?muted:gold,640,true);
             button("save-settings","Guardar",{228,592,300,38},[this](){save_settings();},true,true);button("cancel","Cancelar",{548,592,322,38},[this](){close_modal();});return;
         }
         if(modal=="legacy"){
@@ -432,6 +509,13 @@ class App {
         auto result=SDL_RenderReadPixels(renderer,nullptr,SDL_PIXELFORMAT_ARGB8888,surface->pixels,surface->pitch);
         if(result==0)result=SDL_SaveBMP(surface,screenshot.u8string().c_str());SDL_FreeSurface(surface);if(result!=0)throw Error("E_CAPTURE",SDL_GetError());}
     void capture_state(const char* label){if(screenshot.empty())return;auto original=screenshot;screenshot=original.parent_path()/fs::u8path(original.stem().u8string()+"."+label+".bmp");capture();screenshot=original;}
+    void push_click(const std::string& id){
+        auto it=std::find_if(widgets.begin(),widgets.end(),[&](const Widget& w){return w.id==id;});
+        check(it!=widgets.end(),"mouse target available");
+        SDL_Event e{};e.type=SDL_MOUSEBUTTONDOWN;e.button.windowID=SDL_GetWindowID(window);e.button.button=SDL_BUTTON_LEFT;e.button.clicks=1;
+        SDL_RenderLogicalToWindow(renderer,it->rect.x+it->rect.w/2.f,it->rect.y+it->rect.h/2.f,&e.button.x,&e.button.y);
+        SDL_PushEvent(&e);
+    }
     void push_key(SDL_Keycode sym,SDL_Keymod mod=KMOD_NONE){SDL_Event e{};e.type=SDL_KEYDOWN;e.key.keysym.sym=sym;e.key.keysym.mod=mod;e.key.keysym.scancode=SDL_GetScancodeFromKey(sym);SDL_PushEvent(&e);}
     void play_test_tick(){
         if(!test_play)return;
@@ -474,7 +558,8 @@ class App {
         if(smoke_step==0){focused=true;blocked.fill(false);smoke_initial=library.preferences["selected_game"];check(library.healthy&&(!library.selected()||focus=="game:"+std::string(library.info().id)),"catalog and initial selection focused");if(library.selected())focus="game:"+std::string(library.info().id);push_key(SDLK_DOWN);}
         if(smoke_step==2){if(library.games.size()>1)check(library.preferences["selected_game"]!=smoke_initial,"keyboard changes game");push_key(SDLK_RIGHT);}
         if(smoke_step==4){check(focus=="edition"||!library.selected(),"keyboard reaches editions");push_key(SDLK_F11);}
-        if(smoke_step==6){check((SDL_GetWindowFlags(window)&SDL_WINDOW_FULLSCREEN_DESKTOP)!=0,"fullscreen entered");capture_state("fullscreen");push_key(SDLK_F11);}
+        if(smoke_step==6){check((SDL_GetWindowFlags(window)&SDL_WINDOW_FULLSCREEN_DESKTOP)!=0,"fullscreen entered");capture_state("fullscreen");if(library.selected())push_click("settings");else push_click("add");}
+        if(smoke_step==7){check(modal==(library.selected()?"settings":"browser"),"fullscreen physical click opens target");close_modal();push_key(SDLK_F11);}
         if(smoke_step==8){check((SDL_GetWindowFlags(window)&SDL_WINDOW_FULLSCREEN_DESKTOP)==0,"window restored");push_key(SDLK_a);}
         if(smoke_step==10){check(modal=="browser","browser opened");capture_state("browser");push_key(SDLK_l,KMOD_CTRL);SDL_Event input{};input.type=SDL_TEXTINPUT;SDL_strlcpy(input.text.text,"carpeta ñ",sizeof input.text.text);SDL_PushEvent(&input);}
         if(smoke_step==11){check(focus=="path"&&path_text=="carpeta ñ","UTF-8 path replaces Ctrl-L selection");push_key(SDLK_BACKSPACE);push_key(SDLK_ESCAPE);}
@@ -498,7 +583,12 @@ class App {
         if(smoke_step==38)SDL_JoystickSetVirtualAxis(virtual_pad,SDL_CONTROLLER_AXIS_LEFTY,30000);
         if(smoke_step==40){if(library.games.size()>1)check(library.preferences["selected_game"]!=smoke_pad_game,"neutral stick rearms navigation");SDL_JoystickClose(virtual_pad);virtual_pad=nullptr;SDL_JoystickDetachVirtual(virtual_device);virtual_device=-1;}
         if(smoke_step==42){check(!controller||SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(controller))!=virtual_id,"controller removal handled");SDL_SetWindowSize(window,960,660);}
-        if(smoke_step==44){int width,height;SDL_GetWindowSize(window,&width,&height);check(width==960&&height==660,"window resized");capture_state("resized");SDL_SetWindowSize(window,1100,720);if(!library.games.empty()){library.choose_game(library.games[0]);focus="game:"+std::string(library.info().id);}}
+        if(smoke_step==44){int width,height;SDL_GetWindowSize(window,&width,&height);check(width==960&&height==660,"window resized");capture_state("resized");if(library.selected())push_click("settings");else push_click("add");if(!library.games.empty()){library.choose_game(library.games[0]);focus="game:"+std::string(library.info().id);}}
+        if(smoke_step==45){check(modal==(library.selected()?"settings":"browser"),"resized physical click opens target");close_modal();SDL_SetWindowSize(window,1100,720);}
+        if(smoke_step==46&&library.selected()){
+            gallery=true;draw();capture_state("gallery");push_click("settings");
+        }
+        if(smoke_step==47&&library.selected()){check(modal=="settings","windowed gallery physical click opens options");close_modal();gallery=false;}
         if(smoke_step==50){
             if(workflow_source.empty()){smoke_report();return;}
             focus="check";push_key(SDLK_RETURN);
@@ -522,10 +612,12 @@ public:
                 if(installed)for(const auto& g:entry.at("games"))for(const auto& edition:g.at("editions"))if(edition=="dos")library.runtime_games.insert(g.at("game_id"));}
         }catch(const std::exception&){}
         if(!initial_browse.empty()){library.preferences["browse_path"]=normalized_path(initial_browse).u8string();library.dirty=true;}
+        if(smoke)gallery=false;
         if(smoke)SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS,"1");
         if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_GAMECONTROLLER)!=0)throw Error("E_SDL",SDL_GetError());
         if(TTF_Init()!=0)throw Error("E_FONT",TTF_GetError());
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY,"linear");
+        SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH,"1");
         window=SDL_CreateWindow("Titus Engine",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,library.preferences["window_width"],library.preferences["window_height"],SDL_WINDOW_RESIZABLE|SDL_WINDOW_ALLOW_HIGHDPI);
         if(!window)throw Error("E_WINDOW",SDL_GetError());SDL_SetWindowMinimumSize(window,920,640);
         renderer=SDL_CreateRenderer(window,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
@@ -536,7 +628,7 @@ public:
         for(int i=0;i<SDL_NumJoysticks();++i)open_controller(i);font(18);SDL_EventState(SDL_DROPFILE,SDL_ENABLE);
         if(!workflow_source.empty()){browse(false);read_browser(workflow_source);smoke_step=-4;}
     }
-    ~App(){clear_previews();if(job.valid())job.wait();if(virtual_pad)SDL_JoystickClose(virtual_pad);if(virtual_device>=0)SDL_JoystickDetachVirtual(virtual_device);for(auto& p:text_cache)SDL_DestroyTexture(p.second.texture);for(auto& p:fonts)TTF_CloseFont(p.second);
+    ~App(){for(auto& p:covers)SDL_DestroyTexture(p.second);clear_previews();if(job.valid())job.wait();if(virtual_pad)SDL_JoystickClose(virtual_pad);if(virtual_device>=0)SDL_JoystickDetachVirtual(virtual_device);for(auto& p:text_cache)SDL_DestroyTexture(p.second.texture);for(auto& p:fonts)TTF_CloseFont(p.second);
         if(controller)SDL_GameControllerClose(controller);if(renderer)SDL_DestroyRenderer(renderer);if(window)SDL_DestroyWindow(window);TTF_Quit();SDL_Quit();}
     int run(){draw();SDL_RenderPresent(renderer);while(running){SDL_Event e;while(SDL_PollEvent(&e)){auto previous_modal=modal;event(e);if(modal!=previous_modal&&!session_hidden)draw();}finish_job();poll_session();
             if(!session_hidden){draw();if(smoke)smoke_tick();if(test_play)play_test_tick();if(settings_probe)settings_test_tick();SDL_RenderPresent(renderer);}

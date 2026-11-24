@@ -228,3 +228,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-24 | PF-01/PF-02 | El usuario confirma resuelto el parpadeo de Jukebox. R3 conserva la precisión fraccionaria de cámara/sprites y dimensiona el margen de tiles para cubrir todo el desplazamiento, tras reproducir la pérdida de precisión y un hueco en el borde. Nuevas pruebas de píxeles, anclas y movimiento nativo. | Scroll pendiente de nueva revisión jugando; PF sigue abierto. |
 
 | 2026-11-24 | PF-01/PF-02 | El usuario acepta Jukebox r3. R4 corrige en P2 el recorte de columnas impares, separa fondo/cámara fraccionaria y evita interpolar el primer plano como un actor. Pruebas específicas de bordes, movimiento y rewind. | P2 pendiente de revisión jugando; PF sigue abierto y PF-06 al 0 %. |
+
+| 2026-11-24 | Biblioteca | P2 r4 aceptado por el usuario. Corregida doble conversión del ratón en pantalla completa; retorno de ventana con activación Windows y aviso si el SO la rechaza. Selector visual con portada, DOS/Amiga y acceso a gestión; carátulas pendientes de localizar. Documentadas herencia y opciones. | Revisar biblioteca r5 jugando; PF-06 sigue pendiente. |

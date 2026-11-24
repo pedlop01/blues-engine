@@ -22,15 +22,39 @@ de la pantalla completa del juego.
 | Motor/juegos | Opciones comunes | Partidas en biblioteca |
 |---|---|---|
 | Blues DOS/Amiga | Pantalla, música/efectos, botones de acción/salto, cámara, HUD, encuadre, ayudas, vidas, nivel inicial y modo de audio | Ocho slots BBS con miniaturas; carga nativa |
-| Jukebox / Prehistorik 2 DOS | Pantalla, música/efectos y botones de acción/salto | Sin slots gestionados |
-| Titus the Fox DOS | Pantalla completa; mantiene sus controles/audio nativos | Sin slots gestionados |
-| Fox Amiga / Prehistorik 1 Amiga | Pantalla, música/efectos, botones, cámara, HUD, encuadre, ayudas, vidas y nivel inicial | Ocho slots nativos con miniaturas; carga y rebobinado |
-| Prehistorik 1 DOS | Pantalla completa; mantiene sus controles/audio nativos | Sin slots gestionados |
+| Jukebox / Prehistorik 2 DOS | Pantalla, música/efectos, botones, cámara, HUD, encuadre, ayudas, vidas y nivel inicial; rewind en partida | Sin slots persistentes gestionados todavía |
+| Fox / Prehistorik 1 DOS y Amiga | Pantalla, música/efectos, botones, cámara, HUD, encuadre, ayudas, vidas y nivel inicial | Ocho slots nativos con miniaturas; carga y rebobinado |
 
 Globales puede mostrar ajustes que solo algunos juegos aplican. Las pestañas
-particulares muestran únicamente los soportados por ese adaptador. Fox DOS no
-ofrece dos buses de volumen independientes en su puente OPL; no se inventan
-sliders ni se trasladan trucos, zoom o guardados de Blues a otros motores.
+particulares muestran los ajustes del juego. Las funciones disponibles se
+comprueban con el adaptador instalado antes de arrancar.
+
+### Cómo elegir
+
+- **Cámara Original:** conserva el seguimiento del juego clásico. **Suavizada:** interpola el seguimiento entre pasos del juego.
+- **HUD Original:** conserva el encuadre del marcador junto al juego. **Fijo:** mantiene su tamaño al alejar la cámara. Ambos usan el arte de cada versión.
+- **Encuadre 0:** vista original (1×). Los pasos 1–8 permiten ver más mapa; los límites dependen del nivel y del motor.
+- **Invulnerable:** evita daño; no equivale a vidas infinitas. **Vidas infinitas:** evita agotar las vidas al morir. **Vidas:** cantidad inicial cuando se usan vidas limitadas.
+- **Nivel inicial:** punto de inicio de una nueva partida; no es una partida guardada.
+- **Música/Efectos:** volúmenes independientes. Los botones de acción/salto se refieren al mando.
+
+Por ejemplo: volumen global 70 %, excepción del juego 40 % y edición Amiga en
+Heredar producen 40 % en Amiga. Una excepción de sesión al 20 % solo afecta a la
+próxima ejecución. Antes de cambiar de pestaña, guarda los cambios que quieras
+conservar. La sesión se consume al lanzar y no cambia las preferencias duraderas.
+
+### Biblioteca visual y ventana
+
+La vista de carátulas ofrece un selector de juegos y botones DOS/Amiga. Gestionar
+abre la biblioteca detallada para verificar, relocalizar o quitar instalaciones;
+Carátulas vuelve al selector. Ratón, teclado y mando siguen disponibles.
+Las imágenes opcionales se describen en [assets/covers](../assets/covers/README.md).
+
+El ratón usa las coordenadas lógicas que SDL entrega, sin aplicar una segunda
+conversión al cambiar resolución, DPI o bandas laterales. Al terminar un juego,
+la biblioteca vuelve a mostrarse, se restaura si estaba minimizada y solicita
+el primer plano. En Windows, si el sistema rechaza la activación, se señala su
+botón en la barra de tareas; no se fuerza a estar siempre encima.
 
 Los botones de mando usan la nomenclatura SDL: A/B/X/Y, L3/R3 y RB. Acción y
 salto deben ser distintos. Las direcciones y la pausa siguen siendo nativas; los menús del motor pueden
