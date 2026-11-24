@@ -1,0 +1,454 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-24",
+  "source_revision": "afe8a4901b02e89c316b3b1de221f3b4d3f3ed2d",
+  "family_build_revision": "afe8a4901b02e89c316b3b1de221f3b4d3f3ed2d-pf2",
+  "problem": "Jukebox actor flicker, oscillating backdrop and corrupted death/reload screen reported by user",
+  "reproductions_before_fixes": {
+    "sprites": "build/pf-r2-before-sprites.log",
+    "resize": "build/pf-r2-before-resize.log",
+    "backdrop": "build/pf-r2-before-backdrop.log",
+    "music": "build/pf-r2-music-first.log"
+  },
+  "validation": {
+    "pf-r2-regression-linux": {
+      "platform": "linux",
+      "cases": [
+        {
+          "case": "sprites",
+          "result": "pass"
+        },
+        {
+          "case": "resize",
+          "result": "pass"
+        },
+        {
+          "case": "backdrop",
+          "result": "pass"
+        },
+        {
+          "case": "music",
+          "result": "pass"
+        },
+        {
+          "case": "death",
+          "result": "pass"
+        }
+      ],
+      "death_routes": 32
+    },
+    "pf-r2-regression-windows": {
+      "platform": "windows",
+      "cases": [
+        {
+          "case": "sprites",
+          "result": "pass"
+        },
+        {
+          "case": "resize",
+          "result": "pass"
+        },
+        {
+          "case": "backdrop",
+          "result": "pass"
+        },
+        {
+          "case": "music",
+          "result": "pass"
+        },
+        {
+          "case": "death",
+          "result": "pass"
+        }
+      ],
+      "death_routes": 32
+    },
+    "pf-r2-regression-sanitize": {
+      "platform": "linux",
+      "cases": [
+        {
+          "case": "sprites",
+          "result": "pass"
+        },
+        {
+          "case": "resize",
+          "result": "pass"
+        },
+        {
+          "case": "backdrop",
+          "result": "pass"
+        },
+        {
+          "case": "music",
+          "result": "pass"
+        },
+        {
+          "case": "death",
+          "result": "pass"
+        }
+      ],
+      "death_routes": 32
+    },
+    "pf-r2-matrix-linux-final": {
+      "platform": "linux",
+      "stages": [
+        {
+          "module": "ja",
+          "stage": 1,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 2,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 3,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 4,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 5,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 6,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 7,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 8,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 9,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 10,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 11,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 12,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 13,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 14,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 15,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 16,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 17,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 18,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 19,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 20,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 21,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 22,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 23,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 24,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 25,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 26,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 27,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 28,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 29,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 30,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 31,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 0,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 1,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 2,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 3,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 4,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 5,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 6,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 7,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 8,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 9,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 10,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 11,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 12,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 13,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 14,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 15,
+          "result": "pass"
+        }
+      ]
+    },
+    "pf-r2-matrix-windows": {
+      "platform": "windows",
+      "stages": [
+        {
+          "module": "ja",
+          "stage": 1,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 16,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 31,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 0,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 5,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 9,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 15,
+          "result": "pass"
+        }
+      ]
+    }
+  },
+  "death_coverage": {
+    "native_level": 1,
+    "routes_per_platform": 32,
+    "presentation_hz": [
+      60,
+      120
+    ],
+    "hud": [
+      "classic",
+      "fixed"
+    ],
+    "zoom_steps": [
+      0,
+      1,
+      4,
+      8
+    ],
+    "player": [
+      "normal",
+      "powered"
+    ],
+    "checks": [
+      "actual native death and respawn",
+      "lives decrease",
+      "movement after respawn",
+      "renderer dimensions match viewport",
+      "intermediate frames retain actors",
+      "powered death uses current sprite frame"
+    ]
+  },
+  "other_checks": {
+    "ctest": "build/pf-r2-ctest.log",
+    "contracts": "build/pf-r2-contracts.log",
+    "menu": "build/pf-r2-menu.log",
+    "blues_regression": "build/pf-r2-blues-linux.log",
+    "managed_linux": "build/pf-r2-family-linux.log",
+    "managed_windows": "build/pf-r2-family-windows.log",
+    "original_files_unchanged": 462
+  },
+  "visual_review": "build/pf-r2-respawn.png (real respawn and continued movement at 120 Hz with fixed HUD and zoom 4)",
+  "delivery": {
+    "path": "build/pf-package-windows-r2",
+    "engines": 5,
+    "files": [
+      {
+        "path": "bin/titus-engine.exe",
+        "bytes": 4326009,
+        "sha256": "855bd9a19a5ac92721cbc5bcc5fc1b1cc2b1198f7aeae259d78f4f0169c326fb"
+      },
+      {
+        "path": "bin/engines/blues-family/blues-family-runtime.exe",
+        "bytes": 6516557,
+        "sha256": "5634f985be68f8511b8e4b9f03815cd96b8b21c4c866840aaf0e463a26c32973"
+      }
+    ]
+  },
+  "limits": [
+    "Automated gameplay uses test-only timing/input hooks with the real native simulation and original resources",
+    "Not a complete campaign acceptance",
+    "PF-06 saves and remaining family parity remain open; user acceptance pending"
+  ],
+  "packaged_validation": {
+    "launcher": {
+      "fullscreen": false,
+      "games": 5,
+      "installations": 8,
+      "selected_game": "blues",
+      "ui_checks": 26
+    },
+    "managed_games": [
+      "jukebox",
+      "prehistorik2"
+    ],
+    "ready": true,
+    "family_build_revision": "afe8a4901b02e89c316b3b1de221f3b4d3f3ed2d-pf2",
+    "artifacts": [
+      "build/pf-r2-packaged-launcher.json",
+      "build/pf-r2-packaged-jukebox.json",
+      "build/pf-r2-packaged-prehistorik2.json"
+    ]
+  }
+}

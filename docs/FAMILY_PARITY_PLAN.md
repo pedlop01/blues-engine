@@ -119,3 +119,7 @@ python3 tests/check_jukebox_regressions.py --bin-dir build/th14-release   --data
 R2 corrige estos errores; **no cierra PF ni implementa los guardados pendientes**.
 La aceptación jugando sigue pendiente. La evidencia de r1 se conserva como
 histórica en el informe anterior.
+
+Evidencia de r2: [pf-r2-validation.json](measurements/pf-r2-validation.json),
+con las reproducciones anteriores, matrices, sanitizadores y comprobación del
+paquete Windows final (cinco motores y revisión `afe8a49-pf2`).
