@@ -1,5 +1,7 @@
+// Modified for native Prehistorik Amiga by Titus Engine contributors, 2026-11-24.
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Krzysztof Sokołowski
+#include "systems/screen_topology.hpp"
 #include "systems/player.hpp"
 
 #include "systems/cave_logic.hpp"   // kSprCaveDescent1
@@ -296,8 +298,11 @@ void update_player(SystemsState& state) {
 void clamp_player_position(SystemsState& state) {
     PlayerState& p = state.player;
     if (p.death_counter != 0) return;  // skip during death
-    if (p.x < 0) p.x = 0;
-    if (p.x > 300) p.x = 300;
+    bool world=state.continuous_world&&!state.cave_flag&&!state.secret_flag;
+    int low=world&&continuous_walk_seam(state.current_level,state.current_screen,state.current_screen-1)?-32:0;
+    int high=world&&continuous_walk_seam(state.current_level,state.current_screen,state.current_screen+1)?352:300;
+    if(p.x<low)p.x=low;
+    if(p.x>high)p.x=high;
 }
 
 void check_death_by_fall(SystemsState& state) {

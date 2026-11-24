@@ -50,6 +50,7 @@ def main():
     returned=invoke('titus-session',base+['--return-on-ready','--test-ms','5000']);assert returned['ready'] and returned['state']=='done';summary.append('library load and return command')
     controls=out/'controls.json';controls.write_text(json.dumps([{'ms':1100,'key':'P'},{'ms':1500,'key':'P'},{'ms':3000,'rewind':True},{'ms':3400,'rewind':False}]))
     observed=invoke('titus-session',base+['--test-ms','5200','--gameplay-probe'],variables=dict(env,TITUS_TEST_SCRIPT=str(controls)));assert observed['ready'];folder=local(observed['directory']);observation=loads((folder/'probe-observation.json').read_text())
+    assert observation['logic_hz']==20,observation
     assert observation['right']>20 and observation['left']>20 and observation['jump']>20 and observation['pause'] and observation['rewind_steps']>0,observation
     assert observation['samples']>10000 and observation['nonzero']>1000 and observation['peak']>1000 and observation['clipped']==0,observation
     summary.append({'gameplay_audio_pause_rewind':observation})
@@ -59,6 +60,11 @@ def main():
     # in the menu remains persistent via the shared settings store.
     prefs=loads((work/'preferences.json').read_text());assert prefs['camera']=='smooth' and prefs['music_volume']==100 and prefs['start_level']==1
     summary.append('edition options, bindings and temporary override recovery')
+    timing=out/'timing.json';steps=[{'ms':100,'key':'Escape'},{'ms':120,'key':'Down'},{'ms':140,'key':'Return'}]+[{'ms':180+i*20,'key':'Down'} for i in range(10)]+[{'ms':420,'key':'Return'}];timing.write_text(json.dumps(steps))
+    chosen=invoke('titus-session',base+['--test-ms','700'],variables=dict(env,TITUS_TEST_SCRIPT=str(timing)));assert chosen['ready'];assert loads((work/'preferences.json').read_text())['timing']=='original'
+    resumed=invoke('titus-session',base+['--test-ms','700']);assert resumed['ready'];folder=local(resumed['directory']);assert loads((folder/'probe-observation.json').read_text())['logic_hz']==12.5
+    assert loads((work/'preferences.json').read_text())['timing']=='original';summary.append('20 Hz default and persistent 12.5 Hz original menu option')
+
     future='{"schema_version":2,"fullscreen":false}';old=(work/'preferences.json').read_text();(work/'preferences.json').write_text(future)
     failed=invoke('titus-session',base+['--test-ms','150'],1);assert not failed['ready'] and (work/'preferences.json').read_text()==future;(work/'preferences.json').write_text(old)
     for fault in ['before_ready','missing_result']:

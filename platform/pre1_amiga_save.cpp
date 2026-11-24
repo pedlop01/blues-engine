@@ -174,6 +174,7 @@ Game restore_game(Assets &a, const Json &doc, const std::string &fingerprint) {
     throw std::runtime_error("Invalid saved secret scatter");
   valid(g);
   a.level(g.state.current_level);
+  g.connect(a);
   return g;
 }
 } // namespace titus::pre1_amiga

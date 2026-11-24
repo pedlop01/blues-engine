@@ -1,6 +1,7 @@
 // Modified for native Prehistorik Amiga by Titus Engine contributors, 2026-11-24.
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Krzysztof Sokołowski
+#include "systems/screen_topology.hpp"
 #include "systems/transitions.hpp"
 
 #include <climits>
@@ -52,14 +53,21 @@ constexpr WalkClamp kL7Clamps[] = {
     {10,  7,       kHiOpen},
 };
 
+// Keep the full 320-pixel world span and the movement overshoot. The original
+// reset to 6/285 is only appropriate while replacing an entire fixed screen.
+static bool seamless(const SystemsState& s,int direction){return s.continuous_world&&!s.cave_flag&&!s.secret_flag&&continuous_walk_seam(s.current_level,s.current_screen,s.current_screen+direction);}
+static bool left_edge(const SystemsState& s){return s.player.x<(seamless(s,-1)?0:6);}
+static bool right_edge(const SystemsState& s){return s.player.x>(seamless(s,1)?319:295);}
+static void cross_left(SystemsState& s){s.player.x=seamless(s,-1)?s.player.x+320:285;--s.current_screen;}
+static void cross_right(SystemsState& s){s.player.x=seamless(s,1)?s.player.x-320:6;++s.current_screen;}
+
 void check_l1_transition(SystemsState& state) {
     PlayerState& p = state.player;
     const int scr = state.current_screen;
 
     // Left edge.
-    if (p.x < 6 && !state.glider_active && scr > 0) {
-        state.current_screen -= 1;
-        p.x = 285;
+    if (left_edge(state) && !state.glider_active && scr > 0) {
+        cross_left(state);
         state.screen_change = true;
         return;
     }
@@ -71,15 +79,13 @@ void check_l1_transition(SystemsState& state) {
     }
     // Screen-9 ride exit.
     if (scr == 9 && p.x > 299 && state.glider_active) {
-        state.current_screen += 1;
-        p.x = 6;
+        cross_right(state);
         state.screen_change = true;
         return;
     }
     // Normal right edge (screens 9 and 18 excluded).
-    if (p.x > 295 && scr != 9 && scr != core::kLastScreen) {
-        state.current_screen += 1;
-        p.x = 6;
+    if (right_edge(state) && scr != 9 && scr != core::kLastScreen) {
+        cross_right(state);
         state.screen_change = true;
         return;
     }
@@ -142,15 +148,13 @@ void check_l3_transition(SystemsState& state) {
             return;
         }
     }
-    if (p.x < 6 && !state.glider_active && scr != 0 && !state.screen_change) {
-        state.current_screen -= 1;
-        p.x = 285;
+    if (left_edge(state) && !state.glider_active && scr != 0 && !state.screen_change) {
+        cross_left(state);
         state.screen_change = true;
         return;
     }
-    if (p.x > 295 && scr != 18 && !state.screen_change) {
-        state.current_screen += 1;
-        p.x = 6;
+    if (right_edge(state) && scr != 18 && !state.screen_change) {
+        cross_right(state);
         state.screen_change = true;
         return;
     }
@@ -175,16 +179,14 @@ void check_l5_transition(SystemsState& state) {
         state.level_complete = true;
         return;
     }
-    if (p.x < 6 && !state.glider_active && scr > 0 && !state.screen_change) {
-        state.current_screen -= 1;
-        p.x = 285;
+    if (left_edge(state) && !state.glider_active && scr > 0 && !state.screen_change) {
+        cross_left(state);
         state.screen_change = true;
         return;
     }
-    if (p.x > 295 && scr != core::kLastScreen && !state.screen_change) {
-        state.current_screen += 1;
+    if (right_edge(state) && scr != core::kLastScreen && !state.screen_change) {
+        cross_right(state);
         if (state.current_screen == 12 && state.glider_active) p.y = 70;
-        p.x = 6;
         state.screen_change = true;
     }
 }
@@ -218,17 +220,15 @@ void check_l7_transition(SystemsState& state) {
             return;
         }
     }
-    if (p.x < 6 && state.current_screen != 0 && !state.screen_change) {
-        state.current_screen -= 1;
-        p.x = 0x11D;
+    if (left_edge(state) && state.current_screen != 0 && !state.screen_change) {
+        cross_left(state);
         state.screen_change = true;
         return;
     }
-    if (p.x > 0x127 && state.current_screen != 0x12 &&
+    if (right_edge(state) && state.current_screen != 0x12 &&
         !state.screen_change) {
-        state.current_screen += 1;
+        cross_right(state);
         if (state.current_screen == 9) p.y -= 0x10;
-        p.x = 6;
         if (state.current_screen == 0xD) {   // teleport entry, no scroll
             p.x = 0x30;
             p.y = 130;

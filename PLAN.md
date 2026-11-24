@@ -209,3 +209,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-24 | TH-14 | Runtime Amiga completo, validación Linux/Windows y aceptación jugando por el usuario. | 100 %: cerrada. |
 
 | 2026-11-24 | TH-15 | Prehistorik 1 Amiga: simulación/render nativos, siete etapas y final, PAT/efectos y adaptador gestionado. Cámara suave/encuadre, HUD, menú/ayudas, ocho slots y rebobinado. Comparaciones con rutinas originales y validación Linux/Windows/ASan; 462 originales intactos. Ver docs/PREHISTORIK_AMIGA_RUNTIME.md. | 95 %: implementación lista para revisión jugando; no marcar 100 % sin aceptación del usuario. |
+
+| 2026-11-24 | TH-15 | Primera revisión: cruces continuos sin recolocación, colisiones de tramos vecinos y recorte de tiles/fondos antes de actores. Ritmo normal 20 pasos/s aprobado por el usuario y opción Amiga 12,5 persistente. 126 cruces, 33 encuadres junto a cuevas y validación Linux/Windows/ASan, con guardados anteriores compatibles. | 95 %: paquete r2 listo para nueva revisión; cierre pendiente. |

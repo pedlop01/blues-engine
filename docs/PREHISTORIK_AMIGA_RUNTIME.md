@@ -33,9 +33,14 @@ No se ejecuta código 68k en el runtime ni se distribuyen tablas comerciales.
 El lector PC1 y el secuenciador PAT comparten primitivas con Fox, con dialectos
 explícitos: eso no convierte la física de Prehistorik en la de Fox o Blues.
 
-La adaptación conserva la cadencia lógica Amiga de 12,5 pasos/s, independiente
-de la presentación. Interpola posiciones y cámara entre pasos, también al
-atravesar uniones continuas, sin cambiar la velocidad del juego. El zoom muestra
+El ritmo normal usa **20 pasos/s**, elegido tras la revisión del usuario.
+Opciones → Ritmo permite conservar la cadencia Amiga de **12,5 pasos/s**; la
+elección persiste entre sesiones y no altera la velocidad de la música. La
+presentación interpola posiciones y cámara entre pasos. En uniones continuas
+se conserva el desplazamiento completo sobre 320 píxeles, en vez de recolocar
+al personaje en las coordenadas del antiguo cambio de pantalla. Las sondas de
+colisión consultan también el terreno vecino; puertas y teletransportes
+conservan sus transiciones propias. El zoom muestra
 más mapa donde existe continuidad; las cuevas, jefes y secuencia del tronco
 conservan su composición propia. El orden interno original de las etapas se
 traduce a los números 1–7 del menú.
@@ -52,7 +57,7 @@ traduce a los números 1–7 del menú.
 | Pantalla completa | F11 |
 | Guardar/cargar | Menú, ocho slots con miniatura de la escena |
 | Ayudas | Invulnerabilidad, vidas 0–99, vidas infinitas y selector de nivel |
-| Presentación y sonido | Cámara original/suave, HUD original/fijo, volúmenes separados |
+| Presentación y sonido | Cámara original/suave, HUD original/fijo, ritmo normal 20 / Amiga 12,5 y volúmenes separados |
 
 El menú consume sus entradas y detiene la simulación. Los cambios de nivel,
 carga y reinicio vacían el historial de rebobinado. La reproducción marcha
@@ -124,3 +129,11 @@ los cambios de formato requieren revisar compatibilidad y versión. `tests/check
 la biblioteca. Los validadores `tools/validate_pre1_amiga_*.py` son herramientas
 de desarrollo: sus oráculos necesitan Unicorn y secciones privadas generadas
 por `tools/validate_pre1_amiga_levels.py`, nunca incluidas en la distribución.
+
+## Correcciones tras la primera revisión
+
+Se elimina la recolocación horizontal de los cambios por pantallas al recorrer
+uniones continuas. El terreno se recorta a los límites de cada tramo; se pintan
+todos los fondos antes de los actores, para que un fondo vecino no los borre.
+Los guardados anteriores siguen siendo legibles: la colisión de los vecinos se
+reconstruye desde los recursos. Ver [evidencia de las correcciones](measurements/th15-scroll-review-fixes.json).

@@ -61,7 +61,10 @@
     "systems/fluid_bubbles.cpp",
     "core/types.hpp",
     "core/collision_bitmap.hpp",
-    "core/rng.hpp"
+    "core/rng.hpp",
+    "systems/player.cpp",
+    "systems/player.hpp",
+    "systems/screen_topology.hpp"
   ],
   "modification_date": "2026-11-24"
 }

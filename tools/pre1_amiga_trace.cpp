@@ -4,6 +4,7 @@
 #include "systems/collision_dispatch.hpp"
 #include "systems/monster_ai.hpp"
 #include "systems/transitions.hpp"
+#include "titus/pre1_amiga_render.hpp"
 #include "titus/pre1_amiga_save.hpp"
 #include <fstream>
 #include <iostream>
@@ -31,6 +32,30 @@ int run(const std::vector<std::string> &args) {
     unsigned n = c.at("level");
     Game game;
     game.start(assets, n);
+    if (mode == "scroll") {
+      game.state.current_screen = c.at("screen");
+      game.bind(assets);
+      game.state.entities.clear();
+      for (auto &item : game.store)
+        item.second.clear();
+      game.state.player.sprite = -1;
+      game.state.player.hit_counter = 0;
+      game.state.get_ready_counter = 0;
+      View v;
+      v.width = 320;
+      v.height = 200;
+      v.x = c.at("camera");
+      auto f = render(assets, game, v);
+      std::string rgb;
+      for (unsigned y = 22; y < 200; ++y)
+        for (unsigned x = 0; x < 320; ++x) {
+          auto px = f.pixels[y * 320 + x];
+          for (int shift : {16, 8, 0})
+            rgb += char(px >> shift);
+        }
+      results.push_back({{"sha256_rgb", titus::sha256(rgb)}});
+      continue;
+    }
     if (mode == "trunk") {
       auto &l = assets.level(3);
       titus::Json first = titus::Json::array(), second = titus::Json::array();
@@ -125,6 +150,8 @@ int run(const std::vector<std::string> &args) {
         p[it.key()] = it.value();
         s.player = p.get<olduvai::systems::PlayerState>();
       }
+    s.continuous_world = false;
+    game.connect(assets);
     s.frame_counter = 0;
     s.get_ready_counter = 0;
     s.player.hit_counter = 0;

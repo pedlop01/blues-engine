@@ -260,6 +260,7 @@ void Game::start(Assets &a, unsigned level, int lives, long score,
   if (level < 1 || level > 7)
     throw std::runtime_error("Invalid Prehistorik level");
   state = {};
+  state.continuous_world = true;
   club_phase = 0;
   transition_ticks = 0;
   trunk_ticks = 0;
@@ -343,6 +344,20 @@ void Game::bind(Assets &a) {
     state.collision.restore(bytes);
   }
   state.screen_change = false;
+  connect(a);
+}
+void Game::connect(Assets &a) {
+  const Collision *left = nullptr, *right = nullptr;
+  if (state.continuous_world && state.current_screen < 19 && !state.cave_flag &&
+      !state.secret_flag && (state.current_level & 1)) {
+    auto &l = a.level(state.current_level);
+    int s = state.current_screen;
+    if (olduvai::systems::continuous_walk_seam(state.current_level, s, s - 1))
+      left = &l.scenes[s - 1].collision;
+    if (olduvai::systems::continuous_walk_seam(state.current_level, s, s + 1))
+      right = &l.scenes[s + 1].collision;
+  }
+  state.collision.neighbors(left, right);
 }
 void Game::tick(Assets &a, const olduvai::systems::FrameInputs &input,
                 bool invulnerable, bool infinite_lives) {

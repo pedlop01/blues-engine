@@ -214,7 +214,7 @@ int run(const std::vector<std::string> &input_args) {
   }
   bool running = true, menu = false, controls = false, smooth = true,
        classic_hud = true, fullscreen = false, invulnerable = false,
-       infinite = false, rewinding = false;
+       infinite = false, rewinding = false, original_timing = false;
   unsigned selected = 0, page = 0, music = 80, effects = 80, initial_lives = 3,
            action_button = 0, jump_button = 1, intro = test_ms ? 0 : 1,
            frames = 0, rewound = 0;
@@ -238,6 +238,10 @@ int run(const std::vector<std::string> &input_args) {
     classic_hud = p.value("hud", std::string("classic")) == "classic";
     invulnerable = p.value("invulnerable", false);
     infinite = p.value("infinite_lives", false);
+    const auto timing = p.value("timing", std::string("normal"));
+    if (timing != "normal" && timing != "original")
+      throw std::runtime_error("Invalid saved timing");
+    original_timing = timing == "original";
     initial_lives = p.value("lives", 3u);
     music = p.value("music_volume", 80u);
     effects = p.value("effects_volume", 80u);
@@ -457,7 +461,7 @@ int run(const std::vector<std::string> &input_args) {
         continue;
       }
       if (menu) {
-        unsigned count = page == 0 ? 6 : page == 1 ? 12 : 8;
+        unsigned count = page == 0 ? 6 : page == 1 ? 13 : 8;
         if (key == SDLK_UP)
           selected = (selected + count - (page >= 2 ? 2 : 1)) % count;
         if (key == SDLK_DOWN)
@@ -535,10 +539,15 @@ int run(const std::vector<std::string> &input_args) {
             break;
           }
           case 10:
+            original_timing = !original_timing;
+            history.clear();
+            accumulator = 0;
+            break;
+          case 11:
             select_level(game.state.current_level);
             menu = false;
             break;
-          case 11:
+          case 12:
             page = selected = 0;
             break;
           }
@@ -607,8 +616,9 @@ int run(const std::vector<std::string> &input_args) {
       }
     }
     accumulator += elapsed;
-    while (accumulator >= .08 && !menu && !intro) {
-      accumulator -= .08;
+    const double tick_seconds = original_timing ? .08 : .05;
+    while (accumulator >= tick_seconds && !menu && !intro) {
+      accumulator -= tick_seconds;
       if (rewinding) {
         game = std::move(history.back());
         history.pop_back();
@@ -617,7 +627,7 @@ int run(const std::vector<std::string> &input_args) {
           break;
       } else {
         history.push_back(game);
-        if (history.size() > 125)
+        if (history.size() > unsigned(std::lround(10 / tick_seconds)))
           history.pop_front();
         olduvai::systems::FrameInputs in;
         in.left = keys[SDL_SCANCODE_LEFT] ||
@@ -695,7 +705,7 @@ int run(const std::vector<std::string> &input_args) {
         (game.state.current_level & 1) && game.state.current_screen < 100
             ? game.state.current_screen * 320
             : 0;
-    double alpha = smooth ? std::clamp(accumulator / .08, 0., 1.) : 1;
+    double alpha = smooth ? std::clamp(accumulator / tick_seconds, 0., 1.) : 1;
     if ((game.state.current_level & 1) && game.state.current_screen < 100 &&
         !game.trunk_ticks) {
       int lo = game.state.current_screen, hi = lo;
@@ -799,6 +809,7 @@ int run(const std::vector<std::string> &input_args) {
                     "EFECTOS " + std::to_string(effects),
                     "BOTON ACCION " + std::to_string(action_button),
                     "BOTON SALTO " + std::to_string(jump_button),
+                    original_timing ? "RITMO AMIGA 12.5" : "RITMO NORMAL 20",
                     "REINICIAR NIVEL",
                     "VOLVER"};
       if (page < 2)
@@ -879,6 +890,7 @@ int run(const std::vector<std::string> &input_args) {
        {"hud", classic_hud ? "classic" : "fixed"},
        {"invulnerable", invulnerable},
        {"infinite_lives", infinite},
+       {"timing", original_timing ? "original" : "normal"},
        {"lives", initial_lives},
        {"zoom", target_zoom},
        {"view_step", unsigned(std::clamp(
@@ -893,6 +905,7 @@ int run(const std::vector<std::string> &input_args) {
     bmp(capture, last_frame);
   if (managed && test_ms)
     managed->observe({{"frames", frames},
+                      {"logic_hz", original_timing ? 12.5 : 20.},
                       {"ticks", game.ticks},
                       {"level", game.state.current_level},
                       {"right", moves_right},
@@ -907,6 +920,7 @@ int run(const std::vector<std::string> &input_args) {
   if (managed)
     managed->finish();
   std::cout << titus::Json({{"frames", frames},
+                            {"logic_hz", original_timing ? 12.5 : 20.},
                             {"ticks", game.ticks},
                             {"level", game.state.current_level},
                             {"right", moves_right},

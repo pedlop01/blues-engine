@@ -38,6 +38,9 @@ for ns,file,names in spec:
     fields.append(field)
   print(name,len(fields))
   out+=['void to_json(titus::Json& j,const '+name+'& v){j=titus::Json::object();']+[' j["'+f+'"]=v.'+f+';' for f in fields]+['}']
-  out+=['void from_json(const titus::Json& j,'+name+'& v){if(!j.is_object() || j.size()!='+str(len(fields))+')throw std::runtime_error("Invalid '+name+' save fields");']+[' j.at("'+f+'").get_to(v.'+f+');' for f in fields]+['}']
+  if name=='SystemsState':
+   migration='if(!j.contains(\"continuous_world\")){auto migrated=j;migrated[\"continuous_world\"]=true;from_json(migrated,v);return;}'
+  else:migration=''
+  out+=['void from_json(const titus::Json& j,'+name+'& v){'+migration+'if(!j.is_object() || j.size()!='+str(len(fields))+')throw std::runtime_error("Invalid '+name+' save fields");']+[' j.at("'+f+'").get_to(v.'+f+');' for f in fields]+['}']
  out+=['}']
 args.output.write_text('\n'.join(out)+'\n')

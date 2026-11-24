@@ -1,3 +1,4 @@
+// Modified for native Prehistorik Amiga by Titus Engine contributors, 2026-11-24.
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Krzysztof Sokołowski
 // Screen-seam topology: which adjacent-screen seams are not contiguous
@@ -32,6 +33,7 @@ inline SeamKind seam_kind(int internal_level, int a, int b) {
         if (lo == 17) return SeamKind::TrunkDescent;
     }
     if (internal_level == 7) {
+        if (lo == 5 || lo == 6) return SeamKind::Warp; // Vertical drops, not horizontal neighbours.
         // Volcanic cave hall: S9 right edge clamps + cave-DESCENT warps to
         // S10 (10,131) — check_l7_transition.
         if (lo == 9) return SeamKind::Warp;
@@ -48,4 +50,10 @@ inline bool seam_contiguous(int internal_level, int a, int b) {
     return seam_kind(internal_level, a, b) == SeamKind::Contiguous;
 }
 
+// L1's balloon ride changes the player's placement as part of its sequence.
+inline bool continuous_walk_seam(int level, int a, int b) {
+    if(a<0 || b<0 || a>18 || b>18) return false;
+    if(level==1 && (a==9 || b==9) && (a==10 || b==10)) return false;
+    return seam_contiguous(level,a,b);
+}
 }  // namespace olduvai::systems

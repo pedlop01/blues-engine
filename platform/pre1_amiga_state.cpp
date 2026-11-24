@@ -339,6 +339,7 @@ void to_json(titus::Json &j, const SystemsState &v) {
   j["cave_emerge_frames"] = v.cave_emerge_frames;
   j["cave_descent_third_shown"] = v.cave_descent_third_shown;
   j["enhanced_active"] = v.enhanced_active;
+  j["continuous_world"] = v.continuous_world;
   j["time_stopped"] = v.time_stopped;
   j["teleport_out_ticks"] = v.teleport_out_ticks;
   j["teleport_in_ticks"] = v.teleport_in_ticks;
@@ -395,7 +396,13 @@ void to_json(titus::Json &j, const SystemsState &v) {
   j["secret_exit_x"] = v.secret_exit_x;
 }
 void from_json(const titus::Json &j, SystemsState &v) {
-  if (!j.is_object() || j.size() != 84)
+  if (!j.contains("continuous_world")) {
+    auto migrated = j;
+    migrated["continuous_world"] = true;
+    from_json(migrated, v);
+    return;
+  }
+  if (!j.is_object() || j.size() != 85)
     throw std::runtime_error("Invalid SystemsState save fields");
   j.at("player").get_to(v.player);
   j.at("input").get_to(v.input);
@@ -427,6 +434,7 @@ void from_json(const titus::Json &j, SystemsState &v) {
   j.at("cave_emerge_frames").get_to(v.cave_emerge_frames);
   j.at("cave_descent_third_shown").get_to(v.cave_descent_third_shown);
   j.at("enhanced_active").get_to(v.enhanced_active);
+  j.at("continuous_world").get_to(v.continuous_world);
   j.at("time_stopped").get_to(v.time_stopped);
   j.at("teleport_out_ticks").get_to(v.teleport_out_ticks);
   j.at("teleport_in_ticks").get_to(v.teleport_in_ticks);

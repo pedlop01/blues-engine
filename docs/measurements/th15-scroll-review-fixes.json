@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "task": "TH-15",
+  "state": "review_fixes_pending_user_playtest",
+  "progress_percent": 95,
+  "date": "2026-11-24",
+  "fixes": {
+    "seams": "continuous 320-pixel traversal retains displacement; collision probes include neighbouring terrain; special warps remain separate",
+    "terrain": "clip each native scene to its screen; draw all scenery before actors",
+    "cadence": {
+      "default_logic_hz": 20,
+      "original_logic_hz": 12.5,
+      "persistent_menu_choice": true,
+      "user_approved_default_change": true,
+      "music_rate_unchanged": true,
+      "rewind_seconds": 10
+    }
+  },
+  "verification": {
+    "seam_fixtures": 126,
+    "actual_first_cave_crossings": 2,
+    "neighbour_actor_overpaint_fixture": true,
+    "panning_cases_per_platform": 33,
+    "panning_reference": "independently clipped original-validated scene BMPs, first L1 cave seams",
+    "legacy_save_migration": true,
+    "full_game_and_42_render_hashes_match_linux_windows_sanitizers": true,
+    "classic_physics_original_cases": 304,
+    "classic_physics_original_ticks": 36480,
+    "linux_ctest_passed": 8,
+    "original_files_unchanged": 462,
+    "managed_sessions": {
+      "linux": {
+        "schema_version": 1,
+        "platform": "linux",
+        "checks": [
+          "eight native slots, payload/preview hashes and library thumbnails",
+          "library load and return command",
+          {
+            "gameplay_audio_pause_rewind": {
+              "clipped": 0,
+              "frames": 1815,
+              "jump": 93,
+              "left": 128,
+              "level": 1,
+              "logic_hz": 20.0,
+              "nonzero": 386134,
+              "pause": true,
+              "peak": 5632,
+              "rewind_steps": 8,
+              "right": 136,
+              "samples": 403456,
+              "ticks": 79
+            }
+          },
+          "edition options, bindings and temporary override recovery",
+          "20 Hz default and persistent 12.5 Hz original menu option",
+          "future preferences, load failure, missing result and subsequent recovery",
+          "damaged and incompatible saves are preserved and isolated"
+        ],
+        "originals_unchanged": true,
+        "original_files": 71
+      },
+      "windows": {
+        "schema_version": 1,
+        "platform": "windows",
+        "checks": [
+          "eight native slots, payload/preview hashes and library thumbnails",
+          "library load and return command",
+          {
+            "gameplay_audio_pause_rewind": {
+              "clipped": 0,
+              "frames": 937,
+              "jump": 93,
+              "left": 134,
+              "level": 1,
+              "logic_hz": 20.0,
+              "nonzero": 477558,
+              "pause": true,
+              "peak": 7701,
+              "rewind_steps": 7,
+              "right": 136,
+              "samples": 497664,
+              "ticks": 81
+            }
+          },
+          "edition options, bindings and temporary override recovery",
+          "20 Hz default and persistent 12.5 Hz original menu option",
+          "future preferences, load failure, missing result and subsequent recovery",
+          "damaged and incompatible saves are preserved and isolated"
+        ],
+        "originals_unchanged": true,
+        "original_files": 71
+      }
+    }
+  },
+  "packages": {
+    "linux": "build/th15-package-linux-r2",
+    "windows": "build/th15-package-windows-r2"
+  },
+  "private_evidence": {
+    "build/th15-scroll-game-linux.json": "e325bb5c37ad499d4db4aaab39b7356ae152685f017b6c9cd4b61d498e57805c",
+    "build/th15-scroll-game-windows/report.json": "e325bb5c37ad499d4db4aaab39b7356ae152685f017b6c9cd4b61d498e57805c",
+    "build/th15-scroll-game-sanitize/report.json": "e325bb5c37ad499d4db4aaab39b7356ae152685f017b6c9cd4b61d498e57805c",
+    "build/th15-scroll-fix-paint/report.json": "dee216dd483bca30140a9a46d41c4704fc04bc4763f8662a112abb8e3afea8b6",
+    "build/th15-scroll-paint-windows/report.json": "dee216dd483bca30140a9a46d41c4704fc04bc4763f8662a112abb8e3afea8b6",
+    "build/th15-scroll-sessions-linux/report.json": "e158b8f08656a5f341f6b3f92604e383891cc1fe63676624d4c8a73b8ff966ee",
+    "build/th15-scroll-sessions-windows/report.json": "e4e71856df1397f4ff0f599e52327d49465da4cc5e18d63eece8e47fc9c23b0c",
+    "build/th15-scroll-player-original/physics-validation.json": "0018b2351b6c27b622553ce9fb4396d8fb5f0e3d55ee11b57a1d9d676da2fb53"
+  }
+}

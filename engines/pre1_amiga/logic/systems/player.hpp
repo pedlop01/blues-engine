@@ -1,3 +1,4 @@
+// Modified for native Prehistorik Amiga by Titus Engine contributors, 2026-11-24.
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Krzysztof Sokołowski
 // Player state and physics, headless.  The original state machine:
@@ -144,6 +145,7 @@ struct SystemsState {
     bool cave_descent_third_shown = false;
     // GameOptions::enhanced, for render-only cosmetic gates.
     bool enhanced_active = false;
+    bool continuous_world = false; // Native seamless traversal; classic oracles leave this off.
     // run_tick: an Enhanced animation stopped game time this tick, so the
     // draw-timed game counters (tick_get_ready) wait with the world.
     bool time_stopped = false;

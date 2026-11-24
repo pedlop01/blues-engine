@@ -59,6 +59,7 @@ struct Game {
   void start(Assets &, unsigned internal_level = 1, int lives = 3,
              long score = 0, std::uint32_t seed = 0);
   void bind(Assets &);
+  void connect(Assets &);
   void tick(Assets &, const olduvai::systems::FrameInputs &,
             bool invulnerable = false, bool infinite_lives = false);
 };

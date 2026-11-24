@@ -32,11 +32,14 @@ Palette palette(const Assets &a, const LevelAssets &l,
 struct Canvas {
   Frame &f;
   double left, top, scale;
+  int clip_left = 0, clip_right = 0x7fffffff;
   void fill(double x, double y, unsigned w, unsigned h, std::uint32_t c) {
     int x0 = std::lround((x - left) * scale),
         y0 = std::lround((y - top) * scale),
         x1 = std::lround((x + w - left) * scale),
         y1 = std::lround((y + h - top) * scale);
+    x0 = std::max(x0, clip_left);
+    x1 = std::min(x1, clip_right);
     rectangle(f, x0, y0, x1 - x0, y1 - y0, c);
   }
   void sprite(const std::vector<Sprite> &bank, int id, const Palette &p,
@@ -53,7 +56,8 @@ struct Canvas {
     for (int yy = std::max(y0, 0); yy < std::min(y1, int(f.height)); ++yy) {
       unsigned sy =
           std::min(s.height - 1, unsigned((yy - y0) * s.height / (y1 - y0)));
-      for (int xx = std::max(x0, 0); xx < std::min(x1, int(f.width)); ++xx) {
+      for (int xx = std::max({x0, 0, clip_left});
+           xx < std::min({x1, int(f.width), clip_right}); ++xx) {
         unsigned sx =
             std::min(s.width - 1, unsigned((xx - x0) * s.width / (x1 - x0)));
         if (flip)
@@ -74,7 +78,8 @@ struct Canvas {
     if (x1 <= x0 || y1 <= y0)
       return;
     for (int yy = std::max(y0, 0); yy < std::min(y1, int(f.height)); ++yy)
-      for (int xx = std::max(x0, 0); xx < std::min(x1, int(f.width)); ++xx) {
+      for (int xx = std::max({x0, 0, clip_left});
+           xx < std::min({x1, int(f.width), clip_right}); ++xx) {
         unsigned sy = std::min(s.height - 1,
                                unsigned((yy - y0) * s.height / (y1 - y0))),
                  sx = std::min(s.width - 1,
@@ -135,6 +140,13 @@ void entities(Canvas &c, const LevelAssets &l, const Palette &p,
 void draw_scene(Canvas &c, const Assets &a, const LevelAssets &l,
                 const olduvai::systems::SystemsState &s, double offset,
                 bool overlay = false, unsigned trunk_ticks = 0) {
+  // A native screen owns exactly [0,320). Tile art can extend beyond that
+  // rectangle and must not overpaint an adjacent screen during scrolling.
+  const int old_left = c.clip_left, old_right = c.clip_right;
+  c.clip_left =
+      std::max(old_left, int(std::lround((offset - c.left) * c.scale)));
+  c.clip_right =
+      std::min(old_right, int(std::lround((offset + 320 - c.left) * c.scale)));
   auto p = palette(a, l, s);
   if (s.current_screen < 100 && l.number != 3)
     c.picture(l.background, offset, 0, 9);
@@ -174,6 +186,8 @@ void draw_scene(Canvas &c, const Assets &a, const LevelAssets &l,
       c.fill(offset + cmd.x, cmd.y, cmd.a + 1, cmd.b + 1, p[cmd.color]);
     else
       c.sprite(*tiles, cmd.a, p, offset + cmd.x, cmd.y);
+  c.clip_left = old_left;
+  c.clip_right = old_right;
 }
 void boss(Canvas &c, const Assets &a, const LevelAssets &l, const Game &g,
           double alpha) {
@@ -368,6 +382,12 @@ Frame render(Assets &a, const Game &g, const View &view) {
       double offset = room ? 0 : screen * 320;
       draw_scene(c, a, l, copy, offset, g.trunk_overlay && screen == 18,
                  g.trunk_ticks);
+    }
+    // All scenery first: a neighbour's background must never erase an actor.
+    for (int screen = first; screen <= last; ++screen) {
+      auto copy = st;
+      copy.current_screen = screen;
+      double offset = room ? 0 : screen * 320;
       if (screen == st.current_screen && !g.trunk_ticks)
         entities(c, l, palette(a, l, copy), st.entities, offset, alpha);
       else {

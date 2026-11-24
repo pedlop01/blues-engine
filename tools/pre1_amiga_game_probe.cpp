@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "core/rng.hpp"
 #include "systems/cave_logic.hpp"
+#include "systems/screen_topology.hpp"
 #include "systems/secret.hpp"
+#include "systems/transitions.hpp"
 #include "titus/catalog.hpp"
 #include "titus/pre1_amiga_game.hpp"
 #include "titus/pre1_amiga_render.hpp"
@@ -13,6 +15,119 @@ int main(int argc, char **argv) {
     if (argc != 2 && argc != 3)
       throw std::runtime_error("Usage: pre1-game-probe DATAPATH");
     titus::pre1_amiga::Assets a(std::filesystem::u8path(argv[1]));
+    unsigned seam_cases = 0;
+    for (unsigned level : {1u, 3u, 5u, 7u})
+      for (int screen = 0; screen < 18; ++screen) {
+        if (!olduvai::systems::continuous_walk_seam(level, screen, screen + 1))
+          continue;
+        for (int dir : {-1, 1}) {
+          titus::pre1_amiga::Game g;
+          g.start(a, level);
+          auto &s = g.state;
+          s.current_screen = screen + (dir < 0);
+          g.bind(a);
+          s.player.x = dir > 0 ? 323 : -4;
+          s.player.y = 80;
+          int before = s.current_screen * 320 + s.player.x;
+          olduvai::systems::clamp_player_position(s);
+          olduvai::systems::check_screen_transition(s);
+          if (s.current_screen != screen + (dir > 0) ||
+              s.current_screen * 320 + s.player.x != before)
+            throw std::runtime_error("Seam discarded player displacement");
+          g.bind(a);
+          if (titus::pre1_amiga::player_world_x(g, 1) != before)
+            throw std::runtime_error("Seam render placement mismatch");
+          auto saved = titus::pre1_amiga::save_game(g, "probe");
+          auto restored = titus::pre1_amiga::restore_game(a, saved, "probe");
+          for (int x : {-24, 0, 300, 328})
+            for (int y : {30, 80, 160})
+              if (s.collision.test(x, y) != restored.state.collision.test(x, y))
+                throw std::runtime_error(
+                    "Seam collision neighbours not restored");
+          ++seam_cases;
+        }
+      }
+    {
+      titus::pre1_amiga::Game g;
+      g.start(a);
+      auto doc = titus::pre1_amiga::save_game(g, "probe");
+      doc["payload"]["state"].erase("continuous_world");
+      doc["payload_sha256"] = titus::sha256(doc["payload"].dump());
+      auto old = titus::pre1_amiga::restore_game(a, doc, "probe");
+      if (!old.state.continuous_world)
+        throw std::runtime_error("Legacy save migration failed");
+    }
+    for (int direction : {-1, 1}) {
+      titus::pre1_amiga::Game g;
+      g.start(a);
+      auto &st = g.state;
+      st.current_screen = direction > 0 ? 0 : 1;
+      g.bind(a);
+      st.entities.clear();
+      for (auto &item : g.store)
+        item.second.clear();
+      st.get_ready_counter = 0;
+      st.player.x = direction > 0 ? 310 : 5;
+      st.player.y = 60;
+      st.player.gravity_flag = 1;
+      bool crossed = false;
+      for (unsigned i = 0; i < 8; ++i) {
+        int old_screen = st.current_screen;
+        double before = st.current_screen * 320 + st.player.x;
+        olduvai::systems::FrameInputs in;
+        in.right = direction > 0;
+        in.left = direction < 0;
+        g.tick(a, in, true, true);
+        double after = st.current_screen * 320 + st.player.x;
+        if (st.current_screen != old_screen) {
+          if (direction * (after - before) <= 0 ||
+              direction * (after - before) > 8 ||
+              titus::pre1_amiga::player_world_x(g, 0) != before)
+            throw std::runtime_error(
+                "Actual cave-seam traversal jumped or reversed");
+          crossed = true;
+          break;
+        }
+      }
+      if (!crossed)
+        throw std::runtime_error("Actual cave-seam traversal did not cross");
+    }
+    {
+      titus::pre1_amiga::Game g;
+      g.start(a);
+      g.state.entities.clear();
+      for (auto &item : g.store)
+        item.second.clear();
+      g.state.player.sprite = -1;
+      g.state.player.hit_counter = 0;
+      g.state.get_ready_counter = 0;
+      olduvai::core::Entity e;
+      e.active = e.visible = true;
+      e.x = e.prev_x = 310;
+      e.y = e.prev_y = 90;
+      e.sprite = 0;
+      g.state.entities.push_back(e);
+      titus::pre1_amiga::View v;
+      v.width = 320;
+      v.height = 200;
+      v.x = 240;
+      auto frame = titus::pre1_amiga::render(a, g, v);
+      auto &l = a.level(1);
+      auto &sprite = l.actors[0];
+      unsigned checked = 0;
+      for (unsigned y = 0; y < sprite.height; ++y)
+        for (unsigned x = 10; x < sprite.width; ++x) {
+          unsigned i = y * sprite.width + x;
+          if (sprite.opaque[i]) {
+            auto expected = 0xff000000 | l.background.palette[sprite.colors[i]];
+            if (frame.pixels[(90 + y) * 320 + 70 + x] != expected)
+              throw std::runtime_error("Neighbour scenery erased an actor");
+            ++checked;
+          }
+        }
+      if (!checked)
+        throw std::runtime_error("Empty seam actor fixture");
+    }
     titus::Json report = titus::Json::array();
     titus::Json render_hashes = titus::Json::array();
     for (unsigned n = 1; n <= 7; ++n) {
@@ -271,6 +386,7 @@ int main(int argc, char **argv) {
       exits.push_back({{"level", level}, {"next", g.state.current_level}});
     }
     std::cout << titus::Json({{"levels", report},
+                              {"seam_cases", seam_cases},
                               {"render_hashes", render_hashes},
                               {"exit_fixtures", exits},
                               {"room_fixtures", checked_rooms},
