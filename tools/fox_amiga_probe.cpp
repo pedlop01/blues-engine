@@ -4,6 +4,9 @@
 #include "titus/fox_amiga_audio.hpp"
 #include "titus/fox_amiga_objects.hpp"
 #include "titus/fox_amiga_rules.hpp"
+#include "titus/fox_amiga_enemies.hpp"
+#include "titus/fox_amiga_platforms.hpp"
+#include "titus/fox_amiga_game.hpp"
 #include "titus/catalog.hpp"
 #include <filesystem>
 #include <fstream>
@@ -80,7 +83,7 @@ Json object_snapshot(const ObjectWorld& world){
     return {{"objects",hex.str()},{"state",Json::array({world.carried?int(*world.carried):-1,world.attachment.x,world.attachment.y,int(world.special_item),world.contact_cooldown,world.sound_event,int(world.action_latched)})}};
 }
 int probe_main(int argc,char** argv) try {
-    std::string audio_name;unsigned audio_ticks=1000,rules_only=0;
+    std::string audio_name;unsigned audio_ticks=1000,rules_only=0,audio_effects=0,enemy_init=0,enemy_ticks=0,platform_ticks=0,game_ticks=0;
     fs::path root,output,palette,motion_script,object_script;unsigned level=1,x=0,y=0,spawn_view=0;
     auto number=[](const std::string& value) {
         if(value.empty() || value.find_first_not_of("0123456789")!=std::string::npos)
@@ -97,6 +100,11 @@ int probe_main(int argc,char** argv) try {
         else if(key=="--output")output=fs::u8path(value);
         else if(key=="--palette")palette=fs::u8path(value);
         else if(key=="--audio")audio_name=value;
+        else if(key=="--game-ticks")game_ticks=number(value);
+        else if(key=="--platform-ticks")platform_ticks=number(value);
+        else if(key=="--enemy-ticks")enemy_ticks=number(value);
+        else if(key=="--enemy-init")enemy_init=number(value);
+        else if(key=="--audio-effects")audio_effects=number(value);
         else if(key=="--rules-only")rules_only=number(value);
         else if(key=="--audio-ticks")audio_ticks=number(value);
         else if(key=="--objects")object_script=fs::u8path(value);
@@ -108,7 +116,7 @@ int probe_main(int argc,char** argv) try {
         else throw std::runtime_error("Unknown option: "+key);
     }
     if((!object_script.empty() && !motion_script.empty()) || (!audio_name.empty() && (!object_script.empty() || !motion_script.empty())))throw std::runtime_error("Choose one diagnostic script mode");
-    if(root.empty() || output.empty() || level<1 || level>16 || level==15 || spawn_view>1 || rules_only>1)
+    if(root.empty() || output.empty() || level<1 || level>16 || level==15 || spawn_view>1 || rules_only>1 || enemy_init>1 || audio_effects>1 || (audio_effects && audio_name.empty()))
         throw std::runtime_error("Usage: titus-fox-amiga-probe --datapath FOLDER --output PRIVATE_FOLDER --palette REFERENCE_JSON [--level 1..14/16] [--x PIXEL --y PIXEL] [--spawn-view 0/1] [--motion SCRIPT | --objects SCRIPT]; audio: --datapath FOLDER --output PRIVATE_FOLDER --audio NAME [--audio-ticks N]");
     auto canonical_root=titus::normalized_path(root), canonical_output=titus::normalized_path(output);
     root=canonical_root;output=canonical_output;
@@ -119,17 +127,24 @@ int probe_main(int argc,char** argv) try {
     if(!audio_name.empty()){
         if(!audio_ticks || audio_ticks>60000)throw std::runtime_error("Invalid audio tick count");
         auto song=pat_song(unpack(read(resolve(root,audio_name))),[&](const std::string& name){return read(resolve(root,name));});
+        std::array<std::shared_ptr<const EffectSample>,5> bank{};
+        if(audio_effects){const auto rules=native_rules(read(resolve(root,"main")));const char* names[]={"ressort","ballon","fox","tirperso","coup"};
+            for(unsigned i=0;i<5;++i)bank[i]=std::make_shared<EffectSample>(effect_sample(read(resolve(root,names[i])),rules.effect_frequencies[i]));}
+        auto trigger=[&](PatPlayer& player,unsigned tick){const unsigned times[]={25,100,110,200,300,320},ids[]={0,1,2,3,4,0};
+            if(audio_effects)for(unsigned i=0;i<6;++i)if(tick%600==times[i])player.play_effect(bank[ids[i]]);};
         PatPlayer player(song);Json frames=Json::array();
         for(unsigned n=0;n<audio_ticks;++n){
-            player.tick();Json row=Json::array({player.order(),player.row(),player.sub_tick(),player.speed()});
+            trigger(player,n);player.tick();Json row=Json::array({player.order(),player.row(),player.sub_tick(),player.speed()});
             for(const auto& c:player.channels()){row.push_back(c.period);row.push_back(c.volume);row.push_back(c.base_period);}
             frames.push_back(row);
         }
-        PatPlayer pcm_player(song);auto pcm=pcm_player.render(441000);
+        PatPlayer pcm_player(song);std::vector<std::int16_t> pcm(882000);
+        for(unsigned block=0;block<500;++block){trigger(pcm_player,block);pcm_player.render_into(pcm.data()+block*1764,882);}
         Bytes raw;raw.reserve(pcm.size()*2);unsigned nonzero=0,peak=0;
         for(auto sample:pcm){unsigned v=unsigned(sample)&65535;raw.push_back(std::uint8_t(v));raw.push_back(std::uint8_t(v>>8));nonzero+=sample!=0;peak=std::max(peak,unsigned(std::abs(int(sample))));}
         report["audio"]={{"name",audio_name},{"ticks",audio_ticks},{"trace_sha256",titus::sha256(frames.dump())},
             {"pcm_sha256",titus::sha256(std::string(raw.begin(),raw.end()))},{"pcm_frames",441000},{"nonzero",nonzero},{"peak",peak},{"loops",player.loops()}};
+        if(audio_effects)report["audio"]["effects"]=true;
         titus::ensure_directory(output);
         std::ofstream trace(titus::filesystem_path(output/"audio.json"));trace<<frames.dump()<<'\n';if(!trace)throw std::runtime_error("Cannot write audio trace");
         std::ofstream wav(titus::filesystem_path(output/"audio.wav"),std::ios::binary);
@@ -144,6 +159,7 @@ int probe_main(int argc,char** argv) try {
             {"walk_frames",native.motion.walk_frames},{"jump_impulses",native.motion.jump_impulses},{"enemy_animation_frames",native.level.enemy_animation_frames},{"object_rules",Json::array()}};
         for(const auto& rule:native.objects.kinds)reference["object_rules"].push_back({{"flags",rule.flags},{"fall_limit",rule.fall_limit},{"width",rule.width},{"height",rule.height},{"anchor_x",rule.anchor_x},{"anchor_y",rule.anchor_y}});
         report["native_section_sha256"]=native.section_sha256;
+        report["render_palettes"]={{"player",native.player_palette},{"hud",native.hud_palette}};report["level_songs"]=native.level_songs;
         if(rules_only){
             titus::ensure_directory(output);std::ofstream file(titus::filesystem_path(output/"rules.json"));file<<reference.dump(2)<<'\n';if(!file)throw std::runtime_error("Cannot write native rules");
             report["rules_sha256"]=titus::sha256(reference.dump());std::ofstream result(titus::filesystem_path(output/"report.json"));result<<report.dump(2)<<'\n';if(!result)throw std::runtime_error("Cannot write rules report");std::cout<<report.dump()<<'\n';return 0;
@@ -169,6 +185,61 @@ int probe_main(int argc,char** argv) try {
     LevelRules rules;
     for(unsigned i=0;i<232;++i)rules.enemy_animation_frames[i]=reference["enemy_animation_frames"][i].get<bool>();
     const auto state=initialize_level(level,map,meta,rules);
+    if(game_ticks){
+        if(game_ticks>12000)throw std::runtime_error("Too many game diagnostic ticks");
+        auto reader=[&](const std::string& name){return read(resolve(root,name));};auto assets=load_game_assets(reader);
+        assets.levels[level]=load_level_assets(level,reader,assets.rules);auto game=start_game(*assets.levels[level],assets.rules);game.infinite_lives=true;
+        Json frames=Json::array();
+        for(unsigned tick=0;tick<game_ticks;++tick){
+            BodyInput input;input.right=(tick%600)<250;input.left=(tick%600)>=350;input.up=(tick%120)<24;input.down=(tick%240)>220;
+            try{game_step(game,input,(tick%90)<10,assets.rules);}catch(const std::exception& e){throw std::runtime_error(std::string(e.what())+" at tick "+std::to_string(tick)+" player "+std::to_string(game.player.feet.x)+","+std::to_string(game.player.feet.y));}
+            if(!(tick%50)){
+                auto image=game_frame(game,assets,game.camera);std::string bytes;for(auto pixel:image.pixels)for(unsigned shift=0;shift<32;shift+=8)bytes.push_back(char(pixel>>shift));
+                frames.push_back({{"tick",tick},{"x",game.player.feet.x},{"y",game.player.feet.y},{"state",game.player.state},{"energy",game.player.energy},{"phase",int(game.phase)},{"frame_sha256",titus::sha256(bytes)}});
+            }
+        }
+        titus::ensure_directory(output);std::ofstream file(titus::filesystem_path(output/"game-motion.json"));file<<frames.dump()<<'\n';if(!file)throw std::runtime_error("Cannot write game motion");
+        report["game_motion"]={{"level",level},{"ticks",game_ticks},{"sha256",titus::sha256(frames.dump())}};std::cout<<report.dump()<<'\n';return 0;
+    }
+    if(platform_ticks){
+        if(platform_ticks>4096)throw std::runtime_error("Too many platform diagnostic ticks");
+        const auto native=native_rules(read(resolve(root,"main")));auto world=initialize_platforms(state);Json frames=Json::array();Body player;
+        for(unsigned tick=0;tick<platform_ticks;++tick){
+            Point target=world.empty()?state.spawn:world[(tick/120)%world.size()].body.feet;
+            Point camera{std::max(0,target.x-160),std::max(0,target.y-86)};player.feet={target.x+8,target.y+1};player.vy=16;
+            step_platforms(world,player,camera,native);Json row=Json::array();
+            for(const auto& p:world)row.push_back(Json::array({p.body.kind,unsigned(p.body.feet.x)&65535,unsigned(p.body.feet.y)&65535,0,0,0,0,0,0,p.body.flags,p.body.width,p.body.height,p.direction,p.speed,p.source_range,p.range,unsigned(p.origin.x)&65535,unsigned(p.origin.y)&65535,p.source_direction,p.counter}));
+            frames.push_back({{"platforms",row},{"player",Json::array({player.feet.x,player.feet.y,player.vy,player.state})}});
+        }
+        titus::ensure_directory(output);std::ofstream file(titus::filesystem_path(output/"platform-motion.json"));file<<frames.dump()<<'\n';if(!file)throw std::runtime_error("Cannot write platform motion");
+        report["platform_motion"]={{"level",level},{"ticks",platform_ticks},{"sha256",titus::sha256(frames.dump())}};std::cout<<report.dump()<<'\n';return 0;
+    }
+    if(enemy_ticks){
+        if(enemy_ticks>12000)throw std::runtime_error("Too many enemy diagnostic ticks");
+        const auto native=native_rules(read(resolve(root,"main")));auto world=initialize_enemies(state,native);
+        Body player;EnemyStepContext context;context.invulnerability=100;Json frames=Json::array();
+        const auto initial=world.enemies;
+        for(unsigned tick=0;tick<enemy_ticks;++tick){
+            context.frame=tick;
+            const Point target=initial.empty()?state.spawn:Point{initial[(tick/120)%initial.size()].signed_get(2),initial[(tick/120)%initial.size()].signed_get(4)};
+            int px=target.x+(tick%120<60?-24:48),py=target.y+(tick%80<40?0:64);
+            player.feet={px,py};context.camera={std::max(0,px-160),std::max(0,py-86)};
+            step_enemies(state,world,player,context,native);
+            Json row=Json::array();for(const auto& enemy:world.enemies)row.push_back(enemy.words);
+            frames.push_back(row);
+        }
+        titus::ensure_directory(output);std::ofstream file(titus::filesystem_path(output/"enemy-motion.json"));file<<frames.dump()<<'\n';if(!file)throw std::runtime_error("Cannot write enemy motion");
+        report["enemy_motion"]={{"level",level},{"ticks",enemy_ticks},{"sha256",titus::sha256(frames.dump())}};
+        std::cout<<report.dump()<<'\n';return 0;
+    }
+    if(enemy_init){
+        const auto native=native_rules(read(resolve(root,"main")));const auto world=initialize_enemies(state,native);
+        const auto bytes=dynamic_enemy_projection(world);Json rows=Json::array();for(const auto& enemy:world.enemies)rows.push_back(enemy.words);
+        report["enemy_init"]={{"level",level},{"count",world.enemies.size()},{"boss_power",world.boss_power},{"sha256",titus::sha256(std::string(bytes.begin(),bytes.end()))}};
+        titus::ensure_directory(output);std::ofstream file(titus::filesystem_path(output/"enemies.json"));file<<rows.dump(2)<<'\n';if(!file)throw std::runtime_error("Cannot write enemy state");
+        std::ofstream result(titus::filesystem_path(output/"report.json"));result<<report.dump(2)<<'\n';if(!result)throw std::runtime_error("Cannot write enemy report");std::cout<<report.dump()<<'\n';return 0;
+    }
+
     if(!object_script.empty()){
         if(titus::path_file_size(object_script)>1024*1024)throw std::runtime_error("Object script too large");
         std::ifstream stream(titus::filesystem_path(object_script));Json script;stream>>script;

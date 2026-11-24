@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "playable_catalog": false,
+  "originals_unchanged": true,
+  "original_files": 462,
+  "enemy_initialization_records": 453,
+  "enemy_reference_ticks": 9000,
+  "platform_reference_ticks": 9000,
+  "combined_smoke_ticks": 18000,
+  "cross_platform_cases_per_build": 45,
+  "cross_platform_ticks_per_build": 36000,
+  "sfx_music_songs": 11,
+  "sfx_music_interrupts_per_build": 132000,
+  "native_sdl_runtime": [
+    "linux",
+    "windows"
+  ],
+  "pending": [
+    "extended enemy trajectories",
+    "campaign presentation and ending",
+    "managed adapter and catalog integration",
+    "persistent common options and saves",
+    "user review"
+  ]
+}

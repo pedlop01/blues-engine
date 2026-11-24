@@ -34,6 +34,9 @@ def main():
     parser.add_argument('--check-audio', action='store_true', help='Compare PAT replay interrupts with the original')
     parser.add_argument('--check-objects', action='store_true', help='Compare native pickup/drop/throw operations')
     parser.add_argument('--check-object-physics',action='store_true',help='Compare complete object steps without graphics hardware')
+    parser.add_argument('--check-audio-effects',action='store_true',help='Compare music interrupts while real effects occupy channel four')
+    parser.add_argument('--check-enemies',action='store_true',help='Compare complete native enemy initialization records')
+    parser.add_argument('--check-enemy-motion',action='store_true',help='Compare native enemy behavior steps with isolated original AI')
     args = parser.parse_args()
     root, output = args.datapath.resolve(), args.output.resolve()
     if output == root or root in output.parents or output.exists():
@@ -80,6 +83,11 @@ def main():
             elif not bases[5] <= address < bases[5]+496:
                 raise ValueError('Packer execution escaped its isolated segment')
             return
+        if phase=='enemies':
+            if address==0xe6160:
+                sp=cpu.reg_read(UC_M68K_REG_A7);cpu.reg_write(UC_M68K_REG_D0,128);cpu.reg_write(UC_M68K_REG_PC,be(sp));cpu.reg_write(UC_M68K_REG_A7,sp+4);return
+            if 0xee1dc<=address<0xef300 or 0xe612c<=address<0xe6160 or 0xe65d4<=address<0xe661c:return
+            raise ValueError(f'Enemy behavior escaped to {address:x}')
         if phase=='object_physics':
             if address==0xe6160:
                 sp=cpu.reg_read(UC_M68K_REG_A7);cpu.reg_write(UC_M68K_REG_D0,128);cpu.reg_write(UC_M68K_REG_PC,be(sp));cpu.reg_write(UC_M68K_REG_A7,sp+4);return
@@ -91,7 +99,8 @@ def main():
             if 0xe65d4<=address<0xe661c or 0xe69ce<=address<0xe6d10 or 0xe7a52<=address<0xe7a70:return
             raise ValueError(f'Object operation escaped to {address:x}')
         if phase == 'audio':
-            if 0xe3d6c<=address<0xe43ee:return
+            if address==0xe3d34:cpu.reg_write(UC_M68K_REG_PC,0xe3d54);return  # Skip the beam-position delay only.
+            if 0xe3cf4<=address<0xe43ee or 0xef584<=address<0xef680 or 0xf18a8<=address<0xf1a00:return
             raise ValueError(f'PAT replay escaped to {address:x}')
         if phase == 'motion':
             if address in (0xe6d10,0xe6fb4):
@@ -208,7 +217,13 @@ def main():
     native_rule_report=json.loads(native_rules_process.stdout)
     reference_sections=[hashlib.sha256(bytes(u.mem_read(bases[i],image.segments[i].get_size()))).hexdigest() for i in range(1,5)]
     if native_rule_report['native_section_sha256']!=reference_sections:raise ValueError('Native packed executable sections differ from original unpacker')
-    report['native_rules']=dict(reference_match=True,section_sha256=reference_sections,rules_sha256=native_rule_report['rules_sha256'])
+    render_palettes=dict(player=words(0x1dc,16),hud=words(0x2cc,16))
+    level_songs=[]
+    for i in range(16):
+        address=int.from_bytes(data[0x4e6+i*4:0x4ea+i*4],'big')-bases[3]
+        level_songs.append(data[address:data.index(0,address)].decode('ascii').removeprefix('df0:'))
+    if native_rule_report['render_palettes']!=render_palettes or native_rule_report['level_songs']!=level_songs:raise ValueError('Native render palettes/music routing differ from original data')
+    report['native_rules']=dict(reference_match=True,section_sha256=reference_sections,rules_sha256=native_rule_report['rules_sha256'],render_palettes=render_palettes,level_songs=level_songs)
     decoded_resources = {}
     for row in native['resources']:
         packed = (root/row['name']).read_bytes()
@@ -227,7 +242,7 @@ def main():
             raise ValueError(f'Native/reference mismatch: {row["name"]}')
         report['resources'].append(dict(row, reference_match=True))
         decoded_resources[row['name'].casefold()] = bytes(decoded)
-    if args.check_audio:
+    if args.check_audio or args.check_audio_effects:
         phase='audio';u.mem_map(0xdff000,4096);u.mem_map(0xbfe000,4096)
         def set_audio_word(address,value):u.mem_write(address,int(value).to_bytes(2,'big'))
         def set_audio_pointer(address,value):u.mem_write(address,int(value).to_bytes(4,'big'))
@@ -235,9 +250,10 @@ def main():
         results=[]
         for name,song in decoded_resources.items():
             if not name.endswith('.pat'):continue
-            folder=output/('audio-'+name)
+            prefix='audio-fx-' if args.check_audio_effects else 'audio-'
+            folder=output/(prefix+name)
             process=subprocess.run([str(args.probe.resolve()),'--datapath',str(root),'--output',str(folder),
-                '--audio',name,'--audio-ticks','12000'],capture_output=True,text=True,timeout=60)
+                '--audio',name,'--audio-ticks','12000','--audio-effects','1' if args.check_audio_effects else '0'],capture_output=True,text=True,timeout=60)
             if process.returncode:raise ValueError(f'{name}: {process.stderr}')
             frames=json.loads((folder/'audio.json').read_text())
             u.mem_write(0x190000,song);set_audio_pointer(0x80436,0x190000)
@@ -247,17 +263,29 @@ def main():
             for channel in range(4):set_audio_word(0xe43f8+24*channel+22,1<<channel)
             for instrument in range(16):set_audio_pointer(0x180000+4*instrument,0x200000+instrument*0x8000)
             u.mem_write(0xdff000,bytes(4096));call(0xe3d6c)
+            hold=0
+            if args.check_audio_effects:
+                set_audio_pointer(0x80dfc,0x180600);set_audio_pointer(0x80e00,0x180680);set_audio_word(0x8063a,1);u.mem_write(0xb00b0,b'\x00')
+                names=('ressort','ballon','fox','tirperso','coup')
+                for i,sample_name in enumerate(names):
+                    raw=next(p for p in root.iterdir() if p.name.lower()==sample_name).read_bytes()
+                    set_audio_pointer(0x180600+i*4,0x280000+i*0x10000);set_audio_pointer(0x180680+i*4,len(raw))
             for tick,expected in enumerate(frames):
+                if args.check_audio_effects:
+                    for at,index in ((25,0),(100,1),(110,2),(200,3),(300,4),(320,0)):
+                        if tick%600==at:hold=call(0xef584,(index,))
+                    set_audio_word(0x8043c,int(hold>0))
                 call(0xe3e56)
+                if hold:hold-=1
                 observed=[be(0xe44ea),be(0xe44ee)//16,audio_word(0xe44f6),audio_word(0xe43f6)]
                 for channel in range(4):
                     observed.extend((audio_word(0xdff0a6+16*channel),audio_word(0xdff0a8+16*channel),audio_word(0xe43f8+24*channel+16)))
                 if observed!=expected:raise ValueError(f'{name} audio tick {tick}: native {expected}, original {observed}')
             results.append(dict(reference_match=True,**json.loads(process.stdout)['audio']))
         report['audio']=dict(sequencer_only=True,cases=results)
-    if args.check_levels or args.check_motion or args.check_objects or args.check_object_physics:
+    if args.check_levels or args.check_motion or args.check_objects or args.check_object_physics or args.check_enemies or args.check_enemy_motion:
         phase = 'level'
-        levels = [];object_results=[]
+        levels = [];object_results=[];enemy_results=[];enemy_motion_results=[]
         sha = lambda data: hashlib.sha256(data).hexdigest()
         def w(address):
             return int.from_bytes(u.mem_read(address,2),'big')
@@ -267,7 +295,7 @@ def main():
             u.mem_write(address, (value&65535).to_bytes(2,'big'))
         def set_pointer(address,value):
             u.mem_write(address,value.to_bytes(4,'big'))
-        for level in (list(range(1,15))+[16] if args.check_levels or args.check_objects else [1]):
+        for level in (list(range(1,15))+[16] if args.check_levels or args.check_objects or args.check_enemies or args.check_enemy_motion else [1]):
             if level==1:
                 state=native['level_state']
             else:
@@ -355,6 +383,40 @@ def main():
                             call(0xe6fb4)
                             exits.append(int(w(0x805e2)==4))
             original_state['exit_queries_sha256']=sha(exits)
+            if args.check_enemies:
+                folder=output/f'enemies-{level}'
+                process=subprocess.run([str(args.probe.resolve()),'--datapath',str(root),'--output',str(folder),'--level',str(level),'--enemy-init','1'],capture_output=True,text=True,timeout=60)
+                if process.returncode:raise ValueError(process.stderr)
+                enemy_native=json.loads(process.stdout)['enemy_init'];count=w(0x804a8);expected=bytes(u.mem_read(0x182000,count*92))
+                if enemy_native['sha256']!=sha(expected):
+                    rows=json.loads((folder/'enemies.json').read_text());differences=[]
+                    for i,row in enumerate(rows):
+                        for j,value in enumerate(row):
+                            original=int.from_bytes(expected[i*92+j*2:i*92+j*2+2],'big')
+                            if value!=original:differences.append((i,j*2,value,original))
+                    raise ValueError(f'Level {level} full enemies native/original mismatch: {differences[:30]}')
+                if enemy_native['count']!=count or enemy_native['boss_power']!=w(0x80628):raise ValueError(f'Level {level}: enemy globals mismatch')
+                enemy_results.append(dict(reference_match=True,**enemy_native))
+            if args.check_enemy_motion:
+                phase='enemies';folder=output/f'enemy-motion-{level}'
+                process=subprocess.run([str(args.probe.resolve()),'--datapath',str(root),'--output',str(folder),'--level',str(level),'--enemy-ticks','600'],capture_output=True,text=True,timeout=60)
+                if process.returncode:raise ValueError(process.stderr)
+                frames=json.loads((folder/'enemy-motion.json').read_text());count=w(0x804a8)
+                initial=[(signed(w(0x182000+i*92+2)),signed(w(0x182000+i*92+4))) for i in range(count)]
+                for address,value in {0x805c4:bases[3]+0xd4a,0x805c8:bases[3]+0x7ba,0x805cc:0x186000,0x805fc:0x188000,0x805e8:0x189000,0x80604:0x18a000}.items():set_pointer(address,value)
+                set_word(0x804b2,101);set_word(0x8049e,0);set_word(0x8049a,100)
+                (output/f'enemy-state-{level}.bin').write_bytes(bytes(u.mem_read(0x10000,0x300000)))
+                for tick,rows in enumerate(frames):
+                    px,py=initial[(tick//120)%count] if count else original_state['spawn'];px+=-24 if tick%120<60 else 48;py+=0 if tick%80<40 else 64
+                    for address,value in {0x80526:tick,0x804f6:px,0x804f8:py,0x80564:max(0,px-160),0x80566:max(0,py-86),0x8049a:100}.items():set_word(address,value)
+                    call(0xef13e)
+                    for i,row in enumerate(rows):
+                        for j,value in enumerate(row):
+                            original=w(0x182000+i*92+j*2)
+                            if value!=original:raise ValueError(f'Enemy motion level {level} tick {tick} enemy {i} behavior {row[12]} offset {j*2}: native {value}, original {original}')
+                enemy_motion_results.append(dict(reference_match=True,**json.loads(process.stdout)['enemy_motion']))
+                print(f'Enemy motion level {level}: {len(frames)} ticks match',flush=True)
+                phase='level'
             for key,value in original_state.items():
                 if state[key]!=value:
                     raise ValueError(f'Level {level} mismatch {key}: native {state[key]}, original {value}')
@@ -584,8 +646,10 @@ def main():
                 collision_queries=132,exit_queries=36,gate_transitions=state['gate_transitions'],objects=state['objects'],enemies=state['enemies'],
                 elevators=state['elevators'],bonuses=state['bonuses'],gates=state['gates']))
         report['levels']=levels
+        if args.check_enemies:report['enemies']=enemy_results
+        if args.check_enemy_motion:report['enemy_motion']=enemy_motion_results
         if args.check_objects or args.check_object_physics:report['objects']=dict(actors_simulated=False,cases=object_results)
-    report['checks']=dict(levels=args.check_levels,objects=args.check_objects,motion=args.check_motion,audio=args.check_audio,object_physics=args.check_object_physics)
+    report['checks']=dict(levels=args.check_levels,objects=args.check_objects,motion=args.check_motion,audio=args.check_audio,object_physics=args.check_object_physics,audio_effects=args.check_audio_effects,enemies=args.check_enemies)
     report.update(resources_verified=len(report['resources']), native_sprites=native['sprites'],
                   originals_unchanged=before == snapshot(root))
     if not report['originals_unchanged']:

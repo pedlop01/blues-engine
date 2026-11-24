@@ -28,6 +28,7 @@ def main():
     if result.returncode:raise ValueError(result.stderr)
     report=json.loads(result.stdout);gold=json.loads((reference/'report.json').read_text())['native_rules']
     assert not report['playable'] and report['native_section_sha256']==gold['section_sha256'] and report['rules_sha256']==gold['rules_sha256']
+    if 'render_palettes' in gold:assert report['render_palettes']==gold['render_palettes'] and report['level_songs']==gold['level_songs']
     assert json.loads((output/'valid/rules.json').read_text())==json.loads((reference/'palette.json').read_text())
     main=next(p for p in root.iterdir() if p.name.lower()=='main').read_bytes()
     for name,raw in [('empty',b''),('truncated',main[:-1]),('modified',bytes([main[0]^1])+main[1:])]:

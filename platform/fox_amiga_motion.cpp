@@ -18,7 +18,7 @@ static Body step_impl(const Level& level,Body b,const BodyInput& input,const Mot
     auto pose=[&](int x,int y){if(world)world->attachment={x,y};};
     if((b.state>5 && !(context && b.state==7)) || b.lock_ticks>65535 || b.energy>16 || b.crouch_jump_ticks>100 || b.ice_shift>3 || b.walk_phase>13 || (b.jump_phase>5 && b.jump_phase!=128) || (b.state==2 && b.jump_phase>4) || b.vx<-256 || b.vx>256 || b.vy<-256 || b.vy>256)
         unsupported("Unsupported terrain-only body state");
-    if(b.feet.x<4 || b.feet.x>4092 || (!context && (b.feet.y<20 || b.feet.y>=int(level.height_tiles*16))))
+    if((!context && (b.feet.x<4 || b.feet.x>4092 || b.feet.y<20 || b.feet.y>=int(level.height_tiles*16))) || (context && (b.feet.x<-32768 || b.feet.x>32767 || b.feet.y<-32768 || b.feet.y>32767)))
         unsupported("Body outside terrain probe bounds");
     auto floor=[&](int x,int y){auto c=collision_at(level,x,y);return context && c.outside?0u:c.floor;};
     auto ceiling=[&](int x,int y){auto c=collision_at(level,x,y);return context && c.outside?0u:c.ceiling;};

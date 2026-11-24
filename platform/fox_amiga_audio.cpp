@@ -45,6 +45,19 @@ PatSong pat_song(const Bytes& bytes,const std::function<Bytes(const std::string&
     }
     return song;
 }
+EffectSample effect_sample(const Bytes& raw,unsigned frequency){
+    if(raw.size()<2 || raw.size()>131070 || frequency<55 || frequency>3579545)throw std::runtime_error("Invalid Amiga effect sample");
+    EffectSample result;result.samples.assign(raw.begin(),raw.begin()+(raw.size()&~std::size_t(1)));result.samples[0]=result.samples[1]=0;
+    result.period=3579545/frequency;result.hold_ticks=unsigned(((raw.size()*10000/frequency)*50)/10000)+10;
+    if(result.period>65535 || result.hold_ticks>65535)throw std::runtime_error("Amiga effect exceeds replay limits");
+    return result;
+}
+void PatPlayer::play_effect(std::shared_ptr<const EffectSample> effect){
+    if(!effect || effect->samples.size()<2 || effect->samples.size()>131070 || (effect->samples.size()&1) || !effect->period || effect->period>65535 || !effect->hold_ticks || effect->hold_ticks>65535)throw std::runtime_error("Invalid prepared Amiga effect");
+    effect_=std::move(effect);effect_phase_=0;effect_ticks_=effect_->hold_ticks;
+    channels_[3].active=false;channels_[3].period=effect_->period;channels_[3].volume=64;
+}
+void PatPlayer::volume(unsigned music,unsigned effects){if(music>100 || effects>100)throw std::runtime_error("Invalid Amiga audio volume");music_volume_=music;effect_volume_=effects;}
 PatPlayer::PatPlayer(PatSong song):song_(std::move(song)){
     if(song_.order.empty() || song_.order.size()>128 || song_.patterns.empty() || song_.patterns.size()>128*1024 || song_.patterns.size()%1024)throw std::runtime_error("Invalid PAT song");
     for(auto n:song_.order)if(n>=song_.patterns.size()/1024)throw std::runtime_error("PAT order outside patterns");
@@ -80,8 +93,10 @@ void PatPlayer::effect(PatChannel& c){
     }
 }
 void PatPlayer::tick(){
+    const bool occupied=effect_ticks_!=0;
+    struct HoldTick { unsigned& ticks;~HoldTick(){if(ticks)--ticks;} } hold{effect_ticks_};
     if(++tick_<speed_){
-        for(auto& c:channels_)if(c.parameter || c.effect==11 || c.effect==12 || c.effect==13 || c.effect==15)effect(c);
+        for(unsigned n=0;n<(occupied?3u:4u);++n){auto& c=channels_[n];if(c.parameter || c.effect==11 || c.effect==12 || c.effect==13 || c.effect==15)effect(c);}
         return;
     }
     if(pending_order_>=0){
@@ -91,7 +106,9 @@ void PatPlayer::tick(){
     if(pending_break_){pending_break_=false;row_=0;advance_order();}
     tick_=0;
     std::size_t p=std::size_t(song_.order[order_])*1024+row_*16;
-    for(auto& c:channels_){
+    for(unsigned channel=0;channel<4;++channel){
+        auto& c=channels_[channel];
+        if(channel==3 && occupied){p+=4;continue;}
         const unsigned note=word(song_.patterns,p),instrument=song_.patterns[p+2]>>4;
         c.effect=song_.patterns[p+2]&15;c.parameter=song_.patterns[p+3];p+=4;
         if(instrument){
@@ -114,12 +131,25 @@ void PatPlayer::tick(){
 }
 std::vector<std::int16_t> PatPlayer::render(unsigned frames,unsigned sample_rate){
     if(sample_rate<8000 || sample_rate>192000 || frames>sample_rate*60)throw std::runtime_error("Invalid PAT PCM request");
+    std::vector<std::int16_t> pcm(std::size_t(frames)*2);render_into(pcm.data(),frames,sample_rate);return pcm;
+}
+void PatPlayer::render_into(std::int16_t* pcm,unsigned frames,unsigned sample_rate){
+    if(sample_rate<8000 || sample_rate>192000 || frames>sample_rate*60)throw std::runtime_error("Invalid PAT PCM request");
     if(render_rate_ && render_rate_!=sample_rate)throw std::runtime_error("Cannot change PAT sample rate during replay");
-    render_rate_=sample_rate;std::vector<std::int16_t> pcm(std::size_t(frames)*2);
+    if(frames && !pcm)throw std::runtime_error("Missing audio output buffer");
+    render_rate_=sample_rate;
     for(unsigned n=0;n<frames;++n){
         interrupt_phase_+=50;if(interrupt_phase_>=sample_rate){interrupt_phase_-=sample_rate;tick();}
         int left=0,right=0;
         for(unsigned j=0;j<4;++j){
+            if(j==3 && effect_ticks_ && effect_){
+                const unsigned index=unsigned(effect_phase_>>32);
+                if(index<effect_->samples.size()){
+                    unsigned byte=effect_->samples[index];left+=(byte<128?int(byte):int(byte)-256)*64*int(effect_volume_)/100;
+                    effect_phase_+=(std::uint64_t(3546895)<<32)/(std::uint64_t(sample_rate)*effect_->period);
+                }
+                continue;
+            }
             auto& c=channels_[j];if(!c.active || !c.period)continue;
             const auto& data=song_.instruments[c.instrument-1].samples;
             unsigned index=unsigned(c.phase>>32);
@@ -130,11 +160,11 @@ std::vector<std::int16_t> PatPlayer::render(unsigned frames,unsigned sample_rate
             }
             if(c.sample_offset+index>=data.size())throw std::runtime_error("PAT playback outside sample");
             const unsigned byte=data[c.sample_offset+index];int sample=(byte<128?int(byte):int(byte)-256)*int(std::min(c.volume,64u));
+            sample=sample*int(music_volume_)/100;
             if(j==0 || j==3)left+=sample;else right+=sample;
             c.phase+=(std::uint64_t(3546895)<<32)/(std::uint64_t(sample_rate)*c.period);
         }
         pcm[n*2]=std::int16_t(left);pcm[n*2+1]=std::int16_t(right);
     }
-    return pcm;
 }
 }

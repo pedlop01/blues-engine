@@ -1,6 +1,6 @@
 # TH-14: Titus the Fox Amiga
 
-Estado: **en curso, 54 %**. Lectura nativa de recursos y referencia gráfica
+Estado: **en curso, 64 %**. Lectura nativa de recursos y referencia gráfica
 completadas; inicialización de niveles, consultas de colisión y transiciones
 contrastadas con el original. El núcleo de movimiento sobre terreno está
 contrastado por ticks, incluidas escaleras y movimiento agachado. Las 11 canciones
@@ -340,7 +340,7 @@ Evidencia: [replay original](measurements/th14-audio.json) y
 ## Trabajo necesario para entregar TH-14 a revisión final
 
 La petición vigente es completar TH-14 sin supervisión y reservar el 100 % a la
-revisión del usuario. **Aún no se ha alcanzado esa entrega**: el 54 % describe
+revisión del usuario. **Aún no se ha alcanzado esa entrega**: el 64 % describe
 los bloques implementados, no una tarea terminada pendiente solo de aceptación.
 
 | Bloque pendiente | Criterio de entrega |
@@ -464,3 +464,37 @@ La instrucción vigente es continuar hasta entregar TH-14, sin detenerse en esto
 hitos. El siguiente bloque es la inicialización completa de enemigos, IA e
 impactos, seguido del ciclo jugable, render, audio integrado y adaptador. El
 100 % sigue reservado a la revisión del usuario.
+
+
+## Actores, efectos y primer ciclo nativo (64 %)
+
+Los 453 registros completos de enemigos coinciden con el original. Las 19
+variantes de IA ya tienen implementación nativa; una primera comparación en los
+15 mapas verifica 9000 pasos y todos los registros de 92 bytes por paso. Hay una
+comparación más larga en curso para activar enemigos alejados del inicio.
+Las plataformas coinciden en otros 9000 pasos, incluidas posición, inversión de
+sentido y soporte del jugador. Se desactivan cuatro identificadores de plataforma
+fuera del banco de 71 sprites; no se intenta leer dibujos inexistentes.
+
+Los cinco efectos reales ocupan temporalmente el cuarto canal de Paula. Once
+canciones con efectos consecutivos y reemplazos coinciden en 132000 interrupciones;
+el PCM es idéntico entre Linux, Windows y ASan/UBSan. Se extraen también las
+paletas propias del protagonista y del HUD y la selección real de canción por
+nivel (el nivel 1 utiliza jeu42.pat).
+
+El primer ciclo combinado conecta movimiento, objetos, plataformas, IA,
+proyectiles, impactos, bonus, puertas y salida. Los 15 mapas superan 18000 pasos
+con render periódico; 45 repeticiones y 36000 pasos por compilación coinciden en
+Windows y ASan/UBSan. Esto es una prueba de ejecución y determinismo, **no una
+campaña completa jugada ni una validación visual contra el Amiga**.
+
+La aplicación SDL de desarrollo `titus-fox-amiga` arranca en Linux y Windows con
+música, efectos, cámara, zoom de encuadre, pausa y rebobinado de diez segundos.
+Se compila con `TITUS_BUILD_FOX_AMIGA_RUNTIME=ON` y admite `--datapath`, `--level`,
+`--test-ms` y `--capture`. Aún no está registrada en el lanzador. Su menú y HUD son
+provisionales; siguen pendientes las presentaciones, final, persistencia,
+guardados y protocolo gestionado. No se anuncia paridad completa de opciones.
+
+Evidencia resumida sin recursos comerciales:
+`measurements/th14-actors-validation.json`. Los 462 originales conservan tamaño,
+fecha y SHA256. TH-14 sigue activa y el 100 % requiere revisión del usuario.

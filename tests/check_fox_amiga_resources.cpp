@@ -4,6 +4,8 @@
 #include "titus/fox_amiga_objects.hpp"
 #include "titus/fox_amiga_executable.hpp"
 #include "titus/fox_amiga_rules.hpp"
+#include "titus/fox_amiga_enemies.hpp"
+#include "titus/fox_amiga_platforms.hpp"
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
@@ -51,6 +53,26 @@ int main() try {
     auto black=picture(repeat,4,true);require(black.image.pixels==Bytes(64000,0));
     rejects([&]{auto d=repeat;d.pop_back();picture(d,4,true);});
     rejects([&]{auto d=repeat;d[51]=0;picture(d,4,true);});
+    // Elevator support follows its logical edge, not its visual anchor.
+    NativeRules actor_rules;actor_rules.sprites[30]={32,8,16,8};
+    PlatformBody platform;platform.body.kind=1;platform.body.feet={100,100};platform.direction=1;platform.speed=2;platform.range=2;
+    std::vector<PlatformBody> moving{platform};Body rider;rider.feet={110,101};rider.vy=16;
+    step_platforms(moving,rider,{0,0},actor_rules);
+    require(rider.feet.y==100 && rider.vy==0 && (moving[0].body.flags&0x4000));
+    step_platforms(moving,rider,{0,0},actor_rules);
+    require(rider.feet.x==112 && moving[0].direction==3 && moving[0].counter==0);
+    EnemyBody enemy;enemy.set(6,-160);require(enemy.signed_get(6)==-160 && enemy.get(6)==65376);
+    enemy.animation(0xb1234);require(enemy.animation()==0xb1234);
+    rejects([&]{enemy.get(3);});rejects([&]{enemy.set(92,1);});
+    // A projectile damages once, removes itself and starts recovery. Cheats
+    // preserve the projectile and player while their trajectories continue.
+    EnemyStepContext attack;attack.projectiles[0].kind=1;attack.projectiles[0].feet={100,100};
+    Body target;target.feet={100,99};target.energy=1;
+    step_enemy_projectiles(target,attack,actor_rules);
+    require(!attack.projectiles[0].kind && target.energy==0 && target.state==7 && target.lock_ticks==100 && attack.sound_event==5);
+    attack.projectiles[0].kind=1;attack.projectiles[0].feet={100,100};attack.invulnerable=true;attack.invulnerability=0;
+    target={};target.feet={100,99};step_enemy_projectiles(target,attack,actor_rules);
+    require(attack.projectiles[0].kind==1 && target.energy==16 && !target.lock_ticks);
     Bytes poil(3060,0);
     auto le=[&](unsigned at,unsigned v){poil.at(at)=std::uint8_t(v);poil.at(at+1)=std::uint8_t(v>>8);};
     for(unsigned i=0;i<40;++i){le(768+i*6,65535);le(770+i*6,65535);le(772+i*6,65535);}
@@ -189,6 +211,16 @@ int main() try {
     carrier=object_player_step(object_level,carrier,{false,true,false,false},motion,empty_world,false,full_context);
     require(carrier.state==1);
     rejects([&]{auto bad=context;bad.camera.x=2147483647;step_objects(object_level,objects,carrier,bad,object_rules);});
+    auto fx=std::make_shared<EffectSample>(effect_sample(Bytes(512,127),4000));
+    require(fx->period==894 && fx->samples[0]==0 && fx->samples[1]==0 && fx->hold_ticks==16);
+    PatPlayer effects_only(song);effects_only.volume(0,100);effects_only.play_effect(fx);auto effect_pcm=effects_only.render(4410);
+    require(std::any_of(effect_pcm.begin(),effect_pcm.end(),[](auto value){return value!=0;}));
+    for(unsigned i=1;i<effect_pcm.size();i+=2)require(effect_pcm[i]==0);
+    PatPlayer muted(song);muted.volume(0,0);muted.play_effect(fx);auto silence=muted.render(4410);
+    require(std::all_of(silence.begin(),silence.end(),[](auto value){return value==0;}));
+    require(muted.effect_ticks()==11 && !muted.channels()[3].active);
+    rejects([&]{muted.play_effect(nullptr);});rejects([&]{muted.volume(101,0);});rejects([&]{muted.render_into(nullptr,1);});
+    rejects([]{effect_sample(Bytes(1),4000);});rejects([]{effect_sample(Bytes(8),0);});
     rejects([]{executable_sections({});});
     rejects([]{executable_sections(Bytes(64,0));});
     rejects([]{native_rules(Bytes(51048,0));});

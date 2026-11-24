@@ -3,6 +3,7 @@
 #include "titus/fox_amiga.hpp"
 #include <functional>
 #include <string>
+#include <memory>
 namespace titus::fox_amiga {
 struct PatInstrument {
     std::string name;
@@ -17,6 +18,8 @@ struct PatSong {
 // PAT has a 20-byte title, 15 external sample descriptions and 128 orders.
 // Sample files are raw PCM; the original loader reserves their first two bytes.
 PatSong pat_song(const Bytes&,const std::function<Bytes(const std::string&)>& read_sample);
+struct EffectSample { Bytes samples;unsigned period=0,hold_ticks=0; };
+EffectSample effect_sample(const Bytes& raw,unsigned original_frequency);
 struct PatChannel {
     unsigned instrument=0,period=0,base_period=0,slide_period=0,volume=0,effect=0,parameter=0;
     unsigned sample_offset=0,sample_length=0,loop_offset=0,loop_length=0;
@@ -26,6 +29,10 @@ struct PatChannel {
 class PatPlayer {
 public:
     explicit PatPlayer(PatSong song);
+    void play_effect(std::shared_ptr<const EffectSample> effect);
+    void volume(unsigned music,unsigned effects);
+    unsigned effect_ticks()const{return effect_ticks_;}
+    void render_into(std::int16_t* output,unsigned frames,unsigned sample_rate=44100);
     void tick(); // One original replay interrupt, independent of host audio blocks.
     const std::array<PatChannel,4>& channels()const{return channels_;}
     unsigned order()const{return order_;}
@@ -43,7 +50,9 @@ private:
     int pending_order_=-1;
     bool pending_break_=false;
     std::uint64_t interrupt_phase_=0;
-    unsigned render_rate_=0;
+    unsigned render_rate_=0,music_volume_=100,effect_volume_=100,effect_ticks_=0;
+    std::shared_ptr<const EffectSample> effect_;
+    std::uint64_t effect_phase_=0;
     void effect(PatChannel&);
     void advance_order();
 };

@@ -24,7 +24,8 @@ def main():
     for case in golden['cases']:
         name=case['name']
         if Path(name).name!=name or not name.lower().endswith('.pat'):raise ValueError('Invalid PAT name')
-        options=['--datapath',str(root),'--output',str(output/name),'--audio',name,'--audio-ticks',str(case['ticks'])]
+        label=('fx-' if case.get('effects') else '')+name
+        options=['--datapath',str(root),'--output',str(output/label),'--audio',name,'--audio-ticks',str(case['ticks']),'--audio-effects','1' if case.get('effects') else '0']
         if args.windows:
             wrapper=Path(__file__).resolve().parents[1]/'tools/run_windows_probe.py'
             result=subprocess.run([sys.executable,str(wrapper),'--program',str(args.probe.resolve()),'--output-dir',str(output/'runner'),'--timeout','45','--',*options],capture_output=True,text=True,timeout=55)
@@ -36,8 +37,8 @@ def main():
         report=json.loads(result.stdout);assert not report['playable']
         actual=report['audio'];assert all(actual[k]==case[k] for k in actual),(name,actual,case)
         assert actual['nonzero'] and actual['peak']<32767
-        assert json.loads((output/name/'audio.json').read_text())==json.loads((reference/('audio-'+name)/'audio.json').read_text()),(name,'trace')
-        assert (output/name/'audio.wav').read_bytes()==(reference/('audio-'+name)/'audio.wav').read_bytes(),(name,'PCM')
+        assert json.loads((output/label/'audio.json').read_text())==json.loads((reference/(('audio-fx-' if case.get('effects') else 'audio-')+name)/'audio.json').read_text()),(name,'trace')
+        assert (output/label/'audio.wav').read_bytes()==(reference/(('audio-fx-' if case.get('effects') else 'audio-')+name)/'audio.wav').read_bytes(),(name,'PCM')
         cases.append(actual)
     assert before==snapshot()
     (output/'report.json').write_text(json.dumps(dict(schema_version=1,playable=False,sequencer_only=True,cases=cases,originals_unchanged=True),indent=2)+'\n')
