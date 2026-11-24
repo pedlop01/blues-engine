@@ -144,6 +144,12 @@ bool same_identity(const Json& a,const Json& b) {
     for(auto k:{"game_id","edition_id","variant_id","fingerprint"}) if(a.at(k)!=b.at(k)) return false;
     return true;
 }
+void refresh_detection(Json& installation,const Json& detected) {
+    // Resource identity and locations stay stable when an adapter becomes available.
+    for(const auto* key:{"engine_id","status","save_compatibility_id","preparation_id"})
+        installation[key]=detected.at(key);
+}
+
 }
 std::string platform() {
 #ifdef _WIN32
@@ -541,8 +547,8 @@ Json CatalogStore::add(const fs::path& source,bool recursive,long long expected)
             if(match) {
                 const auto& loc=d.installation["locations"][0];auto& locs=(*match)["locations"];
                 if(std::find(locs.begin(),locs.end(),loc)==locs.end()) { locs.push_back(loc);changed=true; }
-                // Adding an extracted directory can make an ADF-only source ready.
-                if(d.installation["status"]=="recognized"&&(*match)["status"]=="needs_preparation") { (*match)["status"]="recognized";changed=true; }
+                // Refresh engine metadata too: an old Amiga entry can now be playable.
+                if(d.installation["status"]=="recognized" || d.installation["status"]=="needs_preparation") {auto previous=*match;refresh_detection(*match,d.installation);changed=changed||previous!=*match;}
             } else { d.installation["id"]=uuid();c["installations"].push_back(d.installation);changed=true; }
         }
         return changed;
@@ -555,7 +561,7 @@ Json CatalogStore::relocate(const std::string& id,const fs::path& source,long lo
             auto& locations=i["locations"];
             locations.erase(std::remove_if(locations.begin(),locations.end(),[](const Json& l){return l["location"]["platform"]==platform()&&!fs::exists(fs::u8path(l["location"]["path"].get<std::string>()));}),locations.end());
             auto loc=d.installation["locations"][0];if(std::find(locations.begin(),locations.end(),loc)==locations.end())locations.push_back(loc);
-            i["status"]=d.installation["status"];return true;
+            refresh_detection(i,d.installation);return true;
         }
         throw Error("E_IDENTITY_MISMATCH","Replacement resources do not match this installation");
     },expected);
@@ -593,7 +599,7 @@ Json CatalogStore::recheck(const std::string& id,long long expected) {
             }
         }
         require(local,"Installation has no locations on this platform","E_NO_LOCAL_SOURCE");
-        if(!verified.is_null()&&rank(verified)>0) { i["status"]=verified["status"];return true; }
+        if(!verified.is_null()&&rank(verified)>0) { refresh_detection(i,verified);return true; }
         if(!upgrade.is_null()) {
             for(const auto& other:c["installations"])if(other["id"]!=id)
                 require(!same_identity(other,upgrade),"These resources already belong to another installation; add its location and remove the incomplete reference","E_DUPLICATE_IDENTITY");

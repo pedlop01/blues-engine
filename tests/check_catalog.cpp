@@ -121,6 +121,23 @@ int main(int argc,char** argv) {
         auto upgraded=store.recheck(partial_id);bool found=false;
         for(const auto& i:upgraded["installations"])if(i["id"]==partial_id)found=i["variant_id"]=="test-full";
         check(found,"explicit incomplete upgrade keeps UUID");
+        // Existing Amiga entries must gain the new engine on verification,
+        // without losing UUIDs, locations or existing profile files.
+        auto fox_source=temp.root/"fox amiga";write(fox_source/"fox.dat","fox");write(fox_source/"fox.gfx","pixels");
+        auto fox_paths=Paths::resolve(temp.root/"fox-user");auto legacy=profile("fox","amiga");
+        CatalogStore old_fox(fox_paths,Detector(Json::array({legacy})));auto old_catalog=old_fox.add(fox_source);
+        auto fox_id=old_catalog["installations"][0]["id"].get<std::string>();
+        auto modern=legacy;modern["engine_id"]="fox-amiga-native";modern["status"]="recognized";modern["save_compatibility_id"]="fox.amiga.full.audited";
+        CatalogStore new_fox(fox_paths,Detector(Json::array({modern})));
+        auto keep=fox_paths.data/"profiles/old-profile/sentinel";write(keep,"preserved");
+        for(unsigned operation=0;operation<3;++operation){
+            write(fox_paths.catalog(),old_catalog.dump());
+            auto migrated=operation==0?new_fox.recheck(fox_id):operation==1?new_fox.add(fox_source):new_fox.relocate(fox_id,fox_source);
+            const auto& installation=migrated["installations"][0];validate_catalog(migrated);
+            check(migrated["installations"].size()==1 && installation["id"]==fox_id && installation["locations"]==old_catalog["installations"][0]["locations"],"Fox migration preserves identity and locations");
+            check(installation["engine_id"]=="fox-amiga-native" && installation["status"]=="recognized" && installation["save_compatibility_id"]=="fox.amiga.full.audited","Fox migration refreshes engine and compatibility");
+            check(fs::exists(keep),"Fox migration preserves profile files");
+        }
         std::cout<<"OK: "<<checks<<" catalog checks\n";return 0;
     }catch(const std::exception& e) {std::cerr<<"FAIL after "<<checks<<" checks: "<<e.what()<<'\n';return 1;}
 }

@@ -23,7 +23,9 @@ aceptación jugable del usuario; las pruebas automáticas no sustituyen esa revi
 En la biblioteca, verificar de nuevo la carpeta `orig-games/fox-amiga` si fue
 registrada antes de instalar este adaptador. Seleccionar **Titus the Fox → Amiga →
 Jugar**. Los perfiles antiguos con motor ausente siguen siendo legibles y se
-actualizan mediante la verificación; no se mezclan con Fox DOS.
+actualizan mediante la verificación; no se mezclan con Fox DOS. La migración
+actualiza estado, motor y compatibilidad juntos; conserva UUID, ubicaciones y
+archivos de perfil. Se prueba también al volver a añadir o localizar la carpeta.
 
 Paquetes locales de revisión, sin datos comerciales:
 
