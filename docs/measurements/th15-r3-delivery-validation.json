@@ -1,0 +1,13 @@
+{
+  "bundle": "Titus-Engine-TH15-r3-completo.zip",
+  "archive_sha256": "cc3c6e53348f1abf090d4a9c6d808bec4977cc3a259555fdbb4973080c05d359",
+  "windows_launch_ready": true,
+  "actual_engine_revision": "f43848bf900ac8a56530bc0e35afd1b392695e08",
+  "complete_package_extracted_and_launched": true,
+  "schema_version": 1,
+  "task": "TH-15",
+  "progress_percent": 95,
+  "library_play_return_checks_windows": 2,
+  "library_play_return_checks_linux": 2,
+  "zip_extraction_note": "Python extraction needed executable bits for WSL subprocess interop; Windows cmd launch verified directly before that adjustment."
+}
