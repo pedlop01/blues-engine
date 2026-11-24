@@ -32,6 +32,7 @@ def main():
     parser.add_argument('--check-levels', action='store_true', help='Compare native POIL initialization and collision queries')
     parser.add_argument('--check-motion', action='store_true', help='Compare isolated terrain-only player ticks')
     parser.add_argument('--check-audio', action='store_true', help='Compare PAT replay interrupts with the original')
+    parser.add_argument('--check-objects', action='store_true', help='Compare native pickup/drop/throw operations')
     args = parser.parse_args()
     root, output = args.datapath.resolve(), args.output.resolve()
     if output == root or root in output.parents or output.exists():
@@ -59,6 +60,7 @@ def main():
     helper, stop, stack = 0x10000, 0x10002, 0x2f0000
     u.mem_write(helper, b'\x4e\x75\x4e\x71')
     phase, payload, cursor, heap = 'packer', b'', 0, 0x180000
+    motion_interactions=False
 
     def be(address):
         return int.from_bytes(u.mem_read(address, 4), 'big')
@@ -77,6 +79,11 @@ def main():
             elif not bases[5] <= address < bases[5]+496:
                 raise ValueError('Packer execution escaped its isolated segment')
             return
+        if phase == 'objects':
+            if address==0xe7a70:
+                sp=cpu.reg_read(UC_M68K_REG_A7);cpu.reg_write(UC_M68K_REG_PC,be(sp));cpu.reg_write(UC_M68K_REG_A7,sp+4);return
+            if 0xe65d4<=address<0xe661c or 0xe69ce<=address<0xe6d10 or 0xe7a52<=address<0xe7a70:return
+            raise ValueError(f'Object operation escaped to {address:x}')
         if phase == 'audio':
             if 0xe3d6c<=address<0xe43ee:return
             raise ValueError(f'PAT replay escaped to {address:x}')
@@ -88,6 +95,7 @@ def main():
                 cpu.reg_write(UC_M68K_REG_PC,be(sp));cpu.reg_write(UC_M68K_REG_A7,sp+4)
                 return
             ranges=((0xe65d4,0xe69ce),(0xe7028,0xe7a82),(0xe8c34,0xe8da8),(0xe6c74,0xe6c86))
+            if motion_interactions and 0xe69ce<=address<0xe6d10:return
             if any(begin<=address<end for begin,end in ranges):return
             raise ValueError(f'Terrain player step escaped to {address:x}')
         if phase == 'level':
@@ -171,7 +179,8 @@ def main():
     code = bytes(u.mem_read(bases[4], image.segments[4].get_size()))
     motion_walk=[int.from_bytes(code[p:p+2],'big') for p in range(0x7a8e,0x7aaa,2)]
     motion_jump=[int.from_bytes(code[p:p+2],'big',signed=True) for p in range(0x7a82,0x7a8c,2)]
-    palette = dict(walk_frames=motion_walk,jump_impulses=motion_jump,
+    object_rules=[dict(flags=data[0x72c+i],fall_limit=data[0x773+i]*16,width=words(0xd4a+(30+i)*4,1)[0],height=words(0xd4c+(30+i)*4,1)[0]) for i in range(71)]
+    palette = dict(object_rules=object_rules,walk_frames=motion_walk,jump_impulses=motion_jump,
                    main_sha256=MAIN_SHA, palette=words(0x2aa, 16),
                    level_color14=words(0x340, 16),
                    enemy_animation_frames=[i in animation_words for i in range(232)])
@@ -233,9 +242,9 @@ def main():
                 if observed!=expected:raise ValueError(f'{name} audio tick {tick}: native {expected}, original {observed}')
             results.append(dict(reference_match=True,**json.loads(process.stdout)['audio']))
         report['audio']=dict(sequencer_only=True,cases=results)
-    if args.check_levels or args.check_motion:
+    if args.check_levels or args.check_motion or args.check_objects:
         phase = 'level'
-        levels = []
+        levels = [];object_results=[]
         sha = lambda data: hashlib.sha256(data).hexdigest()
         def w(address):
             return int.from_bytes(u.mem_read(address,2),'big')
@@ -245,7 +254,7 @@ def main():
             u.mem_write(address, (value&65535).to_bytes(2,'big'))
         def set_pointer(address,value):
             u.mem_write(address,value.to_bytes(4,'big'))
-        for level in (list(range(1,15))+[16] if args.check_levels else [1]):
+        for level in (list(range(1,15))+[16] if args.check_levels or args.check_objects else [1]):
             if level==1:
                 state=native['level_state']
             else:
@@ -263,6 +272,7 @@ def main():
                 0x80584:0x180300,0x805e4:0x181000,0x80600:0x182000,
                 0x8058a:0x184000,0x80614:0x184200,0x805f8:0x185000,
                 0x805f4:0x185200,0x805c4:0x186000,0x80580:0x190000}
+            if args.check_objects:addresses[0x805c4]=bases[3]+0xd4a
             for address,value in addresses.items():set_pointer(address,value)
             for address,value in {0x804a0:40,0x804a2:50,0x804ae:100,0x804a4:10,
                                   0x804a6:20,0x80578:256,0x8057a:height,0x804b0:30,
@@ -335,6 +345,57 @@ def main():
             for key,value in original_state.items():
                 if state[key]!=value:
                     raise ValueError(f'Level {level} mismatch {key}: native {state[key]}, original {value}')
+            if args.check_objects:
+                phase='objects'
+                cases={'initial':dict(steps=[])}
+                if level==1:
+                    for kind,rule in enumerate(object_rules,1):
+                        if not rule['width'] or not rule['height']:continue
+                        cases[f'kind_{kind}']=dict(objects=[dict(slot=5,kind=kind,x=210,y=415)],steps=[
+                            dict(action='pick',x=209,y=415,right=True),dict(action='attach',x=220,y=400,dx=2,dy=-31),
+                            dict(action='throw',right=True),dict(action='pick',x=221,y=384,right=True),
+                            dict(action='throw',up=True),dict(action='pick'),
+                            dict(action='attach',x=4,y=400,dx=-24,dy=-31),dict(action='drop')])
+                    for label,x,y,right in [('right_edge_miss',194,415,True),('left_edge_pick',226,415,False),
+                        ('vertical_edge_pick',209,419,True),('vertical_miss',209,420,True),('wrong_side',211,415,True)]:
+                        cases[label]=dict(objects=[dict(slot=5,kind=3,x=210,y=415)],steps=[dict(action='pick',x=x,y=y,right=right)])
+                    cases['empty']=dict(objects=[],steps=[dict(action='pick',x=200,y=415,right=True),dict(action='drop'),dict(action='throw')])
+                    cases['first_match']=dict(objects=[dict(slot=2,kind=3,x=210,y=415),dict(slot=8,kind=10,x=211,y=415),dict(slot=39,kind=1,x=1000,y=415)],steps=[dict(action='pick',x=209,y=415,right=True)])
+                    cases['already_last']=dict(objects=[dict(slot=39,kind=3,x=210,y=415)],steps=[dict(action='pick',x=209,y=415,right=True)])
+                original_objects=bytes(u.mem_read(0x181000,960))
+                for name,scenario in cases.items():
+                    script=output/f'objects-{level}-{name}.json';script.write_text(json.dumps(scenario));folder=output/f'objects-{level}-{name}'
+                    process=subprocess.run([str(args.probe.resolve()),'--datapath',str(root),'--output',str(folder),'--palette',str(palette_path),'--level',str(level),'--objects',str(script)],capture_output=True,text=True,timeout=60)
+                    if process.returncode:raise ValueError(f'{name}: {process.stderr}')
+                    trace=json.loads((folder/'objects.json').read_text())
+                    initial_bytes=bytes.fromhex(trace['initial']['objects'])
+                    if name=='initial' and initial_bytes!=original_objects:raise ValueError(f'Level {level}: dynamic object initialization mismatch')
+                    u.mem_write(0x181000,initial_bytes);set_pointer(0x8060c,0)
+                    set_word(0xe7aae,0);set_word(0xe7ab0,0);set_word(0x80bf4,0);set_word(0x80d9a,0);u.mem_write(0x804f5,b'\x00')
+                    # Empty enemy list of fixed valid size, so unsuccessful object
+                    # grabs cannot enter the separate enemy-carrying behavior.
+                    u.mem_write(0x182000,bytes(92*50));set_word(0x804a8,50)
+                    set_word(0x80574,4096);set_word(0x804f6,state['spawn'][0]);set_word(0x804f8,state['spawn'][1]);set_word(0x8050c,0)
+                    for tick,(step,expected) in enumerate(zip(scenario['steps'],trace['steps'])):
+                        for key,address in [('x',0x804f6),('y',0x804f8),('right',0x8050c)]:
+                            if key in step:set_word(address,int(step[key]))
+                        for reg,value in [(UC_M68K_REG_A0,0x190000),(UC_M68K_REG_A1,0x180000),(UC_M68K_REG_A2,0x180100),(UC_M68K_REG_A3,0x180200)]:u.reg_write(reg,value)
+                        action=step['action']
+                        if action=='pick':call(0xe6a70)
+                        elif action=='drop':
+                            if be(0x8060c):call(0xe69ce)
+                        elif action=='throw':
+                            u.mem_write(0x804f0,b'\x01');u.mem_write(0x804ec,bytes([int(step.get('up',False))]));call(0xe6c74)
+                        elif action=='attach':
+                            if 'dx' in step:set_word(0xe7aae,step['dx'])
+                            if 'dy' in step:set_word(0xe7ab0,step['dy'])
+                            if be(0x8060c):
+                                u.reg_write(UC_M68K_REG_D2,w(0x804f6));u.reg_write(UC_M68K_REG_D3,w(0x804f8));call(0xe7a52)
+                        ptr=be(0x8060c)
+                        observed=dict(objects=bytes(u.mem_read(0x181000,960)).hex(),state=[(ptr-0x181000)//24 if ptr else -1,signed(w(0xe7aae)),signed(w(0xe7ab0)),w(0x80bf4),u.mem_read(0x804f5,1)[0],w(0x80d9a)])
+                        if observed!=expected:raise ValueError(f'{name} operation {tick}: object state mismatch: {observed} != {expected}')
+                    object_results.append(dict(level=level,name=name,reference_match=True,**json.loads(process.stdout)['objects']))
+                phase='level'
             if args.check_motion and level==1:
                 phase='motion'
                 neutral={}
@@ -367,6 +428,19 @@ def main():
                     ladder_enter=dict(initial=dict(x=202,y=300,state=3),fixture=dict(floor_row=26,ladder=ladder),steps=[neutral]*12+[dict(up=True)]*12),
                     ladder_side=dict(initial=dict(x=200,y=399,state=4),fixture=dict(floor_row=26,ladder=ladder),steps=[dict(right=True)]*16+[neutral]*20),
                     ladder_from_top=dict(initial=dict(x=202,y=303),fixture=dict(floor_row=26,ladder=ladder),steps=[dict(down=True)]*26+[neutral]*10))
+                carried=dict(object_interactions=True,objects=[dict(slot=39,kind=3,x=202,y=384)],carried=39,attachment=[2,-31],fixture=dict(floor_row=26))
+                scenarios.update(
+                    carry_idle=dict(carried,initial=dict(x=200,y=415),steps=[neutral]*360),
+                    carry_walk=dict(carried,initial=dict(x=200,y=415),steps=[dict(right=True)]*24+[dict(left=True)]*20+[neutral]*10),
+                    carry_jump=dict(carried,initial=dict(x=200,y=415),steps=[dict(up=True,right=True)]*8+[neutral]*60),
+                    carry_crouch=dict(carried,initial=dict(x=200,y=415),steps=[dict(down=True)]*5+[dict(down=True,right=True)]*8+[neutral]*8),
+                    carry_throw_right=dict(carried,initial=dict(x=200,y=415,facing_right=True),steps=[neutral]*3+[dict(action=True)]+[neutral]*8),
+                    carry_throw_left=dict(carried,initial=dict(x=200,y=415),steps=[neutral]*3+[dict(action=True)]+[neutral]*8),
+                    carry_throw_up=dict(carried,initial=dict(x=200,y=415),steps=[dict(action=True,up=True)]*8+[neutral]*30),
+                    carry_ladder=dict(carried,initial=dict(x=200,y=399,state=4),fixture=dict(floor_row=26,ladder=ladder),steps=[dict(up=True)]*20+[dict(down=True)]*20+[neutral]*5),
+                    carry_ceiling_drop=dict(carried,initial=dict(x=200,y=415),fixture=dict(floor_row=26,ceiling_row=24),steps=[dict(right=True)]*8+[neutral]*8),
+                    pickup_latch=dict(object_interactions=True,objects=[dict(slot=5,kind=3,x=210,y=415)],initial=dict(x=200,y=415,state=5,facing_right=True),fixture=dict(floor_row=26),steps=[dict(action=True,down=True)]*10+[dict(down=True)]+[dict(action=True,down=True)]+[neutral]*5),
+                    pickup_move_throw=dict(object_interactions=True,objects=[dict(slot=5,kind=3,x=210,y=415)],initial=dict(x=200,y=415,state=5,facing_right=True),fixture=dict(floor_row=26),steps=[dict(action=True,down=True),neutral]+[dict(right=True)]*8+[dict(action=True,right=True)]+[dict(right=True)]*20))
                 motion_results=[]
                 base_floor=bytes(u.mem_read(0x180100,256))
                 base_horizontal=bytes(u.mem_read(0x180000,256));base_ceiling=bytes(u.mem_read(0x180200,256))
@@ -400,8 +474,16 @@ def main():
                     if 'floor_override' in scenario:terrain_floor=bytes([scenario['floor_override']])*256
                     for address,values in ((0x190000,terrain_map),(0x180000,terrain_horizontal),(0x180100,terrain_floor),(0x180200,terrain_ceiling)):
                         u.mem_write(address,bytes(values))
+                    motion_interactions=scenario.get('object_interactions',False)
+                    set_word(0xe7aac,0);u.mem_write(0x8048a,b'\x00')
+                    if motion_interactions:
+                        obj=trajectory['objects_initial'];u.mem_write(0x181000,bytes.fromhex(obj['objects']))
+                        carried_slot,dx,dy,special,cooldown,sound,latched=obj['state']
+                        set_pointer(0x8060c,0x181000+carried_slot*24 if carried_slot>=0 else 0)
+                        set_word(0xe7aae,dx);set_word(0xe7ab0,dy);set_word(0x80bf4,special);set_word(0x80d9a,sound);set_word(0xe7aac,latched);u.mem_write(0x804f5,bytes([cooldown]))
+                        u.mem_write(0x182000,bytes(92*50));set_word(0x804a8,50)
                     for tick,(keys,expected) in enumerate(zip(scenario['steps'],trajectory['frames'])):
-                        for address,key in ((0x804ee,'left'),(0x804ef,'right'),(0x804ec,'up'),(0x804ed,'down')):
+                        for address,key in ((0x804ee,'left'),(0x804ef,'right'),(0x804ec,'up'),(0x804ed,'down'),(0x804f0,'action')):
                             u.mem_write(address,bytes([int(keys.get(key,False))]))
                         call(0xe70b4)
                         observed=[w(address) for address in fields]
@@ -409,15 +491,21 @@ def main():
                         if expected!=observed:
                             diffs=[(column,a,b) for column,a,b in zip(trajectory['columns'],expected,observed) if a!=b]
                             raise ValueError(f'{name} tick {tick}: native/original {diffs}')
+                        if motion_interactions:
+                            ptr=be(0x8060c)
+                            object_observed=dict(objects=bytes(u.mem_read(0x181000,960)).hex(),state=[(ptr-0x181000)//24 if ptr else -1,signed(w(0xe7aae)),signed(w(0xe7ab0)),w(0x80bf4),u.mem_read(0x804f5,1)[0],w(0x80d9a),w(0xe7aac)])
+                            if trajectory['object_frames'][tick]!=object_observed:raise ValueError(f'{name} tick {tick}: coupled object mismatch: {object_observed} != {trajectory["object_frames"][tick]}')
                     native_motion=json.loads(process.stdout)['motion']
                     motion_results.append(dict(name=name,ticks=len(scenario['steps']),reference_match=True,
-                        sha256=native_motion['sha256'],synthetic_floor=scenario.get('floor_override'),synthetic_geometry='fixture' in scenario))
+                        sha256=native_motion['sha256'],object_frames_sha256=native_motion.get('object_frames_sha256'),object_interactions=motion_interactions,synthetic_floor=scenario.get('floor_override'),synthetic_geometry='fixture' in scenario))
                 report['motion']=dict(terrain_only=True,columns=trajectory['columns'],cases=motion_results)
                 phase='level'
             levels.append(dict(level=level,reference_match=True,fields_verified=len(original_state),
                 collision_queries=132,exit_queries=36,gate_transitions=state['gate_transitions'],objects=state['objects'],enemies=state['enemies'],
                 elevators=state['elevators'],bonuses=state['bonuses'],gates=state['gates']))
         report['levels']=levels
+        if args.check_objects:report['objects']=dict(actors_simulated=False,cases=object_results)
+    report['checks']=dict(levels=args.check_levels,objects=args.check_objects,motion=args.check_motion,audio=args.check_audio)
     report.update(resources_verified=len(report['resources']), native_sprites=native['sprites'],
                   originals_unchanged=before == snapshot(root))
     if not report['originals_unchanged']:

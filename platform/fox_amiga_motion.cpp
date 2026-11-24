@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "titus/fox_amiga.hpp"
+#include "titus/fox_amiga_objects.hpp"
 #include <algorithm>
 #include <stdexcept>
 namespace titus::fox_amiga {
@@ -7,7 +8,13 @@ namespace {
 int floor16(int v){return v>=0?v/16:-((-v+15)/16);}
 void unsupported(const char* text){throw std::runtime_error(text);}
 }
-Body terrain_step(const Level& level,Body b,const BodyInput& input,const MotionRules& rules){
+static Body step_impl(const Level& level,Body b,const BodyInput& input,const MotionRules& rules,ObjectWorld* world,bool action){
+    const Body previous=b;
+    bool fire=action;
+    if(world && world->action_latched){world->action_latched=action;fire=false;}
+    auto carrying=[&](){return world && world->carried.has_value();};
+    auto object_action=[&](){if(fire && carrying())throw_object(*world,b,input.up);};
+    auto pose=[&](int x,int y){if(world)world->attachment={x,y};};
     if(b.state>5 || b.crouch_jump_ticks>100 || b.ice_shift>3 || b.walk_phase>13 || (b.jump_phase>5 && b.jump_phase!=128) || (b.state==2 && b.jump_phase>4) || b.vx<-256 || b.vx>256 || b.vy<-256 || b.vy>256)
         unsupported("Unsupported terrain-only body state");
     if(b.feet.x<4 || b.feet.x>4092 || b.feet.y<20 || b.feet.y>=int(level.height_tiles*16))
@@ -24,25 +31,30 @@ Body terrain_step(const Level& level,Body b,const BodyInput& input,const MotionR
     auto accelerate=[&](int cap=64,int amount=0){if(moving){if(!amount)amount=16>>b.ice_shift;b.vx=b.facing_right?std::min(cap,b.vx+amount):std::max(-cap,b.vx-amount);}};
     auto support=[&](){if(!(floor(b.feet.x+4,b.feet.y+1)|floor(b.feet.x-4,b.feet.y+1))){b.state=3;b.jump_phase=0;if(!b.vy)b.vy=16;}};
     auto descend=[&](){if(input.down){
-        if(floor(b.feet.x,b.feet.y+16)==6){b.feet.x=(b.feet.x&~15)|8;b.state=4;b.vx=b.vy=0;b.feet.y=(b.feet.y|15)+16;}
+        if(floor(b.feet.x,b.feet.y+16)==6){b.feet.x=((b.feet.x&~15)|8)-(carrying()?4:0);b.state=4;b.vx=b.vy=0;b.feet.y=(b.feet.y|15)+16;}
         else {b.state=5;b.vx=0;}
     }};
     if(b.state==0){
+        object_action();
         if(++b.idle_ticks>350)b.idle_ticks=0;
         b.frame=b.vx?2:(b.idle_ticks>250?1:(b.crouch_jump_ticks?15:0));
+        if(carrying()){b.frame=6;pose(2,-31);}
         if(moving)b.state=1;
         if(input.up && !(ceiling(b.feet.x,b.feet.y-32)&1)){b.state=2;b.jump_phase=0;}
         support();descend();
     }else if(b.state==1){
-        b.idle_ticks=0;
+        b.idle_ticks=0;object_action();
         b.walk_phase=(b.walk_phase+1)%14;b.frame=rules.walk_frames[b.walk_phase];
         if(b.frame>=30)unsupported("Invalid walking frame");
-        if(b.crouch_jump_ticks)b.frame=14+(b.walk_phase&1);
+        if(carrying()){b.frame+=4;pose(2,-31);}
+        else if(b.crouch_jump_ticks)b.frame=14+(b.walk_phase&1);
         direction();accelerate();b.state=moving?1:0;
         if(input.up && !(ceiling(b.feet.x,b.feet.y-32)&1)){b.state=2;b.jump_phase=0;}
         support();descend();
     }else if(b.state==2){
-        b.idle_ticks=0;b.frame=14;direction();accelerate();
+        b.idle_ticks=0;object_action();b.frame=14;
+        if(carrying()){b.frame=16;pose(0,-31);}
+        direction();accelerate();
         unsigned next_state=input.up?2:3;
         if(input.up){
             const int impulse=rules.jump_impulses[b.jump_phase];
@@ -53,22 +65,32 @@ Body terrain_step(const Level& level,Body b,const BodyInput& input,const MotionR
         if(++b.jump_phase==5)next_state=3;
         b.state=next_state;
     }else if(b.state==3){
-        b.idle_ticks=0;b.frame=23;direction();accelerate();b.vy=std::min(128,b.vy+16);
+        b.idle_ticks=0;object_action();b.frame=23;
+        if(carrying()){b.frame=17;pose(0,-31);}
+        direction();accelerate();b.vy=std::min(128,b.vy+16);
     }else if(b.state==4){
         b.idle_ticks=0;b.crouch_jump_ticks=0;
         if(b.walk_phase>3)b.walk_phase=0;
-        b.frame=12+(b.walk_phase>>1);direction();accelerate(32,8);
+        b.frame=12+(b.walk_phase>>1);
+        if(carrying()){b.frame-=2;pose(11,-31);}
+        direction();object_action();accelerate(32,8);
         b.vy=0;b.facing_right=false;
         if(input.up){++b.walk_phase;b.vy=-64;}
         else if(input.down){++b.walk_phase;b.vy=64;}
         if(floor(b.feet.x,b.feet.y+floor16(b.vy)-16)!=6 && b.vy<0){b.vy=-96;b.state=3;b.jump_phase=128;}
         if(floor(b.feet.x,b.feet.y-16)!=6 && floor(b.feet.x,b.feet.y)!=6){b.state=3;b.jump_phase=0;}
     }else{
-        b.idle_ticks=0;b.frame=19;direction();b.state=input.down?5:0;
-        if(moving){b.walk_phase=(b.walk_phase+1)%4;b.frame=20+(b.walk_phase>>1);accelerate(32);b.state=5;}
+        b.idle_ticks=0;b.frame=19;const bool carried_on_entry=carrying();
+        if(carried_on_entry){b.frame=22;pose(b.facing_right?11:-11,-8);}
+        direction();b.state=input.down?5:0;
+        if(moving && !carried_on_entry){b.walk_phase=(b.walk_phase+1)%4;b.frame=20+(b.walk_phase>>1);accelerate(32);b.state=5;}
         if(input.up && !(ceiling(b.feet.x,b.feet.y-28)&1)){b.state=2;b.jump_phase=0;b.crouch_jump_ticks=100;}
         support();
         if(input.down && floor(b.feet.x,b.feet.y+16)==6)descend();
+        if(world && fire && !world->action_latched){
+            world->action_latched=true;
+            if(carrying())drop_object(level,*world,previous);else pick_object(*world,previous);
+        }
     }
     b.feet.x=std::clamp(b.feet.x+(b.vx<0?-((-b.vx)/16):b.vx/16),4,4092);
     b.feet.y+=b.vy<0?-((-b.vy)/16):b.vy/16;
@@ -86,7 +108,7 @@ Body terrain_step(const Level& level,Body b,const BodyInput& input,const MotionR
     }
     offset=b.feet.x;
     if(ceiling(offset,b.feet.y-20)&1){
-        if(b.state<=1)b.state=5;
+        if(b.state<=1){b.state=5;if(carrying())drop_object(level,*world,previous);}
         else if(b.state!=5){if(b.vy<0)b.vy=0;b.state=3;b.jump_phase=0;}
     }
     if(b.state==3 && b.jump_phase!=128 && ((ceiling(offset,b.feet.y)|ceiling(offset,b.feet.y-16))&2)){
@@ -100,6 +122,7 @@ Body terrain_step(const Level& level,Body b,const BodyInput& input,const MotionR
             else if(!(horizontal((b.feet.x|15)+1,b.feet.y)&1))b.feet.x+=2;
         }
     }
+    if(carrying())attach_object(*world,b.feet);
     const unsigned under=floor(b.feet.x,b.feet.y+1);
     if(under&128)b.ice_shift=under==0x81?1:under==0x83?2:3;
     else{
@@ -108,6 +131,10 @@ Body terrain_step(const Level& level,Body b,const BodyInput& input,const MotionR
             unsupported("Damage is outside the terrain-only probe");
     }
     return b;
+}
+Body terrain_step(const Level& level,Body b,const BodyInput& input,const MotionRules& rules){return step_impl(level,b,input,rules,nullptr,false);}
+Body object_player_step(const Level& level,Body b,const BodyInput& input,const MotionRules& rules,ObjectWorld& world,bool action){
+    dynamic_object_projection(world);return step_impl(level,b,input,rules,&world,action);
 }
 Bytes body_projection(const Body& b){
     Bytes out;

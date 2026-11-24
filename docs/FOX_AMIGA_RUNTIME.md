@@ -1,10 +1,11 @@
 # TH-14: Titus the Fox Amiga
 
-Estado: **en curso, 46 %**. Lectura nativa de recursos y referencia gráfica
+Estado: **en curso, 48 %**. Lectura nativa de recursos y referencia gráfica
 completadas; inicialización de niveles, consultas de colisión y transiciones
 contrastadas con el original. El núcleo de movimiento sobre terreno está
 contrastado por ticks, incluidas escaleras y movimiento agachado. Las 11 canciones
-PAT tienen reproducción nativa contrastada por interrupciones. **Todavía no es un port jugable** ni un adaptador registrado.
+PAT tienen reproducción nativa contrastada por interrupciones. Se añaden agarre,
+transporte y lanzamiento dentro del paso del personaje. **Todavía no es un port jugable** ni un adaptador registrado.
 La edición DOS, los perfiles existentes y las capacidades del lanzador no cambian.
 
 ## Progreso
@@ -14,7 +15,7 @@ La edición DOS, los perfiles existentes y las capacidades del lanzador no cambi
 | Recursos y referencia gráfica | Descompresores nativos contrastados, mapas/tiles/sprites/pantallas leídos, escenas exportadas y paletas obtenidas del original | Completado con los límites siguientes | 20 % |
 | Inicialización y consultas Amiga | POIL, normalización de mapas/tablas, entidades iniciales, consultas de colisión, puertas y condiciones de salida contrastadas | Completado, 10 de los 20 puntos del bloque de lógica | 10 % |
 | Movimiento sobre terreno | Caminar, frenar, cambiar dirección, saltar/caer y resolver paredes/techos; selección lógica de frames, sin actores | Completado como módulo aislado y acotado | 5 % |
-| Simulación e interacciones restantes | Escaleras y agacharse contrastados; pendientes daños, coger/lanzar, IA/plataformas, anclajes/oclusión, campaña y final | Parcial, 4 puntos de lógica pendientes | 1 % |
+| Simulación e interacciones restantes | Escaleras, agacharse y manipulación de objetos contrastados; pendientes física autónoma de objetos, daños, IA/plataformas, anclajes/oclusión, campaña y final | Parcial, 2 puntos de lógica pendientes | 3 % |
 | Audio Amiga | Secuenciador PAT y muestras externas nativos; 132.000 interrupciones contrastadas y PCM portable. Pendientes efectos, integración y contraste auditivo | Parcial, 10 puntos de audio pendientes | 10 % |
 | Adaptador e integración | Preparación privada nativa, protocolo, preferencias por edición, retorno seguro; exponer solo capacidades implementadas y conservar objetivo PX | Pendiente | 0 % |
 | Validación jugable | Regresión DOS/Blues, campaña Amiga y comprobaciones Linux/Windows, controles, audio y final | Pendiente | 0 % |
@@ -339,12 +340,12 @@ Evidencia: [replay original](measurements/th14-audio.json) y
 ## Trabajo necesario para entregar TH-14 a revisión final
 
 La petición vigente es completar TH-14 sin supervisión y reservar el 100 % a la
-revisión del usuario. **Aún no se ha alcanzado esa entrega**: el 46 % describe
+revisión del usuario. **Aún no se ha alcanzado esa entrega**: el 48 % describe
 los bloques implementados, no una tarea terminada pendiente solo de aceptación.
 
 | Bloque pendiente | Criterio de entrega |
 |---|---|
-| Interacciones | Recoger/lanzar y transportar objetos; daño, muerte y recuperación; bonus y puertas activados por controles reales |
+| Interacciones | Física autónoma de los objetos lanzados, colisiones entre actores; daño, muerte y recuperación; bonus y puertas activados por controles reales |
 | Actores | IA, animaciones, impactos y plataformas; filtrar registros inválidos sin accesos fuera del mapa |
 | Presentación | Anclajes y capas contrastados, cámara y temporización reales; presentación interactiva y final |
 | Audio integrado | Efectos y prioridad del cuarto canal, dispositivo y pausa, volúmenes; escucha comparada |
@@ -354,3 +355,52 @@ los bloques implementados, no una tarea terminada pendiente solo de aceptación.
 Las capacidades públicas y las tareas PX siguen sin cambios. No se ha habilitado
 el botón Jugar para esta edición ni sustituido música Amiga por audio DOS.
 Los 462 archivos originales conservan tamaño, fecha de modificación y SHA256.
+
+
+## Manipulación de objetos y paso del personaje
+
+Se conserva un estado de 24 bytes por objeto, equivalente al original: tipo,
+posición, velocidades, parámetros físicos, temporizador, agarre, flags y tamaños
+de colisión. Los 71 conjuntos de parámetros se obtienen del ejecutable original
+en el descriptor privado; no se deducen del tamaño de los dibujos. La
+inicialización de los **40 objetos en cada uno de los 15 mapas** coincide en los
+960 bytes completos, incluidas las entradas deshabilitadas.
+
+Las operaciones de objeto reproducen el agarre por cercanía, su distinta frontera
+horizontal según la orientación, el intercambio con la última posición de la
+lista, los objetos especiales, el desplazamiento junto al personaje, la suelta
+con corrección de paredes/suelo y los lanzamientos horizontal y vertical. Se
+mantienen las diferencias por flags, la velocidad horizontal retenida al lanzar
+hacia arriba y los cambios de tipo/altura al recoger ciertos objetos.
+
+El contraste aislado comprende **94 casos y 578 operaciones**: las 15
+inicializaciones reales, 71 tipos en estados sintéticos y ocho escenarios de
+frontera/orden de selección. Los estados sintéticos no certifican que esos 71
+tipos aparezcan o sean recogibles en una partida normal. No hay IA ni simulación
+autónoma de objetos en estas pruebas.
+
+`object_player_step` incorpora las acciones al paso del personaje: poses de
+carga al caminar, saltar, caer, agacharse y usar escaleras; suelta bajo techo y
+bloqueo del botón tras recoger hasta soltarlo. El contraste del movimiento crece
+a **35 escenarios y 2252 ticks**; once escenarios nuevos comprueban también
+los 960 bytes de objetos y los siete campos de control de carga en cada tick.
+Solo se ejecuta el paso original del personaje y sus auxiliares; no se ejecutan
+los bucles originales de física de objetos o enemigos. Los objetos lanzados aún
+no avanzan ni golpean a otros actores: ese es el siguiente trabajo de simulación.
+La variante especial de carga lateral asociada al flag original `0x8048a` tampoco
+está implementada; los escenarios usan el modo normal, con ese flag a cero.
+
+```sh
+build/th14-venv/bin/python tools/validate_fox_amiga_resources.py --datapath ../orig-games/fox-amiga --output build/fox-amiga-objects-reference --amitools ../tools/amitools --probe build/th14-native/titus-fox-amiga-probe --check-objects
+python3 tests/check_fox_amiga_objects.py --probe build/th14-native/titus-fox-amiga-probe --datapath ../orig-games/fox-amiga --reference build/fox-amiga-objects-reference --output build/fox-amiga-objects-replay
+build/th14-venv/bin/python tools/validate_fox_amiga_resources.py --datapath ../orig-games/fox-amiga --output build/fox-amiga-carry-reference --amitools ../tools/amitools --probe build/th14-native/titus-fox-amiga-probe --check-motion
+```
+
+Linux, Windows x64 ejecutado y ASan/UBSan producen los mismos estados y firmas.
+El replay de objetos acepta `--windows`; seis casos inválidos comprueban índices,
+tipos, doble agarre, desbordamiento y acciones desconocidas. El replay de
+movimiento compara también los estados de objetos cuando están presentes.
+Evidencias: [objetos](measurements/th14-objects.json),
+[su validación](measurements/th14-objects-validation.json),
+[paso con carga](measurements/th14-carry.json) y
+[su validación](measurements/th14-carry-validation.json).

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "titus/fox_amiga.hpp"
 #include "titus/fox_amiga_audio.hpp"
+#include "titus/fox_amiga_objects.hpp"
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
@@ -132,5 +133,36 @@ int main() try {
     rejects([&]{auto d=pat;d[470]=129;pat_song(d,sample);});
     rejects([&]{auto d=pat;d[49]=16;pat_song(d,sample);});
     rejects([&]{pat_song(pat,[](const auto&){return Bytes(1);});});
+    ObjectRules object_rules;for(auto& rule:object_rules.kinds)rule={0,240,16,16};
+    auto object_level=plane;for(auto& o:object_level.objects)o.kind=0;
+    object_level.objects[2].kind=3;object_level.objects[2].position={110,100};
+    auto objects=initialize_objects(object_level,object_rules);Body carrier;carrier.feet={100,100};carrier.facing_right=true;
+    require(pick_object(objects,carrier) && objects.carried==39 && objects.objects[39].kind==3 && objects.objects[2].kind==0);
+    rejects([&]{pick_object(objects,carrier);});
+    objects.attachment={2,-31};attach_object(objects,{150,110});require(objects.objects[39].feet.x==152 && objects.objects[39].feet.y==79);
+    throw_object(objects,carrier,false);require(!objects.carried && objects.objects[39].vx==160 && objects.objects[39].vy==0 && (objects.objects[39].flags&128));
+    carrier.feet={151,84};require(pick_object(objects,carrier));throw_object(objects,carrier,true);
+    require(objects.objects[39].vx==160 && objects.objects[39].vy==-160 && objects.sound_event==4);
+    carrier.feet={126,100};carrier.facing_right=false;objects=initialize_objects(object_level,object_rules);
+    require(pick_object(objects,carrier)); // Inclusive left-facing boundary.
+    objects.attachment={-1000,-10};attach_object(objects,carrier.feet);drop_object(object_level,objects,carrier);
+    require(!objects.carried && objects.objects[39].feet.x==8);
+    carrier.feet={94,100};carrier.facing_right=true;objects=initialize_objects(object_level,object_rules);
+    require(!pick_object(objects,carrier)); // Exclusive right-facing boundary.
+    object_level.objects[2].kind=25;objects=initialize_objects(object_level,object_rules);carrier.feet={109,100};
+    require(pick_object(objects,carrier) && objects.objects[39].kind==26 && objects.objects[39].height==21);
+    objects.objects[39].flags=4;throw_object(objects,carrier,false);require(objects.objects[39].vy==1 && objects.objects[39].flags==4);
+    rejects([&]{auto invalid=objects;invalid.carried=40;drop_object(object_level,invalid,carrier);});
+    rejects([&]{auto invalid=carrier;invalid.feet.x=2147483647;pick_object(objects,invalid);});
+    require(dynamic_object_projection(objects).size()==960);
+    object_level.floor[1]=1;object_level.objects[2].kind=3;object_level.objects[2].position={110,111};
+    objects=initialize_objects(object_level,object_rules);carrier={};carrier.feet={100,111};carrier.state=5;carrier.facing_right=true;
+    for(unsigned n=0;n<10;++n)carrier=object_player_step(object_level,carrier,{false,false,false,true},motion,objects,true);
+    require(objects.carried==39 && objects.action_latched && carrier.frame==22);
+    carrier=object_player_step(object_level,carrier,{false,false,false,true},motion,objects,false);
+    require(objects.carried && !objects.action_latched);
+    carrier=object_player_step(object_level,carrier,{false,false,false,true},motion,objects,true);
+    require(!objects.carried && objects.action_latched);
+
     std::cout<<"Fox Amiga resource boundaries passed\n";return 0;
 } catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

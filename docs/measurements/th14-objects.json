@@ -1,0 +1,766 @@
+{
+  "schema_version": 1,
+  "main_sha256": "18ca46dd02a3ad3623b03d425f0e0ae489b5090498882aea6d2578161010bc45",
+  "playable": false,
+  "reference": "original POIL object initialization and isolated pickup/drop/throw/attachment",
+  "initialized_objects_per_level": 40,
+  "levels_verified": 15,
+  "objects": {
+    "actors_simulated": false,
+    "cases": [
+      {
+        "level": 1,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "502897b3bd6c65bb114c1a7c7cac259ef25a54c2ef8c2921ec7c8215f5f27892",
+        "steps": 0
+      },
+      {
+        "level": 1,
+        "name": "kind_1",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "9b71f5edd3aba003c45275c7a535e80a1a8f6081f72ebc6d9e2b18251e25121e",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_2",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "a2c6870657afc3aa16d3fc679fc7bacfb77181133c630f410e8704155f034304",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_3",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "1e12c2e3f2c2f69038ed6eafd3f0d9d576580f9b2477fb8db3dd0a23c998350a",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_4",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "b505941e6f7ad0818b5440d079a4a750c43133b1c43ec4d372ef94615338b0cf",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_5",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "a57cbc7ba9cd2d04b1f123258368b4d3bd7202741c7c0c4bca626022a5217929",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_6",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "6f54494b13bc442f896270832e7d3026b6d036a1c64db1c684801b1d67f55be7",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_7",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "22976ef06f347dd208ed15a8c85fbeabc4f9302ce5c554794fc117005ac7be05",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_8",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "857fd3eec81d8b97f1af435eb4966c29bcb5ba6b999845a998a32b551b243d0e",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_9",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "e502cb5091367a382782849fc8e8f86c72b3c9d6ed79069f4ef9260f0ab2134d",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_10",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "75f32ca45d3ea5f02e42fdb7d07bf5c6dac157e077dea024e43b77ecf6127a51",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_11",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "5e9624e2631f1aca11228cfc077bd0969983deb6a0fea84d99f5c1f817cfe9d3",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_12",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "ea15a4724f399d3ffe405fd8137d67fabdc34ff89f1c8290a645e73b04dad93f",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_13",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "16e69c42fe14d70f74915d2c373d38f77bddb0f08e6592b4def729dad4161905",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_14",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "608f07a34b2d48ae192e2b6c5e4c4b02a4179ed06b1325d77c71569961e00125",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_15",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "89867c111b9b3a9cbce5a007c709819fa34172e01dfa7a816f6f08cfa346cbb1",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_16",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "c8ea1cdeeedf69a79811f011732f32b5d801dbca55859b082fe6036dd66edbfc",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_17",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "242d469ac0a544e211e587b38c8adc6950e43e12836a31b626df07c7931d1cd2",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_18",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "8bf7b0c3b3873ed89d344f0eff9b5bc63d9a193406a0558cf41edf477836808a",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_19",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "204bf8fe8570f6d7df1cf5255b82e5b1caa734582a597b4c5b3b99d9dc66d91c",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_20",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "671ec4ccef7bffe53150d59e2a47b010b0778441fb6db6d6f12c560d564a502a",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_21",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "72393e64c2ebb0b4167833ec5db3cd04ac482c3ae87ecfdefbe5b10ede09dc9d",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_22",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "142c5124702e874061a709715379568365897d9a8a688b37a63b7d66c0077849",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_23",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "efdece7ba5ccc41939fef8c9f935a93fca18e21d521455743411dec6dd72c842",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_24",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "1bd26105cab79683568d870590818a1519fc089bc34b47cf96c7823b3c5d2282",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_25",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "79b7b23af672b6403fb234916794418486b4a690c1b13b3e89e3413f0da80d8d",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_26",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "dd1ffd9af12a8b647c2cb08eb65f8b6a78b20be35077e139808dfdfa688bf13c",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_27",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "8704840e3e397f948f0be9627d0329d7cb54f9ddaba6cbfc6ab988ff72512a75",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_28",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "cb0ccbcae03715507208dd30ad40376873d7e035f777d90c6c34005e32fb2795",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_29",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "0dcabe7d3e4a00a89fbb063d2152cedfd34de1c646e1150286528a465191fc6b",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_30",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "e296e12600bbcf4b67070b83549e0db2065399d487b44a344f13cfafd6a38b39",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_31",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "585b20e3f8ac629d7ef4a4d39e5ae99f81a3dbb715747b4bbe40f18d1c471a72",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_32",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "1118a4e52ced6dcb362e536d98e4b21459a5f02d824450e108d546d4365c6fae",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_33",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "4b5cee77fc6e5f41892b6d965874ac9b58f6873ded853954b594252187d94dee",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_34",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "b36952267697c26a7ee9e227a135830eb03cea0cccdb93b773819bad1a370950",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_35",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "f709fd6ceeef5f0139a916526f5f5105f7cb0ee4935c6880f4abe8c2a3732cb3",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_36",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "b569291eed6b00d09832fc3aa00eba1c150c8d7c5980b39c9b8caa5f32f5c350",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_37",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "0682f85de8c844976edae02715960492576dbac685721d4f1c47c3f933911f5d",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_38",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "75a77dcc9b1b86e6b80d0d1fa22418301f1ad9beafd9514717db2f9c83f139c3",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_39",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "0edf7024e56f7fe7f7adf18f1be0b411b96b804d7fa66b2279969680a2c811ea",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_40",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "4fc0e1fc565038fb15f939d76b7ab711b24113b726bec29a36bbffc16b8eb1ae",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_41",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "efc9f1584206e7492bf5e8addea5481d3fb0c580aafb9780d119e5ba51b08e4a",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_42",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "2af83796e4665bd7d7bc4e00d082f68b5c72e0e5442943e531faefa1c7aea9a4",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_43",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "aa8ef4d5d2af6ab66bc7d5d7d23f33adb3694506587da6347754f74b93f67826",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_44",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "370ef5641f7fe9d0b864a912c2e6d51d1f1ca9c1e784faf886ab101d20ef473b",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_45",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "8d6f7ee1360cbfc8b762cfd8ec86a4cc746c0210f41fabb58f7838a6c0825077",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_46",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "d21fe1bd24d6529d7209bb07d70bf1ce2339c0bfe40fe693d610e6d31e862457",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_47",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "55e1228d8bc6fc239cd876a4f2f92431453e18c620644fba36c144d744bcdcdf",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_48",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "ab41158cf316e5e081a8c0f764ae36f35802bbb61acecf7e30448044c21febb5",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_49",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "a9917f83b4ab54253d567435dcd514d0817d2f4ac6df96038d7fa9bad7810b5f",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_50",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "87d3ead068a8eb078e2124baadea3af4c8d57eb2dc947a1a28f2bb241e8d3e14",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_51",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "c36a868218a28bf772a6bdab3fbac8212ad8d2459d845f1ba084fb5a3c9d393c",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_52",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "0e90cab92b42f2e9aeb6ea6c33e23728e953a50a73edb01a4adb84d73205510a",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_53",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "e0b064784edde372851e22e40e5af2d5dc9b8b6bd5b38d8cc8d2505f84c75972",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_54",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "c8cf2776749078fc50f704d35432680e44593efb217b4d40de8ecab7447af900",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_55",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "1bba3b413b1dec0b0f1980da6c010faaba99ca29a3b4f0cb42eb19ba48dfbc5d",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_56",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "fae3d3195b667dac1de01f29b1ee3c73e79464c09cb6ffd70fb2007c16a57675",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_57",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "cb429ec8632cac481375d046d3120d14ca0a7f02626aef854bd7e6040e7db58c",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_58",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "8a4d546d510214f047d1135f853b34c1a203027b4eb18bf0cf649bef55c241fd",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_59",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "1fa4f842673cf5ea1fc3324c60374150b1189c584e05e461be18d60f85e7133b",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_60",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "87b4b3707d948b8f396db3101cbfb4026e19cf903d72b5a76a6aa6d48cdc6587",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_61",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "ba98b890a45fd045e8646b2cd98c14bc0d3f57ed33cc24fe91012005b953feb6",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_62",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "26f31b4fae9e566113e7e70c6c649fa2375132b2671c773bfac0c319baea0677",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_63",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "819cb238f450e7373736f6f61f00b736a2e97573229eb5b063c1df7486c81f3d",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_64",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "cd68a7b8cb7fea7d00eb138785bb7e7d3ddadd7b20ea4ab38935c68585c77a17",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_65",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "2cb3557e888088a44ac68cdac180764f891ca6b88b608ac79ce853413347fb6f",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_66",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "5c7322e566c71a1cdf236a188638276d3689e1e9ee4ba5b5fff491b92b67b922",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_67",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "752600df6965fd7b6fe2f206fc3e103da8012b82f2d01c1dfc9b1241fe0c60ee",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_68",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "12dc6554aa2eb60b3060b9141a54e16fd689b20dd1cb0086d9adb80899dfeddc",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_69",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "55898e143c74e605d1490461ee4a1eddaf2166ac9bc3193b6e0d1fe36ac07a6f",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_70",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "6cd3b43f69379379fa5476a6a06aebff2d4d4351cbc1adde6992708c11200dad",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "kind_71",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "f5801b42aa3c26c808ca85fe0f83fe2743b3a897d15069017744c0548f7a262b",
+        "steps": 8
+      },
+      {
+        "level": 1,
+        "name": "right_edge_miss",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "535dbdf7cb8fd66d89e5245bc660ba2c7218c9497a11ea3341c32cfb15544062",
+        "steps": 1
+      },
+      {
+        "level": 1,
+        "name": "left_edge_pick",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "e40326e63de9ff7c5235117dcdca7c11d146ba533d06bbbfb71df239069afb54",
+        "steps": 1
+      },
+      {
+        "level": 1,
+        "name": "vertical_edge_pick",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "313c74684dcac95bb735cb095aa8abaf226d78fb3b2a6b12ae6b156ef21d228b",
+        "steps": 1
+      },
+      {
+        "level": 1,
+        "name": "vertical_miss",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "535dbdf7cb8fd66d89e5245bc660ba2c7218c9497a11ea3341c32cfb15544062",
+        "steps": 1
+      },
+      {
+        "level": 1,
+        "name": "wrong_side",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "535dbdf7cb8fd66d89e5245bc660ba2c7218c9497a11ea3341c32cfb15544062",
+        "steps": 1
+      },
+      {
+        "level": 1,
+        "name": "empty",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "8158b31e484b4731fd208be1d166a146d38e03eaf2a9c1c661594beb27c08ea1",
+        "steps": 3
+      },
+      {
+        "level": 1,
+        "name": "first_match",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "b5631fa6187aa0a8e9352ce85813f57cf7ef4e1af9973eddd6eac69cfe2384be",
+        "steps": 1
+      },
+      {
+        "level": 1,
+        "name": "already_last",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "2ade8d7246dcbf04c0b02d2ae584d794fe1ca0561c8de71a2fc473d3426525b7",
+        "steps": 1
+      },
+      {
+        "level": 2,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "9629d7f1e066c3ea4bfd18af31413dd34234f4c33e5bf1fbd753b24bfa054ccb",
+        "steps": 0
+      },
+      {
+        "level": 3,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "a1fc7540feb0d1e66d7d26425d89c11885bef49ece7c1a2d746618f72ad9e1ff",
+        "steps": 0
+      },
+      {
+        "level": 4,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "a58d5d147e2584883a197abb36b96d8e4fa7e1295e8bbf5741bf8a0f79f16fcf",
+        "steps": 0
+      },
+      {
+        "level": 5,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "20965fb6f73afe105dd9029e5efba46a9ad1731642017650c06f85f8c35b822b",
+        "steps": 0
+      },
+      {
+        "level": 6,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "efcdd0627d512f870063bd218fa21fd83d1b853d1f35d7b6a3f001b9527908fd",
+        "steps": 0
+      },
+      {
+        "level": 7,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "870f4f5e4b43378cc7fcdc8f3c237d1b44f7327bfe904fc3d497854e887ed065",
+        "steps": 0
+      },
+      {
+        "level": 8,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "0441f818a3077c5a6897674d2de942049cb9a27ed2fa564652c015219ffee9c3",
+        "steps": 0
+      },
+      {
+        "level": 9,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "ba976bff5561cb78f4185270689917be7a3f781ac2a03c633bb5fa2b12a336d5",
+        "steps": 0
+      },
+      {
+        "level": 10,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "fef51dcc4d9310e101abaa16809d80682148376e19e6b1ceda7bbea5af25a124",
+        "steps": 0
+      },
+      {
+        "level": 11,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "5b5554fcbc9742d43139812ddd44553ef6eef74a14678f4c59a51709edeb3d99",
+        "steps": 0
+      },
+      {
+        "level": 12,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "391c8189a6068c7da0168b9a976d4213e66ea8b22ce5ca4bb03b13d1a9721793",
+        "steps": 0
+      },
+      {
+        "level": 13,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "a971f207c4cf3bd969c8d71ae3ca649b12c0d62558656a0636af5087d8125beb",
+        "steps": 0
+      },
+      {
+        "level": 14,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "66cfc5553345644b3bab8b76275069b3c505c929897adcd3372492753b9f021c",
+        "steps": 0
+      },
+      {
+        "level": 16,
+        "name": "initial",
+        "reference_match": true,
+        "actors_simulated": false,
+        "sha256": "ce6cb5e3c50b2a28f630521ae7a0b52d3c27dfcb5d3a2b293fe408d0c9f3728c",
+        "steps": 0
+      }
+    ]
+  },
+  "originals_unchanged": true
+}
