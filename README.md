@@ -4,8 +4,9 @@
 **An extension of [cyxx/blues](https://github.com/cyxx/blues), the engine
 reimplementation by [Gregory Montoir (cyxx)](https://github.com/cyxx) and its
 contributors.** The original engine and reverse-engineering work are theirs;
-this repository preserves the upstream history and adds a new set of features
-focused on the first **Blues Brothers** game.
+this repository preserves the upstream history and adds the shared Titus Engine
+library, Windows support and presentation/gameplay features across the supported
+DOS and Amiga games.
 
 **Titus Engine now has an SDL2 game library, persistent catalog and detection CLI.** The
 current Linux/Windows library launches five games through isolated engine
@@ -34,6 +35,29 @@ Current local deliveries are `build/linux/bin/titus-engine` and
 `python3 tools/build_releases.py --replace`; SDK caches and compiler output stay
 outside `build/`. See [build layout and cleanup](docs/WORKSPACE_CLEANUP.md).
 
+## Engine origins and acknowledgements
+
+Titus Engine builds on the reverse engineering and implementations of the projects
+below. Their original authors retain credit for the code we reuse and adapt.
+
+| Project and original authors | Contribution used here | Source provenance |
+|---|---|---|
+| [blues](https://github.com/cyxx/blues) — Gregory Montoir (cyxx) and contributors | Base engine, game logic and resource decoding for The Blues Brothers, Jukebox Adventure and Prehistorik 2. | [Original engine and revision](CREDITS.md#original-engine) |
+| [OpenTitus](https://github.com/stople/OpenTitus) — Eirik Stople, Eitan Tal and contributors | Adapted DOS game kernel for Titus the Fox, with our SDL2 presentation and library integration around it. | [Imported kernel, revision and modifications](engines/fox_dos/legacy/UPSTREAM.json) |
+| [Olduvai](https://github.com/ksokolowski/olduvai) — Krzysztof Sokołowski | Selected simulation, resource-reader and audio-driver code for Prehistorik 1 DOS; a separate simulation adaptation for Prehistorik 1 Amiga. | [DOS logic](engines/pre1_dos/logic/UPSTREAM.json), [readers and audio](engines/pre1_dos/vendor/UPSTREAM.json), [Amiga adaptation](engines/pre1_amiga/logic/UPSTREAM.json) |
+| [Nuked OPL3](https://github.com/nukeykt/Nuked-OPL3) — Nuke.YKT | OPL chip emulation used by the DOS audio backends. | [Blues audio provenance](third_party/nuked-opl3/README.md), [Fox/Prehistorik copy and license](engines/pre1_dos/vendor/third_party/nuked_opl3/LICENSE) |
+
+Our library, adapters, camera/zoom, menus, saves and rewind extend these foundations.
+The native Fox Amiga implementation has its own [source and authorship notice](engines/fox_amiga/NOTICE.md).
+Original games, artwork, levels and music are credited to Titus and their respective
+rights holders; users provide their game data.
+
+See [CREDITS.md](CREDITS.md) for the full lineage, supporting libraries, research
+tools, pinned revisions and license notices, and each engine's `NOTICE.md` and
+`UPSTREAM.json` for the imported code and modifications.
+
+## Library and supported games
+
 The independent `titus-catalog` tool recognizes the eight audited DOS/Amiga
 resource sets, links known ADF sources and manages installation references without
 changing game files. It manages the catalog; the graphical frontend launches games. Build and test it with
@@ -45,7 +69,7 @@ remembers per-game selections and provides a folder/ADF browser, verification
 and installation management. Keyboard, mouse, controller and fullscreen are
 supported. **Blues Brothers DOS/Amiga, Jukebox Adventure DOS, Prehistorik 2 DOS and Titus
 the Fox DOS/Amiga and Prehistorik 1 DOS/Amiga now launch from the library**, with a clean return and per-game preferences.
-Blues also imports classic preferences and saves reversibly. Fox DOS uses a separate OpenTitus runtime with native private data preparation.
+Blues also imports classic preferences and saves reversibly. Fox DOS uses an isolated kernel adapted from [OpenTitus](https://github.com/stople/OpenTitus), with native private data preparation.
 The PX adapters add 30/60/120 FPS presentation, smooth/original cameras, map zoom,
 in-game options and editable controls, separate audio volumes, assists, eight
 thumbnail saves and VHS rewind to Fox DOS and Prehistorik DOS. Their original
@@ -60,7 +84,7 @@ Fox Amiga uses our independent [native C++/SDL2 runtime](docs/FOX_AMIGA_RUNTIME.
 with smooth camera/dynamic framing, original/fixed HUD, assists, level selection,
 independent volumes, controller bindings, VHS rewind and eight thumbnail saves.
 TH-14 was accepted by the user and completed on 24 November 2026.
-Prehistorik 1 DOS uses Olduvai with native private DIET preparation ([guide](docs/PREHISTORIK_RUNTIME.md)). See the [family runtime](docs/FAMILY_RUNTIME.md),
+Prehistorik 1 DOS adapts [Olduvai](https://github.com/ksokolowski/olduvai) components with native private DIET preparation ([guide](docs/PREHISTORIK_RUNTIME.md)). See the [family runtime](docs/FAMILY_RUNTIME.md),
 [Blues runtime](docs/BLUES_RUNTIME.md), [Fox runtime](docs/FOX_RUNTIME.md) and [library](docs/LIBRARY_FRONTEND.md) guides.
 Build with `-DTITUS_BUILD_LAUNCHER=ON`, Python 3 and SDL2/SDL2_ttf/libmodplug
 development files. Fox DOS additionally needs `TITUS_BUILD_FOX_RUNTIME=ON`; Prehistorik DOS needs

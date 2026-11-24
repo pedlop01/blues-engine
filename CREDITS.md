@@ -58,8 +58,12 @@ The expansion selects [OpenTitus](https://github.com/stople/OpenTitus) (Eirik
 Stople and contributors, GPL-3.0-or-later) for Fox DOS and
 [Olduvai](https://github.com/ksokolowski/olduvai) (Krzysztof Sokołowski,
 GPL-3.0-or-later source) for Prehistorik DOS. They were audited externally and now have separate managed runtimes.
-Pinned source exports and binaries stay under ignored build directories;
-commercial game resources are not imported.
+The selected code is included with provenance manifests under
+`engines/fox_dos/legacy`, `engines/pre1_dos/logic`,
+`engines/pre1_dos/vendor` and `engines/pre1_amiga/logic`. Historical reference
+exports remain separate from these current adapters. SDKs use the system cache,
+and `build/linux` and `build/windows` contain the current local deliveries.
+Commercial game resources are not imported into Git.
 Olduvai's notices distinguish its source license from the GPL-3.0 combined
 binary because of xBRZ. Their dependency notices accompany the managed builds.
 
@@ -69,9 +73,10 @@ was used externally to unpack the user's DIET-compressed executable for audit.
 contributors (GPL-2.0-or-later), was used externally for read-only ADF comparison.
 Neither is bundled. Unicorn 2.1.4 is an external preparation tool for the
 verified Fox COM decompressor; it is not a game runtime dependency.
-Chocolate Doom 1.6.0 OPL (Simon Howard and contributors, GPL-2.0-or-later),
-with OpenTitus DBOPL (DOSBox Team, GPL-2.0-or-later), is rebuilt externally for
-Fox. SDL 1.2 compatibility and SDL_mixer reference SDKs also remain external.
+The historical Fox reference and TH-08 adapter used Chocolate Doom 1.6.0 OPL
+(Simon Howard and contributors, GPL-2.0-or-later) and OpenTitus DBOPL
+(DOSBox Team, GPL-2.0-or-later), with external SDL 1.2/SDL_mixer SDKs.
+The current DOS parity adapters use Nuked OPL3 as described below.
 The engine patches under `patches/` retain GPL-3.0-or-later for their respective
 external engine changes; they do not assign a license to the inherited base.
 Our audit scripts contain no original game data or copies
@@ -100,8 +105,10 @@ notices must accompany binary distribution.
 [DejaVu Sans 2.37](https://dejavu-fonts.github.io/) is bundled unchanged for
 library text, with the [Bitstream Vera license and DejaVu public-domain notices](assets/fonts/LICENSE-DejaVu.txt).
 Its source/checksum are recorded in [assets/fonts/README.md](assets/fonts/README.md).
-No original game fonts or artwork are used by the frontend. Native game HUDs
-retain their resource sets and authorship. See the [frontend guide](docs/LIBRARY_FRONTEND.md)
+Library text uses DejaVu Sans. The visual selector can display original title
+artwork extracted locally from the user's game files or user-provided covers;
+these images are not committed to Git. Their authorship remains with the original
+rights holders. Native game HUDs retain their resource sets and authorship. See the [frontend guide](docs/LIBRARY_FRONTEND.md)
 for pinned dependencies and validation.
 
 The managed family runtime in `engines/blues-family/` calls the same inherited
@@ -112,16 +119,20 @@ Original game resources remain external.
 
 ## Managed Titus the Fox runtime
 
-Fox DOS now uses a separate [OpenTitus runtime](docs/FOX_RUNTIME.md), derived from
+The current Fox DOS adapter uses an isolated, modified kernel derived from
 [OpenTitus](https://github.com/stople/OpenTitus) at
 `6540e8f2867f99aff54ad1a710ae6379ecb9c590`, Copyright (C) 2008–2011 The OpenTitus
-team, including Eirik Stople (GPL-3.0-or-later). OPL uses the pinned Chocolate
-Doom interface and DOSBox DBOPL noted in the [runtime notices](engines/opentitus/NOTICE.md).
-Full GPL and SDK notices accompany the local engine package. Patches and the
-managed bridge retain their GPL declarations. No commercial upstream `bin/`
-assets or precompiled OPL code are included; data is prepared from the user's COM.
-The frontend does not link this external engine. Final redistribution and
-corresponding-source packaging remain task 18.
+team, including Eirik Stople and Eitan Tal (GPL-3.0-or-later). Its SDL2 host,
+presentation and state traversal are documented in the
+[current notice](engines/fox_dos/NOTICE.md) and
+[source provenance manifest](engines/fox_dos/legacy/UPSTREAM.json).
+The DOS audio backend retains OpenTitus sequencing and uses Nuked OPL3 synthesis.
+
+The earlier TH-08 runtime used the Chocolate Doom/DOSBox OPL implementation;
+its [historical runtime notices](engines/opentitus/NOTICE.md) retain that attribution.
+Dependency and GPL notices accompany the local engine packages. Original game
+data is supplied by the user; no commercial upstream `bin/` assets or precompiled
+OPL code are included in Git. Public release/source packaging remains task 18.
 
 ## Historical TH-09 Prehistorik DOS runtime
 
