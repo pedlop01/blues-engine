@@ -16,13 +16,10 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILD = ROOT / 'build'
-KEEP = {
-    'th14-release', 'th14-windows', 'th14-venv', 'th14-deps',
-    'SDL2-2.30.12', 'pre1-sources', 'fox-sources',
-    'pf-modplug-windows', 'libmodplug-0.8.9.0',
-    'retained-state', 'retained-validation', 'retained-configs',
-    'cleanup-report.json',
-}
+KEEP = {'linux', 'windows'}
+STATE = Path(os.environ.get('XDG_STATE_HOME', Path.home() / '.local/state')) / 'titus-engine'
+BACKUP = STATE / 'workspace-backups' / ('cleanup-' + hashlib.sha256(str(ROOT).encode()).hexdigest()[:12])
+
 STATE_NAMES = {'preferences.ini', 'preferences.json', 'catalog.json',
                'game-settings.json', 'library.json'}
 
@@ -75,27 +72,7 @@ def main():
         raise SystemExit('Tracked files found in build/; review manually.')
 
     keep = set(KEEP)
-    revisions = []
-    for platform in ('linux', 'windows'):
-        packages = [(int(m[1]), p.name) for p in BUILD.iterdir()
-                    if (m := re.fullmatch(r'library-package-' + platform + r'-r(\d+)', p.name))]
-        if packages:
-            revision, package = max(packages)
-            keep.add(package)
-            revisions.append(revision)
-    for revision in set(revisions):
-        keep.update(f'library-r{revision}-{suffix}' for suffix in (
-            'art', 'e2e-linux', 'e2e-windows', 'packaged-ui',
-            'gallery.png', 'windows-gallery.png'))
-
     targets = [p for p in sorted(BUILD.iterdir()) if p.name not in keep]
-    # SDK architectures/tests and downloaded archives unused by active x64 builds.
-    targets += [p for p in (
-        BUILD / 'SDL2-2.30.12/i686-w64-mingw32',
-        BUILD / 'SDL2-2.30.12/test',
-        BUILD / 'th14-deps/SDL2_ttf-2.22.0/i686-w64-mingw32',
-        BUILD / 'th14-deps/SDL2_ttf-devel-2.22.0-mingw.tar.gz',
-    ) if p.exists() or p.is_symlink()]
     # Stale Make outputs outside build/, including Python bytecode caches.
     outside = []
     for directory, dirs, files in os.walk(ROOT, followlinks=False):
@@ -122,15 +99,15 @@ def main():
         return
 
     before = size(BUILD) + sum(size(p) for p in outside)
-    archive = BUILD / 'retained-state'
-    archive.mkdir(exist_ok=True)
+    archive = BACKUP / 'retained-state'
+    archive.mkdir(parents=True, exist_ok=True)
     manifest = archive / 'manifest.json'
     records = json.loads(manifest.read_text()) if manifest.exists() else []
     known = {(r['path'], r['sha256']) for r in records}
     objects = archive / 'objects'
     objects.mkdir(exist_ok=True)
-    validation = BUILD / 'retained-validation'
-    configs = BUILD / 'retained-configs'
+    validation = BACKUP / 'retained-validation'
+    configs = BACKUP / 'retained-configs'
     validation.mkdir(exist_ok=True)
     configs.mkdir(exist_ok=True)
     # Finish every preservation step before beginning deletion.
@@ -171,7 +148,7 @@ def main():
     report = {'before_bytes': before, 'after_bytes': after,
               'reclaimed_bytes': before - after, 'removed_paths': len(targets + outside) - len(errors),
               'preserved_state_records': len(records), 'errors': errors}
-    (BUILD / 'cleanup-report.json').write_text(json.dumps(report, indent=2) + '\n')
+    (BACKUP / 'cleanup-report.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
     if errors:
         raise SystemExit(1)

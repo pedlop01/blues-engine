@@ -49,3 +49,36 @@ se tratan como enlaces; sus destinos externos se mantienen.
 Tras la limpieza pasaron las compilaciones de desarrollo Linux/Windows, los ocho
 tests CTest y el smoke test del lanzador Windows empaquetado. La comprobación
 posterior del plan no encontró más salidas obsoletas.
+
+
+## Organización actual: dos entregas
+
+La revisión siguiente sustituye los directorios anteriores por:
+
+```text
+build/
+  linux/bin/titus-engine
+  windows/bin/titus-engine.exe
+```
+
+Cada carpeta contiene los cinco motores, fuentes, imágenes, licencias y utilidades
+necesarios para esa plataforma. Los directorios de compilación se crean bajo
+`$XDG_CACHE_HOME/titus-engine/work` y se eliminan al terminar correctamente.
+Los SDK compartidos están en `$XDG_CACHE_HOME/titus-engine/deps`, y los registros
+de compilación en `$XDG_STATE_HOME/titus-engine/build-logs`.
+
+Los respaldos anteriores se trasladan a
+`$XDG_STATE_HOME/titus-engine/workspace-backups` (por defecto `~/.local/state`).
+`tools/clean_workspace.py` conserva ahora únicamente `linux` y `windows`; cualquier
+nuevo respaldo se guarda fuera de `build/`.
+
+Para compilar desde cero ambas versiones usando los SDK de la caché:
+
+```sh
+python3 tools/build_releases.py --replace
+```
+
+Puede seleccionarse `--platform linux` o `--platform windows`. El script compila
+en Release, verifica las pruebas, instala la entrega y elimina símbolos de
+depuración de los binarios distribuidos. `--keep-work` permite conservar
+explícitamente los intermedios si se está investigando un fallo.

@@ -30,14 +30,14 @@ nativa privada. [TH-09](PREHISTORIK_RUNTIME.md) añade Prehistorik 1 DOS mediant
 Las entregas actuales conservadas tras la limpieza del espacio de trabajo son:
 
 ```text
-Windows: build/library-package-windows-r6/bin/titus-engine.exe
-Linux:   build/library-package-linux-r6/bin/titus-engine
+Windows: build/windows/bin/titus-engine.exe
+Linux:   build/linux/bin/titus-engine
 ```
 
 Conserva las carpetas y dependencias de cada paquete. La revisión r6 incluye
 selector con imágenes reales de título y ocho slots de Jukebox/P2 accesibles
-desde Partidas. Los builds de desarrollo siguen en `build/th14-release` y
-`build/th14-windows`; las recetas posteriores permiten crear builds nuevos.
+desde Partidas. `tools/build_releases.py --replace` reconstruye ambas versiones desde cero; los
+intermedios se mantienen fuera del repositorio y se eliminan tras la compilación.
 Ver [limpieza y respaldos locales](WORKSPACE_CLEANUP.md).
 
 La primera apertura muestra una biblioteca vacía si todavía no existe catálogo.
@@ -56,8 +56,8 @@ El explorador no selecciona automáticamente el primer ADF al abrir una carpeta.
 Opciones útiles:
 
 ```sh
-build/library-package-linux-r6/bin/titus-engine --browse-dir /ruta/a/mis/juegos
-build/library-package-linux-r6/bin/titus-engine --user-dir /ruta/absoluta/a/un/perfil/de/prueba
+build/linux/bin/titus-engine --browse-dir /ruta/a/mis/juegos
+build/linux/bin/titus-engine --user-dir /ruta/absoluta/a/un/perfil/de/prueba
 ```
 
 `--browse-dir` configura la ubicación inicial del explorador, sin registrar datos
