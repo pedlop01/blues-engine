@@ -1,0 +1,703 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-24",
+  "source_revision": "cf7550fd21fd88f2a6c18b2967cd77febbaf5299",
+  "family_build_revision": "cf7550fd21fd88f2a6c18b2967cd77febbaf5299-pf4",
+  "problem": "Prehistorik 2 camera oscillation and clipped left-edge tiles; Jukebox r3 accepted by user",
+  "validation": {
+    "p2-linux-final": {
+      "platform": "linux",
+      "cases": [
+        {
+          "case": "clip",
+          "result": "pass"
+        },
+        {
+          "case": "backdrop",
+          "result": "pass"
+        },
+        {
+          "case": "camera",
+          "result": "pass"
+        },
+        {
+          "case": "foreground",
+          "result": "pass"
+        },
+        {
+          "case": "motion",
+          "result": "pass"
+        },
+        {
+          "case": "timeline",
+          "result": "pass"
+        }
+      ],
+      "clipping_placements": 700,
+      "native_motion_routes": 4,
+      "native_frames_per_route": 360
+    },
+    "p2-windows-final": {
+      "platform": "windows",
+      "cases": [
+        {
+          "case": "clip",
+          "result": "pass"
+        },
+        {
+          "case": "backdrop",
+          "result": "pass"
+        },
+        {
+          "case": "camera",
+          "result": "pass"
+        },
+        {
+          "case": "foreground",
+          "result": "pass"
+        },
+        {
+          "case": "motion",
+          "result": "pass"
+        },
+        {
+          "case": "timeline",
+          "result": "pass"
+        }
+      ],
+      "clipping_placements": 700,
+      "native_motion_routes": 4,
+      "native_frames_per_route": 360
+    },
+    "p2-sanitize-final": {
+      "platform": "linux",
+      "cases": [
+        {
+          "case": "clip",
+          "result": "pass"
+        },
+        {
+          "case": "backdrop",
+          "result": "pass"
+        },
+        {
+          "case": "camera",
+          "result": "pass"
+        },
+        {
+          "case": "foreground",
+          "result": "pass"
+        },
+        {
+          "case": "motion",
+          "result": "pass"
+        },
+        {
+          "case": "timeline",
+          "result": "pass"
+        }
+      ],
+      "clipping_placements": 700,
+      "native_motion_routes": 4,
+      "native_frames_per_route": 360
+    },
+    "ja-regression": {
+      "platform": "linux",
+      "cases": [
+        {
+          "case": "sprites",
+          "result": "pass"
+        },
+        {
+          "case": "resize",
+          "result": "pass"
+        },
+        {
+          "case": "backdrop",
+          "result": "pass"
+        },
+        {
+          "case": "music",
+          "result": "pass"
+        },
+        {
+          "case": "death",
+          "result": "pass"
+        },
+        {
+          "case": "scroll",
+          "result": "pass"
+        },
+        {
+          "case": "camera",
+          "result": "pass"
+        },
+        {
+          "case": "motion",
+          "result": "pass"
+        }
+      ],
+      "death_routes": 32
+    },
+    "matrix-linux": {
+      "platform": "linux",
+      "stages": [
+        {
+          "module": "ja",
+          "stage": 1,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 2,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 3,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 4,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 5,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 6,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 7,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 8,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 9,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 10,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 11,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 12,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 13,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 14,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 15,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 16,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 17,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 18,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 19,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 20,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 21,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 22,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 23,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 24,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 25,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 26,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 27,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 28,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 29,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 30,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 31,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 0,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 1,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 2,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 3,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 4,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 5,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 6,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 7,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 8,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 9,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 10,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 11,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 12,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 13,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 14,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 15,
+          "result": "pass"
+        }
+      ]
+    },
+    "matrix-windows": {
+      "platform": "windows",
+      "stages": [
+        {
+          "module": "ja",
+          "stage": 1,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 16,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 31,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 0,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 5,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 9,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 15,
+          "result": "pass"
+        }
+      ]
+    },
+    "camera-d3d": {
+      "program": "check_p2_presentation.exe",
+      "exit": 0,
+      "stdout": "PASS: Prehistorik 2 scroll regression\r\n",
+      "stderr": ""
+    },
+    "backdrop-d3d": {
+      "program": "check_p2_presentation.exe",
+      "exit": 0,
+      "stdout": "PASS: Prehistorik 2 scroll regression\r\n",
+      "stderr": ""
+    },
+    "packaged-launcher": {
+      "program": "titus-engine.exe",
+      "exit": 0,
+      "stdout": "{\"fullscreen\":false,\"games\":5,\"installations\":8,\"selected_game\":\"blues\",\"ui_checks\":26}\r\n",
+      "stderr": ""
+    },
+    "packaged-p2": {
+      "program": "titus-session.exe",
+      "exit": 0,
+      "stdout": "{\"directory\":\"\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\plopez\\\\proj\\\\titus\\\\blues-engine\\\\build\\\\pf-delivery-profile\\\\cache\\\\sessions\\\\9ac58cd6-8618-43e8-9b56-1c290c26ffee\",\"error\":\"\",\"inspection\":{\"engine_id\":\"blues-family\",\"error\":null,\"features\":[\"return_to_library\",\"native_pause\",\"fullscreen\",\"separate_volumes\",\"controller_bindings\",\"smooth_camera\",\"dynamic_view\",\"hud_modes\",\"invulnerability\",\"lives_options\",\"level_select\",\"rewind\"],\"game_id\":\"prehistorik2\",\"inspection_id\":\"041e73b9-f213-4531-a5d8-ad0ee0c88dfc\",\"kind\":\"inspection\",\"preparation_ids\":[],\"profile_id\":\"72b5fc30-409c-4dd8-8f46-b648649477a4\",\"save_compatibility_id\":\"prehistorik2.full.audited\",\"save_index\":null,\"save_slot_count\":0,\"schema_version\":1,\"status\":\"ok\"},\"message\":\"De vuelta en tu biblioteca.\",\"ready\":true,\"state\":\"done\"}\r\n",
+      "stderr": ""
+    },
+    "managed_linux": {
+      "result": "pass",
+      "original_files_unchanged": 462,
+      "log": "build/pf-r4-managed-linux.log"
+    },
+    "managed_windows": {
+      "result": "pass",
+      "original_files_unchanged": 462,
+      "log": "build/pf-r4-managed-windows-final.log"
+    }
+  },
+  "registry": {
+    "schema_version": 1,
+    "kind": "engine_registry",
+    "role": "package",
+    "engines": [
+      {
+        "engine_id": "blues-family",
+        "adapter_state": "validated",
+        "expected_protocol": 1,
+        "source_revision": "cf7550fd21fd88f2a6c18b2967cd77febbaf5299",
+        "executables": {
+          "linux": "engines/blues-family/blues-family-runtime",
+          "windows": "engines/blues-family/blues-family-runtime.exe"
+        },
+        "games": [
+          {
+            "game_id": "blues",
+            "editions": [
+              "dos",
+              "amiga"
+            ],
+            "reference_native_features": [
+              "return_to_library",
+              "native_pause",
+              "fullscreen",
+              "save_slots",
+              "save_thumbnails",
+              "rewind",
+              "dynamic_view",
+              "smooth_camera",
+              "hud_modes",
+              "invulnerability",
+              "lives_options",
+              "level_select",
+              "character_select",
+              "controller_bindings",
+              "separate_volumes",
+              "audio_mode_selection",
+              "live_edition_switch"
+            ]
+          },
+          {
+            "game_id": "jukebox",
+            "editions": [
+              "dos"
+            ],
+            "reference_native_features": [
+              "return_to_library",
+              "native_pause",
+              "fullscreen",
+              "controller_bindings",
+              "separate_volumes",
+              "smooth_camera",
+              "dynamic_view",
+              "hud_modes",
+              "invulnerability",
+              "lives_options",
+              "level_select",
+              "rewind",
+              "character_select"
+            ]
+          },
+          {
+            "game_id": "prehistorik2",
+            "editions": [
+              "dos"
+            ],
+            "reference_native_features": [
+              "return_to_library",
+              "native_pause",
+              "fullscreen",
+              "controller_bindings",
+              "separate_volumes",
+              "smooth_camera",
+              "dynamic_view",
+              "hud_modes",
+              "invulnerability",
+              "lives_options",
+              "level_select",
+              "rewind"
+            ]
+          }
+        ]
+      },
+      {
+        "engine_id": "opentitus",
+        "adapter_state": "validated",
+        "expected_protocol": 1,
+        "source_revision": "6540e8f2867f99aff54ad1a710ae6379ecb9c590",
+        "executables": {
+          "linux": "engines/opentitus/opentitus-runtime",
+          "windows": "engines/opentitus/opentitus-runtime.exe"
+        },
+        "games": [
+          {
+            "game_id": "fox",
+            "editions": [
+              "dos"
+            ],
+            "reference_native_features": [
+              "return_to_library",
+              "native_pause",
+              "fullscreen",
+              "save_slots",
+              "save_thumbnails",
+              "rewind",
+              "dynamic_view",
+              "smooth_camera",
+              "hud_modes",
+              "invulnerability",
+              "lives_options",
+              "level_select",
+              "separate_volumes",
+              "controller_bindings"
+            ]
+          }
+        ]
+      },
+      {
+        "engine_id": "olduvai",
+        "adapter_state": "validated",
+        "expected_protocol": 1,
+        "source_revision": "a69e9204fc311c8810d696a6b799000d1bcd1642",
+        "executables": {
+          "linux": "engines/olduvai/olduvai-runtime",
+          "windows": "engines/olduvai/olduvai-runtime.exe"
+        },
+        "games": [
+          {
+            "game_id": "prehistorik",
+            "editions": [
+              "dos"
+            ],
+            "reference_native_features": [
+              "return_to_library",
+              "native_pause",
+              "fullscreen",
+              "save_slots",
+              "save_thumbnails",
+              "rewind",
+              "dynamic_view",
+              "smooth_camera",
+              "hud_modes",
+              "invulnerability",
+              "lives_options",
+              "level_select",
+              "separate_volumes",
+              "controller_bindings"
+            ]
+          }
+        ]
+      },
+      {
+        "engine_id": "fox-amiga-native",
+        "adapter_state": "validated",
+        "expected_protocol": 1,
+        "source_revision": "cf7550fd21fd88f2a6c18b2967cd77febbaf5299",
+        "executables": {
+          "linux": "engines/fox_amiga/titus-fox-amiga",
+          "windows": "engines/fox_amiga/titus-fox-amiga.exe"
+        },
+        "games": [
+          {
+            "game_id": "fox",
+            "editions": [
+              "amiga"
+            ],
+            "reference_native_features": [
+              "return_to_library",
+              "native_pause",
+              "fullscreen",
+              "save_slots",
+              "save_thumbnails",
+              "rewind",
+              "dynamic_view",
+              "smooth_camera",
+              "hud_modes",
+              "invulnerability",
+              "lives_options",
+              "level_select",
+              "separate_volumes",
+              "controller_bindings"
+            ]
+          }
+        ]
+      },
+      {
+        "engine_id": "pre1-amiga-native",
+        "adapter_state": "validated",
+        "expected_protocol": 1,
+        "source_revision": "cf7550fd21fd88f2a6c18b2967cd77febbaf5299",
+        "executables": {
+          "linux": "engines/pre1_amiga/titus-pre1-amiga",
+          "windows": "engines/pre1_amiga/titus-pre1-amiga.exe"
+        },
+        "games": [
+          {
+            "game_id": "prehistorik",
+            "editions": [
+              "amiga"
+            ],
+            "reference_native_features": [
+              "return_to_library",
+              "native_pause",
+              "fullscreen",
+              "save_slots",
+              "save_thumbnails",
+              "rewind",
+              "dynamic_view",
+              "smooth_camera",
+              "hud_modes",
+              "invulnerability",
+              "lives_options",
+              "level_select",
+              "separate_volumes",
+              "controller_bindings"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "packaged_hello": {
+    "body": {
+      "build_revision": "cf7550fd21fd88f2a6c18b2967cd77febbaf5299-pf4",
+      "engine_id": "blues-family",
+      "protocol": 1
+    },
+    "event": "hello",
+    "kind": "event",
+    "schema_version": 1,
+    "seq": 1,
+    "session_id": "9ac58cd6-8618-43e8-9b56-1c290c26ffee"
+  },
+  "ctest": "8/8 pass",
+  "visual_review": "Native P2 cave frame inspected; ground, background and HUD intact",
+  "artifacts": {
+    "build/pf-package-windows-r4/bin/titus-engine.exe": {
+      "bytes": 4326009,
+      "sha256": "855bd9a19a5ac92721cbc5bcc5fc1b1cc2b1198f7aeae259d78f4f0169c326fb"
+    },
+    "build/pf-package-windows-r4/bin/engines/blues-family/blues-family-runtime.exe": {
+      "bytes": 6522799,
+      "sha256": "2b2b0969ae9d321d5bc3d3844c060fa490d328cbc80e1cfa1e011630cf14ec89"
+    }
+  }
+}
