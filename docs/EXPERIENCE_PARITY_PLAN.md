@@ -9,25 +9,26 @@ TH-14 y TH-15 están implementadas y aceptadas. PX amplía ahora las ediciones
 DOS, con sus simulaciones propias; no sustituye ni modifica esas entregas Amiga.
 TH-16 está cancelada / no aplicable: Prehistorik 2 no salió para Amiga.
 
-**24-11-2026: implementación y validación automática listas para revisión.**
+**24-11-2026: PX-01–PX-08 cerradas al 100 % por aceptación del usuario:**
+«funcionan perfecto!».
 Detalle, controles, límites y pruebas en [DOS_PARITY_RUNTIME.md](DOS_PARITY_RUNTIME.md).
-El 100 % queda pendiente de la revisión jugando, con dispositivos reales.
+La aceptación cierra este bloque; no equivale a documentar campañas completas
+o pruebas de todos los dispositivos físicos. Ese repaso queda para la distribución.
 
 | ID | Tarea y criterio de aceptación | Fox DOS | Prehistorik 1 DOS | Dependencia |
 |---|---|---:|---:|---|
-| PX-01 | Scroll super suave: desacoplar lógica y presentación a 30/60/120 Hz, interpolar cámara y sprites; no alterar física, colisiones o velocidad; comprobar bordes, escaleras, plataformas, golpes y cambios de habitación | 95 % | 95 % | TH-12 |
-| PX-02 | Cámara original/suavizada y zoom real del mapa, con transiciones suaves, límites correctos y HUD original independiente del encuadre | 95 % | 95 % | PX-01 |
-| PX-03 | Menú in-game común centrado, misma navegación/tecla de pausa y retorno que Blues; controles editables, guardados/ayudas/accesos sin duplicados | 95 % | 95 % | PX-02 |
-| PX-04 | Volúmenes música/efectos independientes y sin petardeos; persistencia por capas, mute/restauración, pausa y cambios de dispositivo probados | 95 % | 95 % | PX-03 |
-| PX-05 | Invulnerabilidad, vidas ajustables/infinitas, selector de nivel y reinicio/selección de personaje cuando el juego la tenga; no inventar personajes o niveles | 95 % | 95 % | PX-03 |
-| PX-06 | Ocho slots con miniaturas y resumen, carga desde juego/biblioteca, formato versionado y validación de recursos; guardar estado completo, no solo posición/nivel | 95 % | 95 % | PX-03 |
-| PX-07 | Rebobinado de varios segundos, simulación visible marcha atrás y efecto VHS como Blues; RNG, objetos, enemigos, scroll y estado de audio coherentes tras reanudar | 95 % | 95 % | PX-06 |
-| PX-08 | Regresión de paridad: matriz equivalente a Blues con rutas/campañas, temporización, controles, ayudas, ocho slots y rebobinado; Linux/Windows y dispositivos reales | 90 % | 90 % | PX-01–PX-07 |
+| PX-01 | Scroll super suave: desacoplar lógica y presentación a 30/60/120 Hz, interpolar cámara y sprites; no alterar física, colisiones o velocidad; comprobar bordes, escaleras, plataformas, golpes y cambios de habitación | 100 % | 100 % | TH-12 |
+| PX-02 | Cámara original/suavizada y zoom real del mapa, con transiciones suaves, límites correctos y HUD original independiente del encuadre | 100 % | 100 % | PX-01 |
+| PX-03 | Menú in-game común centrado, misma navegación/tecla de pausa y retorno que Blues; controles editables, guardados/ayudas/accesos sin duplicados | 100 % | 100 % | PX-02 |
+| PX-04 | Volúmenes música/efectos independientes y sin petardeos; persistencia por capas, mute/restauración, pausa y cambios de dispositivo probados | 100 % | 100 % | PX-03 |
+| PX-05 | Invulnerabilidad, vidas ajustables/infinitas, selector de nivel y reinicio/selección de personaje cuando el juego la tenga; no inventar personajes o niveles | 100 % | 100 % | PX-03 |
+| PX-06 | Ocho slots con miniaturas y resumen, carga desde juego/biblioteca, formato versionado y validación de recursos; guardar estado completo, no solo posición/nivel | 100 % | 100 % | PX-03 |
+| PX-07 | Rebobinado de varios segundos, simulación visible marcha atrás y efecto VHS como Blues; RNG, objetos, enemigos, scroll y estado de audio coherentes tras reanudar | 100 % | 100 % | PX-06 |
+| PX-08 | Regresión de paridad: matriz equivalente a Blues con rutas/campañas, temporización, controles, ayudas, ocho slots y rebobinado; Linux/Windows y dispositivos reales | 100 % | 100 % | PX-01–PX-07 |
 
 Los porcentajes miden implementación **y verificación de paridad**, no la mera
-presencia de un menú o una función parecida en el motor de origen. Olduvai tiene
-opciones nativas propias, pero todavía no se anuncian como equivalentes a Blues.
-Cada tarea se cerrará por juego con pruebas reproducibles y revisión visual.
+presencia de un menú o una función parecida en el motor de origen. Las funciones anunciadas están implementadas en los adaptadores DOS y el usuario
+ha aceptado el resultado tras las pruebas reproducibles y su revisión jugando.
 
 ## Límites que deben conservarse
 

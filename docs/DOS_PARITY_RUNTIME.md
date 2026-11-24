@@ -1,8 +1,9 @@
 # PX-01–PX-08: experiencia común en Fox y Prehistorik DOS
 
-Estado: implementación disponible para revisión jugando. PX-01–PX-07 al 95 %;
-PX-08 al 90 %. El porcentaje restante corresponde a la aceptación manual y a
-completar campañas, escucha, mando y pantalla reales. No se cierran Blues 17 ni 18.
+Estado: **PX-01–PX-08 completadas y aceptadas al 100 %** el 24-11-2026.
+El usuario confirma: «funcionan perfecto!». No se cierran Blues 17 ni 18.
+La aceptación no añade evidencia de campañas completas ni de dispositivos
+físicos que no se hayan probado y documentado.
 
 Los adaptadores conservan sus identidades `opentitus` y `olduvai`, sus perfiles y
 sus cachés auditadas. Fox usa la lógica DOS de OpenTitus; Prehistorik usa un
@@ -91,7 +92,7 @@ Las sondas `titus-fox-dos-game-probe`, `titus-pre1-dos-game-probe` y
 `titus-dos-audio-probe` aceptan rutas a datos ya preparados; Fox admite un tercer
 argumento `--stress` para recorridos prolongados y restauraciones intermedias.
 
-## Revisión manual pendiente
+## Comprobaciones recomendadas antes de la distribución
 
 - Jugar campañas completas: puertas, escaleras, objetos, plataformas, daño,
   jefes, bonus y finales; ambas cámaras y varios encuadres.

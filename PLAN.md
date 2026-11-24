@@ -17,7 +17,7 @@ expansión validada. El detalle de TH-00–TH-16 y la fase de paridad PX-01–PX
 - Completadas: **01–16**.
 - Blues: **17 en curso** con las pruebas del usuario; **18 pospuesta** hasta la expansión.
 - Titus Engine: **TH-00–TH-13 completadas (100 %)**; TH-12 cerrada por el usuario y TH-13 documentada en [viabilidad Amiga](docs/AMIGA_FEASIBILITY.md). **TH-14 completada y aceptada (100 %)**. **TH-15 completada y aceptada (100 %)** el 24-11-2026: Prehistorik 1 Amiga nativo, campaña/final, audio y opciones comunes, con las correcciones de revisión r2–r4. Ver [runtime Amiga](docs/PREHISTORIK_AMIGA_RUNTIME.md).
-- Paridad Fox/Prehistorik: **PX-01–PX-07 implementadas (95 %), PX-08 al 90 %**, pendientes de revisión jugando. DOS mantiene simulaciones propias, con menú, cámara/zoom, audio, ayudas, ocho slots y rewind. Ver [paridad DOS](docs/DOS_PARITY_RUNTIME.md).
+- Paridad Fox/Prehistorik: **PX-01–PX-08 completadas y aceptadas (100 %)**. DOS mantiene simulaciones propias, con menú, cámara/zoom, audio, ayudas, ocho slots y rewind. Ver [paridad DOS](docs/DOS_PARITY_RUNTIME.md).
 - Corrección de escaleras validada por el usuario.
 - El punto recuperable previo a la expansión es `dd07383`, etiqueta `blues-baseline-2026-11-23`.
 
@@ -217,3 +217,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-24 | TH-15 | El usuario acepta el resultado tras comprobar las correcciones de scroll, actores vecinos e introducción: «está perfecto! Gracias! Podemos cerrar TH-15». | 100 %: tarea cerrada; runtime aceptado r4 (`ce51a15`). |
 
 | 2026-11-24 | PX-01–PX-08 | Fox DOS y Prehistorik DOS: presentación independiente a 30/60/120 FPS, cámara/encuadre/HUD, menú y controles editables, buses de audio, ayudas, ocho slots portables y rewind VHS. Preparación y perfiles conservados, pruebas gestionadas Linux/Windows y de memoria; originales de solo lectura. Detalle en docs/DOS_PARITY_RUNTIME.md. | PX-01–07 al 95 % y PX-08 al 90 %: revisión jugando, campañas y dispositivos reales pendientes. Entrega mediante enlace al EXE, sin ZIP; 17 abierta y 18 pospuesta. |
+
+| 2026-11-24 | PX-01–PX-08 | El usuario acepta las versiones DOS: «funcionan perfecto!». Se cierra la paridad de Fox y Prehistorik al 100 %, con la validación automática y el resultado probado por el usuario. | Pendientes: cerrar la revisión de Blues 17 y preparar la distribución Windows 18. La aceptación no añade pruebas físicas o campañas que no se hayan documentado. |

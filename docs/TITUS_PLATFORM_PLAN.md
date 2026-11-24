@@ -209,9 +209,9 @@ entrega si la investigación determina que requieren un port independiente.
 El objetivo acordado es tener las mismas opciones y funcionamiento en Fox y
 Prehistorik 1, manteniendo procesos separados y su presentación original.
 [PX-01–PX-08](EXPERIENCE_PARITY_PLAN.md) incorpora tareas por juego y porcentajes,
-con **scroll super suave, cámara y encuadre** primero. PX-01–PX-07 están
-implementadas al 95 % y PX-08 al 90 %: validación automática Linux/Windows
-completada y revisión jugando pendiente. Detalle en
+con **scroll super suave, cámara y encuadre** primero. PX-01–PX-08 están
+completadas al 100 %: validación automática Linux/Windows y aceptación del usuario
+el 24 de noviembre de 2026 («funcionan perfecto!»). Detalle en
 [DOS_PARITY_RUNTIME.md](DOS_PARITY_RUNTIME.md). Las ediciones DOS conservan sus
 simulaciones propias; TH-14/TH-15 Amiga ya están aceptadas y no se sustituyen.
 TH-16 queda cancelada como no aplicable y no cuenta como implementación completada.
@@ -266,5 +266,5 @@ TH-13 completada: [viabilidad Amiga](AMIGA_FEASIBILITY.md). Siguiente tarea
 Amiga: TH-14 cerrada al 100 % por aceptación del usuario el 24 de noviembre de 2026.
 Incluye simulación completa, render, campaña/final, audio y adaptador gestionado con opciones,
 rebobinado y ocho slots; evidencia y límites en [FOX_AMIGA_RUNTIME.md](FOX_AMIGA_RUNTIME.md). TH-15 cerrada al 100 % por aceptación del usuario el 24 de noviembre de 2026, tras las correcciones r2–r4 de scroll, actores vecinos e introducción.
-La paridad PX-01–PX-08 está implementada para revisión (95 %/90 %), con el bloque manual pendiente. TH-11 mantiene adaptadores separados.
+La paridad PX-01–PX-08 está cerrada al 100 % por aceptación del usuario. TH-11 mantiene adaptadores separados.
 La tarea 17 continúa abierta; la distribución 18 sigue pospuesta.

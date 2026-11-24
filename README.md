@@ -43,8 +43,8 @@ Blues also imports classic preferences and saves reversibly. Fox DOS uses a sepa
 The PX adapters add 30/60/120 FPS presentation, smooth/original cameras, map zoom,
 in-game options and editable controls, separate audio volumes, assists, eight
 thumbnail saves and VHS rewind to Fox DOS and Prehistorik DOS. Their original
-DOS simulation remains separate from the Amiga engines. Implementation is ready
-for play review; see [DOS parity](docs/DOS_PARITY_RUNTIME.md).
+DOS simulation remains separate from the Amiga engines. PX-01–PX-08 were accepted by the user and completed on 24 November 2026;
+see [DOS parity](docs/DOS_PARITY_RUNTIME.md).
 Fox Amiga uses our independent [native C++/SDL2 runtime](docs/FOX_AMIGA_RUNTIME.md),
 with smooth camera/dynamic framing, original/fixed HUD, assists, level selection,
 independent volumes, controller bindings, VHS rewind and eight thumbnail saves.
