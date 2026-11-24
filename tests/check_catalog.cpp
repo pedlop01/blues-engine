@@ -94,7 +94,8 @@ int main(int argc,char** argv) {
 #endif
         auto image=temp.root/"blues.adf";write(image,"bluesimage");auto image_result=detector.scan(image);
         check(image_result[0].installation["fingerprint"]==fp&&image_result[0].installation["status"]=="needs_preparation","ADF linkage");
-        check(store.add(image)["installations"].size()==2,"ADF deduplication");
+        auto with_image=store.add(image);check(with_image["installations"].size()==2,"ADF deduplication");
+        check(with_image["installations"][0]["status"]=="recognized","Adding an ADF preserves a verified extracted directory");
         write(temp.root/"unknown.adf","unknown");check(detector.scan(temp.root/"unknown.adf")[0].installation.is_null(),"unknown image not assigned game");
         fails([&]{store.add(temp.root/"unknown.adf");},"E_NO_MATCH");
         auto saved=storage.data/"profiles"/"keep.bbs";write(saved,"saved progress");

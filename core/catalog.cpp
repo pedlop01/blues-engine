@@ -548,7 +548,7 @@ Json CatalogStore::add(const fs::path& source,bool recursive,long long expected)
                 const auto& loc=d.installation["locations"][0];auto& locs=(*match)["locations"];
                 if(std::find(locs.begin(),locs.end(),loc)==locs.end()) { locs.push_back(loc);changed=true; }
                 // Refresh engine metadata too: an old Amiga entry can now be playable.
-                if(d.installation["status"]=="recognized" || d.installation["status"]=="needs_preparation") {auto previous=*match;refresh_detection(*match,d.installation);changed=changed||previous!=*match;}
+                if(d.installation["status"]=="recognized" || (d.installation["status"]=="needs_preparation" && (*match)["status"]!="recognized")) {auto previous=*match;refresh_detection(*match,d.installation);changed=changed||previous!=*match;}
             } else { d.installation["id"]=uuid();c["installations"].push_back(d.installation);changed=true; }
         }
         return changed;
