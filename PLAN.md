@@ -226,3 +226,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-24 | PF-01/PF-02/PF-07 | Revisión r2 por los fallos de Jukebox comunicados: sprites conservados entre ticks, fondo fijo separado, resolución reconstruida tras morir y búfer del nivel protegido al reiniciar música. Pruebas de regresión y 32 muertes/reapariciones con movimiento posterior. | Nueva revisión jugando; PF permanece abierto y PF-06 pendiente. |
 
 | 2026-11-24 | PF-01/PF-02 | El usuario confirma resuelto el parpadeo de Jukebox. R3 conserva la precisión fraccionaria de cámara/sprites y dimensiona el margen de tiles para cubrir todo el desplazamiento, tras reproducir la pérdida de precisión y un hueco en el borde. Nuevas pruebas de píxeles, anclas y movimiento nativo. | Scroll pendiente de nueva revisión jugando; PF sigue abierto. |
+
+| 2026-11-24 | PF-01/PF-02 | El usuario acepta Jukebox r3. R4 corrige en P2 el recorte de columnas impares, separa fondo/cámara fraccionaria y evita interpolar el primer plano como un actor. Pruebas específicas de bordes, movimiento y rewind. | P2 pendiente de revisión jugando; PF sigue abierto y PF-06 al 0 %. |

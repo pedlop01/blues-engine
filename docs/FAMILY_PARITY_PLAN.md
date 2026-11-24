@@ -72,7 +72,7 @@ PF-01/PF-08 incluyen revisar los actores que se ven al alejar el zoom. No se
 promete todavía una campaña completa, dispositivos físicos, guardados portables
 ni paridad cerrada al 100 %. La tarea 17 de Blues continúa abierta y 18 pospuesta.
 
-Entrega de revisión: `build/pf-package-windows-r3/bin/titus-engine.exe`, con todas
+Entrega de revisión: `build/pf-package-windows-r4/bin/titus-engine.exe`, con todas
 sus dependencias al lado; no es un ejecutable autónomo ni una distribución final.
 
 Resultados de la primera entrega: 47 etapas en Linux (31 JA + 16 P2), siete
@@ -156,3 +156,22 @@ R3 sigue pendiente de revisión jugando; no cierra PF ni añade guardados.
 Evidencia de r3: [pf-r3-validation.json](measurements/pf-r3-validation.json),
 con reproducciones, ocho grupos de regresión, matrices Linux/Windows,
 sanitizadores y pruebas gráficas de cámara/fondo con Direct3D 11.
+
+
+## Revisión r4: scroll de Prehistorik 2 (24-11-2026)
+
+El usuario acepta el comportamiento de Jukebox r3 y comunica oscilaciones y
+columnas entrecortadas en Prehistorik 2. Se reproducen cuatro defectos: recorte
+incorrecto de nibbles en columnas impares, fondo interpolado con el mapa,
+proyección entera de cámara y tiles del primer plano identificados como actores.
+
+P2 activa el fondo separado y la cámara fraccionaria ya disponibles en el host,
+con margen de mapa adaptable. El recorte conserva cada píxel y la transparencia;
+el primer plano usa geometría de cámara. La arena especial del minotauro mantiene
+sus dimensiones nativas. Se sustituyen desplazamientos de enteros negativos por
+multiplicaciones equivalentes en colisiones, retroceso y plataformas.
+
+La regresión específica cubre 700 recortes, fondo, cámara/bordes, primer plano,
+cuatro rutas nativas de 360 frames a 60/120 Hz con ambos HUD y rebobinado.
+La entrega r4 queda pendiente de revisión jugando en P2. PF permanece abierto;
+PF-06 continúa al 0 %. Evidencia: [pf-r4-validation.json](measurements/pf-r4-validation.json).

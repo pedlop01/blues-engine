@@ -431,6 +431,8 @@ static void regression_backdrop() {
   }
   _save_preview_capture = false;
 }
+#else
+#include "pre2_scroll_regressions.h"
 #endif
 int main(int argc, char **argv) {
   assert(argc >= 2);
@@ -509,6 +511,9 @@ int main(int argc, char **argv) {
     puts("PASS: Jukebox lifecycle regression");
     return 0;
   }
+#else
+  const char *regression=SDL_getenv("PF_REGRESSION");
+  if(regression){p2_scroll_regressions(regression);family_end();res_fini();g_sys.fini();puts("PASS: Prehistorik 2 scroll regression");return 0;}
 #endif
   const struct vars_t before = g_vars;
   const uint32_t hash = checksum(map, map_size);

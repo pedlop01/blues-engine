@@ -1712,7 +1712,7 @@ static bool level_update_objects_decors_helper(struct object_t *obj) {
 		g_vars.objects_tbl[1].y_pos = y + 1;
 		g_vars.objects_tbl[1].data.p.y_velocity = 1;
 	} else {
-		g_vars.objects_tbl[1].data.p.y_velocity = g_vars.current_platform_dy << 4;
+		g_vars.objects_tbl[1].data.p.y_velocity = g_vars.current_platform_dy * 16;
 	}
 	return true;
 }
@@ -1874,7 +1874,7 @@ static void level_update_player_x_velocity() {
 static void level_update_player_hdir_x_velocity(int x_vel) {
 	int16_t f = 0;
 	if (g_vars.input.key_hdir) {
-		f = g_vars.objects_tbl[1].data.p.hdir << 4;
+		f = g_vars.objects_tbl[1].data.p.hdir * 16;
 	}
 	f >>= g_vars.objects_tbl[1].x_friction;
 	const int16_t dx = g_vars.objects_tbl[1].x_velocity + f;
@@ -2277,7 +2277,7 @@ static void level_update_player_decor() {
 		}
 	}
 	g_vars.player_tile_flags = 0;
-	level_update_tile0((y_pos << 8) | x_pos);
+	level_update_tile0((y_pos * 256) | x_pos);
 	if (g_vars.player_tile_flags == 1) {
 		if (g_vars.level_force_x_scroll_flag != 0) {
 			level_player_reset();
@@ -2294,7 +2294,7 @@ static void level_update_player_decor() {
 	if (g_vars.objects_tbl[1].y_pos <= 0) {
 		return;
 	}
-	int pos = (y_pos << 8) | ((dx + g_vars.objects_tbl[1].x_pos) >> 4);
+	int pos = (y_pos * 256) | ((dx + g_vars.objects_tbl[1].x_pos) >> 4);
 	level_update_tile1(pos);
 	while (1) {
 		pos -= 0x100;
@@ -2600,7 +2600,7 @@ static void level_update_player_collision() {
 				g_vars.objects_tbl[1].hit_counter = 44;
 				g_vars.player_anim_0x40_flag = 0;
 				g_vars.objects_tbl[1].data.p.y_velocity = -128;
-				g_vars.objects_tbl[1].x_velocity = -(g_vars.objects_tbl[1].x_velocity << 2);
+				g_vars.objects_tbl[1].x_velocity = -(g_vars.objects_tbl[1].x_velocity * 4);
 				g_vars.player_gravity_flag = 0;
 				if (g_vars.player_flying_flag) {
 					g_vars.player_flying_flag = false;
@@ -3033,6 +3033,9 @@ static void level_draw_front_tile(uint8_t tile_num, int x, int y) {
 }
 
 static void level_draw_front_tiles() {
+	/* Grid entries change at tile boundaries; they are camera geometry,
+	 * never actor identities to interpolate across successive grids. */
+	if(g_sys.set_sprite_owner)g_sys.set_sprite_owner(-1);
 	if ((g_vars.tile_attr2_flags & 0x40) == 0) { /* no front tiles */
 		return;
 	}
@@ -3889,6 +3892,8 @@ void do_gameover_animation() {
 	video_set_sprite_pos_flags(0);
 }
 
+#define FAMILY_FRACTIONAL_CAMERA
+#define FAMILY_SEPARATE_BACKDROP
 #define FAMILY_LEVEL_COUNT 16
 #define FAMILY_NO_CHARACTER true
 static const char *const family_level_names[16] = {
@@ -3920,10 +3925,12 @@ static int family_native_y() {
   return g_vars.tilemap.y * 16 + g_vars.tilemap.scroll_dy;
 }
 static int family_map_w() { return g_vars.level_num == 9 ? 320 : 4096; }
-static int family_map_h() { return g_vars.tilemap.h * 16; }
+static int family_map_h() { return g_vars.level_num==9?176:g_vars.tilemap.h * 16; }
 static int family_quantize_x(int x) { return x; }
 static void family_draw_view(int x, int y, int w, int h, uint8_t *pixels);
 static uint8_t family_map_pixel(int wx, int wy, int sx, int sy);
+static uint8_t family_backdrop_pixel(int sx,int sy);
+static uint8_t family_map_layer_pixel(int wx,int wy);
 static size_t family_state_size();
 static void family_capture(void *data);
 static void family_restore(const void *data);
@@ -3993,23 +4000,21 @@ static void family_draw_view(int x, int y, int w, int h, uint8_t *pixels) {
   g_options.screen_w = 320;
   g_options.screen_h = 200;
 }
-static uint8_t family_map_pixel(int wx, int wy, int sx, int sy) {
-  uint8_t bg =
-      g_res.background[MAX(0, MIN(175, sy * 176 / MAX(1, _family_h - 24))) *
-                           320 +
-                       ((sx % 320 + 320) % 320)];
-  if (wx < 0 || wy < 0 || wx >= 4096 || wy >= family_map_h())
-    return bg;
-  uint8_t tile = g_res.leveldat[(wy / 16) * 256 + wx / 16];
-  tile = g_vars.level_animated_tiles_current_tbl[tile];
-  const int num =
-      READ_LE_UINT16(g_res.leveldat + g_vars.tilemap.size + tile * 2);
-  const uint8_t *data =
-      num < 256 ? g_res.leveldat + g_vars.tilemap.size + 512 + num * 128
-                : g_res.uniondat + (num - 256) * 128;
-  uint8_t b = data[(wy % 16) * 8 + (wx % 16) / 2],
-          color = (wx & 1) ? b & 15 : b >> 4;
-  return color == 0 ? bg : color;
+static uint8_t family_backdrop_pixel(int sx,int sy){
+  return g_res.background[MAX(0,MIN(175,sy*176/MAX(1,_family_h-24)))*320+((sx%320+320)%320)];
+}
+static uint8_t family_map_layer_pixel(int wx,int wy){
+  if(wx<0 || wy<0 || wx>=family_map_w() || wy>=family_map_h())return 0;
+  uint8_t tile=g_res.leveldat[(wy/16)*256+wx/16];
+  tile=g_vars.level_animated_tiles_current_tbl[tile];
+  const int num=READ_LE_UINT16(g_res.leveldat+g_vars.tilemap.size+tile*2);
+  const uint8_t *data=num<256?g_res.leveldat+g_vars.tilemap.size+512+num*128:g_res.uniondat+(num-256)*128;
+  const uint8_t packed=data[(wy%16)*8+(wx%16)/2];
+  return (wx&1)?packed&15:packed>>4;
+}
+static uint8_t family_map_pixel(int wx,int wy,int sx,int sy){
+  const uint8_t color=family_map_layer_pixel(wx,wy);
+  return color?color:family_backdrop_pixel(sx,sy);
 }
 
 void do_level() {

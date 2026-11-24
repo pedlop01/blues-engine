@@ -148,46 +148,23 @@ void video_draw_panel(const uint8_t *src) {
 }
 
 void video_draw_tile(const uint8_t *src, int x_offset, int y_offset) {
-	int tile_w = 16;
-	if (x_offset < 0) {
-		tile_w += x_offset;
-		src -= x_offset / 2;
-		x_offset = 0;
-	}
-	if (x_offset + tile_w > TILEMAP_SCREEN_W) {
-		tile_w = TILEMAP_SCREEN_W - x_offset;
-	}
-	if (tile_w <= 0) {
-		return;
-	}
-	int tile_h = 16;
-	if (y_offset < 0) {
-		tile_h += y_offset;
-		src -= y_offset * 8;
-		y_offset = 0;
-	}
-	if (y_offset + tile_h > TILEMAP_SCREEN_H) {
-		tile_h = TILEMAP_SCREEN_H - y_offset;
-	}
-	if (tile_h <= 0) {
-		return;
-	}
-	uint8_t *dst = g_res.vga + y_offset * TILEMAP_SCREEN_W + x_offset;
-	for (int y = 0; y < tile_h; ++y) {
-		for (int x = 0; x < tile_w / 2; ++x) {
-			const uint8_t color = src[x];
-			const uint8_t c1 = color >> 4;
-			if (c1 != 0) {
-				dst[x * 2] = c1;
-			}
-			const uint8_t c2 = color & 15;
-			if (c2 != 0) {
-				dst[x * 2 + 1] = c2;
-			}
-		}
-		src += 8;
-		dst += TILEMAP_SCREEN_W;
-	}
+    /* Clip in pixels, not packed bytes: an odd left cut starts at the low
+     * nibble and can leave an odd final column. Zero stays transparent. */
+    const int sx=MAX(0,-x_offset),sy=MAX(0,-y_offset);
+    const int dx=MAX(0,x_offset),dy=MAX(0,y_offset);
+    const int w=MIN(16-sx,TILEMAP_SCREEN_W-dx);
+    const int h=MIN(16-sy,TILEMAP_SCREEN_H-dy);
+    if(w<=0 || h<=0)return;
+    for(int y=0;y<h;++y){
+        const uint8_t *row=src+(sy+y)*8;
+        uint8_t *dst=g_res.vga+(dy+y)*GAME_SCREEN_W+dx;
+        for(int x=0;x<w;++x){
+            const int source_x=sx+x;
+            const uint8_t packed=row[source_x/2];
+            const uint8_t color=(source_x&1)?packed&15:packed>>4;
+            if(color)dst[x]=color;
+        }
+    }
 }
 
 void video_convert_tiles(uint8_t *data, int len) {
