@@ -329,7 +329,7 @@ if(BUILD_TESTING)
 endif()
 
 # TH-14 first milestone: standalone resource diagnostics, not a game runtime.
-add_library(titus_fox_amiga_resources platform/fox_amiga.cpp)
+add_library(titus_fox_amiga_resources platform/fox_amiga.cpp platform/fox_amiga_level.cpp)
 target_include_directories(titus_fox_amiga_resources PUBLIC include)
 if(NOT MSVC)
   target_compile_options(titus_fox_amiga_resources PRIVATE -Wall -Wextra -Wpedantic)

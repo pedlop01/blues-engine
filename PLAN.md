@@ -16,7 +16,7 @@ expansión validada. El detalle de TH-00–TH-16 y la fase de paridad PX-01–PX
 - Tareas completadas: **16 de 18**.
 - Completadas: **01–16**.
 - Blues: **17 en curso** con las pruebas del usuario; **18 pospuesta** hasta la expansión.
-- Titus Engine: **TH-00–TH-13 completadas (100 %)**; TH-12 cerrada por el usuario y TH-13 documentada en [viabilidad Amiga](docs/AMIGA_FEASIBILITY.md). **TH-14 al 20 %**: lectores y referencia gráfica, todavía sin runtime jugable.
+- Titus Engine: **TH-00–TH-13 completadas (100 %)**; TH-12 cerrada por el usuario y TH-13 documentada en [viabilidad Amiga](docs/AMIGA_FEASIBILITY.md). **TH-14 al 30 %**: lectores, inicialización y consultas contrastadas, todavía sin runtime jugable.
 - Paridad Fox/Prehistorik: **PX-01–PX-08 planificadas (0 %)**, con scroll, cámara y encuadre primero.
 - Corrección de escaleras validada por el usuario.
 - El punto recuperable previo a la expansión es `dd07383`, etiqueta `blues-baseline-2026-11-23`.
@@ -195,3 +195,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-24 | TH-16 | Corrección del usuario: Prehistorik 2 no salió para Amiga. TH-16 cancelada/no aplicable, fuera del cálculo de progreso; se conserva el ID histórico. | Amiga adicional: solo Fox (TH-14) y Prehistorik 1 (TH-15). |
 
 | 2026-11-24 | TH-14 | Primer bloque de Fox Amiga: lectores C++ LZW/Huffman contrastados con los 65 recursos del original; 15 mapas, 398 sprites y tres pantallas PC1 con paleta propia. Herramienta de diagnóstico independiente, sin habilitar Jugar. Ver docs/FOX_AMIGA_RUNTIME.md. | 20 %: continuar lógica/colisiones, audio y adaptador. Mantener paridad PX. |
+
+| 2026-11-24 | TH-14 | Inicialización POIL nativa contrastada en los 15 mapas: tablas, bonus y entidades; 1980 puntos de colisión, 82 puertas y 540 escenarios de salida. Descriptores de animación extraídos del original impiden activar registros rechazados. Nuevas vistas de entidades quietas y colisiones. | 30 %: continuar simulación y animación reales; audio/adaptador/validación jugable pendientes. |
