@@ -8,13 +8,15 @@ selected simple value structs are supported; this is not a C++ parser.
 import argparse
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--output",required=True,type=__import__("pathlib").Path)
+parser.add_argument("--logic-root",type=__import__("pathlib").Path)
+parser.add_argument("--header",default="titus/pre1_amiga_save.hpp")
 args=parser.parse_args()
 if args.output.exists():raise ValueError("Output already exists")
 from pathlib import Path
 import re
-base=Path(__file__).resolve().parents[1]/'engines/pre1_amiga/logic'
+base=args.logic_root or Path(__file__).resolve().parents[1]/'engines/pre1_amiga/logic'
 spec=[('core','types.hpp',['Entity']),('systems','player.hpp',['ScoreBonus','PlayerState','InputState','SystemsState']),('systems','boss.hpp',['BossPlayerState']),('systems','boss_l2.hpp',['L2ProjectileSlot','L2BossState']),('systems','boss_l4.hpp',['L4BossState']),('systems','boss_l6.hpp',['L6BossState'])]
-out=['// SPDX-License-Identifier: GPL-3.0-or-later','// Explicit field serialization for the isolated Amiga state; no ABI-dependent','// structs, pointer bytes or platform padding are stored.','#include "titus/pre1_amiga_save.hpp"']
+out=['// SPDX-License-Identifier: GPL-3.0-or-later','// Explicit field serialization for the isolated Amiga state; no ABI-dependent','// structs, pointer bytes or platform padding are stored.','#include "'+args.header+'"']
 for ns,file,names in spec:
  s=re.sub(r'//[^\n]*','',(base/ns/file).read_text())
  out+=['namespace olduvai::'+ns+' {']

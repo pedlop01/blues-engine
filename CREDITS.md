@@ -123,11 +123,12 @@ assets or precompiled OPL code are included; data is prepared from the user's CO
 The frontend does not link this external engine. Final redistribution and
 corresponding-source packaging remain task 18.
 
-## Managed Prehistorik DOS runtime
+## Historical TH-09 Prehistorik DOS runtime
 
 Prehistorik 1 uses [Olduvai](https://github.com/ksokolowski/olduvai), revision
 `a69e9204fc311c8810d696a6b799000d1bcd1642`, by Krzysztof Sokołowski (2026).
-Its GPL-3.0-or-later source links GPL3-only xBRZ; the combined binary is GPL3.
+The historical TH-09 binary linked GPL3-only xBRZ; that combined binary is GPL3.
+The current PX adapter below uses only the selected GPL-3.0-or-later portions.
 Nuked OPL3 and stb retain their upstream notices. The native DIET decoder adapts
 MIT-licensed Deark code by Jason Summers. Full provenance and build/license
 requirements: [runtime notices](engines/olduvai/NOTICE.md) and
@@ -151,3 +152,22 @@ The inherited upstream snapshot does not include a top-level license file.
 This extension does not assign a new blanket license to that inherited code.
 Original authorship and history are preserved, and the bundled Nuked OPL3
 sources retain their explicit license and notices.
+
+### DOS parity adapters (PX-01–PX-08)
+
+The current Fox DOS adapter contains an isolated, modified OpenTitus kernel
+(revision `6540e8f2867f99aff54ad1a710ae6379ecb9c590`, GPL-3.0-or-later),
+with SDL2 presentation and portable state traversal. Its source/export hashes
+and changes are recorded in `engines/fox_dos/legacy/UPSTREAM.json`.
+
+Prehistorik DOS uses a separate Olduvai DOS kernel, resource readers and AdLib
+driver (`a69e9204fc311c8810d696a6b799000d1bcd1642`, GPL-3.0-or-later),
+credited to Krzysztof Sokołowski. Provenance and modifications are recorded in
+`engines/pre1_dos/logic/UPSTREAM.json` and `engines/pre1_dos/vendor/UPSTREAM.json`.
+The accepted Amiga kernel remains separate. These new DOS binaries do not link
+xBRZ or SDL 1.2/SDL_mixer.
+
+Both DOS audio backends use Nuked OPL3 by Nuke.YKT, LGPL-2.1-or-later; the
+unmodified source, copyright and license are in
+`engines/pre1_dos/vendor/third_party/nuked_opl3`. Original game resources are
+read from the user's installations and are not included in this repository.

@@ -16,7 +16,18 @@
       "reference_native_features": [
         "return_to_library",
         "native_pause",
-        "fullscreen"
+        "fullscreen",
+        "save_slots",
+        "save_thumbnails",
+        "rewind",
+        "dynamic_view",
+        "smooth_camera",
+        "hud_modes",
+        "invulnerability",
+        "lives_options",
+        "level_select",
+        "separate_volumes",
+        "controller_bindings"
       ]
     }
   ]

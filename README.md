@@ -23,6 +23,7 @@ this transition.
 [Engine audit and startup checks](docs/ENGINE_AUDIT.md) ·
 [Game detection rules](docs/GAME_DETECTION_RULES.md) ·
 [Reference engine validation](docs/ENGINE_REFERENCE_TESTS.md) ·
+[DOS feature parity and review](docs/DOS_PARITY_RUNTIME.md) ·
 [Architecture and v1 contracts](docs/TITUS_ARCHITECTURE.md) ·
 [Catalog core: build, commands and tests](docs/CATALOG_CORE.md) ·
 [Global library: build, controls and tests](docs/LIBRARY_FRONTEND.md)
@@ -39,6 +40,11 @@ and installation management. Keyboard, mouse, controller and fullscreen are
 supported. **Blues Brothers DOS/Amiga, Jukebox Adventure DOS, Prehistorik 2 DOS and Titus
 the Fox DOS/Amiga and Prehistorik 1 DOS/Amiga now launch from the library**, with a clean return and per-game preferences.
 Blues also imports classic preferences and saves reversibly. Fox DOS uses a separate OpenTitus runtime with native private data preparation.
+The PX adapters add 30/60/120 FPS presentation, smooth/original cameras, map zoom,
+in-game options and editable controls, separate audio volumes, assists, eight
+thumbnail saves and VHS rewind to Fox DOS and Prehistorik DOS. Their original
+DOS simulation remains separate from the Amiga engines. Implementation is ready
+for play review; see [DOS parity](docs/DOS_PARITY_RUNTIME.md).
 Fox Amiga uses our independent [native C++/SDL2 runtime](docs/FOX_AMIGA_RUNTIME.md),
 with smooth camera/dynamic framing, original/fixed HUD, assists, level selection,
 independent volumes, controller bindings, VHS rewind and eight thumbnail saves.
@@ -46,9 +52,10 @@ TH-14 was accepted by the user and completed on 24 November 2026.
 Prehistorik 1 DOS uses Olduvai with native private DIET preparation ([guide](docs/PREHISTORIK_RUNTIME.md)). See the [family runtime](docs/FAMILY_RUNTIME.md),
 [Blues runtime](docs/BLUES_RUNTIME.md), [Fox runtime](docs/FOX_RUNTIME.md) and [library](docs/LIBRARY_FRONTEND.md) guides.
 Build with `-DTITUS_BUILD_LAUNCHER=ON`, Python 3 and SDL2/SDL2_ttf/libmodplug
-development files. Fox additionally needs `TITUS_BUILD_FOX_RUNTIME=ON` and the
-pinned SDL 1.2/OPL source setup in its guide. Prehistorik 1 needs
-`TITUS_BUILD_PRE1_RUNTIME=ON` and its pinned Olduvai source export.
+development files. Fox DOS additionally needs `TITUS_BUILD_FOX_RUNTIME=ON`; Prehistorik DOS needs
+`TITUS_BUILD_PRE1_RUNTIME=ON`. Their pinned logic/readers and OPL code are included
+with source provenance and licenses; SDL 1.2 and external source exports are no
+longer required by these adapters.
 Fox Amiga is enabled with the launcher by default, or explicitly with
 `TITUS_BUILD_FOX_AMIGA_RUNTIME=ON`; it needs SDL2 and user-supplied Amiga files,
 without OpenTitus, Unicorn or an Amiga emulator.

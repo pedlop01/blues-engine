@@ -140,11 +140,11 @@ def validate(document):
             require(all(gates[key] in features for key in settings["blues"]), "Setting capability not requested")
         for group in ["fox","prehistorik"]:
             if group in settings:
-                require(document["game_id"]==group and document["edition_id"]=="amiga", "Native settings require their Amiga edition")
+                require(document["game_id"]==group, "Native settings require their matching game")
                 gates={"camera":"smooth_camera","hud":"hud_modes","view_step":"dynamic_view","invulnerable":"invulnerability","infinite_lives":"lives_options","lives":"lives_options","start_level":"level_select"}
                 require(all(gates[key] in features for key in settings[group]), "Native setting capability not requested")
         if document["action"]["type"] == "load_slot":
-            require((document["game_id"] == "blues" or document["engine_id"] in {"fox-amiga-native","pre1-amiga-native"}) and "save_slots" in features, "This edition has no global resume")
+            require((document["game_id"] == "blues" or document["game_id"] in {"fox","prehistorik"}) and "save_slots" in features, "This edition has no global resume")
     elif kind == "event" and document["event"] == "ready":
         features = set(document["body"]["features"])
         require((document["body"]["save_slot_count"] > 0) == ("save_slots" in features), "Slot capability/count mismatch")
@@ -154,7 +154,7 @@ def validate(document):
         unique(document["slots"], "slot", "Duplicate save slot")
         for slot in document["slots"]:
             require(slot["file"] == (f"slot-{slot['slot']}.json" if document["game_id"] in {"fox","prehistorik"} else f"saves/slot{slot['slot']:02}.bbs"), "Wrong native slot filename")
-            require(slot["format_id"]==(document["game_id"]+".amiga.json" if document["game_id"] in {"fox","prehistorik"} else "blues.bbs"),"Wrong native save format")
+            require(slot["format_id"]==(document["game_id"]+(".amiga.json" if document["engine_id"] in {"fox-amiga-native","pre1-amiga-native"} else ".dos.json") if document["game_id"] in {"fox","prehistorik"} else "blues.bbs"),"Wrong native save format")
     elif kind == "inspect_request":
         validate(inspection_as_launch(document))
     elif kind == "inspection":

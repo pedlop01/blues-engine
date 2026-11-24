@@ -1,5 +1,10 @@
 # TH-08: Titus the Fox DOS
 
+**Actualización PX-01–PX-08:** el adaptador DOS actual tiene presentación y
+opciones comunes, ocho slots y rebobinado. Véase [paridad DOS](DOS_PARITY_RUNTIME.md)
+para la compilación y pruebas actuales. El flujo SDL/export descrito abajo es
+la referencia histórica TH-08/TH-09 y no el adaptador que se entrega ahora.
+
 La biblioteca incorpora **Titus the Fox DOS**, mediante un proceso OpenTitus
 separado del frontend y del runtime Blues/Jukebox/P2. Esta entrada admite únicamente el conjunto DOS auditado; Moktar no se habilita.
 Fox Amiga tiene ahora su [adaptador nativo independiente TH-14](FOX_AMIGA_RUNTIME.md),

@@ -550,7 +550,9 @@
           "enum": [
             "blues.bbs",
             "fox.amiga.json",
-            "prehistorik.amiga.json"
+            "prehistorik.amiga.json",
+            "fox.dos.json",
+            "prehistorik.dos.json"
           ]
         },
         "format_version": {

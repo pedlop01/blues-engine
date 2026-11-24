@@ -1,5 +1,10 @@
 # TH-09: Prehistorik 1 DOS
 
+**Actualización PX-01–PX-08:** el adaptador DOS actual tiene presentación y
+opciones comunes, ocho slots y rebobinado. Véase [paridad DOS](DOS_PARITY_RUNTIME.md)
+para la compilación y pruebas actuales. El flujo SDL/export descrito abajo es
+la referencia histórica TH-08/TH-09 y no el adaptador que se entrega ahora.
+
 Seleccionar **Prehistorik → DOS → Jugar** en `build/launcher/titus-engine`
 o `build/launcher-windows/titus-engine.exe`. Olduvai corre en un proceso nativo
 separado. No se ejecuta su CLI independiente ni el EXE DOS. La edición Amiga

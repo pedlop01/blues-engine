@@ -1,0 +1,233 @@
+// Managed Unicode path adaptation by Titus Engine contributors; see ../UPSTREAM.json.
+#include "managed_io.hpp"
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Krzysztof Sokołowski
+#include "formats/hash64.hpp"
+#include "prepare/game_files.hpp"
+
+#include "formats/unsqz.hpp"
+
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
+#include <iterator>
+#include <system_error>
+#include <utility>
+
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN   // CMakeLists.txt already defines it
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
+
+namespace fs = std::filesystem;
+
+namespace olduvai::prepare {
+
+namespace {
+
+// Case-insensitive compare of an on-disk filename against a canonical
+// upper-case required name.
+bool name_matches(const std::string& on_disk, const std::string& want) {
+    if (on_disk.size() != want.size()) return false;
+    for (std::size_t i = 0; i < want.size(); ++i) {
+        if (std::toupper(static_cast<unsigned char>(on_disk[i])) != want[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Resolve a required name to an actual path inside `dir`, honouring case.
+fs::path resolve(const fs::path& dir, const std::string& want) {
+    if(titus_old::io_file(dir/want))return dir/want;
+    std::error_code ec;
+    for (const auto& it : fs::directory_iterator(titus_old::io_path(dir), ec)) {
+        const std::string name = it.path().filename().string();
+        if (name_matches(name, want)) return it.path();
+    }
+    return {};
+}
+
+// Case-insensitive subdirectory lookup (GOG installs mix cases: "data",
+// "PREH").  Returns "" when absent.
+fs::path resolve_subdir(const fs::path& dir, const std::string& want) {
+    std::error_code ec;
+    for (const auto& it : fs::directory_iterator(titus_old::io_path(dir), ec)) {
+        if (!it.is_directory(ec)) continue;
+        const std::string name = it.path().filename().string();
+        if (name_matches(name, want)) return it.path();
+    }
+    return {};
+}
+
+// The compressed-executable container name CD-era distributions use.
+constexpr const char* kSqzName = "PREH.SQZ";
+
+}  // namespace
+
+// Hoisted out of the anonymous namespace above: this is the whole-file reader
+// the rest of the engine had privately re-implemented eight more times.  It
+// lives in prepare/ because that is the lowest layer every caller
+// (presentation, app) may legally include.
+std::vector<std::uint8_t> slurp_file(const fs::path& p) {
+    std::ifstream in(titus_old::io_path(p), std::ios::binary);
+    if (!in) return {};
+    return {std::istreambuf_iterator<char>(in),
+            std::istreambuf_iterator<char>()};
+}
+
+const std::vector<std::string>& required_game_files() {
+    static const std::vector<std::string> files = {
+        "FILESA.CUR", "FILESB.CUR", "FILESA.VGA", "FILESB.VGA", "HISTORIK.EXE",
+    };
+    return files;
+}
+
+std::uint64_t fnv1a64_file(const fs::path& path, bool& ok,
+                           std::uintmax_t& size) {
+    ok = false;
+    size = 0;
+    std::ifstream in(titus_old::io_path(path), std::ios::binary);
+    if (!in) return 0;
+    formats::Hash64 h;
+    std::array<char, 1 << 16> buf{};
+    while (in) {
+        in.read(buf.data(), static_cast<std::streamsize>(buf.size()));
+        const std::streamsize n = in.gcount();
+        h.mix_bytes(reinterpret_cast<const std::uint8_t*>(buf.data()),
+                    static_cast<std::size_t>(n));
+        size += static_cast<std::uintmax_t>(n);
+    }
+    // A read error that is not plain EOF means we can't trust the digest.
+    if (in.bad()) return 0;
+    ok = true;
+    return h.value();
+}
+
+fs::path resolve_game_dir(const fs::path& dir) {
+    if (!resolve(dir, "FILESA.CUR").empty()) return dir;
+    // GOG install root: game files live in <root>/data/PREH.
+    // (resolve_subdir wants canonical UPPER-CASE names, like resolve.)
+    if (const fs::path data = resolve_subdir(dir, "DATA"); !data.empty()) {
+        if (const fs::path preh = resolve_subdir(data, "PREH");
+            !preh.empty() && !resolve(preh, "FILESA.CUR").empty()) {
+            return preh;
+        }
+    }
+    if (const fs::path preh = resolve_subdir(dir, "PREH");
+        !preh.empty() && !resolve(preh, "FILESA.CUR").empty()) {
+        return preh;
+    }
+    return dir;
+}
+
+std::vector<fs::path> default_game_dir_candidates() {
+    std::vector<fs::path> out;
+#ifdef _WIN32
+    // The GOG installer records the install path in the registry under the
+    // game's product id — authoritative even for custom install locations.
+    // 32-bit installer: the key lives under WOW6432Node in a 64-bit view.
+    for (const char* key : {
+             "SOFTWARE\\WOW6432Node\\GOG.com\\Games\\1430912792",
+             "SOFTWARE\\GOG.com\\Games\\1430912792",
+         }) {
+        char buf[MAX_PATH];
+        DWORD len = sizeof(buf);
+        if (RegGetValueA(HKEY_LOCAL_MACHINE, key, "path", RRF_RT_REG_SZ,
+                         nullptr, buf, &len) == ERROR_SUCCESS &&
+            buf[0] != '\0') {
+            out.emplace_back(buf);
+        }
+    }
+    // Conventional locations: GOG Galaxy's library and the standalone
+    // installer's default.
+    for (const char* env : {"ProgramFiles(x86)", "ProgramFiles"}) {
+        if (const char* p = std::getenv(env)) {
+            out.push_back(fs::path(p) / "GOG Galaxy" / "Games" /
+                          "Prehistorik");
+        }
+    }
+    out.emplace_back("C:\\GOG Games\\Prehistorik");
+#endif
+    return out;
+}
+
+GameFiles detect_game_files(const fs::path& game_dir) {
+    GameFiles gf;
+    gf.dir = resolve_game_dir(game_dir);
+    for (const auto& want : required_game_files()) {
+        GameFileInfo info;
+        info.name = want;
+        info.path = resolve(gf.dir, want);
+        // The executable also ships SQZ-compressed (GOG / CD releases):
+        // accept PREH.SQZ under the canonical entry, checksummed as-is.
+        if (info.path.empty() && want == "HISTORIK.EXE") {
+            info.path = resolve(gf.dir, kSqzName);
+            info.via_sqz = !info.path.empty();
+        }
+        if (info.path.empty()) {
+            info.present = false;
+        } else {
+            info.present = true;
+            bool ok = false;
+            std::uintmax_t size = 0;
+            info.checksum = fnv1a64_file(info.path, ok, size);
+            info.size = size;
+            info.zero_byte = ok && size == 0;
+            // An unreadable-but-present file is treated as missing (no key).
+            if (!ok) {
+                info.present = false;
+                info.checksum = 0;
+            }
+        }
+        gf.files.push_back(std::move(info));
+    }
+    return gf;
+}
+
+bool GameFiles::complete() const {
+    if (files.size() != required_game_files().size()) return false;
+    return std::all_of(files.begin(), files.end(), [](const auto& f) {
+        return f.present && !f.zero_byte;
+    });
+}
+
+std::string GameFiles::problems() const {
+    std::string out;
+    for (const auto& f : files) {
+        if (!f.present) {
+            out += "  " + f.name + " — missing or unreadable";
+            if (f.name == "HISTORIK.EXE") out += " (PREH.SQZ also accepted)";
+            out += "\n";
+        } else if (f.zero_byte) {
+            out += "  " + f.name + " — present but zero bytes\n";
+        }
+    }
+    return out;
+}
+
+std::vector<std::uint8_t> load_game_executable(const fs::path& game_dir) {
+    const fs::path dir = resolve_game_dir(game_dir);
+    if (const fs::path exe = resolve(dir, "HISTORIK.EXE"); !exe.empty()) {
+        return slurp_file(exe);
+    }
+    if (const fs::path sqz = resolve(dir, kSqzName); !sqz.empty()) {
+        const auto raw = slurp_file(sqz);
+        if (!formats::looks_like_sqz(raw)) return {};
+        try {
+            return formats::unsqz(raw);
+        } catch (const formats::SqzError&) {
+            return {};   // malformed container == executable unavailable
+        }
+    }
+    return {};
+}
+
+
+}  // namespace olduvai::prepare
