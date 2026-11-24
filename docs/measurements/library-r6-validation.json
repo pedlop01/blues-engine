@@ -1,0 +1,655 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-24",
+  "source_revision": "c41c1d70e5fd86c8a1b963a012d765fab8e972c2",
+  "family_build_revision": "c41c1d70e5fd86c8a1b963a012d765fab8e972c2-pf6",
+  "changes": [
+    "Original title artwork for all five games, wide hero and image selector; private title cache and optional cover override",
+    "Eight portable TITUSFS slots per Jukebox/P2 game, native save/load and library thumbnails/loading",
+    "Canonical scalar fields and symbolic table/record references; resource signature and CRC; independent process restore and cleared rewind",
+    "Loaded camera/HUD/assists do not overwrite persistent game preferences",
+    "Inherited Windows ANSI save paths normalized when necessary"
+  ],
+  "validation": {
+    "saves_all_47_linux": {
+      "platform": "linux",
+      "stages": [
+        {
+          "module": "ja",
+          "stage": 1,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 2,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 3,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 4,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 5,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 6,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 7,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 8,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 9,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 10,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 11,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 12,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 13,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 14,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 15,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 16,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 17,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 18,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 19,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 20,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 21,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 22,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 23,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 24,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 25,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 26,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 27,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 28,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 29,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 30,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 31,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 0,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 1,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 2,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 3,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 4,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 5,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 6,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 7,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 8,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 9,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 10,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 11,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 12,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 13,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 14,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 15,
+          "result": "pass"
+        }
+      ],
+      "rejections": [
+        "truncation",
+        "crc",
+        "future_version",
+        "other_game",
+        "resources",
+        "invalid_boolean_JA"
+      ]
+    },
+    "saves_windows": {
+      "platform": "windows",
+      "stages": [
+        {
+          "module": "ja",
+          "stage": 1,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 16,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 31,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 0,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 5,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 9,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 15,
+          "result": "pass"
+        }
+      ],
+      "cross_platform": false,
+      "rejections": [
+        "truncation",
+        "crc",
+        "future_version",
+        "other_game",
+        "resources",
+        "invalid_boolean_JA"
+      ]
+    },
+    "cross_platform_both_directions": {
+      "platform": "linux",
+      "stages": [
+        {
+          "module": "ja",
+          "stage": 1,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 16,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 31,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 0,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 5,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 9,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 15,
+          "result": "pass"
+        }
+      ],
+      "cross_platform": true,
+      "rejections": [
+        "truncation",
+        "crc",
+        "future_version",
+        "other_game",
+        "resources",
+        "invalid_boolean_JA"
+      ]
+    },
+    "sanitizers": {
+      "platform": "linux",
+      "stages": [
+        {
+          "module": "ja",
+          "stage": 1,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 16,
+          "result": "pass"
+        },
+        {
+          "module": "ja",
+          "stage": 31,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 0,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 5,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 9,
+          "result": "pass"
+        },
+        {
+          "module": "p2",
+          "stage": 15,
+          "result": "pass"
+        }
+      ],
+      "rejections": [
+        "truncation",
+        "crc",
+        "future_version",
+        "other_game",
+        "resources",
+        "invalid_boolean_JA"
+      ]
+    },
+    "jukebox_regressions": {
+      "platform": "linux",
+      "cases": [
+        {
+          "case": "sprites",
+          "result": "pass"
+        },
+        {
+          "case": "resize",
+          "result": "pass"
+        },
+        {
+          "case": "backdrop",
+          "result": "pass"
+        },
+        {
+          "case": "music",
+          "result": "pass"
+        },
+        {
+          "case": "death",
+          "result": "pass"
+        },
+        {
+          "case": "scroll",
+          "result": "pass"
+        },
+        {
+          "case": "camera",
+          "result": "pass"
+        },
+        {
+          "case": "motion",
+          "result": "pass"
+        }
+      ],
+      "death_routes": 32
+    },
+    "pre2_scroll_regressions": {
+      "platform": "linux",
+      "cases": [
+        {
+          "case": "clip",
+          "result": "pass"
+        },
+        {
+          "case": "backdrop",
+          "result": "pass"
+        },
+        {
+          "case": "camera",
+          "result": "pass"
+        },
+        {
+          "case": "foreground",
+          "result": "pass"
+        },
+        {
+          "case": "motion",
+          "result": "pass"
+        },
+        {
+          "case": "timeline",
+          "result": "pass"
+        }
+      ],
+      "clipping_placements": 700,
+      "native_motion_routes": 4,
+      "native_frames_per_route": 360
+    },
+    "library-r6-ui-linux": {
+      "summary": [
+        "{\"fullscreen\": false, \"games\": 5, \"installations\": 8, \"selected_game\": \"blues\", \"ui_checks\": 38}",
+        "Originals unchanged: 462 files; catalog and UI preferences verified"
+      ]
+    },
+    "library-r6-ui-windows": {
+      "summary": [
+        "{\"fullscreen\": false, \"games\": 5, \"installations\": 8, \"selected_game\": \"blues\", \"ui_checks\": 38}",
+        "Originals unchanged: 462 files; catalog and UI preferences verified"
+      ]
+    },
+    "pf6-managed-linux-final": {
+      "summary": [
+        "prehistorik2 {\"clipped\": 0, \"effects\": 4, \"frames\": 165, \"gameplay\": true, \"jump\": 60, \"left\": 65, \"nonzero\": 393786, \"pause\": true, \"peak\": 18020, \"rewind\": true, \"right\": 130, \"samples\": 569344}",
+        "OK: two native routes, separate profiles/preferences, zero clipped PCM samples; 462 originals unchanged"
+      ]
+    },
+    "pf6-managed-windows-final": {
+      "summary": [
+        "prehistorik2 {\"clipped\": 0, \"effects\": 4, \"frames\": 157, \"gameplay\": true, \"jump\": 60, \"left\": 65, \"nonzero\": 385652, \"pause\": true, \"peak\": 17952, \"rewind\": true, \"right\": 130, \"samples\": 561152}",
+        "OK: two native routes, separate profiles/preferences, zero clipped PCM samples; 462 originals unchanged"
+      ]
+    },
+    "pf6-blues-regression": {
+      "summary": [
+        "OK: 15 native session operations, 4 validated game sessions; BBS v1/v2, eight thumbnails, F6/HUD/zoom/rewind, migration and orphan lock",
+        "Originals unchanged: 462 files"
+      ]
+    },
+    "ctest": "8/8 passed",
+    "contracts": "All existing examples validate; family save formats added to schema",
+    "library_end_to_end": {
+      "linux": {
+        "ui": {
+          "family_save_ui_checks": 5,
+          "loaded_games": 2
+        },
+        "restored_states": [
+          {
+            "camera": 1,
+            "frame": 25,
+            "hud": 0,
+            "level": 0,
+            "view": 0,
+            "x": 102,
+            "y": 672
+          },
+          {
+            "camera": 1,
+            "frame": 25,
+            "hud": 0,
+            "level": 0,
+            "view": 0,
+            "x": 74,
+            "y": 208
+          }
+        ]
+      },
+      "windows": {
+        "ui": {
+          "family_save_ui_checks": 5,
+          "loaded_games": 2
+        },
+        "restored_states": [
+          {
+            "camera": 1,
+            "frame": 24,
+            "hud": 0,
+            "level": 0,
+            "view": 0,
+            "x": 97,
+            "y": 672
+          },
+          {
+            "camera": 1,
+            "frame": 23,
+            "hud": 0,
+            "level": 0,
+            "view": 0,
+            "x": 66,
+            "y": 208
+          }
+        ]
+      }
+    },
+    "packaged_ui": {
+      "program": "titus-engine.exe",
+      "exit": 0,
+      "stdout": "{\"family_save_ui_checks\":5,\"loaded_games\":2}\r\n",
+      "stderr": ""
+    },
+    "packaged_runtime": [
+      {
+        "game": "jukebox",
+        "build_revision": "c41c1d70e5fd86c8a1b963a012d765fab8e972c2-pf6",
+        "slot_count": 8,
+        "action": {
+          "slot": 1,
+          "type": "load_slot"
+        }
+      },
+      {
+        "game": "prehistorik2",
+        "build_revision": "c41c1d70e5fd86c8a1b963a012d765fab8e972c2-pf6",
+        "slot_count": 8,
+        "action": {
+          "slot": 1,
+          "type": "load_slot"
+        }
+      }
+    ]
+  },
+  "artifacts": {
+    "build/library-package-windows-r6/bin/titus-engine.exe": {
+      "bytes": 4360408,
+      "sha256": "9aaa0b978f4d7356dacba3286357442dc3c803786806e8fc6d82c8e635730a33"
+    },
+    "build/library-package-windows-r6/bin/engines/blues-family/blues-family-runtime.exe": {
+      "bytes": 6593041,
+      "sha256": "a9aa39d658aeff22f86e704eef37769e7bbba7713e351e52fb93e55059f67da8"
+    },
+    "build/library-package-windows-r6/bin/engines/fox_amiga/titus-fox-amiga.exe": {
+      "bytes": 4415845,
+      "sha256": "f6c052956d6be040d9248b4f6b47c57a485c8f6f66eb6c482bae6c964f124e2f"
+    },
+    "build/library-package-windows-r6/bin/engines/olduvai/olduvai-runtime.exe": {
+      "bytes": 4702755,
+      "sha256": "0a91b14543397138108b5e31b3ac9330edbe79863c3684208701b051e0fa6ae3"
+    },
+    "build/library-package-windows-r6/bin/engines/opentitus/opentitus-runtime.exe": {
+      "bytes": 5063056,
+      "sha256": "8661834732c57e22f829c048e8817419d028a61dd976300abe4475ff2538ae39"
+    },
+    "build/library-package-windows-r6/bin/engines/pre1_amiga/titus-pre1-amiga.exe": {
+      "bytes": 4459257,
+      "sha256": "fab67f95513da6b107ba279430226e60f2ed5a8baa14faa9fb2e1c5e5e920f9b"
+    }
+  },
+  "package_engine_count": 5,
+  "artwork": {
+    "blues": {
+      "source": "Local original game title screen",
+      "width": 640,
+      "height": 400,
+      "sha256": "e8347f98b31d91f6ae89698b6ec4159a631980b43c74fcd857146d4caba09be7"
+    },
+    "jukebox": {
+      "source": "Local original game title screen",
+      "width": 640,
+      "height": 400,
+      "sha256": "0e296b72c97585e60bf5e2612c375467d14d1738f79fedb6f98e9ee52b6a017b"
+    },
+    "fox": {
+      "source": "Local original game title screen",
+      "width": 320,
+      "height": 200,
+      "sha256": "4364d43e16912147c4ad30abe8354ebcecf093f1cda4174bcd1e41703133ede8"
+    },
+    "prehistorik": {
+      "source": "Local original game title screen",
+      "width": 320,
+      "height": 200,
+      "sha256": "107413b689cc49803b373def890e37d88b35734a8adb3c76997f96c351b95173"
+    },
+    "prehistorik2": {
+      "source": "Local original game title screen",
+      "width": 640,
+      "height": 400,
+      "sha256": "2f43b0a7fd95cafc0b2ea213346e2f2da6a8672d1a69de1fc93011f3cdd6ea61"
+    }
+  },
+  "limits": [
+    "Human play review pending; initialization/save tests across stages are not complete campaigns",
+    "Jukebox persistent slots support single-player modes",
+    "Artwork is supplied locally from user originals and is not committed to Git"
+  ]
+}
