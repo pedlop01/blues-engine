@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <stdexcept>
 namespace titus::pre1_amiga {
 namespace {
 using Palette = std::array<std::uint32_t, 16>;
@@ -307,6 +308,21 @@ void boss(Canvas &c, const Assets &a, const LevelAssets &l, const Game &g,
   }
 }
 } // namespace
+Frame picture_frame(const fox_amiga::Picture &picture, unsigned scale) {
+  if (!scale || scale > 4 || picture.image.width != 320 ||
+      picture.image.height != 200 || picture.image.pixels.size() != 64000)
+    throw std::runtime_error("Invalid full-screen picture");
+  Frame f{320 * scale, 200 * scale,
+          std::vector<std::uint32_t>(64000 * scale * scale)};
+  // PC1 decoding already expands RGB12 components into RGB24. Reinterpreting
+  // those expanded bytes as RGB12 changes the original intro colours.
+  for (unsigned y = 0; y < f.height; ++y)
+    for (unsigned x = 0; x < f.width; ++x)
+      f.pixels[std::size_t(y) * f.width + x] =
+          0xff000000 |
+          picture.palette[picture.image.pixels[(y / scale) * 320 + x / scale]];
+  return f;
+}
 double player_world_x(const Game &g, double alpha) {
   const auto &s = g.state;
   double offset = s.current_screen < 100 ? s.current_screen * 320 : 0;

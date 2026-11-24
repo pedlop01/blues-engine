@@ -771,15 +771,7 @@ int run(const std::vector<std::string> &input_args) {
       const char *pics[] = {"titus.pc1", "titre1.pc1", "titre2.pc1"};
       auto pic = titus::fox_amiga::picture(assets.files.read(pics[intro - 1]),
                                            4, true);
-      for (unsigned y = 0; y < frame.height; ++y)
-        for (unsigned x = 0; x < frame.width; ++x) {
-          unsigned color =
-              pic.palette[pic.image
-                              .pixels[(y / resolution) * 320 + x / resolution]];
-          frame.pixels[std::size_t(y) * frame.width + x] =
-              0xff000000 | (((color >> 8) & 15) * 17 << 16) |
-              (((color >> 4) & 15) * 17 << 8) | (color & 15) * 17;
-        }
+      frame = picture_frame(pic, resolution);
       if (intro == 3)
         ui(56, 184, "ENTER PARA JUGAR", 0xffffdf63);
     }

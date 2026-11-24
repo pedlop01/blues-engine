@@ -16,6 +16,38 @@ int main(int argc, char **argv) {
     if (argc != 2 && argc != 3)
       throw std::runtime_error("Usage: pre1-game-probe DATAPATH");
     titus::pre1_amiga::Assets a(std::filesystem::u8path(argv[1]));
+    unsigned intro_picture_checks = 0;
+    for (const std::string name : {"titus", "titre1", "titre2"}) {
+      auto original = a.files.read(name + ".pc1");
+      auto picture = titus::fox_amiga::picture(original, 4, true);
+      for (unsigned scale = 1; scale <= 4; ++scale) {
+        auto f = titus::pre1_amiga::picture_frame(picture, scale);
+        for (unsigned y = 0; y < f.height; ++y)
+          for (unsigned x = 0; x < f.width; ++x) {
+            unsigned index =
+                picture.image.pixels[(y / scale) * 320 + x / scale];
+            // Independent expected colour from the original PC1 header's
+            // separate RGB component arrays, not the decoded palette object.
+            unsigned expected = 0xff000000 |
+                                ((original[index] >> 4) * 17 << 16) |
+                                ((original[16 + index] >> 4) * 17 << 8) |
+                                (original[32 + index] >> 4) * 17;
+            if (f.pixels[y * f.width + x] != expected)
+              throw std::runtime_error(
+                  "Intro original PC1 palette/scaling mismatch");
+          }
+        ++intro_picture_checks;
+        if (argc == 3 && scale == 1) {
+          std::ofstream file(std::filesystem::path(argv[2]) /
+                                 ("intro-" + name + ".ppm"),
+                             std::ios::binary);
+          file << "P6\n320 200\n255\n";
+          for (auto px : f.pixels)
+            for (int shift : {16, 8, 0})
+              file.put(char(px >> shift));
+        }
+      }
+    }
     auto platform = []() {
       olduvai::core::Entity e;
       e.obj_type = olduvai::core::ObjType::Platform;
@@ -503,6 +535,7 @@ int main(int argc, char **argv) {
     std::cout << titus::Json({{"levels", report},
                               {"seam_cases", seam_cases},
                               {"neighbour_fixtures", 5},
+                              {"intro_picture_checks", intro_picture_checks},
                               {"render_hashes", render_hashes},
                               {"exit_fixtures", exits},
                               {"room_fixtures", checked_rooms},

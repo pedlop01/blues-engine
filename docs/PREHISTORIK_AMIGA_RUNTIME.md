@@ -171,3 +171,13 @@ Comprobaciones específicas: activación y movimiento de un enemigo vecino,
 plataforma/interpolación/guardado, un único paso al cruzar, separación por
 teletransporte y separación de una cueva respecto al exterior. Evidencia:
 [th15-neighbour-validation.json](measurements/th15-neighbour-validation.json).
+
+## r4: paleta de la introducción
+
+Las tres pantallas de introducción (`TITUS`, `TITRE1`, `TITRE2`) usan
+directamente la paleta RGB24 que devuelve el lector PC1. Se elimina una
+segunda conversión RGB12 que alteraba esos colores. La composición de las
+pantallas se centraliza en `picture_frame`, con doce comprobaciones de todos
+los píxeles frente a las componentes RGB de los archivos originales (tres
+imágenes, escalas 1–4). Se han revisado también las imágenes renderizadas.
+Evidencia: [th15-intro-validation.json](measurements/th15-intro-validation.json).

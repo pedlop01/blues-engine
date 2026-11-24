@@ -11,6 +11,7 @@ struct View {
   unsigned width = 960, height = 600;
   bool classic_hud = true;
 };
+Frame picture_frame(const fox_amiga::Picture &, unsigned scale = 1);
 double player_world_x(const Game &, double alpha = 1);
 Frame render(Assets &, const Game &, const View &);
 void text(Frame &, const Assets &, int x, int y, const std::string &,

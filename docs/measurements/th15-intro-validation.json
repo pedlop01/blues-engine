@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "task": "TH-15",
+  "revision": "r4",
+  "progress_percent": 95,
+  "fix": "intro used a second RGB12 conversion on an already expanded RGB24 palette",
+  "intro_screens": 3,
+  "scales": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "pixel_palette_checks": 12,
+  "pixels_checked": 5760000,
+  "reference": "separate RGB component arrays of the user-supplied original PC1 headers",
+  "linux_windows_match": true,
+  "visually_reviewed": true,
+  "gameplay_and_world_render_fixtures_match_r3": true,
+  "private_evidence": {
+    "build/th15-intro-linux.json": "0363e98b4918eeb4545b4b6470e85dc06a71b4239f7f613a9d2bdbdb1f0102cd",
+    "build/th15-intro-windows/report.json": "0363e98b4918eeb4545b4b6470e85dc06a71b4239f7f613a9d2bdbdb1f0102cd"
+  }
+}

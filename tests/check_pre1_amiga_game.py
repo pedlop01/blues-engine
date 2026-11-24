@@ -40,6 +40,7 @@ if a.windows:
 assert len(report['levels']) == 7 and len(report['exit_fixtures']) == 7
 assert len(report['render_hashes']) == 42
 assert report['neighbour_fixtures'] == 5
+assert report['intro_picture_checks'] == 12
 assert report['room_fixtures'] == 55 and report['trunk_save_and_crossing']
 if a.reference:
     assert report == json.loads(a.reference.read_text()), 'Cross-build state/render divergence'
