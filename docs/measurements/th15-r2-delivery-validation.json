@@ -1,0 +1,15 @@
+{
+  "bundle": "Titus-Engine-TH15-r2-completo.zip",
+  "archive_sha256": "5a24828044b3a691ce32b0c379b1aef864e2c8312941d0e444de0c71a0d82056",
+  "windows_launch_ready": true,
+  "actual_engine_revision": "1eee7c5edef08ca0de32264ac134c93fc3d0bb4a",
+  "complete_package_extracted_and_launched": true,
+  "schema_version": 1,
+  "task": "TH-15",
+  "progress_percent": 95,
+  "previous_reported_engine_revision": "10178b829d748df2c95cd06b645b6690fc536674",
+  "launcher_binary_identical_between_r1_r2": true,
+  "launcher_sha256": "04784332a515cdb738e9e916bfd51f3142cfe28e8afebfff375e9356a2606edd",
+  "delivery": "full ZIP; extract into a new folder; run INICIAR-TITUS.cmd",
+  "runtime_code_changed_in_this_followup": false
+}

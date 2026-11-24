@@ -137,3 +137,14 @@ uniones continuas. El terreno se recorta a los límites de cada tramo; se pintan
 todos los fondos antes de los actores, para que un fondo vecino no los borre.
 Los guardados anteriores siguen siendo legibles: la colisión de los vecinos se
 reconstruye desde los recursos. Ver [evidencia de las correcciones](measurements/th15-scroll-review-fixes.json).
+
+## Actualizar el paquete de revisión en Windows
+
+Extraer **todo** `Titus-Engine-TH15-r2-completo.zip` en una carpeta nueva y abrir
+`INICIAR-TITUS.cmd`. Copiar solo `titus-engine.exe` no actualiza los motores:
+el lanzador de los dos paquetes tiene el mismo hash, y las correcciones están
+en `bin/engines/pre1_amiga/titus-pre1-amiga.exe`. La r2 corregida debe emitir
+`build_revision: 1eee7c5edef08ca0de32264ac134c93fc3d0bb4a` en el evento `hello`;
+`10178b8` corresponde al motor anterior. Se comprueba también el ZIP extraído,
+con un perfil privado, antes de entregarlo. Los perfiles habituales no se
+incluyen ni se reemplazan con el paquete.
