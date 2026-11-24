@@ -106,3 +106,11 @@ Prehistorik 2 tuvo versiones originales DOS y Amstrad CPC, no Amiga; véase el
 [registro de ediciones](https://www.mobygames.com/game/525/prehistorik-2/releases/).
 Se corrige la hipótesis inicial de TH-16: no está bloqueada por falta de datos,
 sino retirada del alcance como no aplicable. No se renumeran las demás tareas.
+
+## Avance posterior de TH-14
+
+La incertidumbre inicial de descompresión de Fox se ha resuelto en el primer
+bloque de [TH-14](FOX_AMIGA_RUNTIME.md): lectores nativos contrastados con los
+65 recursos comprimidos y previews estáticos. Las hipótesis anteriores describen
+el estado de TH-13; no siguen siendo bloqueos de los lectores. El runtime jugable,
+la física y el audio continúan pendientes.

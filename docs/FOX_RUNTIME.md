@@ -150,3 +150,9 @@ inspeccionan capturas del juego; la GUI recorre Blues DOS → Jukebox → P2 →
 Blues Amiga, restaurando ventana/selección cinco veces. Se conservan las regresiones
 de la familia, contratos y core, y tamaño/fecha/SHA-256 de los 462 originales.
 Campaña completa, escucha humana y mandos físicos siguen en TH-12/17.
+
+## Edición Amiga
+
+Su implementación se sigue por separado en [TH-14](FOX_AMIGA_RUNTIME.md). El
+primer bloque aporta lectores y previews; no habilita un runtime Amiga ni cambia
+las capacidades de este adaptador DOS.

@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "playable": false,
+  "scenes": [
+    {
+      "level": 1,
+      "viewport": {
+        "height": 592,
+        "number": 1,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 2,
+      "viewport": {
+        "height": 624,
+        "number": 2,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 3,
+      "viewport": {
+        "height": 880,
+        "number": 3,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 4,
+      "viewport": {
+        "height": 1040,
+        "number": 4,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 5,
+      "viewport": {
+        "height": 1232,
+        "number": 5,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 6,
+      "viewport": {
+        "height": 1616,
+        "number": 6,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 7,
+      "viewport": {
+        "height": 1024,
+        "number": 7,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 8,
+      "viewport": {
+        "height": 2416,
+        "number": 8,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 9,
+      "viewport": {
+        "height": 1760,
+        "number": 9,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 10,
+      "viewport": {
+        "height": 1760,
+        "number": 10,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 11,
+      "viewport": {
+        "height": 2272,
+        "number": 11,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 12,
+      "viewport": {
+        "height": 1088,
+        "number": 12,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 13,
+      "viewport": {
+        "height": 2960,
+        "number": 13,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 14,
+      "viewport": {
+        "height": 592,
+        "number": 14,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    },
+    {
+      "level": 16,
+      "viewport": {
+        "height": 192,
+        "number": 16,
+        "width": 4096,
+        "x": 0,
+        "y": 0
+      },
+      "resources": 65,
+      "sprites": 398
+    }
+  ],
+  "rejected_requests": 7,
+  "originals_unchanged": true
+}

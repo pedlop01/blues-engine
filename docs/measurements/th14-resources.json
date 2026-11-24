@@ -1,0 +1,473 @@
+{
+  "schema_version": 1,
+  "main_sha256": "18ca46dd02a3ad3623b03d425f0e0ae489b5090498882aea6d2578161010bc45",
+  "playable": false,
+  "reference": "isolated original 68000 resource decoders",
+  "resources": [
+    {
+      "decoded_sha256": "71cf657cf24d92844f21e9b2a01c920f9b54f1cbff7eb080aff213f688100163",
+      "decoded_size": 6744,
+      "method": 2,
+      "name": "BONUS.PAT",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "54d2fadadf15a6a82b76af3a1482152134ff04e60e4574cf5dd97e37d385e2fd",
+      "decoded_size": 32768,
+      "method": 2,
+      "name": "BRIK01.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "b43fe8c67d9cdc806f49672d4d9fb3f2941a7feabe004eb187d36ee0148aab3e",
+      "decoded_size": 32768,
+      "method": 2,
+      "name": "BRIK02.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "c97dd77e9d9db65dfcb565bc59e635809485846d1ab56836ee8e8c00d343fb21",
+      "decoded_size": 32768,
+      "method": 2,
+      "name": "BRIK03.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "db8273cd227a9ced5706b03df0ff7bb186319036ce34e49647b2b47efe269ccf",
+      "decoded_size": 32768,
+      "method": 2,
+      "name": "BRIK04.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "f172086eddfb4b684883b054057186828d798010e879e92af73fd016c071f9fe",
+      "decoded_size": 32768,
+      "method": 1,
+      "name": "BRIK05.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "de291f287343bc2784b5ff0b81be89055fa5c2aa5371c30fd13d9beee4bea64d",
+      "decoded_size": 32768,
+      "method": 2,
+      "name": "BRIK06.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "8a1a3c64ffcc40938abc270a38d2736c0eb5ece3c2b2789aaac9e3856f7d4420",
+      "decoded_size": 32768,
+      "method": 2,
+      "name": "BRIK07.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "eda64eb01a17b2b8a677e5c36ec476f6147c4af9cd5159d3f9840f132feeb776",
+      "decoded_size": 32768,
+      "method": 1,
+      "name": "BRIK08.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "c94bdaa73e37d50cf76399fa31dc5e236166145fb0eaa5288f61a471ecdaef0c",
+      "decoded_size": 32768,
+      "method": 1,
+      "name": "BRIK09.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "e88af1ddbc65a4bfb1bea3093b3c5e5fc608b1e312fcf2004ef88fefdf317e15",
+      "decoded_size": 32768,
+      "method": 2,
+      "name": "BRIK10.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "be3497af93704f90d6ccfe75884bff4813fa3497b38ad417112bcf0e2f676967",
+      "decoded_size": 32768,
+      "method": 1,
+      "name": "BRIK11.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "f4956990f89d6cab0a384f994853f6801295bc2ef58feeffacee559d69af6fd4",
+      "decoded_size": 32768,
+      "method": 2,
+      "name": "BRIK12.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "83d190401b8a81e54efdfb0605609fb0c277666bbf0c3d0081ca18a714a02028",
+      "decoded_size": 32768,
+      "method": 2,
+      "name": "BRIK13.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "585cb5649f36d97b253964a4263de069a7a1d8afe93b91ee60910fa09b7cd2d1",
+      "decoded_size": 32768,
+      "method": 2,
+      "name": "BRIK14.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "5d6ac6493e02d655ee83aa2475560fcabb0f24f8f0e932db087e5ee60597f243",
+      "decoded_size": 32768,
+      "method": 2,
+      "name": "BRIK16.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "a5173d48c9c4fc64421351901ee3e5fc8ec561cbf6fae95f6a60a737d0b972f8",
+      "decoded_size": 1624,
+      "method": 2,
+      "name": "CBA1.PAT",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "f004047b1d75f6b773203b373b3590879915474954db4b43118dff4a00af422a",
+      "decoded_size": 5720,
+      "method": 2,
+      "name": "JEU1.PAT",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "4283b06b0786f7a73574357e9318b17c6b14771bf702ab2c0d1700516ad66990",
+      "decoded_size": 9816,
+      "method": 2,
+      "name": "JEU5.PAT",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "6d61dffd63eadd6484a9fcca316c76eeda68c07960f1c2a1b6dde945893c78ef",
+      "decoded_size": 9472,
+      "method": 2,
+      "name": "LEVEL01.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "0733d1db96f91026fa178fe0573bc0fdbd0e49d07a5290ac821b8053604e0fa8",
+      "decoded_size": 9984,
+      "method": 2,
+      "name": "LEVEL02.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "4b87692be737902963ca7e356992cc0cce8186bc50e5f50af605604aad831089",
+      "decoded_size": 14080,
+      "method": 2,
+      "name": "LEVEL03.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "d44547f9602b813b833e001dc8622c376e53c15f7cb20b932affe4bcd924f3e4",
+      "decoded_size": 16640,
+      "method": 2,
+      "name": "LEVEL04.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "bc5c37a26496226039094c3a4286b2b73ab6390f8ee39be0e865b4f5e5f073ea",
+      "decoded_size": 19712,
+      "method": 2,
+      "name": "LEVEL05.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "cd8d8e6abedb2a61e499c4c917061118e76ba741ad6536145d31bef4aa9c8d53",
+      "decoded_size": 25856,
+      "method": 2,
+      "name": "LEVEL06.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "3159bb1cfd0d189cf08aec89936159e112ec73bb36dee496bc98e9b46eb3a3bd",
+      "decoded_size": 16384,
+      "method": 2,
+      "name": "LEVEL07.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "16cf9890050471e105efd365f299046f0ce098b95970b906a43868c3ac0c8ff3",
+      "decoded_size": 38656,
+      "method": 2,
+      "name": "LEVEL08.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "6f5d4118f59e6b145305e61c27c3fdb87e56fc78bfbc21d3bd0d5cd552528526",
+      "decoded_size": 28160,
+      "method": 2,
+      "name": "LEVEL09.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "1949ef4f73a32fe4fc9be75abf035faf6bc66dc2dbaba227ec2583542f7ecddd",
+      "decoded_size": 28160,
+      "method": 2,
+      "name": "LEVEL10.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "78a1e3da8efdf0bf314961fcbffddd7e3bd68e2da9b9d244f19ae8009a49e109",
+      "decoded_size": 36352,
+      "method": 2,
+      "name": "LEVEL11.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "b3aa85b8f94ce02d324decfb7bd23ca05f03d96ee087afda63db3a34437de558",
+      "decoded_size": 17408,
+      "method": 2,
+      "name": "LEVEL12.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "29665d4891549215a510ec7735de05ad53c542505d913f2cf0a780e5add5f6d5",
+      "decoded_size": 47360,
+      "method": 2,
+      "name": "LEVEL13.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "700825967d927671382d8acf54d1c0d0cca08992c065ce0635c8fd4dfdc3cc11",
+      "decoded_size": 9472,
+      "method": 2,
+      "name": "LEVEL14.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "1208abfa88ff63aaefc57822042c87842f157651c92908c21855fb2f070d19c3",
+      "decoded_size": 3072,
+      "method": 2,
+      "name": "LEVEL16.TBL",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "87d1241ce702819992447652b92361f23cb1fc890f0056bdda491d9b849f005e",
+      "decoded_size": 1624,
+      "method": 2,
+      "name": "MORT.PAT",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "ef402f36d68558b00ea04b28e02547e23030bda195e9886ec1ce9ac5d16053e5",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL01.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "c78d80eb231d998cbe83668a21c1aaf5ae0ac603671cffde7dfe249cb2ffc310",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL02.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "33dc7d304ad8cc7688371ba14865b76755af21d65463ba01e922b8a14e675c92",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL03.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "88385f5ef95cfc284e090ba835b22288e6cfd74b7ec1f360b0b1858145ef4032",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL04.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "b53e34dfb9598d01ddf8717a141988bea9a2d72041831b8818d8da2fa711b43a",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL05.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "f6ac900c2fe23b6d3f422af0561eabfa87d37dc7c264b28d0ce475512e0a7ad3",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL06.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "34925c44d78ce479645a41d2d5a043cd715a351975deb6da75942efcc4470ffc",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL07.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "644928d8a3c3e52973ed68760f52dc5b96a4e62ce378602d544f09f56416f1ef",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL08.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "aca5003b3bd2a02b72b2d7348b267ad8163be1048a827449dc268111b2c7b507",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL09.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "cf109ed0ddf1768e59495e6a39e8356293eead150c7f3c011256e75957d57817",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL10.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "a5a1d43db9bf8dcc2488cc61da48d5c8e5a06d05a5914c7bea48c522ff05687c",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL11.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "74a691cd85f0b82d8ae70e0a1944244bef83d1e920553358e0b9586ded1ebfd2",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL12.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "5437c7f2e7b35ed220999618095a902c9c0bab423464c3f43df33fc816be1945",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL13.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "8f97fa7d267846bef7ed64c0dc16ed3b6e0cfe3ad1d2017d6d3d747a7636eb39",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL14.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "799964872e76d8bffa3428865773d5b5556069bd87b0bb401865008f02f4336f",
+      "decoded_size": 3060,
+      "method": 2,
+      "name": "POIL16.BIN",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "ada2ce4e07cd53d9b2f3f6f02b2335b09d336ef9721f01c0bab94a733b733543",
+      "decoded_size": 4696,
+      "method": 2,
+      "name": "PRES2.PAT",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "bf7144fc28f15ebde97825466ede7a531704dcd4d4e3c838098b7aad59f4b308",
+      "decoded_size": 8988,
+      "method": 2,
+      "name": "bisou2.spr",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "ebe11fb1b5dada842dc2f8f07ebb46d04ed13260e08164a0e9f31cba3e395598",
+      "decoded_size": 2270,
+      "method": 2,
+      "name": "fonte.spr",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "1a11f331eda74d00fa33f99d1996071920d9c19c75590273d246a4f1c4afd5de",
+      "decoded_size": 14662,
+      "method": 1,
+      "name": "fox.spr",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "fc2ae5afb0df178832848d066e2fd797b62017ab2efa8c7f4df09483efabf160",
+      "decoded_size": 6744,
+      "method": 2,
+      "name": "gagne2.pat",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "d1facc7d7d903a7b594e0cfe028cd778c59c1d1f59a3fb2bc7821d98255d5c6d",
+      "decoded_size": 13912,
+      "method": 2,
+      "name": "jeu22.pat",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "85bef8f584bfb0abc354d73bce802608da993189b19c10636979d96a3edac235",
+      "decoded_size": 8792,
+      "method": 2,
+      "name": "jeu32.pat",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "c719a95f0daa9ecc694788f19683d3d99d271a26127cb9d79cec5c2c4f772b30",
+      "decoded_size": 11864,
+      "method": 2,
+      "name": "jeu42.pat",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "20ca55f844e057f5ee0ba2a6c4f4170e21d1e19847e2580db792177748f712b7",
+      "decoded_size": 152810,
+      "method": 1,
+      "name": "monster2.spr",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "46e142f57020151a36f2538383c5bb1fe70fbe5d8e06f09b575739e9987464a8",
+      "decoded_size": 14368,
+      "method": 1,
+      "name": "objet2.spr",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "ca201d4dd1ad781795d3dc91ed438856a8685682ceb687b1d186fce60356e0b1",
+      "decoded_size": 10840,
+      "method": 2,
+      "name": "over2.pat",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "68e4461b2fa41096757d2f4f60d4f78a977811a2e89651ca075b39f2e980178e",
+      "decoded_size": 48096,
+      "method": 1,
+      "name": "present2.pc1",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "bdaa5fef7bf61b60d3d8ae70bcc429bc6e2ec71c22e7ba825511131ceeb727ad",
+      "decoded_size": 6726,
+      "method": 1,
+      "name": "theend.spr",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "4316aadd8645e1a51d55935db6a64ec33cfc361c2a81f83e475c3dfd9748de2d",
+      "decoded_size": 11096,
+      "method": 2,
+      "name": "titre2.pc1",
+      "reference_match": true
+    },
+    {
+      "decoded_sha256": "bc4b3686350df0e7bb4a61a09a9efa0ccd8b869eeff2551945a7f5e742dfd8ce",
+      "decoded_size": 5792,
+      "method": 2,
+      "name": "titus.pc1",
+      "reference_match": true
+    }
+  ],
+  "resources_verified": 65,
+  "native_sprites": {
+    "bisou2.spr": 19,
+    "fonte.spr": 42,
+    "fox.spr": 30,
+    "monster2.spr": 232,
+    "objet2.spr": 71,
+    "theend.spr": 4
+  },
+  "originals_unchanged": true
+}

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "playable": false,
+  "task": "TH-14",
+  "implementation_progress": 20,
+  "linux_ctest_groups_passed": 6,
+  "windows_resource_unit_tests_passed": true,
+  "native_reference_resources": 65,
+  "compressed_methods": {
+    "2": 56,
+    "1": 9
+  },
+  "linux_windows_metadata_identical": true,
+  "linux_windows_bmp_sha256": {
+    "fonte.spr.bmp": "ce0b56f8f23e81f83508971f9d82f51628879d68417238c5b04d0b786e6c8a47",
+    "titus.pc1.bmp": "3a8a830bda4295302f9e75e023b1b06923965c55e7d8d765b17352b9121f0a87",
+    "objet2.spr.bmp": "fa758b4cbd76e8b71ecf76ff6f8f5687a9385fcafa58e53bb011f7dd8571f075",
+    "present2.pc1.bmp": "14e2d80c593aad4afb90decc219be2ed821d9811702c138f16fae32b1ca28ce3",
+    "monster2.spr.bmp": "939d3cb3f256290a4bcbdc19c8280522bca6d46d912e5f89603d5ed8f7bc68ce",
+    "titre2.pc1.bmp": "0d75e80d084f728d98c93baef4b8741b06498d52fd9a5728092c482d2f05ba69",
+    "bisou2.spr.bmp": "48c8d4e8f2253e277aac920c7c5afa6adac0a13f3bb9ae546ba7a2840522ee0a",
+    "fox.spr.bmp": "23cbe59777fe3afb14280a907b529f8a43f46d2e1da175d3d1132aebfd3d05cd",
+    "level.bmp": "ad370fc015017d4d1bdab3ce3a63ef15e3d85f6941f897b2ab12d586464957ac",
+    "theend.spr.bmp": "398b54ee77781eb9c826a5b901404e64c486198ebd6891403a8d0323fd48c83f"
+  },
+  "address_undefined_sanitizers": "passed: synthetic bounds and full resource/preview probe",
+  "sanitizer_configuration": "-O1 -fsanitize=address,undefined; ASAN_OPTIONS=detect_stack_use_after_return=0",
+  "windows_source": "WSL UNC path with native path helpers and wmain",
+  "original_files_unchanged": 462,
+  "campaigns_tested": false,
+  "audio_playback_tested": false
+}

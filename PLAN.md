@@ -16,7 +16,7 @@ expansión validada. El detalle de TH-00–TH-16 y la fase de paridad PX-01–PX
 - Tareas completadas: **16 de 18**.
 - Completadas: **01–16**.
 - Blues: **17 en curso** con las pruebas del usuario; **18 pospuesta** hasta la expansión.
-- Titus Engine: **TH-00–TH-13 completadas (100 %)**; TH-12 cerrada por el usuario y TH-13 documentada en [viabilidad Amiga](docs/AMIGA_FEASIBILITY.md).
+- Titus Engine: **TH-00–TH-13 completadas (100 %)**; TH-12 cerrada por el usuario y TH-13 documentada en [viabilidad Amiga](docs/AMIGA_FEASIBILITY.md). **TH-14 al 20 %**: lectores y referencia gráfica, todavía sin runtime jugable.
 - Paridad Fox/Prehistorik: **PX-01–PX-08 planificadas (0 %)**, con scroll, cámara y encuadre primero.
 - Corrección de escaleras validada por el usuario.
 - El punto recuperable previo a la expansión es `dd07383`, etiqueta `blues-baseline-2026-11-23`.
@@ -193,3 +193,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-24 | TH-12/13 | El usuario cierra TH-12. Auditoría Amiga reproducible: 89/71 archivos coinciden con sus ADF; 21 MAT Prehistorik pasan LZSS y límites de registros. Viabilidad y hitos en docs/AMIGA_FEASIBILITY.md, sin habilitar runtimes nuevos. | TH-14: descompresión/escena Fox primero; PX sigue vigente. 17 abierta y 18 pospuesta. |
 
 | 2026-11-24 | TH-16 | Corrección del usuario: Prehistorik 2 no salió para Amiga. TH-16 cancelada/no aplicable, fuera del cálculo de progreso; se conserva el ID histórico. | Amiga adicional: solo Fox (TH-14) y Prehistorik 1 (TH-15). |
+
+| 2026-11-24 | TH-14 | Primer bloque de Fox Amiga: lectores C++ LZW/Huffman contrastados con los 65 recursos del original; 15 mapas, 398 sprites y tres pantallas PC1 con paleta propia. Herramienta de diagnóstico independiente, sin habilitar Jugar. Ver docs/FOX_AMIGA_RUNTIME.md. | 20 %: continuar lógica/colisiones, audio y adaptador. Mantener paridad PX. |
