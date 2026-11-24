@@ -2,6 +2,8 @@
 #include "titus/fox_amiga.hpp"
 #include "titus/fox_amiga_audio.hpp"
 #include "titus/fox_amiga_objects.hpp"
+#include "titus/fox_amiga_executable.hpp"
+#include "titus/fox_amiga_rules.hpp"
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
@@ -164,5 +166,31 @@ int main() try {
     carrier=object_player_step(object_level,carrier,{false,false,false,true},motion,objects,true);
     require(!objects.carried && objects.action_latched);
 
+    object_level.objects[2].position={100,90};object_level.objects[2].kind=3;objects=initialize_objects(object_level,object_rules);objects.contact_cooldown=4;
+    carrier={};carrier.feet={1000,111};ObjectStepContext context;
+    step_objects(object_level,objects,carrier,context,object_rules);
+    require(objects.objects[2].feet.y==91 && objects.objects[2].vy==32 && objects.objects[2].counter==1);
+    for(unsigned n=0;n<24;++n)step_objects(object_level,objects,carrier,context,object_rules);
+    require(objects.objects[2].feet.y==111 && objects.objects[2].vy==0 && objects.smoke[0].kind==17);
+    objects=initialize_objects(object_level,object_rules);objects.contact_cooldown=4;objects.objects[2].feet.y=108;objects.objects[2].vy=160;objects.objects[2].flags=2;
+    step_objects(object_level,objects,carrier,context,object_rules);
+    require(objects.objects[2].feet.y==111 && objects.objects[2].vy==-96);
+    ObjectWorld empty_world;MotionContext full_context;object_level.floor[1]=0x43;carrier={};carrier.feet={100,111};
+    carrier=object_player_step(object_level,carrier,{},motion,empty_world,false,full_context);
+    require(carrier.state==7 && carrier.energy==0 && carrier.vy==-160 && carrier.death_limit==236);
+    for(unsigned n=0;n<60 && !carrier.restart_requested;++n)carrier=object_player_step(object_level,carrier,{},motion,empty_world,false,full_context);
+    require(carrier.restart_requested && carrier.feet.y==240 && carrier.frame==29);
+    carrier={};carrier.feet={100,111};full_context.invulnerable=true;
+    carrier=object_player_step(object_level,carrier,{},motion,empty_world,false,full_context);
+    require(carrier.state==0 && carrier.energy==16 && !carrier.restart_requested);
+    full_context.invulnerable=false;object_level.floor[1]=1;carrier.lock_ticks=0x8003;
+    for(unsigned n=0;n<3;++n)carrier=object_player_step(object_level,carrier,{false,true,false,false},motion,empty_world,false,full_context);
+    require(!carrier.lock_ticks && carrier.state==0 && carrier.feet.x==100);
+    carrier=object_player_step(object_level,carrier,{false,true,false,false},motion,empty_world,false,full_context);
+    require(carrier.state==1);
+    rejects([&]{auto bad=context;bad.camera.x=2147483647;step_objects(object_level,objects,carrier,bad,object_rules);});
+    rejects([]{executable_sections({});});
+    rejects([]{executable_sections(Bytes(64,0));});
+    rejects([]{native_rules(Bytes(51048,0));});
     std::cout<<"Fox Amiga resource boundaries passed\n";return 0;
 } catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

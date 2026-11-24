@@ -1,6 +1,6 @@
 # TH-14: Titus the Fox Amiga
 
-Estado: **en curso, 48 %**. Lectura nativa de recursos y referencia gráfica
+Estado: **en curso, 54 %**. Lectura nativa de recursos y referencia gráfica
 completadas; inicialización de niveles, consultas de colisión y transiciones
 contrastadas con el original. El núcleo de movimiento sobre terreno está
 contrastado por ticks, incluidas escaleras y movimiento agachado. Las 11 canciones
@@ -15,9 +15,9 @@ La edición DOS, los perfiles existentes y las capacidades del lanzador no cambi
 | Recursos y referencia gráfica | Descompresores nativos contrastados, mapas/tiles/sprites/pantallas leídos, escenas exportadas y paletas obtenidas del original | Completado con los límites siguientes | 20 % |
 | Inicialización y consultas Amiga | POIL, normalización de mapas/tablas, entidades iniciales, consultas de colisión, puertas y condiciones de salida contrastadas | Completado, 10 de los 20 puntos del bloque de lógica | 10 % |
 | Movimiento sobre terreno | Caminar, frenar, cambiar dirección, saltar/caer y resolver paredes/techos; selección lógica de frames, sin actores | Completado como módulo aislado y acotado | 5 % |
-| Simulación e interacciones restantes | Escaleras, agacharse y manipulación de objetos contrastados; pendientes física autónoma de objetos, daños, IA/plataformas, anclajes/oclusión, campaña y final | Parcial, 2 puntos de lógica pendientes | 3 % |
+| Simulación e interacciones restantes | Escaleras, agacharse, objetos y sus interacciones físicas contrastados; daño/recuperación del jugador incorporados. Pendientes IA, plataformas, anclajes/oclusión, campaña y final | Parcial, 1 punto de lógica pendiente | 4 % |
 | Audio Amiga | Secuenciador PAT y muestras externas nativos; 132.000 interrupciones contrastadas y PCM portable. Pendientes efectos, integración y contraste auditivo | Parcial, 10 puntos de audio pendientes | 10 % |
-| Adaptador e integración | Preparación privada nativa, protocolo, preferencias por edición, retorno seguro; exponer solo capacidades implementadas y conservar objetivo PX | Pendiente | 0 % |
+| Adaptador e integración | Extracción de tablas nativa sin dependencias de investigación completada; faltan protocolo, preferencias por edición y retorno seguro. Conservar objetivo PX | Parcial, preparación nativa contrastada | 5 % |
 | Validación jugable | Regresión DOS/Blues, campaña Amiga y comprobaciones Linux/Windows, controles, audio y final | Pendiente | 0 % |
 
 Los pesos suman 100 puntos: recursos 20, inicialización 10, simulación 10, audio
@@ -340,12 +340,12 @@ Evidencia: [replay original](measurements/th14-audio.json) y
 ## Trabajo necesario para entregar TH-14 a revisión final
 
 La petición vigente es completar TH-14 sin supervisión y reservar el 100 % a la
-revisión del usuario. **Aún no se ha alcanzado esa entrega**: el 48 % describe
+revisión del usuario. **Aún no se ha alcanzado esa entrega**: el 54 % describe
 los bloques implementados, no una tarea terminada pendiente solo de aceptación.
 
 | Bloque pendiente | Criterio de entrega |
 |---|---|
-| Interacciones | Física autónoma de los objetos lanzados, colisiones entre actores; daño, muerte y recuperación; bonus y puertas activados por controles reales |
+| Interacciones | Daño de enemigos, bonus y puertas activados por controles reales; integrar objetos, muerte y recuperación en el ciclo completo |
 | Actores | IA, animaciones, impactos y plataformas; filtrar registros inválidos sin accesos fuera del mapa |
 | Presentación | Anclajes y capas contrastados, cámara y temporización reales; presentación interactiva y final |
 | Audio integrado | Efectos y prioridad del cuarto canal, dispositivo y pausa, volúmenes; escucha comparada |
@@ -385,8 +385,8 @@ bloqueo del botón tras recoger hasta soltarlo. El contraste del movimiento crec
 a **35 escenarios y 2252 ticks**; once escenarios nuevos comprueban también
 los 960 bytes de objetos y los siete campos de control de carga en cada tick.
 Solo se ejecuta el paso original del personaje y sus auxiliares; no se ejecutan
-los bucles originales de física de objetos o enemigos. Los objetos lanzados aún
-no avanzan ni golpean a otros actores: ese es el siguiente trabajo de simulación.
+los bucles originales de física de objetos o enemigos. En aquel bloque todavía faltaba el vuelo autónomo y los impactos; se incorporan
+en el bloque siguiente.
 La variante especial de carga lateral asociada al flag original `0x8048a` tampoco
 está implementada; los escenarios usan el modo normal, con ese flag a cero.
 
@@ -404,3 +404,63 @@ Evidencias: [objetos](measurements/th14-objects.json),
 [su validación](measurements/th14-objects-validation.json),
 [paso con carga](measurements/th14-carry.json) y
 [su validación](measurements/th14-carry-validation.json).
+
+
+## Física autónoma y preparación completamente nativa
+
+`step_objects` aplica los pasos originales a objetos libres: gravedad, frenado,
+rebotes, paredes, techos, agua/fuego, objetos apilados, contacto con el jugador,
+alfombras y generación de humo. Mantiene la lista de objetos capaces de golpear
+enemigos; su aplicación a la IA es trabajo pendiente. También conserva la
+animación de tipos especiales y la caducidad fuera de pantalla de los proyectiles.
+
+La comprobación conjunta contiene **182 escenarios y 9609 operaciones/pasos de
+objetos**. De ellos, **88 escenarios y 9031 pasos** corresponden a física autónoma.
+Se comparan objetos, estado físico del jugador, lista de impactos y humo. El
+comprobador ejecuta el recorte original de pantalla y sustituye únicamente la
+operación de blitter por su resultado de visibilidad: no certifica el dibujo
+final ni la oclusión. Linux, Windows y ASan/UBSan coinciden en estos escenarios.
+Evidencias: [contraste](measurements/th14-physics.json) y
+[replays](measurements/th14-physics-validation.json).
+
+El lector del ejecutable Hunk y de su empaquetado es ahora C++ acotado. Produce
+los mismos **87400 bytes en cuatro secciones** que el desempaquetador original,
+con las mismas reubicaciones virtuales. `native_rules` verifica la revisión SHA256
+antes de extraer paletas, anclajes, tamaños, reglas de objetos, caminar/salto y
+aceptación de animaciones. No ejecuta instrucciones del juego y no incorpora su
+código o datos comerciales en el programa distribuible. Las secciones originales
+solo se leen en memoria; los informes versionados contienen firmas.
+
+El probe puede funcionar **sin `--palette`**. La referencia con Unicorn/amitools
+sigue siendo exclusivamente una herramienta de comprobación, no una dependencia
+del runtime. Los doce BMP de la preparación nativa coinciden con los del
+descriptor de referencia. Tres revisiones inválidas se rechazan antes de usar
+las tablas. Evidencia: [reglas nativas](measurements/th14-rules-validation.json).
+
+```sh
+build/th14-native/titus-fox-amiga-probe --datapath ../orig-games/fox-amiga --output build/fox-amiga-native-rules --rules-only 1
+build/th14-venv/bin/python tools/validate_fox_amiga_resources.py --datapath ../orig-games/fox-amiga --output build/fox-amiga-simulation-reference --amitools ../tools/amitools --probe build/th14-native/titus-fox-amiga-probe --check-levels --check-objects --check-object-physics --check-motion
+python3 tests/check_fox_amiga_objects.py --probe build/th14-native/titus-fox-amiga-probe --datapath ../orig-games/fox-amiga --reference build/fox-amiga-simulation-reference --output build/fox-amiga-physics-replay --physics-only
+python3 tests/check_fox_amiga_rules.py --probe build/th14-native/titus-fox-amiga-probe --datapath ../orig-games/fox-amiga --reference build/fox-amiga-simulation-reference --output build/fox-amiga-native-rules-replay
+```
+
+## Daño, recuperación y límites del personaje
+
+El paso completo del jugador incorpora el bloqueo temporal tras golpes, la
+animación de recuperación, la muerte por superficies, su trayectoria y la señal
+de reinicio. También contempla la salida inferior del mapa, el límite superior
+y la variante de carga lateral. El paso de terreno aislado conserva sus límites
+explícitos; el paso con objetos usa un contexto de cámara y ayudas.
+
+La batería crece a **47 escenarios y 2934 ticks**, incluidos los anteriores.
+Los doce casos nuevos comprueban bloqueo, estado de retorno, frame de golpe,
+energía, límite de caída y señal de reinicio, además de posición/velocidad y
+objetos. La invulnerabilidad se comprueba aparte como una ayuda del motor; no se
+presenta como comportamiento original. Falta enlazar reinicios, vidas y daño de
+IA con la sesión jugable. Evidencias: [original](measurements/th14-damage.json) y
+[validación](measurements/th14-damage-validation.json).
+
+La instrucción vigente es continuar hasta entregar TH-14, sin detenerse en estos
+hitos. El siguiente bloque es la inicialización completa de enemigos, IA e
+impactos, seguido del ciclo jugable, render, audio integrado y adaptador. El
+100 % sigue reservado a la revisión del usuario.

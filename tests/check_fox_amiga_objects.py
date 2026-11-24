@@ -11,7 +11,7 @@ import sys
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     for key in ('probe','datapath','reference','output'):parser.add_argument('--'+key,type=Path,required=True)
-    parser.add_argument('--windows',action='store_true');args=parser.parse_args()
+    parser.add_argument('--windows',action='store_true');parser.add_argument('--physics-only',action='store_true');args=parser.parse_args()
     root,reference,output=args.datapath.resolve(),args.reference.resolve(),args.output.resolve()
     if output.exists() or output==root or root in output.parents:raise ValueError('Use a new output outside originals')
     def snapshot():
@@ -27,11 +27,12 @@ def main():
         return subprocess.run([str(args.probe.resolve()),*options],capture_output=True,text=True,timeout=45)
     cases=[]
     for case in json.loads((reference/'report.json').read_text())['objects']['cases']:
+        if args.physics_only and not case['actors_simulated']:continue
         if not case['name'].isidentifier():raise ValueError('Invalid case name')
         name=f"objects-{case['level']}-{case['name']}"
         result=run(name,case['level'],reference/(name+'.json'))
         if result.returncode:raise ValueError(name+': '+result.stderr)
-        report=json.loads(result.stdout);assert not report['playable'] and not report['objects']['actors_simulated']
+        report=json.loads(result.stdout);assert not report['playable'] and report['objects']['actors_simulated']==case['actors_simulated']
         assert report['objects']['sha256']==case['sha256']
         assert json.loads((output/name/'objects.json').read_text())==json.loads((reference/name/'objects.json').read_text()),name
         cases.append(case)

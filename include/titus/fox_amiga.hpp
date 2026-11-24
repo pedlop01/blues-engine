@@ -79,12 +79,14 @@ struct MotionRules {
     std::array<unsigned,14> walk_frames{};
     std::array<int,5> jump_impulses{};
 };
+struct MotionContext { Point camera;bool invulnerable=false,wide_carry=false; };
 struct Body {
     Point feet;
     int vx=0,vy=0;
     unsigned state=0,frame=0,walk_phase=0,jump_phase=0,idle_ticks=0,ice_shift=0;
     bool facing_right=false;
-    unsigned crouch_jump_ticks=0;
+    unsigned crouch_jump_ticks=0,lock_ticks=0,return_state=0,hit_frame=0,energy=16;
+    int death_limit=0;bool restart_requested=false;
 };
 struct BodyInput { bool left=false,right=false,up=false,down=false; };
 Body terrain_step(const Level&,Body,const BodyInput&,const MotionRules&);

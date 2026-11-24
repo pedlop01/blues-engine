@@ -3,6 +3,7 @@
 #include "titus/fox_amiga.hpp"
 #include "titus/fox_amiga_audio.hpp"
 #include "titus/fox_amiga_objects.hpp"
+#include "titus/fox_amiga_rules.hpp"
 #include "titus/catalog.hpp"
 #include <filesystem>
 #include <fstream>
@@ -38,10 +39,26 @@ void bmp(const fs::path& p,const Image& im,const std::array<std::uint32_t,64>& p
     for(unsigned row=im.height;row>0;--row)for(unsigned x=0;x<im.width;++x)put(pal.at(im.pixels[(row-1)*im.width+x]),4);
     if(!f)throw std::runtime_error("Cannot write preview");
 }
-ObjectWorld read_objects(const Level& level,const Json& script,const Json& reference){
+Level physics_fixture(Level level,const Json& script){
+    if(!script.contains("fixture"))return level;
+    const auto& f=script["fixture"];unsigned row=f.at("floor_row"),end=f.value("floor_end_column",256u);
+    if(row>=level.height_tiles || end>256)throw std::runtime_error("Invalid physics floor");
+    level.map.assign(level.map.size(),0);level.floor.fill(0);level.horizontal.fill(0);level.ceiling.fill(0);
+    unsigned floor=f.value("floor_value",1u);if(floor>255)throw std::runtime_error("Invalid physics floor flags");
+    level.floor[1]=std::uint8_t(floor);level.horizontal[2]=level.floor[2]=level.ceiling[2]=1;
+    for(unsigned x=0;x<end;++x)level.map[row*256+x]=1;
+    for(const auto& col:f.value("wall_columns",Json::array())){unsigned x=col;if(x>=256)throw std::runtime_error("Invalid physics wall");for(unsigned y=0;y<level.height_tiles;++y)level.map[y*256+x]=2;}
+    if(f.contains("ceiling_row")){unsigned y=f["ceiling_row"];if(y>=level.height_tiles)throw std::runtime_error("Invalid physics ceiling");for(unsigned x=0;x<256;++x)level.map[y*256+x]=2;}
+    return level;
+}
+ObjectRules read_object_rules(const Json& reference){
     if(!reference.contains("object_rules") || reference["object_rules"].size()!=71)throw std::runtime_error("Regenerate object rules");
     ObjectRules rules;
-    for(unsigned i=0;i<71;++i){const auto& r=reference["object_rules"][i];rules.kinds[i]={r.at("flags"),r.at("fall_limit"),r.at("width"),r.at("height")};}
+    for(unsigned i=0;i<71;++i){const auto& r=reference["object_rules"][i];rules.kinds[i]={r.at("flags"),r.at("fall_limit"),r.at("width"),r.at("height"),r.value("anchor_x",-1),r.value("anchor_y",-1)};}
+    return rules;
+}
+ObjectWorld read_objects(const Level& level,const Json& script,const Json& reference){
+    const auto rules=read_object_rules(reference);
     auto source=level;
     if(script.contains("objects")){
         for(auto& o:source.objects){o.kind=0;o.position={0,0};}
@@ -50,6 +67,10 @@ ObjectWorld read_objects(const Level& level,const Json& script,const Json& refer
             source.objects[slot].kind=row.at("kind");source.objects[slot].position={row.at("x"),row.at("y")};}
     }
     auto world=initialize_objects(source,rules);
+    if(script.contains("objects"))for(const auto& row:script["objects"]){auto& o=world.objects[row.at("slot").get<unsigned>()];
+        o.vx=row.value("vx",o.vx);o.vy=row.value("vy",o.vy);o.flags=row.value("flags",o.flags);o.counter=row.value("counter",o.counter);o.reserved=row.value("reserved",o.reserved);
+    }
+    world.contact_cooldown=script.value("cooldown",0u);
     if(script.contains("carried")){unsigned slot=script["carried"];if(slot>=40)throw std::runtime_error("Invalid carried fixture slot");world.carried=slot;world.objects[slot].held=1;}
     if(script.contains("attachment"))world.attachment={script["attachment"].at(0),script["attachment"].at(1)};
     world.action_latched=script.value("action_latched",false);dynamic_object_projection(world);return world;
@@ -59,7 +80,7 @@ Json object_snapshot(const ObjectWorld& world){
     return {{"objects",hex.str()},{"state",Json::array({world.carried?int(*world.carried):-1,world.attachment.x,world.attachment.y,int(world.special_item),world.contact_cooldown,world.sound_event,int(world.action_latched)})}};
 }
 int probe_main(int argc,char** argv) try {
-    std::string audio_name;unsigned audio_ticks=1000;
+    std::string audio_name;unsigned audio_ticks=1000,rules_only=0;
     fs::path root,output,palette,motion_script,object_script;unsigned level=1,x=0,y=0,spawn_view=0;
     auto number=[](const std::string& value) {
         if(value.empty() || value.find_first_not_of("0123456789")!=std::string::npos)
@@ -76,6 +97,7 @@ int probe_main(int argc,char** argv) try {
         else if(key=="--output")output=fs::u8path(value);
         else if(key=="--palette")palette=fs::u8path(value);
         else if(key=="--audio")audio_name=value;
+        else if(key=="--rules-only")rules_only=number(value);
         else if(key=="--audio-ticks")audio_ticks=number(value);
         else if(key=="--objects")object_script=fs::u8path(value);
         else if(key=="--motion")motion_script=fs::u8path(value);
@@ -86,7 +108,7 @@ int probe_main(int argc,char** argv) try {
         else throw std::runtime_error("Unknown option: "+key);
     }
     if((!object_script.empty() && !motion_script.empty()) || (!audio_name.empty() && (!object_script.empty() || !motion_script.empty())))throw std::runtime_error("Choose one diagnostic script mode");
-    if(root.empty() || output.empty() || (palette.empty() && audio_name.empty()) || level<1 || level>16 || level==15 || spawn_view>1)
+    if(root.empty() || output.empty() || level<1 || level>16 || level==15 || spawn_view>1 || rules_only>1)
         throw std::runtime_error("Usage: titus-fox-amiga-probe --datapath FOLDER --output PRIVATE_FOLDER --palette REFERENCE_JSON [--level 1..14/16] [--x PIXEL --y PIXEL] [--spawn-view 0/1] [--motion SCRIPT | --objects SCRIPT]; audio: --datapath FOLDER --output PRIVATE_FOLDER --audio NAME [--audio-ticks N]");
     auto canonical_root=titus::normalized_path(root), canonical_output=titus::normalized_path(output);
     root=canonical_root;output=canonical_output;
@@ -115,6 +137,18 @@ int probe_main(int argc,char** argv) try {
         wav.write("RIFF",4);put(unsigned(raw.size())+36,4);wav.write("WAVEfmt ",8);put(16,4);put(1,2);put(2,2);put(44100,4);put(176400,4);put(4,2);put(16,2);wav.write("data",4);put(unsigned(raw.size()),4);wav.write(reinterpret_cast<const char*>(raw.data()),std::streamsize(raw.size()));if(!wav)throw std::runtime_error("Cannot write audio preview");
         std::ofstream file(titus::filesystem_path(output/"report.json"));file<<report.dump(2)<<'\n';if(!file)throw std::runtime_error("Cannot write audio report");std::cout<<report.dump()<<'\n';return 0;
     }
+    Json reference;
+    if(palette.empty()){
+        const auto native=native_rules(read(resolve(root,"main")));
+        reference={{"main_sha256","18ca46dd02a3ad3623b03d425f0e0ae489b5090498882aea6d2578161010bc45"},{"palette",native.palette},{"level_color14",native.level_color14},
+            {"walk_frames",native.motion.walk_frames},{"jump_impulses",native.motion.jump_impulses},{"enemy_animation_frames",native.level.enemy_animation_frames},{"object_rules",Json::array()}};
+        for(const auto& rule:native.objects.kinds)reference["object_rules"].push_back({{"flags",rule.flags},{"fall_limit",rule.fall_limit},{"width",rule.width},{"height",rule.height},{"anchor_x",rule.anchor_x},{"anchor_y",rule.anchor_y}});
+        report["native_section_sha256"]=native.section_sha256;
+        if(rules_only){
+            titus::ensure_directory(output);std::ofstream file(titus::filesystem_path(output/"rules.json"));file<<reference.dump(2)<<'\n';if(!file)throw std::runtime_error("Cannot write native rules");
+            report["rules_sha256"]=titus::sha256(reference.dump());std::ofstream result(titus::filesystem_path(output/"report.json"));result<<report.dump(2)<<'\n';if(!result)throw std::runtime_error("Cannot write rules report");std::cout<<report.dump()<<'\n';return 0;
+        }
+    }else{std::ifstream input(titus::filesystem_path(palette));input>>reference;}
     std::vector<fs::path> files;
     for(const auto& e:fs::directory_iterator(titus::filesystem_path(root)))if(titus::path_is_regular_file(e.path())) files.push_back(e.path());
     std::sort(files.begin(),files.end());
@@ -130,7 +164,6 @@ int probe_main(int argc,char** argv) try {
     auto load=[&](const std::string& name){return unpack(read(resolve(root,name)));};
     auto map=load("LEVEL"+suffix.str()+".TBL"),bricks=load("BRIK"+suffix.str()+".BIN"),meta=load("POIL"+suffix.str()+".BIN");
     if(meta.size()!=3060 || map.empty() || map.size()%256)throw std::runtime_error("Invalid level resources");
-    std::ifstream reference_input(titus::filesystem_path(palette));Json reference;reference_input>>reference;
     if(reference.at("main_sha256")!="18ca46dd02a3ad3623b03d425f0e0ae489b5090498882aea6d2578161010bc45" || reference.at("enemy_animation_frames").size()!=232)
         throw std::runtime_error("Missing or incompatible Amiga initialization rules; regenerate reference metadata");
     LevelRules rules;
@@ -141,13 +174,23 @@ int probe_main(int argc,char** argv) try {
         std::ifstream stream(titus::filesystem_path(object_script));Json script;stream>>script;
         if(!script.at("steps").is_array() || script["steps"].size()>4096)throw std::runtime_error("Invalid object steps");
         auto world=read_objects(state,script,reference);Body player;player.feet=state.spawn;
+        ObjectStepContext object_context;const auto object_rules=read_object_rules(reference);
+        const bool physics=script.value("physics",false);const auto object_terrain=physics_fixture(state,script);
         auto hex=[](const Bytes& bytes){std::ostringstream s;for(auto v:bytes)s<<std::hex<<std::setw(2)<<std::setfill('0')<<unsigned(v);return s.str();};
-        auto snapshot=[&](){return Json{{"objects",hex(dynamic_object_projection(world))},{"state",Json::array({world.carried?int(*world.carried):-1,world.attachment.x,world.attachment.y,int(world.special_item),world.contact_cooldown,world.sound_event})}};};
+        auto snapshot=[&](){Json r={{"objects",hex(dynamic_object_projection(world))},{"state",Json::array({world.carried?int(*world.carried):-1,world.attachment.x,world.attachment.y,int(world.special_item),world.contact_cooldown,world.sound_event})}};
+            if(physics){r["player"]=Json::array({player.feet.x,player.feet.y,player.vx,player.vy,player.state,player.return_state,player.lock_ticks,player.hit_frame,player.walk_phase,player.idle_ticks,object_context.down_ticks});r["impact_list"]=world.impact_list;r["smoke"]=Json::array();for(const auto& smoke:world.smoke)r["smoke"].push_back(Json::array({smoke.kind,smoke.feet.x,smoke.feet.y}));}
+            return r;};
         Json trace={{"initial",snapshot()},{"steps",Json::array()}};
         for(const auto& step:script["steps"]){
             player.feet={step.value("x",player.feet.x),step.value("y",player.feet.y)};player.facing_right=step.value("right",player.facing_right);
+            player.vx=step.value("vx",player.vx);player.vy=step.value("vy",player.vy);player.state=step.value("state",player.state);player.return_state=step.value("return_state",player.return_state);player.lock_ticks=step.value("lock_ticks",player.lock_ticks);
             const std::string action=step.at("action");
-            if(action=="pick")pick_object(world,player);
+            if(action=="tick"){
+                if(!physics)throw std::runtime_error("Physics mode must be explicit");
+                object_context.frame=step.value("frame",object_context.frame+1);object_context.camera={step.value("camera_x",object_context.camera.x),step.value("camera_y",object_context.camera.y)};
+                object_context.up=step.value("up",false);object_context.down=step.value("down",false);object_context.down_ticks=step.value("down_ticks",object_context.down_ticks);object_context.invulnerability=step.value("invulnerability",object_context.invulnerability);
+                step_objects(object_terrain,world,player,object_context,object_rules);
+            }else if(action=="pick")pick_object(world,player);
             else if(action=="drop")drop_object(state,world,player);
             else if(action=="throw")throw_object(world,player,step.value("up",false));
             else if(action=="attach"){
@@ -155,7 +198,7 @@ int probe_main(int argc,char** argv) try {
             }else throw std::runtime_error("Unknown object action");
             trace["steps"].push_back(snapshot());
         }
-        report["objects"]={{"steps",script["steps"].size()},{"sha256",titus::sha256(trace.dump())},{"actors_simulated",false}};
+        report["objects"]={{"steps",script["steps"].size()},{"sha256",titus::sha256(trace.dump())},{"actors_simulated",physics}};
         titus::ensure_directory(output);
         std::ofstream file(titus::filesystem_path(output/"objects.json"));file<<trace.dump(2)<<'\n';if(!file)throw std::runtime_error("Cannot write object trace");
         std::ofstream summary(titus::filesystem_path(output/"report.json"));summary<<report.dump(2)<<'\n';if(!summary)throw std::runtime_error("Cannot write object report");std::cout<<report.dump()<<'\n';return 0;
@@ -233,6 +276,7 @@ int probe_main(int argc,char** argv) try {
         body.vx=initial.value("vx",0);body.vy=initial.value("vy",0);body.state=initial.value("state",0u);body.ice_shift=initial.value("ice_shift",0u);
         body.facing_right=initial.value("facing_right",false);
         body.jump_phase=initial.value("jump_phase",0u);body.crouch_jump_ticks=initial.value("crouch_jump_ticks",0u);
+        body.lock_ticks=initial.value("lock_ticks",0u);body.return_state=initial.value("return_state",0u);body.hit_frame=initial.value("hit_frame",0u);body.energy=initial.value("energy",16u);body.death_limit=initial.value("death_limit",0);
         auto row=[](const Body& b){return Json::array({b.feet.x,b.feet.y,b.vx,b.vy,b.state,b.frame,b.walk_phase,b.jump_phase,b.idle_ticks,b.ice_shift,unsigned(b.facing_right),b.crouch_jump_ticks});};
         Json trace={{"terrain_only",true},{"columns",{"x","y","vx","vy","state","frame","walk_phase","jump_phase","idle_ticks","ice_shift","facing_right","crouch_jump_ticks"}},
                     {"initial",row(body)},{"frames",Json::array()}};
@@ -241,7 +285,8 @@ int probe_main(int argc,char** argv) try {
             const auto& fixture=script["fixture"];const unsigned row=fixture.at("floor_row").get<unsigned>(),end=fixture.value("floor_end_column",256u);
             if(row>=terrain.height_tiles || end>256)throw std::runtime_error("Invalid fixture floor row");
             terrain.map.assign(terrain.map.size(),0);terrain.horizontal.fill(0);terrain.floor.fill(0);terrain.ceiling.fill(0);
-            terrain.floor[1]=1;terrain.horizontal[2]=terrain.floor[2]=terrain.ceiling[2]=1;
+            unsigned fixture_floor=fixture.value("floor_value",1u);if(fixture_floor>255)throw std::runtime_error("Invalid floor flags");
+            terrain.floor[1]=std::uint8_t(fixture_floor);terrain.horizontal[2]=terrain.floor[2]=terrain.ceiling[2]=1;
             for(unsigned col=0;col<end;++col)terrain.map[row*256+col]=1;
             for(const auto& value:fixture.value("wall_columns",Json::array())){
                 unsigned col=value.get<unsigned>();if(col>=256)throw std::runtime_error("Invalid fixture wall");
@@ -264,15 +309,21 @@ int probe_main(int argc,char** argv) try {
         }
         const bool interactions=script.value("object_interactions",false);
         ObjectWorld world;if(interactions){world=read_objects(state,script,reference);trace["objects_initial"]=object_snapshot(world);trace["object_frames"]=Json::array();}
+        const bool extended=script.value("extended_player",false);
+        MotionContext context;context.camera={script.value("camera_x",0),script.value("camera_y",0)};context.wide_carry=script.value("wide_carry",false);
+        auto extra=[](const Body& b){return Json::array({b.lock_ticks,b.return_state,b.hit_frame,b.energy,b.death_limit,int(b.restart_requested)});};
+        if(extended){trace["extra_initial"]=extra(body);trace["extra_frames"]=Json::array();}
         Bytes trajectory;
         for(const auto& input:script["steps"]){
             const BodyInput keys{input.value("left",false),input.value("right",false),input.value("up",false),input.value("down",false)};
-            body=interactions?object_player_step(terrain,body,keys,motion_rules,world,input.value("action",false)):terrain_step(terrain,body,keys,motion_rules);
+            body=interactions?object_player_step(terrain,body,keys,motion_rules,world,input.value("action",false),context):terrain_step(terrain,body,keys,motion_rules);
             if(interactions)trace["object_frames"].push_back(object_snapshot(world));
+            if(extended)trace["extra_frames"].push_back(extra(body));
             auto raw=body_projection(body);trajectory.insert(trajectory.end(),raw.begin(),raw.end());trace["frames"].push_back(row(body));
         }
         std::ofstream file(titus::filesystem_path(output/"motion.json"));file<<trace.dump(2)<<'\n';if(!file)throw std::runtime_error("Cannot write motion trace");
         report["motion"]={{"terrain_only",true},{"steps",script["steps"].size()},{"sha256",digest(trajectory)}};
+        if(extended)report["motion"]["extra_frames_sha256"]=titus::sha256(trace["extra_frames"].dump());
         if(interactions)report["motion"]["object_frames_sha256"]=titus::sha256(trace["object_frames"].dump());
     }
     const auto fox_bank=sprites(load("fox.spr")),object_bank=sprites(load("objet2.spr")),enemy_bank=sprites(load("monster2.spr"));

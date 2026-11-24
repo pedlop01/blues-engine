@@ -9,7 +9,7 @@ void check_player(const Body& player){if(player.feet.x<-32768 || player.feet.x>3
 void check(const ObjectWorld& world){
     if(world.carried && *world.carried>=world.objects.size())throw std::runtime_error("Invalid carried object slot");
     for(const auto& o:world.objects){
-        if(o.kind>71 || o.vx<-32768 || o.vx>32767 || o.vy<-32768 || o.vy>32767 || o.reserved>65535 || o.fall_limit>65535 || o.counter>65535 || o.held>1 || o.width>4096 || o.height>4096 || o.flags>65535 || o.feet.x<-32768 || o.feet.x>32767 || o.feet.y<-32768 || o.feet.y>32767)
+        if(((o.kind==10 || o.kind==26) && o.height<5) || o.kind>71 || o.vx<-32768 || o.vx>32767 || o.vy<-32768 || o.vy>32767 || o.reserved>65535 || o.fall_limit>65535 || o.counter>65535 || o.held>1 || o.width>4096 || o.height>4096 || o.flags>65535 || o.feet.x<-32768 || o.feet.x>32767 || o.feet.y<-32768 || o.feet.y>32767)
             throw std::runtime_error("Invalid dynamic object state");
     }
     if(world.carried && (!world.objects[*world.carried].kind || !world.objects[*world.carried].held))throw std::runtime_error("Invalid carried object state");

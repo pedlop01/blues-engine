@@ -1,0 +1,725 @@
+{
+  "schema_version": 1,
+  "playable": false,
+  "platform_results_identical": true,
+  "platforms": [
+    "linux",
+    "windows",
+    "asan_ubsan"
+  ],
+  "results": {
+    "schema_version": 1,
+    "playable": false,
+    "actors_simulated": false,
+    "cases": [
+      {
+        "level": 1,
+        "name": "physics_kind_1",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "1ea78e6e41b15a5d244a9a7e9b4e988ebdbd9e3d33f3e211f544552e91f14d60",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_2",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "e197b6daaaf437c91c7be0fdab6ad6a21ab9ee3475277d370fb81c24aba42a34",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_3",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "02c073af2e4b70ae5a5adaeee75675c3ee3673925aca7917e01fb2289219ffb8",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_4",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "5950033e4f9633448c9faf8f7df8519e25b0769465080bc26d8728bd249f870b",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_5",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "afae4fd23b6431fc78437cb2a9425b174d77d492e38f4d85dda6f4f4b7612571",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_6",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "f044687b5b620ae813f72107a97f8df71d2f3649bb5bec0b8b27fc93c6b77c06",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_7",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "0418d9fb26d32ada5b1453186393f9e3d9b49e1a9be31e850cc82fdd7143ad33",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_8",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "506b721a5315a43f1a4202af6c9e4f8a5e3a2057de12f6ad6eced59306fb5850",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_9",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "a24ac22b110acb551012e0a438926e5fd4810c6b05355cf9554c0cadb205cc6f",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_10",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "2d8a2599e5d8a6f2780bf5a5641b5275df0d111edcfbf7e2e4bd44274344b9db",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_11",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "3e372a23d817a4d6ab484c443b052be743fe6662275e029859a2af5be1e23458",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_12",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "f0a7f3af281f15fd011bb05ab96994f5b684376e41eed7a26bfde37f43b0decb",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_13",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "81e13c7da45bc45b2d41ca49681d33dcee57aac1b4793abda311b6b2d388b9bb",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_14",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "094d009ea2bb6a44fddea00d140abfda3f22def86398fcb9eda69e94497aad02",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_15",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "4f3765ceae89823ff0605172577c281afbf955ff061f118a4ab119510bc42d67",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_16",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "acf2b0f63b238fa6c6d01c96cd847bc9d663c07f04f81a824f836413a7a6167e",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_17",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "9a2d2487140010d29f103277daaa89334e105e10aabd37669936c31917ae8273",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_18",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "c04fdd739c48b3dfb48307408cacb30f8245b78c6a79a17268f9e18d602fd571",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_19",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "baf6d19408fcb50ef18168c5269091196be5bb58bbeaab7131d9cf416e2ec92f",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_20",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "697e2b18733f242b4259f378e2ae186f99de161a56420c7864562fa0e93d48cf",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_21",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "bfb1945fe978cb00fd5ccaa331b2543a75ad283edfa1601443fcace2901a031f",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_22",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "68b198c890c9d7fdf8ab06f706813891d6c216199b48cab7e93e00bec7621503",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_23",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "76d1ec5537941d1d61be65e6d5feb2f3c21d5718131253b1b9c3113524637f3b",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_24",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "4d99f705a0bedd84d45199705d68c136bd92c391fd8bf95467c873fec46616a9",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_25",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "dd370e13e832d366048889a86a302e0a739eeb1a857a4e022a3995c98f0ece5f",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_26",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "38deecf377c6e45cd1d6f4baca6916bc9351f59eb1f77d644f6602b355069087",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_27",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "82842e0d70c5d1079e4bb526df1c923e8301e04ab54cc564c15aaa3c3e84e9ff",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_28",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "21a6cd47ac3d17ba50e4c6803f631a08f89471712520121fffe74a5dac5dccb4",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_29",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "fed5912071be7bad916ab0438f8ff9b97b635cbc0d218352f79b36bf6add92ef",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_30",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "81773e5f686024a47d6a07beacd946450d322e0d3481d29c8f154accd8aa0c2e",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_31",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "c1d9f748ff2989ce47c655d8a572c267bfae8257a62c82f38c2a461450f1fe64",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_32",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "b93263e7ba1bc0f5b007618bb15a5cc1fa59454930b2c78dbae4da35f2358dbe",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_33",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "48b2c2163d6b6b6c1be8a4e630b941fe6c998fcf010c5c7f9c886f5774c523cb",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_34",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "1f5cd3fb7147e7ebe14879afc1071da6d2342cd845ac4ea7cc86ea6e5682ba35",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_35",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "f7396b17a64d1be85d53540e5c2683bda55e0a9c476c1abd3cf1eebb11d6e8f5",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_36",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "abac09108801c5a9dcde4e63c8b7b3c896233e86883c326d5456f14483f046e6",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_37",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "d7cdaafee1c7c3d558d1e1115e112c502de4c40196b3b61884d03cb1b817c54c",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_38",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "bcd67d4d1188680ca6e023afacac729f642f0d187080f906b209e6835f9180bb",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_39",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "1a24bfda897fb417533faf975e7af358614128163a4980460df411ffda104aa7",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_40",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "aad2113423a730e08019a27daa12ec43557a8fa2fb2e20c0571c7c679e0e7c9c",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_41",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "70c32307125ce634e0c744413cef8b3461b54cf947c20909e8785fe02c36f03b",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_42",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "197c5e20a5343dcb85673a1eb8413f7ae215938c798bde184db3e94c22069966",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_43",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "3257e16b90ead57ee9ed438f00e2479e213fe2e0910caf85368b943644cb5b57",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_44",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "82cd4a05a7ea93d21cc3055855456f67d3fcb314eccf39e7776272ebbeab19af",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_45",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "a97ce72257f06aee9f6d03cdc2d1c74f3bf84329c1b3f7688663f5712ce21359",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_46",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "45afd1082c93018c223ccf3cb6e3404b7f1980cd915a067ec74b771622ae17cb",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_47",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "da53c98d86eba6acd61d26b3c2fd0576dd66f679694001734715ef79a087aff9",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_48",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "b98db976c76d2304e44cae96e5502bb8786e9ba665d4d019474624c01f915b6f",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_49",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "8e359cb28d7657c6add38a3495341bcc0c0461948eb5a676f25d801f74436dc9",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_50",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "de5df59b92d12b4d2f6bbf989ee97b360a1139af8e251cc5667042f8cd6a1576",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_51",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "9fa17012ca867ef17c74867eb2f8166e64e9b14eb3b814b7ca8d19cc41e88c7f",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_52",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "8db70b61e26849ac8548e9b42ed0c4a15b9d283b7fea629c2459f86017f6071f",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_53",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "daa4cf79ae12398a224cdaa276ac423159d423c7a0d97ee936a15a1b026e9948",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_54",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "cb26c1859edc2cdd72f2f97d6d273825a7a33c3fec59432eaf071c2d296119b7",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_55",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "b8450cc63ac82204f00ca20e792fd9725d91635d12336bc99aee782cb8772510",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_56",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "a88f367b11fdb873c7dd4936e2f277f5659dbc498f662bc54c516becb9e1f027",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_57",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "935295d091097341d32437ae077dcaae82c6c369df426ea3b8e996a37dfc94a6",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_58",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "28c3ceee12dd81382008bc98696cebe27f9c374d045b4990ed03103250fbcd53",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_59",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "5663ce429394da38786e0c0318fc1af19d7e1dc3a5826d65bacb4a4746e2becf",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_60",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "eee217e91a287b4f8440ce7b43fc93c3e861d594c975a6c8e98a2c79a68d6e5f",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_61",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "cea5dba7fa5bbc88baab6c9a61c1f7ec9da6e67b60033cf680e163d173119915",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_62",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "970bcd0302d4b992ccedb16687d151cae2011d667cc324a6817f170991c773cf",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_63",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "033dbc136b96b40ae81f1f1a754b626881a423759fff71c4b7a2424ad16e1c3e",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_64",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "0d757ba1d3a5c365c1e90df3c7c0f0501cf1a800980cbfd54512b0b11c3d8b9e",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_65",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "a825f3e913928222568f7513a860ce46169f4346dce53dbc6c0a255153b6c308",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_66",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "3eedb9cba9f3581a0cdc593450d5d5f2b8edc281d4a9498861413120cab2fec7",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_67",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "45e441f13639f84e050998fa7448df2fbaea1cf93fc98ebc97a03c35bc229874",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_68",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "45ef090ec27ec9dd227b88a7e2e8da9a57bb75a04ecda452803cfcc6187eede9",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_69",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "88c158661e9796973f7f59fb78bcf0bde1c1c628687fcfb94a91dfb40ae1c4aa",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_70",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "850e85fd0e64e32b457b87bfef37e2fbea68848f2c559ca3ba9cb0035a5278ee",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "physics_kind_71",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "43d8e0c99c29eba4b5ce8cd1c9b89dece4257c01d986e2ba54fdef2da50fad47",
+        "steps": 120
+      },
+      {
+        "level": 1,
+        "name": "floor_1_65",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "16cbf6caa82c904d261f2ef9113ca1f4842b3b21f87fef72eda3c774e0d6f68e",
+        "steps": 25
+      },
+      {
+        "level": 1,
+        "name": "floor_1_67",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "16cbf6caa82c904d261f2ef9113ca1f4842b3b21f87fef72eda3c774e0d6f68e",
+        "steps": 25
+      },
+      {
+        "level": 1,
+        "name": "floor_1_71",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "cb3e2d81472b2fc5a76f52b004b4e333f2fb8158707f8b30bbf9e471c45f79f6",
+        "steps": 25
+      },
+      {
+        "level": 1,
+        "name": "floor_3_65",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "982963259b1b7ec25f742686e53bfb1bd682deb62b9378e01b267c6dded9267e",
+        "steps": 25
+      },
+      {
+        "level": 1,
+        "name": "floor_3_67",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "982963259b1b7ec25f742686e53bfb1bd682deb62b9378e01b267c6dded9267e",
+        "steps": 25
+      },
+      {
+        "level": 1,
+        "name": "floor_3_71",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "27c9bd041b0904bac704b2a5f4de78e7d25d04ad54b69095e9f8ed612ef4392a",
+        "steps": 25
+      },
+      {
+        "level": 1,
+        "name": "floor_10_65",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "4757bf0a233c9b86eaa301bf468c06cad61b763c22f33f6815a43a42c6068c35",
+        "steps": 25
+      },
+      {
+        "level": 1,
+        "name": "floor_10_67",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "e4aeb9cc480417958a15d856940e01f41fbbbf8c745e2941ae1a601433ac6d4f",
+        "steps": 25
+      },
+      {
+        "level": 1,
+        "name": "floor_10_71",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "4757bf0a233c9b86eaa301bf468c06cad61b763c22f33f6815a43a42c6068c35",
+        "steps": 25
+      },
+      {
+        "level": 1,
+        "name": "stack",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "605bd9be1cad4e4bd01c05d0a9442060867e80d943d066a1b3c34a032be63fa0",
+        "steps": 60
+      },
+      {
+        "level": 1,
+        "name": "double_bounce",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "4fe7e56945dae9384fe7e9ff00f379f30086a8b89e405b7bb843ad5e4f380314",
+        "steps": 60
+      },
+      {
+        "level": 1,
+        "name": "stand",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "fcfc7008133d92af8a492d0c31543d32d0f2e75559ad35528147456091fe3a85",
+        "steps": 12
+      },
+      {
+        "level": 1,
+        "name": "bounce",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "48be55b8e14e9fad7d7d0e7e56f3a103a7ab0c875578f689bc677d0172020367",
+        "steps": 12
+      },
+      {
+        "level": 1,
+        "name": "shock",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "4d9307d41db9721b23d3c9007a30be14a46170d2d602d0d0bc110ebc4034d17e",
+        "steps": 12
+      },
+      {
+        "level": 1,
+        "name": "ceiling",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "6a81d442751753c0a11ce76b958412d66029c1fabc785a8064534112edd98516",
+        "steps": 50
+      },
+      {
+        "level": 1,
+        "name": "wall_bounce",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "44040d3507e7b643eb52582becfc386e5342a5fb0587d37089b9251638f19bf9",
+        "steps": 40
+      },
+      {
+        "level": 1,
+        "name": "shot",
+        "reference_match": true,
+        "actors_simulated": true,
+        "sha256": "d3fccdc5cf47a90f65de45871021cd5d65279a193ca8fde554b86e87f7fed9b9",
+        "steps": 40
+      }
+    ],
+    "rejected_cases": 6,
+    "originals_unchanged": true
+  },
+  "unit_test_groups": 6,
+  "original_files_unchanged": 462
+}

@@ -328,9 +328,10 @@ if(BUILD_TESTING)
   add_test(NAME family_protocol COMMAND check_family_protocol)
 endif()
 
-# TH-14 first milestone: standalone resource diagnostics, not a game runtime.
-add_library(titus_fox_amiga_resources platform/fox_amiga.cpp platform/fox_amiga_level.cpp platform/fox_amiga_motion.cpp platform/fox_amiga_audio.cpp platform/fox_amiga_objects.cpp)
+# TH-14 native Fox Amiga core; runtime registration follows gameplay validation.
+add_library(titus_fox_amiga_resources platform/fox_amiga.cpp platform/fox_amiga_level.cpp platform/fox_amiga_motion.cpp platform/fox_amiga_audio.cpp platform/fox_amiga_objects.cpp platform/fox_amiga_object_physics.cpp platform/fox_amiga_executable.cpp platform/fox_amiga_rules.cpp)
 target_include_directories(titus_fox_amiga_resources PUBLIC include)
+target_link_libraries(titus_fox_amiga_resources PUBLIC titus_core)
 if(NOT MSVC)
   target_compile_options(titus_fox_amiga_resources PRIVATE -Wall -Wextra -Wpedantic)
 endif()

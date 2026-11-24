@@ -16,7 +16,7 @@ expansión validada. El detalle de TH-00–TH-16 y la fase de paridad PX-01–PX
 - Tareas completadas: **16 de 18**.
 - Completadas: **01–16**.
 - Blues: **17 en curso** con las pruebas del usuario; **18 pospuesta** hasta la expansión.
-- Titus Engine: **TH-00–TH-13 completadas (100 %)**; TH-12 cerrada por el usuario y TH-13 documentada en [viabilidad Amiga](docs/AMIGA_FEASIBILITY.md). **TH-14 al 48 %**: lectores, inicialización, movimiento con carga/manipulación de objetos y música PAT contrastados; todavía sin runtime jugable.
+- Titus Engine: **TH-00–TH-13 completadas (100 %)**; TH-12 cerrada por el usuario y TH-13 documentada en [viabilidad Amiga](docs/AMIGA_FEASIBILITY.md). **TH-14 al 54 %**: preparación completamente nativa, física de objetos, daño/recuperación del jugador y música PAT contrastados; todavía sin runtime jugable.
 - Paridad Fox/Prehistorik: **PX-01–PX-08 planificadas (0 %)**, con scroll, cámara y encuadre primero.
 - Corrección de escaleras validada por el usuario.
 - El punto recuperable previo a la expansión es `dd07383`, etiqueta `blues-baseline-2026-11-23`.
@@ -203,3 +203,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-24 | TH-14 | Trabajo autónomo: escaleras y agacharse contrastados en 1578 ticks (24 casos), y secuenciador nativo para las 11 PAT contrastado en 132000 interrupciones. PCM idéntico en Linux/Windows/sanitizadores. Evidencias en docs/FOX_AMIGA_RUNTIME.md. | 46 %: aún faltan interacciones/actores, render jugable, efectos e integración; no se declara terminada ni se marca al 100 % antes de revisión. |
 
 | 2026-11-24 | TH-14 | Manipulación de objetos: 94 casos, 578 operaciones y estado completo de 40 objetos por mapa contrastados; recogida/carga/suelta/lanzamiento integrados en el paso del personaje. Movimiento ampliado a 35 casos y 2252 ticks. | 48 %: continuar física autónoma de objetos, impactos y actores; el port Amiga aún no es jugable ni está cerrado. |
+
+| 2026-11-24 | TH-14 | Continuación autónoma hasta completar la tarea: 182 casos de objetos (9609 operaciones/pasos), preparación nativa con cuatro secciones idénticas al original y 47 escenarios de jugador (2934 ticks), incluidos daño, recuperación y límites. | 54 %: continuar IA, campaña/render, efectos y adaptador; objetivo activo, sin cierre al completar bloques parciales. |

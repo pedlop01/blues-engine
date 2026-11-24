@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "playable": false,
+  "platform_results_identical": true,
+  "platforms": [
+    "linux",
+    "windows",
+    "asan_ubsan"
+  ],
+  "results": {
+    "schema_version": 1,
+    "playable": false,
+    "section_sha256": [
+      "6c033d216693881bcce474ad7704bc6abe949c4b69dbdae514e68f68cb0111e8",
+      "5bf20baa8e81253184e83e29702e76687430b972a8233683351fa1a158abdcff",
+      "08840aac250a635bb8d396e140fcda1680b8759ad35d89b4afb629494106dc9a",
+      "3582c1c57347d3d6e7a724ec7814b5078e7eef96cc0368c536ea7ee05a67fc78"
+    ],
+    "rules_sha256": "2673631032f56851b219685fed7bcd74eb2bfc576a99c7addbf00dd1e5011fc2",
+    "rejected_cases": 3,
+    "originals_unchanged": true
+  },
+  "unit_test_groups": 6,
+  "original_files_unchanged": 462
+}
