@@ -146,9 +146,13 @@ La escena del menú conserva el desplazamiento fraccionario al congelarse.
 La regresión incorpora ocho grupos: sprites, resize, backdrop, music, death,
 scroll, camera y motion. Compara píxeles de ambos bordes a 1×/2×/3×, fases
 intermedias y posiciones finales, e interpola las anclas del personaje. Recorre
-cuatro rutas nativas de 360 pasos moviéndose a derecha/izquierda a 60/120 Hz,
+cuatro rutas nativas de 360 fotogramas moviéndose a derecha/izquierda a 60/120 Hz,
 además de las 32 muertes y reapariciones de r2. Las lecturas de píxeles de la
 prueba gráfica se hacen **antes** de `SDL_RenderPresent`, como exige SDL, para
 no comparar un backbuffer descartado por Direct3D.
 
 R3 sigue pendiente de revisión jugando; no cierra PF ni añade guardados.
+
+Evidencia de r3: [pf-r3-validation.json](measurements/pf-r3-validation.json),
+con reproducciones, ocho grupos de regresión, matrices Linux/Windows,
+sanitizadores y pruebas gráficas de cámara/fondo con Direct3D 11.
