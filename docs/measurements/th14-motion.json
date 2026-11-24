@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "main_sha256": "18ca46dd02a3ad3623b03d425f0e0ae489b5090498882aea6d2578161010bc45",
+  "playable": false,
+  "reference": "isolated original 68000 terrain-only player ticks; bonus and exit callbacks omitted",
+  "motion": {
+    "terrain_only": true,
+    "columns": [
+      "x",
+      "y",
+      "vx",
+      "vy",
+      "state",
+      "frame",
+      "walk_phase",
+      "jump_phase",
+      "idle_ticks",
+      "ice_shift",
+      "facing_right"
+    ],
+    "cases": [
+      {
+        "name": "idle",
+        "ticks": 360,
+        "reference_match": true,
+        "sha256": "d1983b78da410a447cd6d49b46c3368da96d98d551afef80b6b1f40b55713ac4",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "walk_brake",
+        "ticks": 44,
+        "reference_match": true,
+        "sha256": "5d55df3c833095bb13282e030e735598292750dd14d67464c9efdfccc7f71bb2",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "reverse",
+        "ticks": 60,
+        "reference_match": true,
+        "sha256": "68231e41733a6518a0c0a61694490e8246e5cabe7fa89c3c00448d53c76d5b03",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "short_jump",
+        "ticks": 62,
+        "reference_match": true,
+        "sha256": "1e4cc5bcaa4cf4bd499c7214b80f40873207be32d1fbca9e713a557fe8d325b7",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "held_jump",
+        "ticks": 68,
+        "reference_match": true,
+        "sha256": "99199e6ab26d4dd8c18b5c8eaf1b2e3b9eb108018161252dccc32dddc9113c32",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "moving_jump",
+        "ticks": 69,
+        "reference_match": true,
+        "sha256": "6f33ad18805ef85f9277191a173fb26559ea94976cac592b67059b3df8cac9b5",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "fall",
+        "ticks": 60,
+        "reference_match": true,
+        "sha256": "5122551daea09fc52681e8831f6480ee4ad3e6687927aeb0e70d7e70824039ed",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "rising_release",
+        "ticks": 60,
+        "reference_match": true,
+        "sha256": "a02e97c449906f933eb5bd3d270b0381d3b9a366065696c006b8a971cadc81bd",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "wall_right",
+        "ticks": 34,
+        "reference_match": true,
+        "sha256": "8d10df9be68d34e238d82e9f207153e25afd876f63a8470f2e6dd4cb343b420d",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "wall_left",
+        "ticks": 34,
+        "reference_match": true,
+        "sha256": "b2011a385e058adcc80384dc3123d6b420d8be6ec4b12a135bafc7ce0160f9ac",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "head_bump",
+        "ticks": 33,
+        "reference_match": true,
+        "sha256": "fb937c40e8d37b7b99b1d31ef2502f3579f76ca75976b50cc970202d7c435cea",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "walk_off",
+        "ticks": 24,
+        "reference_match": true,
+        "sha256": "1faf4c31fe95e2aa6bf79ef3e386d325e32c959cfab286daaaa2038ba6fb0897",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "ice_1",
+        "ticks": 90,
+        "reference_match": true,
+        "sha256": "a69f04d0d93db0ead0dcad5e1917bbfc02d7a8b41238a6ac4f6a684ee36a5f73",
+        "synthetic_floor": 129,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "ice_2",
+        "ticks": 90,
+        "reference_match": true,
+        "sha256": "a180e467ec70406e520aa0e386d6b3870dc9f091713c19955fff50060ae79979",
+        "synthetic_floor": 131,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "ice_3",
+        "ticks": 90,
+        "reference_match": true,
+        "sha256": "86e4b9f9708b3564ad8413d6c0cf94384055e80501d009c38401794fbf4e9f3c",
+        "synthetic_floor": 133,
+        "synthetic_geometry": false
+      }
+    ]
+  },
+  "originals_unchanged": true
+}

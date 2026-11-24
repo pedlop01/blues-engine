@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""TH-14 reference check: emulate only pinned, isolated packer/decoder routines.
+"""TH-14 reference check: bounded pinned packer, resource, level and player routines.
 
 No Amiga OS, trainer, game loop, audio or hardware is executed. External amitools
 and Unicorn are used only by this research tool, never by the native reader.
@@ -29,6 +29,7 @@ def main():
     parser.add_argument('--amitools', type=Path, required=True)
     parser.add_argument('--probe', type=Path, required=True)
     parser.add_argument('--check-levels', action='store_true', help='Compare native POIL initialization and collision queries')
+    parser.add_argument('--check-motion', action='store_true', help='Compare isolated terrain-only player ticks')
     args = parser.parse_args()
     root, output = args.datapath.resolve(), args.output.resolve()
     if output == root or root in output.parents or output.exists():
@@ -74,6 +75,16 @@ def main():
             elif not bases[5] <= address < bases[5]+496:
                 raise ValueError('Packer execution escaped its isolated segment')
             return
+        if phase == 'motion':
+            if address in (0xe6d10,0xe6fb4):
+                # Exclude bonus consumption and level completion from this
+                # terrain-only differential test. No object/AI steps are run.
+                sp=cpu.reg_read(UC_M68K_REG_A7)
+                cpu.reg_write(UC_M68K_REG_PC,be(sp));cpu.reg_write(UC_M68K_REG_A7,sp+4)
+                return
+            ranges=((0xe65d4,0xe69ce),(0xe7028,0xe7a82),(0xe8c34,0xe8da8),(0xe6c74,0xe6c86))
+            if any(begin<=address<end for begin,end in ranges):return
+            raise ValueError(f'Terrain player step escaped to {address:x}')
         if phase == 'level':
             ranges = ((0xe7b16,0xe8684),(0xeadb0,0xeb450),(0xedbe8,0xeddbc),
                       (0xf18a8,0xf198c),(0xe65d4,0xe661c),(0xe6716,0xe67a4),(0xe6fb4,0xe7028),(0xe46e2,0xe4904))
@@ -152,7 +163,11 @@ def main():
         if value==0xfc18:break
         animation_words.append(value)
     else:raise ValueError('Missing original enemy animation sentinel')
-    palette = dict(main_sha256=MAIN_SHA, palette=words(0x2aa, 16),
+    code = bytes(u.mem_read(bases[4], image.segments[4].get_size()))
+    motion_walk=[int.from_bytes(code[p:p+2],'big') for p in range(0x7a8e,0x7aaa,2)]
+    motion_jump=[int.from_bytes(code[p:p+2],'big',signed=True) for p in range(0x7a82,0x7a8c,2)]
+    palette = dict(walk_frames=motion_walk,jump_impulses=motion_jump,
+                   main_sha256=MAIN_SHA, palette=words(0x2aa, 16),
                    level_color14=words(0x340, 16),
                    enemy_animation_frames=[i in animation_words for i in range(232)])
     output.mkdir(parents=True)
@@ -166,7 +181,7 @@ def main():
     native = json.loads(process.stdout)
     report = dict(schema_version=1, main_sha256=MAIN_SHA, playable=False,
                   reference=('isolated original 68000 resource, map/POIL initialization and query routines'
-                             if args.check_levels else 'isolated original 68000 resource decoders'), resources=[])
+                             if args.check_levels or args.check_motion else 'isolated original 68000 resource decoders'), resources=[])
     decoded_resources = {}
     for row in native['resources']:
         packed = (root/row['name']).read_bytes()
@@ -185,7 +200,7 @@ def main():
             raise ValueError(f'Native/reference mismatch: {row["name"]}')
         report['resources'].append(dict(row, reference_match=True))
         decoded_resources[row['name'].casefold()] = bytes(decoded)
-    if args.check_levels:
+    if args.check_levels or args.check_motion:
         phase = 'level'
         levels = []
         sha = lambda data: hashlib.sha256(data).hexdigest()
@@ -197,7 +212,7 @@ def main():
             u.mem_write(address, (value&65535).to_bytes(2,'big'))
         def set_pointer(address,value):
             u.mem_write(address,value.to_bytes(4,'big'))
-        for level in list(range(1,15))+[16]:
+        for level in (list(range(1,15))+[16] if args.check_levels else [1]):
             if level==1:
                 state=native['level_state']
             else:
@@ -287,6 +302,71 @@ def main():
             for key,value in original_state.items():
                 if state[key]!=value:
                     raise ValueError(f'Level {level} mismatch {key}: native {state[key]}, original {value}')
+            if args.check_motion and level==1:
+                phase='motion'
+                neutral={}
+                scenarios={
+                    'idle':dict(steps=[neutral]*360),
+                    'walk_brake':dict(steps=[dict(right=True)]*24+[neutral]*20),
+                    'reverse':dict(initial=dict(x=200),steps=[dict(right=True)]*20+[dict(left=True)]*24+[neutral]*16),
+                    'short_jump':dict(initial=dict(x=100),steps=[dict(up=True)]*2+[neutral]*60),
+                    'held_jump':dict(initial=dict(x=100),steps=[dict(up=True)]*8+[neutral]*60),
+                    'moving_jump':dict(initial=dict(x=100),steps=[dict(up=True,right=True)]*8+[dict(right=True)]*45+[neutral]*16),
+                    'fall':dict(initial=dict(x=200,y=400,state=3),steps=[neutral]*60),
+                    'rising_release':dict(initial=dict(x=200,y=500,state=3,vy=-144),steps=[neutral]*60),
+                }
+                scenarios.update(
+                    wall_right=dict(initial=dict(x=100,y=415),fixture=dict(floor_row=26,wall_columns=[8]),steps=[dict(right=True)]*24+[neutral]*10),
+                    wall_left=dict(initial=dict(x=170,y=415),fixture=dict(floor_row=26,wall_columns=[8]),steps=[dict(left=True)]*24+[neutral]*10),
+                    head_bump=dict(initial=dict(x=200,y=415),fixture=dict(floor_row=26,ceiling_row=23),steps=[dict(up=True)]*8+[neutral]*25),
+                    walk_off=dict(initial=dict(x=236,y=415),fixture=dict(floor_row=26,floor_end_column=16),steps=[dict(right=True)]*20+[neutral]*4))
+                for shift,value in ((1,0x81),(2,0x83),(3,0x85)):
+                    scenarios[f'ice_{shift}']=dict(initial=dict(x=200,ice_shift=shift),floor_override=value,
+                        steps=[dict(right=True)]*40+[neutral]*50)
+                motion_results=[]
+                base_floor=bytes(u.mem_read(0x180100,256))
+                base_horizontal=bytes(u.mem_read(0x180000,256));base_ceiling=bytes(u.mem_read(0x180200,256))
+                base_map=bytes(u.mem_read(0x190000,len(original_map)))
+                fields=(0x804f6,0x804f8,0x8051e,0x80520,0x8050e,0x80514,0x80512,0x80518,0x80496,0x80516,0x8050c)
+                for name,scenario in scenarios.items():
+                    script=output/f'{name}.json';script.write_text(json.dumps(scenario))
+                    folder=output/f'motion-{name}'
+                    process=subprocess.run([str(args.probe.resolve()),'--datapath',str(root),
+                        '--output',str(folder),'--palette',str(palette_path),'--motion',str(script)],
+                        capture_output=True,text=True,timeout=60)
+                    if process.returncode:raise ValueError(f'{name}: {process.stderr}')
+                    trajectory=json.loads((folder/'motion.json').read_text())
+                    initial=trajectory['initial']
+                    for address,value in zip(fields,initial):set_word(address,value)
+                    for address in (0x8051a,0x8050a,0x80510,0x804ec,0x804ee,0x804f0,0x804f2):set_word(address,0)
+                    set_pointer(0x8060c,0);set_word(0x80574,4096);set_word(0x80576,height*16)
+                    terrain_map,terrain_horizontal,terrain_floor,terrain_ceiling=base_map,base_horizontal,base_floor,base_ceiling
+                    if 'fixture' in scenario:
+                        fixture=scenario['fixture'];terrain_map=bytearray(len(base_map))
+                        terrain_horizontal=bytearray(256);terrain_floor=bytearray(256);terrain_ceiling=bytearray(256)
+                        terrain_floor[1]=1;terrain_horizontal[2]=terrain_floor[2]=terrain_ceiling[2]=1
+                        for col in range(fixture.get('floor_end_column',256)):terrain_map[fixture['floor_row']*256+col]=1
+                        for col in fixture.get('wall_columns',[]):
+                            for row in range(height):terrain_map[row*256+col]=2
+                        if 'ceiling_row' in fixture:
+                            terrain_map[fixture['ceiling_row']*256:(fixture['ceiling_row']+1)*256]=bytes([2])*256
+                    if 'floor_override' in scenario:terrain_floor=bytes([scenario['floor_override']])*256
+                    for address,values in ((0x190000,terrain_map),(0x180000,terrain_horizontal),(0x180100,terrain_floor),(0x180200,terrain_ceiling)):
+                        u.mem_write(address,bytes(values))
+                    for tick,(keys,expected) in enumerate(zip(scenario['steps'],trajectory['frames'])):
+                        for address,key in ((0x804ee,'left'),(0x804ef,'right'),(0x804ec,'up')):
+                            u.mem_write(address,bytes([int(keys.get(key,False))]))
+                        call(0xe70b4)
+                        observed=[w(address) for address in fields]
+                        observed[:4]=[signed(v) for v in observed[:4]]
+                        if expected!=observed:
+                            diffs=[(column,a,b) for column,a,b in zip(trajectory['columns'],expected,observed) if a!=b]
+                            raise ValueError(f'{name} tick {tick}: native/original {diffs}')
+                    native_motion=json.loads(process.stdout)['motion']
+                    motion_results.append(dict(name=name,ticks=len(scenario['steps']),reference_match=True,
+                        sha256=native_motion['sha256'],synthetic_floor=scenario.get('floor_override'),synthetic_geometry='fixture' in scenario))
+                report['motion']=dict(terrain_only=True,columns=trajectory['columns'],cases=motion_results)
+                phase='level'
             levels.append(dict(level=level,reference_match=True,fields_verified=len(original_state),
                 collision_queries=132,exit_queries=36,gate_transitions=state['gate_transitions'],objects=state['objects'],enemies=state['enemies'],
                 elevators=state['elevators'],bonuses=state['bonuses'],gates=state['gates']))

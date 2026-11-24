@@ -72,3 +72,20 @@ std::optional<GateTransition> gate_transition(const Level&,Point feet);
 bool exit_ready(const Level&,Point feet,bool blocked,unsigned carried_kind);
 unsigned next_level(unsigned number); // 0 means no next regular level.
 }
+
+namespace titus::fox_amiga {
+// Terrain-only logical step: no object/AI, damage, ladders or carrying yet.
+struct MotionRules {
+    std::array<unsigned,14> walk_frames{};
+    std::array<int,5> jump_impulses{};
+};
+struct Body {
+    Point feet;
+    int vx=0,vy=0;
+    unsigned state=0,frame=0,walk_phase=0,jump_phase=0,idle_ticks=0,ice_shift=0;
+    bool facing_right=false;
+};
+struct BodyInput { bool left=false,right=false,up=false; };
+Body terrain_step(const Level&,Body,const BodyInput&,const MotionRules&);
+Bytes body_projection(const Body&);
+}

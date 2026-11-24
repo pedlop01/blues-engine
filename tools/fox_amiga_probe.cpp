@@ -37,7 +37,7 @@ void bmp(const fs::path& p,const Image& im,const std::array<std::uint32_t,64>& p
     if(!f)throw std::runtime_error("Cannot write preview");
 }
 int probe_main(int argc,char** argv) try {
-    fs::path root,output,palette;unsigned level=1,x=0,y=0,spawn_view=0;
+    fs::path root,output,palette,motion_script;unsigned level=1,x=0,y=0,spawn_view=0;
     auto number=[](const std::string& value) {
         if(value.empty() || value.find_first_not_of("0123456789")!=std::string::npos)
             throw std::runtime_error("Expected a nonnegative integer");
@@ -52,6 +52,7 @@ int probe_main(int argc,char** argv) try {
         if(key=="--datapath")root=fs::u8path(value);
         else if(key=="--output")output=fs::u8path(value);
         else if(key=="--palette")palette=fs::u8path(value);
+        else if(key=="--motion")motion_script=fs::u8path(value);
         else if(key=="--level")level=number(value);
         else if(key=="--x")x=number(value);
         else if(key=="--y")y=number(value);
@@ -147,6 +148,48 @@ int probe_main(int argc,char** argv) try {
     }
     report["level_state"]["exit_queries_sha256"]=digest(exits);
     report["level_state"]["next_level"]=next_level(level);
+    if(!motion_script.empty()){
+        if(titus::path_file_size(motion_script)>1024*1024)throw std::runtime_error("Motion script too large");
+        std::ifstream stream(titus::filesystem_path(motion_script));Json script;stream>>script;
+        if(!script.at("steps").is_array() || script["steps"].size()>4096)throw std::runtime_error("Invalid motion script");
+        if(reference.at("walk_frames").size()!=14 || reference.at("jump_impulses").size()!=5)throw std::runtime_error("Regenerate reference motion rules");
+        MotionRules motion_rules;
+        for(unsigned n=0;n<14;++n){motion_rules.walk_frames[n]=reference["walk_frames"][n].get<unsigned>();if(motion_rules.walk_frames[n]>=30)throw std::runtime_error("Invalid walking frame");}
+        for(unsigned n=0;n<5;++n)motion_rules.jump_impulses[n]=reference["jump_impulses"][n].get<int>();
+        auto initial=script.value("initial",Json::object());Body body;body.feet={initial.value("x",state.spawn.x),initial.value("y",state.spawn.y)};
+        body.vx=initial.value("vx",0);body.vy=initial.value("vy",0);body.state=initial.value("state",0u);body.ice_shift=initial.value("ice_shift",0u);
+        body.facing_right=initial.value("facing_right",false);
+        auto row=[](const Body& b){return Json::array({b.feet.x,b.feet.y,b.vx,b.vy,b.state,b.frame,b.walk_phase,b.jump_phase,b.idle_ticks,b.ice_shift,unsigned(b.facing_right)});};
+        Json trace={{"terrain_only",true},{"columns",{"x","y","vx","vy","state","frame","walk_phase","jump_phase","idle_ticks","ice_shift","facing_right"}},
+                    {"initial",row(body)},{"frames",Json::array()}};
+        auto terrain=state;
+        if(script.contains("fixture")){
+            const auto& fixture=script["fixture"];const unsigned row=fixture.at("floor_row").get<unsigned>(),end=fixture.value("floor_end_column",256u);
+            if(row>=terrain.height_tiles || end>256)throw std::runtime_error("Invalid fixture floor row");
+            terrain.map.assign(terrain.map.size(),0);terrain.horizontal.fill(0);terrain.floor.fill(0);terrain.ceiling.fill(0);
+            terrain.floor[1]=1;terrain.horizontal[2]=terrain.floor[2]=terrain.ceiling[2]=1;
+            for(unsigned col=0;col<end;++col)terrain.map[row*256+col]=1;
+            for(const auto& value:fixture.value("wall_columns",Json::array())){
+                unsigned col=value.get<unsigned>();if(col>=256)throw std::runtime_error("Invalid fixture wall");
+                for(unsigned y=0;y<terrain.height_tiles;++y)terrain.map[y*256+col]=2;
+            }
+            if(fixture.contains("ceiling_row")){
+                unsigned y=fixture["ceiling_row"].get<unsigned>();if(y>=terrain.height_tiles)throw std::runtime_error("Invalid fixture ceiling");
+                for(unsigned col=0;col<256;++col)terrain.map[y*256+col]=2;
+            }
+        }
+        if(script.contains("floor_override")){
+            auto value=script["floor_override"].get<unsigned>();if(value>255)throw std::runtime_error("Invalid fixture floor");
+            terrain.floor.fill(std::uint8_t(value));
+        }
+        Bytes trajectory;
+        for(const auto& input:script["steps"]){
+            body=terrain_step(terrain,body,{input.value("left",false),input.value("right",false),input.value("up",false)},motion_rules);
+            auto raw=body_projection(body);trajectory.insert(trajectory.end(),raw.begin(),raw.end());trace["frames"].push_back(row(body));
+        }
+        std::ofstream file(titus::filesystem_path(output/"motion.json"));file<<trace.dump(2)<<'\n';if(!file)throw std::runtime_error("Cannot write motion trace");
+        report["motion"]={{"terrain_only",true},{"steps",script["steps"].size()},{"sha256",digest(trajectory)}};
+    }
     const auto fox_bank=sprites(load("fox.spr")),object_bank=sprites(load("objet2.spr")),enemy_bank=sprites(load("monster2.spr"));
     auto scene=level_scene(state,ts,fox_bank,object_bank,enemy_bank,x,y,viewport.width,viewport.height);
     bmp(output/"scene.bmp",scene,pal);

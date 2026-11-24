@@ -86,5 +86,27 @@ int main() try {
     rejects([&]{auto d=poil;d[512+253]=0;d[512+255]=128;initialize_level(1,raw_map,d,rules);});
     rejects([&]{auto d=poil;d[1011]=16;initialize_level(1,raw_map,d,rules);});
     rejects([&]{initialize_level(15,raw_map,poil,rules);});
+    Level plane;plane.number=1;plane.height_tiles=8;plane.map.assign(2048,0);plane.floor[1]=1;
+    for(unsigned x=0;x<256;++x)plane.map[7*256+x]=1;
+    MotionRules motion;motion.walk_frames.fill(3);motion.jump_impulses.fill(-16);
+    Body walker;walker.feet={100,111};
+    for(unsigned i=0;i<5;++i)walker=terrain_step(plane,walker,{false,true,false},motion);
+    require(walker.feet.x==110 && walker.vx==64 && walker.feet.y==111);
+    for(unsigned i=0;i<6;++i)walker=terrain_step(plane,walker,{},motion);
+    require(walker.feet.x==117 && walker.vx==0 && walker.state==0);
+    Body jumper;jumper.feet={100,111};
+    jumper=terrain_step(plane,jumper,{false,false,true},motion);require(jumper.state==2 && jumper.feet.y==111);
+    jumper=terrain_step(plane,jumper,{false,false,true},motion);require(jumper.vy==-16 && jumper.feet.y==110);
+    jumper=terrain_step(plane,jumper,{},motion);require(jumper.state==3 && jumper.feet.y==109);
+    jumper=terrain_step(plane,jumper,{},motion);require(jumper.vy==0 && jumper.feet.y==109);
+    for(unsigned i=0;i<20;++i)jumper=terrain_step(plane,jumper,{},motion);
+    require(jumper.feet.y==111 && jumper.vy==0 && jumper.state==0);
+    plane.floor[1]=0x85;Body ice;ice.feet={100,111};ice.ice_shift=3;
+    ice=terrain_step(plane,ice,{false,true,false},motion);
+    for(unsigned i=0;i<7;++i)ice=terrain_step(plane,ice,{false,true,false},motion);
+    require(ice.vx==14 && ice.feet.x==100);
+    ice=terrain_step(plane,ice,{false,true,false},motion);require(ice.vx==16 && ice.feet.x==101);
+    rejects([&]{auto b=ice;b.state=4;terrain_step(plane,b,{},motion);});
+    rejects([&]{auto b=ice;b.feet.x=0;terrain_step(plane,b,{},motion);});
     std::cout<<"Fox Amiga resource boundaries passed\n";return 0;
 } catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

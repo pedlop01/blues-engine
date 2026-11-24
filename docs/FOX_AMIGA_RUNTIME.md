@@ -1,8 +1,9 @@
 # TH-14: Titus the Fox Amiga
 
-Estado: **en curso, 30 %**. Lectura nativa de recursos y referencia gráfica
+Estado: **en curso, 35 %**. Lectura nativa de recursos y referencia gráfica
 completadas; inicialización de niveles, consultas de colisión y transiciones
-contrastadas con el original. **Todavía no es un port jugable** ni un adaptador registrado.
+contrastadas con el original. El núcleo de movimiento sobre terreno está
+contrastado por ticks. **Todavía no es un port jugable** ni un adaptador registrado.
 La edición DOS, los perfiles existentes y las capacidades del lanzador no cambian.
 
 ## Progreso
@@ -11,13 +12,15 @@ La edición DOS, los perfiles existentes y las capacidades del lanzador no cambi
 |---|---|---|---:|
 | Recursos y referencia gráfica | Descompresores nativos contrastados, mapas/tiles/sprites/pantallas leídos, escenas exportadas y paletas obtenidas del original | Completado con los límites siguientes | 20 % |
 | Inicialización y consultas Amiga | POIL, normalización de mapas/tablas, entidades iniciales, consultas de colisión, puertas y condiciones de salida contrastadas | Completado, 10 de los 20 puntos del bloque de lógica | 10 % |
-| Simulación Amiga | Física, animaciones, objetos/enemigos/elevadores en movimiento, capas definitivas, campaña y final | Pendiente, 10 puntos restantes de lógica | 0 % |
+| Movimiento sobre terreno | Caminar, frenar, cambiar dirección, saltar/caer y resolver paredes/techos; selección lógica de frames, sin actores | Completado como módulo aislado y acotado | 5 % |
+| Simulación e interacciones restantes | Escaleras, agacharse, daños, coger/lanzar, IA/plataformas, anclajes/oclusión, campaña y final | Pendiente, 5 puntos restantes de lógica | 0 % |
 | Audio Amiga | Reproductor PAT, instrumentos/efectos y mezcla estable, contraste auditivo | Pendiente | 0 % |
 | Adaptador e integración | Preparación privada nativa, protocolo, preferencias por edición, retorno seguro; exponer solo capacidades implementadas y conservar objetivo PX | Pendiente | 0 % |
 | Validación jugable | Regresión DOS/Blues, campaña Amiga y comprobaciones Linux/Windows, controles, audio y final | Pendiente | 0 % |
 
 Los pesos suman 100 puntos: recursos 20, inicialización 10, simulación 10, audio
-20, adaptador 20 y validación jugable 20. No son horas estimadas ni porcentaje de
+20, adaptador 20 y validación jugable 20. Los diez puntos de simulación se
+dividen en movimiento sobre terreno (5) e interacciones restantes (5). No son horas estimadas ni porcentaje de
 compatibilidad. No se habilitará Jugar por tener ya un visor de mapas.
 
 ## Resultados del primer bloque
@@ -198,9 +201,9 @@ firmas como referencia y la separación entre lógica y presentación exigida po
 
 ### Siguiente bloque de simulación
 
-- Portar el paso de jugador (`0x70b4`) y sus auxiliares de colisión/interacción,
-  contrastando trazas de caminar, frenar, saltar, caer y cambiar de zona. Fijar la
-  frecuencia lógica por evidencia; presentar a 60 Hz no debe acelerar la física.
+- El núcleo sobre terreno del paso `0x70b4` ya está contrastado por ticks (ver
+  bloque siguiente). Completar sus estados e interacciones y fijar la frecuencia
+  lógica por evidencia; presentar a 60 Hz no debe acelerar la física.
 - Recuperar las referencias/recortes de los sprites que preparan `0x1f78` y
   `0x29e8`; el visor usa un anclaje provisional al centro/pies, no certifica
   hitboxes ni referencias animadas. Evitar corregir saltos visuales alterando
@@ -221,3 +224,53 @@ mapa (slots 9, 10 y 12). El cálculo nativo conserva los valores originales para
 el contraste; el futuro bucle deberá validar el destino antes de mover al jugador,
 sin convertir un registro inaccesible o residual en una lectura fuera del mapa.
 Las 82 comprobaciones verifican cálculos, no 82 recorridos jugables de habitaciones.
+
+## Movimiento sobre terreno: 35 %
+
+`terrain_step` es una función C++17 independiente del reloj, la ventana, SDL y
+el emulador de auditoría. Implementa los estados quieto, caminar, salto y caída
+sobre el mapa inicializado, junto con fricción, aceleración, gravedad, paredes,
+suelo y golpes de cabeza. Conserva el orden de las consultas y el redondeo del
+original: al integrar se descartan los bits fraccionarios de `|v|`, mientras que
+al deshacer una colisión se usa desplazamiento aritmético. No añade una posición
+subpíxel acumulada que cambie distancias o alturas de salto.
+
+También conserva la selección lógica del frame y los contadores de paseo/salto;
+las 14 entradas de paseo y cinco impulsos de salto se extraen del ejecutable
+propio al regenerar el descriptor. La fase 5 de salto queda retenida al pasar a
+caída, como hace el original; no se reinicia para "simplificar" el estado. El
+anclaje gráfico, hardware sprites, interpolación y render animado final siguen
+pendientes: comparar el índice de frame no certifica su dibujo en pantalla.
+
+Se contrastan **1178 ticks, en 15 casos**, con once columnas por tick: posición,
+velocidades, estado, frame, fase de paseo, fase de salto, contador de reposo,
+fricción y orientación. Hay ocho escenarios sobre el terreno real del nivel 1,
+cuatro geometrías sintéticas para paredes/techo/borde de plataforma, y tres
+fixtures de suelo deslizante. Las geometrías generadas se suministran por igual
+al código nativo y a las rutinas originales; no sustituyen la campaña de 15 mapas.
+
+El arnés ejecuta el paso original `0x70b4` y sus auxiliares de colisión/fricción,
+con los objetos cargados, sin ejecutar su simulación. Solo omite el consumo de
+bonus (`0x6d10`) y la comprobación de final (`0x6fb4`) en estas trazas para aislar
+la física. No entra en el bucle de juego, AmigaOS, audio o hardware. El motor
+nativo no ejecuta esas instrucciones; solo el comprobador externo las usa como
+referencia. Escaleras, agacharse, daño, límites de mapa no cubiertos y estados
+ajenos al subconjunto se rechazan expresamente, sin fingir que están soportados.
+No se habilita Jugar ni se declara esta fase un juego completo.
+
+```sh
+build/fox-amiga-audit-env/bin/python tools/validate_fox_amiga_resources.py --datapath ../orig-games/fox-amiga --output build/fox-amiga-motion-reference --amitools ../tools/amitools --probe build/fox-amiga/titus-fox-amiga-probe --check-motion
+python3 tests/check_fox_amiga_motion.py --probe build/fox-amiga/titus-fox-amiga-probe --datapath ../orig-games/fox-amiga --reference build/fox-amiga-motion-reference --output build/fox-amiga-motion-replay
+```
+
+Para repetir todas las pruebas del cargador junto con las de movimiento, añadir
+`--check-levels` al comprobador. El descriptor anterior sin `walk_frames` y
+`jump_impulses` sirve para los visores estáticos, pero debe regenerarse para
+`--motion SCRIPT.json`. Los scripts y trazas completas quedan en `build/`; el
+informe versionado contiene únicamente resultados, recuentos y firmas.
+
+Evidencia: [contraste original](measurements/th14-motion.json) y
+[Linux/Windows/sanitizadores](measurements/th14-motion-validation.json).
+Los siguientes pasos son completar las interacciones, recuperar los anclajes de
+sprites y conectar una presentación interactiva, manteniendo la lógica separada
+de la frecuencia de dibujado y el objetivo PX de scroll muy suave.
