@@ -16,11 +16,19 @@ int main(int argc, char **argv) {
       if (pic.pixels.size() != 64000)
         throw std::runtime_error("Intro frame size");
     }
+    unsigned elevator_checks = 0;
     for (unsigned n = 1; n <= 15; ++n) {
       titus::fox_dos::load(n);
       for (unsigned t = 0; t < 30; ++t)
         fox_dos_step(t < 15 ? 2 : 0, 1, 1);
       auto s = titus::fox_dos::snapshot();
+      std::vector<long long> named;
+      auto collect = [](void *p, const char *, long long v) {
+        static_cast<std::vector<long long> *>(p)->push_back(v);
+        return v;
+      };
+      if (!fox_dos_state(collect, &named, 0) || named != s.values)
+        throw std::runtime_error("Compact and named state traversal differ");
       auto doc = titus::fox_dos::save(s, "probe");
       auto read = titus::fox_dos::decode(doc, "probe");
       for (unsigned t = 0; t < 20; ++t)
@@ -43,9 +51,38 @@ int main(int argc, char **argv) {
             titus::fox_dos::restore(copy);
           }
         }
+      auto *w = fox_dos_world();
+      for (int i = 0; i < w->elevatorcount; ++i)
+        if (w->elevator[i].sprite.enabled) {
+          auto &p = w->elevator[i].sprite;
+          auto hidden = p.invisible;
+          auto enabled = p.enabled;
+          titus::fox_dos::View v;
+          v.width = 320;
+          v.height = 200;
+          v.x = p.x - 160;
+          v.y = p.y - 100;
+          p.invisible = 0;
+          auto visible = titus::fox_dos::render(v, {});
+          p.invisible = 1;
+          auto culled = titus::fox_dos::render(v, {});
+          p.enabled = 0;
+          auto absent = titus::fox_dos::render(v, {});
+          p.enabled = enabled;
+          p.invisible = hidden;
+          if (visible.pixels != culled.pixels ||
+              visible.pixels == absent.pixels)
+            throw std::runtime_error(
+                "World view lost a platform culled by the legacy viewport");
+          ++elevator_checks;
+          break;
+        }
       auto f = titus::fox_dos::render({}, {});
       std::cout << "level " << n << " ok " << s.values.size() << '\n';
     }
+    if (!elevator_checks)
+      throw std::runtime_error("Missing elevator fixtures");
+    std::cout << "world elevator checks " << elevator_checks << " ok\n";
     // The nonblocking original ending remains saveable through the approach,
     // smoke, hearts and THE END stages.
     titus::fox_dos::load(15);
@@ -54,6 +91,13 @@ int main(int argc, char **argv) {
       result = fox_dos_step(t > 110 ? 16 : 0, 1, 1);
       if (t == 95 || t == 130) {
         auto s = titus::fox_dos::snapshot();
+        std::vector<long long> named;
+        auto collect = [](void *p, const char *, long long v) {
+          static_cast<std::vector<long long> *>(p)->push_back(v);
+          return v;
+        };
+        if (!fox_dos_state(collect, &named, 0) || named != s.values)
+          throw std::runtime_error("Compact and named state traversal differ");
         titus::fox_dos::restore(s);
       }
     }

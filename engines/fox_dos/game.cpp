@@ -8,7 +8,16 @@ extern "C" {
 SDL_Surface *fox_dos_glyph(unsigned char);
 }
 namespace titus::fox_dos {
+std::uint64_t &active_serial() {
+  static std::uint64_t value = 0;
+  return value;
+}
+std::uint64_t fresh_serial() {
+  static std::uint64_t value = 0;
+  return ++value;
+}
 void load(unsigned level, int lives) {
+  active_serial() = 0;
   if (level < 1 || level > 15 || lives < 0 || lives > 99 ||
       fox_dos_load(level - 1, lives) < 0)
     throw std::runtime_error(fox_dos_error());
@@ -20,11 +29,12 @@ Snapshot snapshot() {
     static_cast<Snapshot *>(p)->values.push_back(v);
     return v;
   };
-  if (!fox_dos_state(visit, &result, 0))
+  if (!fox_dos_values(visit, &result, 0))
     throw std::runtime_error("Unrepresentable Fox state");
   return result;
 }
 void restore(const Snapshot &s) {
+  active_serial() = 0;
   if (s.level < 1 || s.level > 15 || s.values.size() > 100000)
     throw std::runtime_error("Invalid Fox state size");
   auto old = snapshot();
@@ -45,11 +55,11 @@ void restore(const Snapshot &s) {
     return r.v[r.pos++];
   };
   Reader r{s.values};
-  if (!fox_dos_state(visit, &r, 1) || !r.ok || r.pos != s.values.size()) {
+  if (!fox_dos_values(visit, &r, 1) || !r.ok || r.pos != s.values.size()) {
     if (changed)
       load(old.level);
     Reader rollback{old.values};
-    fox_dos_state(visit, &rollback, 1);
+    fox_dos_values(visit, &rollback, 1);
     throw std::runtime_error("Invalid Fox snapshot fields");
   }
 }
@@ -182,7 +192,8 @@ Frame render(const View &v, const std::vector<Pose> &previous) {
   auto list = sprites();
   for (std::size_t i = 0; i < list.size(); ++i) {
     auto *p = list[i];
-    if (!p->enabled || p->invisible || !p->spritedata)
+    if (!p->enabled || (p->invisible && i >= unsigned(w->elevatorcount)) ||
+        !p->spritedata)
       continue;
     double x = p->x, y = p->y;
     if (i < previous.size() && std::abs(previous[i].x - p->x) < 80 &&
@@ -207,7 +218,7 @@ Frame render(const View &v, const std::vector<Pose> &previous) {
     rectangle(f, 4 * ui, 4 * ui, 145 * ui, 18 * ui, 0xff182334);
     text(f, 8 * ui, 7 * ui,
          "VIDAS " + std::to_string(w->lives) + "  NIVEL " +
-             std::to_string(w->levelnumber + 1),
+             std::to_string(w->levelnumber == 14 ? 16 : w->levelnumber + 1),
          0xffffd76a, ui);
   }
   return f;

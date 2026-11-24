@@ -22,6 +22,8 @@ struct View {
   unsigned width = 960, height = 600;
   bool classic_hud = true;
 };
+std::uint64_t &active_serial();
+std::uint64_t fresh_serial();
 void load(unsigned level, int lives = 3);
 Snapshot snapshot();
 void restore(const Snapshot &);

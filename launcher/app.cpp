@@ -52,7 +52,7 @@ class App {
     std::future<std::unique_ptr<Session>> starting_session;
     std::unique_ptr<Session> session;
     fs::path package_root;
-    bool session_hidden=false,cancel_start=false,browsing_saves=false;
+    bool session_hidden=false,cancel_start=false,browsing_saves=false,save_preparation_required=false;
     Json settings_doc,settings_draft,save_index,save_details;
     std::map<std::string,Json> session_settings;
     std::map<int,SDL_Texture*> save_previews;
@@ -67,7 +67,7 @@ class App {
     void settings_tab(const std::string& scope){settings_scope=scope;settings_page=0;settings_error.clear();settings_draft=scope=="session"?session_settings.count(library.selected()->at("id").get<std::string>())?session_settings.at(library.selected()->at("id").get<std::string>()):Json::object():SettingsStore(paths).scope(settings_doc,identity(),scope);}
     void cycle_setting(const Setting& spec){auto& group=settings_draft[spec.group];if(!group.contains(spec.key))group[spec.key]=spec.values[0];else{auto it=std::find(spec.values.begin(),spec.values.end(),group[spec.key]);if(it==spec.values.end()||++it==spec.values.end())group.erase(spec.key);else group[spec.key]=*it;}if(group.empty())settings_draft.erase(spec.group);settings_error.clear();}
     void save_settings(){try{auto id=identity();if(settings_scope=="session"){SettingsStore(paths).resolve(settings_doc,id,settings_draft);session_settings[id["id"].get<std::string>()]=settings_draft;}else{ProfileLock lock(paths.data/"profile-locks"/fs::u8path(id["profile_id"].get<std::string>()+"."+id["game_id"].get<std::string>()+"."+id["save_compatibility_id"].get<std::string>()+".lock"));settings_doc=SettingsStore(paths).edit(settings_doc,id,settings_scope,settings_draft);}close_modal();notice="Opciones guardadas. Se aplicarán al abrir el juego.";}catch(const std::exception& e){settings_error=e.what();}}
-    void open_saves(){if(!library.can_play())return;browsing_saves=true;begin_play(0,true);}
+    void open_saves(){if(!library.can_play())return;save_preparation_required=false;browsing_saves=true;begin_play(0,true);}
     void load_selected_save(){for(const auto& slot:save_index["slots"])if(slot["slot"]==selected_slot&&slot["status"]=="ready"){library.select_edition(slot["edition_id"]);browsing_saves=false;begin_play(selected_slot);return;}}
 
     bool test_play=false,test_family=false,test_fox=false,test_pre1=false,test_fox_amiga=false,test_pre1_amiga=false,settings_probe=false;
@@ -151,7 +151,7 @@ class App {
         if(!session->finished())return;
         bool success=session->state==Session::State::Done;
         notice=success?session->message():session->error();
-        if(browsing_saves){browsing_saves=false;clear_previews();save_index=session->inspection().value("save_index",Json(nullptr));save_details=Json::object();auto details=session->directory()/"save-details.json";if(success&&path_exists(details))try{save_details=parse_json(read_document(details));}catch(const std::exception& e){notice=e.what();}session.reset();if(success){set_modal("slots");focus="cancel";}else modal.clear();return;}
+        if(browsing_saves){browsing_saves=false;clear_previews();save_preparation_required=session->inspection().value("status",std::string())=="preparation_required";save_index=session->inspection().value("save_index",Json(nullptr));save_details=Json::object();auto details=session->directory()/"save-details.json";if(success&&path_exists(details))try{save_details=parse_json(read_document(details));}catch(const std::exception& e){notice=e.what();}session.reset();if(success){set_modal("slots");focus="cancel";}else modal.clear();return;}
         session.reset();modal.clear();
         if(session_hidden)SDL_ShowWindow(window);SDL_RaiseWindow(window);SDL_SetWindowInputFocus(window);SDL_ShowCursor(SDL_ENABLE);session_hidden=false;
         focused=true;int count=0;auto keys=SDL_GetKeyboardState(&count);for(int i=0;i<count&&i<SDL_NUM_SCANCODES;++i)blocked[i]=keys[i]!=0;
@@ -356,7 +356,8 @@ class App {
         }
         if(modal=="slots"){
             panel({180,70,740,590},color(0x213146));text("Partidas · "+std::string(library.info().title),204,91,25,ink,490);if(library.info().id==std::string("blues"))button("legacy","Revisar legado",{720,89,174,34},[this](){compare_legacy();});
-            if(save_index.is_null()){text("Este motor no ofrece slots de guardado en la biblioteca.",204,164,18,muted,680,true);text("Puedes seguir usando las funciones de progreso de su menú nativo.",204,226,16,muted,670,true);}
+            if(save_index.is_null()&&save_preparation_required){text("Inicia el juego una vez para activar sus partidas guardadas.",204,164,18,muted,680,true);text("Después podrás ver y cargar aquí sus ocho partidas.",204,226,16,muted,670,true);}
+            else if(save_index.is_null()){text("Este motor no ofrece slots de guardado en la biblioteca.",204,164,18,muted,680,true);text("Puedes seguir usando las funciones de progreso de su menú nativo.",204,226,16,muted,670,true);}
             else for(int n=1;n<=8;++n){int x=204+((n-1)%4)*174,y=140+((n-1)/4)*190;const Json* slot=nullptr;for(const auto& item:save_index["slots"])if(item["slot"]==n)slot=&item;
                 panel({x,y,162,178},color(n==selected_slot?0x344b60:0x172536),6);widget("slot:"+std::to_string(n),{x,y,162,178},[this,n](){selected_slot=n;});if(focus=="slot:"+std::to_string(n))outline({x,y,162,178},aqua);
                 std::string status=slot?slot->at("status").get<std::string>():"empty";text("Slot "+std::to_string(n),x+9,y+9,17,n==selected_slot?aqua:ink);
@@ -460,7 +461,7 @@ class App {
         else if(play_test_stage==5){check(modal=="slots"&&!save_index.is_null()&&save_index["slot_count"]==8,"native save catalog opens");check(!save_previews.empty(),"native previews decoded");draw();capture_state("slots");focus="legacy";push_key(SDLK_RETURN);}
         else if(play_test_stage==6){check(modal=="legacy"&&legacy_comparison.size()==9,"explicit legacy comparison");draw();capture_state("legacy");push_key(SDLK_ESCAPE);}
         else if(play_test_stage==7){check(modal.empty(),"legacy import cancelled");library.choose_game("fox");library.select_edition("dos");focus="saves";draw();push_key(SDLK_RETURN);}
-        else if(play_test_stage==8){check(modal=="slots"&&save_index.is_null(),"unsupported save slots stay unavailable");push_key(SDLK_ESCAPE);}
+        else if(play_test_stage==8){check(modal=="slots"&&save_index.is_null(),"unprepared save catalog remains read-only");push_key(SDLK_ESCAPE);}
         else {std::cout<<Json({{"settings_ui_checks",smoke_checks}}).dump()<<'\n';running=false;}
         ++play_test_stage;
     }

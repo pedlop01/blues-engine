@@ -6,11 +6,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+extern int fox_state_names;
 extern TITUS_level*fox_dos_world(void);
 static int valid;static int loading;static fox_dos_visit visit;static void*context;
 static long long scalar(const char*name,long long v,long long lo,long long hi){long long n=visit(context,name,v);if(n<lo||n>hi){valid=0;return v;}return n;}
-#define V(field,lo,hi) do{snprintf(key,sizeof key,"%s.%s",prefix,#field);long long n=scalar(key,p->field,lo,hi);if(loading)p->field=n;}while(0)
-static void state_tile(TITUS_tile*p,const char*prefix){char key[160];
+#define V(field,lo,hi) do{if(fox_state_names)snprintf(key,sizeof key,"%s.%s",prefix,#field);long long n=scalar(key,p->field,lo,hi);if(loading)p->field=n;}while(0)
+static void state_tile(TITUS_tile*p,const char*prefix){char key[160]={0};
 V(animation[0],0,255);
 V(animation[1],0,255);
 V(animation[2],0,255);
@@ -20,7 +21,7 @@ V(floorflag,0,255);
 V(ceilflag,0,255);
 V(current,0,255);
 }
-static void state_sprite(TITUS_sprite*p,const char*prefix){char key[160];
+static void state_sprite(TITUS_sprite*p,const char*prefix){char key[160]={0};
 V(x,-32768,32767);
 V(y,-32768,32767);
 V(speedX,-32768,32767);
@@ -35,22 +36,22 @@ V(droptobottom,-2147483647LL-1,2147483647LL);
 V(killing,-2147483647LL-1,2147483647LL);
 V(invisible,-2147483647LL-1,2147483647LL);
 }
-static void state_spritedata(TITUS_spritedata*p,const char*prefix){char key[160];
+static void state_spritedata(TITUS_spritedata*p,const char*prefix){char key[160]={0};
 V(collheight,0,255);
 V(collwidth,0,255);
 V(refheight,-32768,32767);
 V(refwidth,0,255);
 }
-static void state_spritebuffer(TITUS_spritebuffer*p,const char*prefix){char key[160];
+static void state_spritebuffer(TITUS_spritebuffer*p,const char*prefix){char key[160]={0};
 V(index,0,255);
 }
-static void state_spritecache(TITUS_spritecache*p,const char*prefix){char key[160];
+static void state_spritecache(TITUS_spritecache*p,const char*prefix){char key[160]={0};
 V(count,0,65535);
 V(tmpcount,0,65535);
 V(cycle,0,65535);
 V(cycle2,0,65535);
 }
-static void state_objectdata(TITUS_objectdata*p,const char*prefix){char key[160];
+static void state_objectdata(TITUS_objectdata*p,const char*prefix){char key[160]={0};
 V(maxspeedY,0,255);
 V(support,-2147483647LL-1,2147483647LL);
 V(bounce,-2147483647LL-1,2147483647LL);
@@ -58,14 +59,14 @@ V(gravity,-2147483647LL-1,2147483647LL);
 V(droptobottom,-2147483647LL-1,2147483647LL);
 V(no_damage,-2147483647LL-1,2147483647LL);
 }
-static void state_object(TITUS_object*p,const char*prefix){char key[160];
+static void state_object(TITUS_object*p,const char*prefix){char key[160]={0};
 V(initsprite,0,65535);
 V(initX,-2147483647LL-1,2147483647LL);
 V(initY,-2147483647LL-1,2147483647LL);
 V(init_enabled,-2147483647LL-1,2147483647LL);
 V(mass,0,255);
 }
-static void state_enemy(TITUS_enemy*p,const char*prefix){char key[160];
+static void state_enemy(TITUS_enemy*p,const char*prefix){char key[160]={0};
 V(dying,0,255);
 V(phase,0,255);
 V(type,0,65535);
@@ -89,14 +90,14 @@ V(visible,-2147483647LL-1,2147483647LL);
 V(counter,0,255);
 V(walkspeedX,0,255);
 }
-static void state_bonus(TITUS_bonus*p,const char*prefix){char key[160];
+static void state_bonus(TITUS_bonus*p,const char*prefix){char key[160]={0};
 V(exists,0,255);
 V(bonustile,0,255);
 V(replacetile,0,255);
 V(x,-2147483647LL-1,2147483647LL);
 V(y,-2147483647LL-1,2147483647LL);
 }
-static void state_gate(TITUS_gate*p,const char*prefix){char key[160];
+static void state_gate(TITUS_gate*p,const char*prefix){char key[160]={0};
 V(exists,0,255);
 V(entranceX,0,4294967295LL);
 V(entranceY,0,4294967295LL);
@@ -106,7 +107,7 @@ V(screenX,0,4294967295LL);
 V(screenY,0,4294967295LL);
 V(noscroll,-2147483647LL-1,2147483647LL);
 }
-static void state_elevator(TITUS_elevator*p,const char*prefix){char key[160];
+static void state_elevator(TITUS_elevator*p,const char*prefix){char key[160]={0};
 V(enabled,-2147483647LL-1,2147483647LL);
 V(counter,0,4294967295LL);
 V(range,0,4294967295LL);
@@ -118,7 +119,7 @@ V(initsprite,0,65535);
 V(initX,-2147483647LL-1,2147483647LL);
 V(initY,-2147483647LL-1,2147483647LL);
 }
-static void state_player(TITUS_player*p,const char*prefix){char key[160];
+static void state_player(TITUS_player*p,const char*prefix){char key[160]={0};
 V(animcycle,0,255);
 V(cageX,-32768,32767);
 V(cageY,-32768,32767);
@@ -128,12 +129,12 @@ V(initY,-32768,32767);
 V(inithp,0,255);
 V(GLISSE,0,255);
 }
-static void state_level(TITUS_level*p,const char*prefix){char key[160];
+static void state_level(TITUS_level*p,const char*prefix){char key[160]={0};
 V(lives,-2147483647LL-1,2147483647LL);
 V(extrabonus,-2147483647LL-1,2147483647LL);
 }
 #undef V
-int fox_dos_scalars(fox_dos_visit fn,void*ctx,int restore){valid=1;loading=restore;visit=fn;context=ctx;char key[160];TITUS_level*w=fox_dos_world();
+int fox_dos_scalars(fox_dos_visit fn,void*ctx,int restore){valid=1;loading=restore;visit=fn;context=ctx;char key[160]={0};TITUS_level*w=fox_dos_world();
 {long long n=scalar("globals.RESETLEVEL_FLAG",RESETLEVEL_FLAG,0,255);if(loading)RESETLEVEL_FLAG=n;}
 {long long n=scalar("globals.GAMEOVER_FLAG",GAMEOVER_FLAG,-2147483647LL-1,2147483647LL);if(loading)GAMEOVER_FLAG=n;}
 {long long n=scalar("globals.BAR_FLAG",BAR_FLAG,0,255);if(loading)BAR_FLAG=n;}
@@ -206,17 +207,17 @@ int fox_dos_scalars(fox_dos_visit fn,void*ctx,int restore){valid=1;loading=resto
 {long long n=scalar("globals.level_code[13]",level_code[13],0,65535);if(loading)level_code[13]=n;}
 {long long n=scalar("globals.level_code[14]",level_code[14],0,65535);if(loading)level_code[14]=n;}
 {long long n=scalar("globals.level_code[15]",level_code[15],0,65535);if(loading)level_code[15]=n;}
-for(int i=0;i<256;++i){snprintf(key,sizeof key,"globals.sprites[%d].enabled",i);long long n=scalar(key,sprites[i].enabled,0,1);if(loading)sprites[i].enabled=n;snprintf(key,sizeof key,"globals.sprites[%d].NUM",i);n=scalar(key,sprites[i].NUM,0,65535);if(loading)sprites[i].NUM=n;snprintf(key,sizeof key,"globals.spritedata[%d].enabled",i);n=scalar(key,spritedata[i].enabled,0,1);if(loading)spritedata[i].enabled=n;snprintf(key,sizeof key,"globals.spritedata[%d].NUM",i);n=scalar(key,spritedata[i].NUM,0,65535);if(loading)spritedata[i].NUM=n;}
+for(int i=0;i<256;++i){if(fox_state_names)snprintf(key,sizeof key,"globals.sprites[%d].enabled",i);long long n=scalar(key,sprites[i].enabled,0,1);if(loading)sprites[i].enabled=n;if(fox_state_names)snprintf(key,sizeof key,"globals.sprites[%d].NUM",i);n=scalar(key,sprites[i].NUM,0,65535);if(loading)sprites[i].NUM=n;if(fox_state_names)snprintf(key,sizeof key,"globals.spritedata[%d].enabled",i);n=scalar(key,spritedata[i].enabled,0,1);if(loading)spritedata[i].enabled=n;if(fox_state_names)snprintf(key,sizeof key,"globals.spritedata[%d].NUM",i);n=scalar(key,spritedata[i].NUM,0,65535);if(loading)spritedata[i].NUM=n;}
 state_level(w,"level");state_player(&w->player,"player");
-for(int i=0;i<w->objectcount;++i){snprintf(key,sizeof key,"object[%d]",i);state_object(&w->object[i],key);snprintf(key,sizeof key,"object[%d].sprite",i);state_sprite(&w->object[i].sprite,key);}
-for(int i=0;i<w->enemycount;++i){snprintf(key,sizeof key,"enemy[%d]",i);state_enemy(&w->enemy[i],key);snprintf(key,sizeof key,"enemy[%d].sprite",i);state_sprite(&w->enemy[i].sprite,key);}
-for(int i=0;i<w->bonuscount;++i){snprintf(key,sizeof key,"bonus[%d]",i);state_bonus(&w->bonus[i],key);}
-for(int i=0;i<w->gatecount;++i){snprintf(key,sizeof key,"gate[%d]",i);state_gate(&w->gate[i],key);}
-for(int i=0;i<w->elevatorcount;++i){snprintf(key,sizeof key,"elevator[%d]",i);state_elevator(&w->elevator[i],key);snprintf(key,sizeof key,"elevator[%d].sprite",i);state_sprite(&w->elevator[i].sprite,key);}
-for(int i=0;i<w->trashcount;++i){snprintf(key,sizeof key,"trash[%d]",i);state_sprite(&w->trash[i],key);}
+for(int i=0;i<w->objectcount;++i){if(fox_state_names)snprintf(key,sizeof key,"object[%d]",i);state_object(&w->object[i],key);if(fox_state_names)snprintf(key,sizeof key,"object[%d].sprite",i);state_sprite(&w->object[i].sprite,key);}
+for(int i=0;i<w->enemycount;++i){if(fox_state_names)snprintf(key,sizeof key,"enemy[%d]",i);state_enemy(&w->enemy[i],key);if(fox_state_names)snprintf(key,sizeof key,"enemy[%d].sprite",i);state_sprite(&w->enemy[i].sprite,key);}
+for(int i=0;i<w->bonuscount;++i){if(fox_state_names)snprintf(key,sizeof key,"bonus[%d]",i);state_bonus(&w->bonus[i],key);}
+for(int i=0;i<w->gatecount;++i){if(fox_state_names)snprintf(key,sizeof key,"gate[%d]",i);state_gate(&w->gate[i],key);}
+for(int i=0;i<w->elevatorcount;++i){if(fox_state_names)snprintf(key,sizeof key,"elevator[%d]",i);state_elevator(&w->elevator[i],key);if(fox_state_names)snprintf(key,sizeof key,"elevator[%d].sprite",i);state_sprite(&w->elevator[i].sprite,key);}
+for(int i=0;i<w->trashcount;++i){if(fox_state_names)snprintf(key,sizeof key,"trash[%d]",i);state_sprite(&w->trash[i],key);}
 state_sprite(&w->player.sprite,"player.sprite");
 state_sprite(&w->player.sprite2,"player.sprite2");
 state_sprite(&w->player.sprite3,"player.sprite3");
-for(int i=0;i<256;++i){snprintf(key,sizeof key,"tile[%d]",i);state_tile(&w->tile[i],key);}
-for(int y=0;y<w->height;++y)for(int x=0;x<w->width;++x){snprintf(key,sizeof key,"map[%d][%d]",y,x);long long n=scalar(key,w->tilemap[y][x],0,255);if(loading)w->tilemap[y][x]=n;}
+for(int i=0;i<256;++i){if(fox_state_names)snprintf(key,sizeof key,"tile[%d]",i);state_tile(&w->tile[i],key);}
+for(int y=0;y<w->height;++y)for(int x=0;x<w->width;++x){if(fox_state_names)snprintf(key,sizeof key,"map[%d][%d]",y,x);long long n=scalar(key,w->tilemap[y][x],0,255);if(loading)w->tilemap[y][x]=n;}
 return valid;}

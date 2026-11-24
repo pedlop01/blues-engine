@@ -568,13 +568,13 @@ static int TAKE_BLK_AND_YTEST(TITUS_level *level, int16 tileY, uint8 tileX) {
         tileX += change;
         horiz = get_horizflag(level, tileY, tileX);
         if (horiz == 0) { //No wall
-            player->sprite.x += change << 1;
+            player->sprite.x += change * 2;
         } else {
             change = 0 - change;
             tileX += change + change;
             horiz = get_horizflag(level, tileY, tileX);
             if (horiz == 0) {
-                player->sprite.x += change << 1;
+                player->sprite.x += change * 2;
             }
         }
     }

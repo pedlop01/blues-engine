@@ -18,6 +18,7 @@ void fox_dos_close(void);
 // Field-wise signed integer visitor; pointers are stable resource/slot indices.
 typedef long long (*fox_dos_visit)(void *, const char *, long long);
 int fox_dos_state(fox_dos_visit, void *, int restoring);
+int fox_dos_values(fox_dos_visit, void *, int restoring);
 void fox_dos_music(unsigned);
 unsigned fox_dos_level_music(void);
 int fox_dos_picture(unsigned, unsigned char **);

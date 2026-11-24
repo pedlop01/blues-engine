@@ -45,7 +45,9 @@ siendo una capacidad de Blues y no se anuncia para estos dos juegos.
   del lanzador se restauran al regresar; teclado y FPS elegidos dentro del
   juego son preferencias nativas persistentes.
 - Los originales se leen sin modificar. Las extracciones siguen en las cachés
-  privadas `fox-lzw-v1` y `pre1-diet-v1`. Fox ya no requiere generar `titus.conf`
+  privadas `fox-lzw-v1` y `pre1-diet-v1`. Las capturas de Fox evitan formatear nombres de campos y no restauran
+  el mismo estado en cada render. El formato portable mantiene el mismo orden
+  comprobado de campos. Fox ya no requiere generar `titus.conf`
   durante una inspección ni depende de SDL 1.2/SDL_mixer.
 - La historia de rewind está limitada a diez segundos; su memoria depende del
   tamaño del mapa y de las entidades. No se conserva esa historia al cargar

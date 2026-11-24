@@ -197,7 +197,7 @@ int MOVE_NMI(TITUS_level *level) {
                 if (!level->enemy[i].visible) { //Is the enemy on the screen?
                     continue;
                 }
-                level->enemy[i].sprite.x -= level->enemy[i].sprite.speedX << 2;
+                level->enemy[i].sprite.x -= level->enemy[i].sprite.speedX * 4;
                 level->enemy[i].sprite.y += level->enemy[i].sprite.speedY;
                 if (level->enemy[i].sprite.speedY + 1 < 0) {
                     level->enemy[i].sprite.speedY++;

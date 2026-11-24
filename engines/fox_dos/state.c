@@ -70,28 +70,32 @@ static int animation_id(int16 *p) {
   }
   return -2;
 }
-int fox_dos_state(fox_dos_visit fn, void *ctx, int restore) {
+int fox_state_names = 1;
+static int traverse(fox_dos_visit fn, void *ctx, int restore) {
   TITUS_level *w = fox_dos_world();
   if (!fox_dos_scalars(fn, ctx, restore))
     return 0;
-  char key[80];
+  char key[80] = {0};
   for (int i = 0; i < 3 + w->objectcount + w->enemycount + w->elevatorcount +
                           w->trashcount;
        ++i) {
     TITUS_sprite *p = sprite_at(w, i);
-    snprintf(key, sizeof key, "spriteptr[%d].actor", i);
+    if (fox_state_names)
+      snprintf(key, sizeof key, "spriteptr[%d].actor", i);
     long long n = fn(ctx, key, actor_id(w, p->spritedata));
     if (n < -1 || n >= SPRITECOUNT)
       return 0;
     if (restore)
       p->spritedata = n < 0 ? NULL : w->spritedata[n];
-    snprintf(key, sizeof key, "spriteptr[%d].ontop", i);
+    if (fox_state_names)
+      snprintf(key, sizeof key, "spriteptr[%d].ontop", i);
     n = fn(ctx, key, sprite_id(w, p->ONTOP));
     if (n < -1 || (n >= 0 && !sprite_at(w, n)))
       return 0;
     if (restore)
       p->ONTOP = sprite_at(w, n);
-    snprintf(key, sizeof key, "spriteptr[%d].animation", i);
+    if (fox_state_names)
+      snprintf(key, sizeof key, "spriteptr[%d].animation", i);
     n = fn(ctx, key, animation_id(p->animation));
     if (n < -1 || n > 0x4ffff || (n >= 0 && !animation_at(n)))
       return 0;
@@ -103,7 +107,8 @@ int fox_dos_state(fox_dos_visit fn, void *ctx, int restore) {
     for (int j = 0; j < ORIG_OBJECT_COUNT; ++j)
       if (w->object[i].objectdata == w->objectdata[j])
         id = j;
-    snprintf(key, sizeof key, "objectptr[%d]", i);
+    if (fox_state_names)
+      snprintf(key, sizeof key, "objectptr[%d]", i);
     long long n = fn(ctx, key, id);
     if (n < -1 || n >= ORIG_OBJECT_COUNT)
       return 0;
@@ -123,4 +128,13 @@ int fox_dos_state(fox_dos_visit fn, void *ctx, int restore) {
       *extra[i] = n;
   }
   return 1;
+}
+
+int fox_dos_state(fox_dos_visit fn, void *ctx, int restoring) {
+  fox_state_names = 1;
+  return traverse(fn, ctx, restoring);
+}
+int fox_dos_values(fox_dos_visit fn, void *ctx, int restoring) {
+  fox_state_names = 0;
+  return traverse(fn, ctx, restoring);
 }

@@ -25,6 +25,7 @@ struct Game {
     bool game_over = false;
     long score = 0;
   } state;
+  std::uint64_t serial = fresh_serial();
   Snapshot saved;
   std::vector<Pose> previous;
   std::uint64_t ticks = 0;
@@ -36,14 +37,18 @@ struct Game {
     state.score = w->extrabonus;
   }
   void bind() const {
-    if (!saved.values.empty())
+    if (active_serial() != serial && !saved.values.empty()) {
       restore(saved);
+      active_serial() = serial;
+    }
     fox_dos_world()->lives = state.player.lives;
   }
   void start(Assets &, unsigned n = 1, int lives = 3, long score = 0) {
     load(n, lives);
     fox_dos_world()->extrabonus = score;
     saved = snapshot();
+    serial = fresh_serial();
+    active_serial() = serial;
     previous = poses();
     state.game_over = ending = level_complete = false;
     ticks = 0;
@@ -77,6 +82,8 @@ struct Game {
       ending = true;
     project();
     saved = snapshot();
+    serial = fresh_serial();
+    active_serial() = serial;
   }
 };
 inline unsigned display_level(unsigned n) { return n == 15 ? 16 : n; }
