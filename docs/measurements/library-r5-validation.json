@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-24",
+  "source_revision": "2989baf373a6e0c01658344752d05d26d95382f1",
+  "changes": [
+    "Use SDL logical mouse event coordinates once",
+    "Restore launcher and request Windows foreground; flash taskbar if denied",
+    "Visual selector with optional aspect-preserved BMP covers; detailed management remains accessible",
+    "Explain setting scopes, camera, HUD and view labels"
+  ],
+  "validation": {
+    "linux-final-test": {
+      "report": {
+        "fullscreen": false,
+        "games": 5,
+        "installations": 8,
+        "selected_game": "blues",
+        "ui_checks": 38
+      },
+      "integrity": "Originals unchanged: 462 files; catalog and UI preferences verified"
+    },
+    "windows-final-test": {
+      "report": {
+        "fullscreen": false,
+        "games": 5,
+        "installations": 8,
+        "selected_game": "blues",
+        "ui_checks": 38
+      },
+      "integrity": "Originals unchanged: 462 files; catalog and UI preferences verified"
+    },
+    "empty-linux": {
+      "report": {
+        "fullscreen": false,
+        "games": 0,
+        "installations": 0,
+        "selected_game": "",
+        "ui_checks": 25
+      },
+      "integrity": "Originals unchanged: 0 files; catalog and UI preferences verified"
+    },
+    "sessions-linux": {
+      "report": {
+        "notice": "De vuelta en tu biblioteca.",
+        "selected_edition": "amiga",
+        "session_ui_checks": 8,
+        "sessions": 4
+      },
+      "integrity": "Originals and legacy preserved: 462 game files; native window/selection restored after every game"
+    },
+    "sessions-windows": {
+      "report": {
+        "notice": "De vuelta en tu biblioteca.",
+        "selected_edition": "amiga",
+        "session_ui_checks": 8,
+        "sessions": 4
+      },
+      "integrity": "Originals and legacy preserved: 462 game files; native window/selection restored after every game"
+    },
+    "ctest": "8/8 pass",
+    "packaged_smoke": {
+      "program": "titus-engine.exe",
+      "exit": 0,
+      "stdout": "{\"fullscreen\":false,\"games\":5,\"installations\":8,\"selected_game\":\"blues\",\"ui_checks\":32}\r\n",
+      "stderr": ""
+    }
+  },
+  "runtime_changes": "None: five packaged engine executables identical to accepted r4",
+  "artifact": {
+    "path": "build/library-package-windows-r5/bin/titus-engine.exe",
+    "bytes": 4355615,
+    "sha256": "6463b27718f96ae36273aab16ce31507e8137f2312335b433afb7badc5d66988"
+  },
+  "limits": [
+    "Commercial cover images not found; selector uses initials until provided",
+    "Foreground activation remains subject to Windows policy; tests verify window shown/selection restored, not guaranteed focus under all desktop activity"
+  ]
+}
