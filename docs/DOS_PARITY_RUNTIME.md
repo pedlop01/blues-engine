@@ -20,7 +20,8 @@ Las ediciones Amiga aceptadas en TH-14/TH-15 conservan sus motores separados.
 | PX-05 | Invulnerabilidad, 0–99 vidas, vidas infinitas, selector/reinicio. Fox muestra sus entradas 1–14 y 16; Prehistorik sus siete etapas en el orden de campaña. No se añade selección de personajes a juegos que no la tienen. |
 | PX-06 | Ocho slots por juego/edición, miniatura y resumen, carga desde menú y biblioteca, hash de contenido y validación de recursos. Estado de enemigos, objetos, mapa, colisiones, salas, jefes, contadores y RNG; referencias de Fox codificadas como índices comprobados. |
 | PX-07 | Hasta diez segundos de historia en memoria, acción visible hacia atrás y efecto VHS. Al continuar se descarta el futuro y se cancelan sus efectos pendientes. La música es acompañamiento: se pausa durante el rebobinado; no se reproduce audio invertido ni se guarda una captura PCM de la canción. |
-| PX-08 | Pruebas gestionadas Linux/Windows: preparación y recuperación de errores, ocho slots y miniaturas, carga individual, opciones temporales, teclado/FPS persistentes, audio, pausa y rewind; igualdad del estado tras 180 pasos a 30/60/120 FPS; sondas de niveles y sanitizadores. Informes en `docs/measurements/px-validation.json`. |
+| PX-08 | Pruebas gestionadas Linux/Windows: preparación y recuperación de errores, ocho slots y miniaturas, carga individual, opciones temporales, teclado/FPS persistentes, audio, pausa y rewind; igualdad del estado tras 180 pasos a 30/60/120 FPS; sondas de niveles y sanitizadores. Las partidas se han cargado en ambos
+  sentidos entre Linux y Windows. Informes en `docs/measurements/px-validation.json`. |
 
 Fox conserva las tres pantallas DOS de presentación y el final animado original,
 ahora sin bucles que bloqueen el menú. El resumen al completar un nivel entrega
@@ -81,6 +82,9 @@ python3 tests/check_dos_parity_render.py --bin-dir build/px-package/bin \
   --fox-data /ruta/cache/fox-lzw-v1 --pre1-data /ruta/cache/pre1-diet-v1 \
   --output build/px-test-fps
 ```
+
+La prueba `tests/check_dos_save_portability.py` permite repetir la carga cruzada
+con los perfiles privados generados por esas baterías, sin tocar perfiles reales.
 
 Añadir `--windows` para ejecutar los EXE desde WSL con perfiles privados Unicode.
 Las sondas `titus-fox-dos-game-probe`, `titus-pre1-dos-game-probe` y

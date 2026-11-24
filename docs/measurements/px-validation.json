@@ -1,0 +1,606 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-24",
+  "tasks": [
+    "PX-01",
+    "PX-02",
+    "PX-03",
+    "PX-04",
+    "PX-05",
+    "PX-06",
+    "PX-07",
+    "PX-08"
+  ],
+  "runtime_source_revision": "96ec68df1e515b620336befa961170a5f6473720",
+  "status": "implemented_awaiting_manual_acceptance",
+  "progress_percent": {
+    "PX-01_to_PX-07": 95,
+    "PX-08": 90
+  },
+  "unit_tests_passed": 8,
+  "contract_examples_passed": 10,
+  "managed_dos_sessions": {
+    "fox_linux": {
+      "schema_version": 1,
+      "game": "fox",
+      "platform": "linux",
+      "checks": [
+        "read-only inspection, preparation fault and cache recovery",
+        "eight real slots, thumbnails, metadata and library load for each slot",
+        {
+          "gameplay_audio_pause_rewind": {
+            "clipped": 0,
+            "frames": 317,
+            "jump": 103,
+            "left": 130,
+            "level": 1,
+            "logic_hz": 34.48275862068966,
+            "nonzero": 387913,
+            "pause": true,
+            "peak": 21729,
+            "rewind_steps": 14,
+            "right": 170,
+            "samples": 389120,
+            "ticks": 144
+          }
+        },
+        "edition options, bindings and temporary override recovery",
+        "editable keyboard, 120 FPS persistence, simulated device reopen and silent mix",
+        "future preferences, load failure, missing result and subsequent recovery",
+        "damaged and incompatible saves preserved and isolated"
+      ],
+      "originals_unchanged": true,
+      "original_files": 27
+    },
+    "prehistorik_linux": {
+      "schema_version": 1,
+      "game": "prehistorik",
+      "platform": "linux",
+      "checks": [
+        "read-only inspection, preparation fault and cache recovery",
+        "eight real slots, thumbnails, metadata and library load for each slot",
+        {
+          "gameplay_audio_pause_rewind": {
+            "clipped": 0,
+            "frames": 316,
+            "jump": 47,
+            "left": 122,
+            "level": 1,
+            "logic_hz": 18.0,
+            "nonzero": 399057,
+            "pause": true,
+            "peak": 20117,
+            "rewind_steps": 7,
+            "right": 116,
+            "samples": 399360,
+            "ticks": 75
+          }
+        },
+        "edition options, bindings and temporary override recovery",
+        "editable keyboard, 120 FPS persistence, simulated device reopen and silent mix",
+        "future preferences, load failure, missing result and subsequent recovery",
+        "damaged and incompatible saves preserved and isolated"
+      ],
+      "originals_unchanged": true,
+      "original_files": 10
+    },
+    "fox_windows": {
+      "schema_version": 1,
+      "game": "fox",
+      "platform": "windows",
+      "checks": [
+        "read-only inspection, preparation fault and cache recovery",
+        "eight real slots, thumbnails, metadata and library load for each slot",
+        {
+          "gameplay_audio_pause_rewind": {
+            "clipped": 0,
+            "frames": 186,
+            "jump": 100,
+            "left": 126,
+            "level": 1,
+            "logic_hz": 34.48275862068966,
+            "nonzero": 324444,
+            "pause": true,
+            "peak": 21729,
+            "rewind_steps": 14,
+            "right": 166,
+            "samples": 325632,
+            "ticks": 144
+          }
+        },
+        "edition options, bindings and temporary override recovery",
+        "editable keyboard, 120 FPS persistence, simulated device reopen and silent mix",
+        "future preferences, load failure, missing result and subsequent recovery",
+        "damaged and incompatible saves preserved and isolated"
+      ],
+      "originals_unchanged": true,
+      "original_files": 27
+    },
+    "prehistorik_windows": {
+      "schema_version": 1,
+      "game": "prehistorik",
+      "platform": "windows",
+      "checks": [
+        "read-only inspection, preparation fault and cache recovery",
+        "eight real slots, thumbnails, metadata and library load for each slot",
+        {
+          "gameplay_audio_pause_rewind": {
+            "clipped": 0,
+            "frames": 179,
+            "jump": 47,
+            "left": 122,
+            "level": 1,
+            "logic_hz": 18.0,
+            "nonzero": 325383,
+            "pause": true,
+            "peak": 18401,
+            "rewind_steps": 7,
+            "right": 116,
+            "samples": 325632,
+            "ticks": 75
+          }
+        },
+        "edition options, bindings and temporary override recovery",
+        "editable keyboard, 120 FPS persistence, simulated device reopen and silent mix",
+        "future preferences, load failure, missing result and subsequent recovery",
+        "damaged and incompatible saves preserved and isolated"
+      ],
+      "originals_unchanged": true,
+      "original_files": 10
+    }
+  },
+  "render_fps_invariance": {
+    "linux": {
+      "schema_version": 1,
+      "platform": "linux",
+      "simulation_independent_of_render_fps": true,
+      "cases": [
+        {
+          "game": "fox",
+          "presentation_fps": 30,
+          "observation": {
+            "clipped": 0,
+            "frames": 157,
+            "jump": 150,
+            "left": 15,
+            "level": 1,
+            "logic_hz": 34.48275862068966,
+            "nonzero": 406938,
+            "pause": false,
+            "peak": 17383,
+            "render_hz": 30,
+            "rewind_steps": 0,
+            "right": 414,
+            "samples": 407552,
+            "state_sha256": "52826ffe44db6434e9dfaf5b303f937f51199a835d39ad35366bd6c9c7f961c9",
+            "ticks": 180
+          }
+        },
+        {
+          "game": "fox",
+          "presentation_fps": 60,
+          "observation": {
+            "clipped": 0,
+            "frames": 315,
+            "jump": 150,
+            "left": 15,
+            "level": 1,
+            "logic_hz": 34.48275862068966,
+            "nonzero": 425364,
+            "pause": false,
+            "peak": 17383,
+            "render_hz": 60,
+            "rewind_steps": 0,
+            "right": 414,
+            "samples": 425984,
+            "state_sha256": "52826ffe44db6434e9dfaf5b303f937f51199a835d39ad35366bd6c9c7f961c9",
+            "ticks": 180
+          }
+        },
+        {
+          "game": "fox",
+          "presentation_fps": 120,
+          "observation": {
+            "clipped": 0,
+            "frames": 647,
+            "jump": 150,
+            "left": 15,
+            "level": 1,
+            "logic_hz": 34.48275862068966,
+            "nonzero": 411032,
+            "pause": false,
+            "peak": 17383,
+            "render_hz": 120,
+            "rewind_steps": 0,
+            "right": 414,
+            "samples": 411648,
+            "state_sha256": "52826ffe44db6434e9dfaf5b303f937f51199a835d39ad35366bd6c9c7f961c9",
+            "ticks": 180
+          }
+        },
+        {
+          "game": "prehistorik",
+          "presentation_fps": 30,
+          "observation": {
+            "clipped": 0,
+            "frames": 300,
+            "jump": 151,
+            "left": 212,
+            "level": 1,
+            "logic_hz": 18.0,
+            "nonzero": 861558,
+            "pause": false,
+            "peak": 16195,
+            "render_hz": 30,
+            "rewind_steps": 0,
+            "right": 762,
+            "samples": 862208,
+            "state_sha256": "84fdf700fed8a1d4c1490fdf8c965aaf5e542eedfac224f30bd9cc609a53ff37",
+            "ticks": 180
+          }
+        },
+        {
+          "game": "prehistorik",
+          "presentation_fps": 60,
+          "observation": {
+            "clipped": 0,
+            "frames": 604,
+            "jump": 151,
+            "left": 212,
+            "level": 1,
+            "logic_hz": 18.0,
+            "nonzero": 861558,
+            "pause": false,
+            "peak": 16195,
+            "render_hz": 60,
+            "rewind_steps": 0,
+            "right": 762,
+            "samples": 862208,
+            "state_sha256": "84fdf700fed8a1d4c1490fdf8c965aaf5e542eedfac224f30bd9cc609a53ff37",
+            "ticks": 180
+          }
+        },
+        {
+          "game": "prehistorik",
+          "presentation_fps": 120,
+          "observation": {
+            "clipped": 0,
+            "frames": 1235,
+            "jump": 151,
+            "left": 212,
+            "level": 1,
+            "logic_hz": 18.0,
+            "nonzero": 857463,
+            "pause": false,
+            "peak": 16195,
+            "render_hz": 120,
+            "rewind_steps": 0,
+            "right": 762,
+            "samples": 858112,
+            "state_sha256": "84fdf700fed8a1d4c1490fdf8c965aaf5e542eedfac224f30bd9cc609a53ff37",
+            "ticks": 180
+          }
+        }
+      ]
+    },
+    "windows": {
+      "schema_version": 1,
+      "platform": "windows",
+      "simulation_independent_of_render_fps": true,
+      "cases": [
+        {
+          "game": "fox",
+          "presentation_fps": 30,
+          "observation": {
+            "clipped": 0,
+            "frames": 134,
+            "jump": 150,
+            "left": 15,
+            "level": 1,
+            "logic_hz": 34.48275862068966,
+            "nonzero": 325043,
+            "pause": false,
+            "peak": 17383,
+            "render_hz": 30,
+            "rewind_steps": 0,
+            "right": 414,
+            "samples": 325632,
+            "state_sha256": "52826ffe44db6434e9dfaf5b303f937f51199a835d39ad35366bd6c9c7f961c9",
+            "ticks": 180
+          }
+        },
+        {
+          "game": "fox",
+          "presentation_fps": 60,
+          "observation": {
+            "clipped": 0,
+            "frames": 244,
+            "jump": 150,
+            "left": 15,
+            "level": 1,
+            "logic_hz": 34.48275862068966,
+            "nonzero": 341424,
+            "pause": false,
+            "peak": 17383,
+            "render_hz": 60,
+            "rewind_steps": 0,
+            "right": 414,
+            "samples": 342016,
+            "state_sha256": "52826ffe44db6434e9dfaf5b303f937f51199a835d39ad35366bd6c9c7f961c9",
+            "ticks": 180
+          }
+        },
+        {
+          "game": "fox",
+          "presentation_fps": 120,
+          "observation": {
+            "clipped": 0,
+            "frames": 436,
+            "jump": 150,
+            "left": 15,
+            "level": 1,
+            "logic_hz": 34.48275862068966,
+            "nonzero": 333234,
+            "pause": false,
+            "peak": 17383,
+            "render_hz": 120,
+            "rewind_steps": 0,
+            "right": 414,
+            "samples": 333824,
+            "state_sha256": "52826ffe44db6434e9dfaf5b303f937f51199a835d39ad35366bd6c9c7f961c9",
+            "ticks": 180
+          }
+        },
+        {
+          "game": "prehistorik",
+          "presentation_fps": 30,
+          "observation": {
+            "clipped": 0,
+            "frames": 235,
+            "jump": 151,
+            "left": 212,
+            "level": 1,
+            "logic_hz": 18.0,
+            "nonzero": 706047,
+            "pause": false,
+            "peak": 16094,
+            "render_hz": 30,
+            "rewind_steps": 0,
+            "right": 762,
+            "samples": 706560,
+            "state_sha256": "84fdf700fed8a1d4c1490fdf8c965aaf5e542eedfac224f30bd9cc609a53ff37",
+            "ticks": 180
+          }
+        },
+        {
+          "game": "prehistorik",
+          "presentation_fps": 60,
+          "observation": {
+            "clipped": 0,
+            "frames": 392,
+            "jump": 151,
+            "left": 212,
+            "level": 1,
+            "logic_hz": 18.0,
+            "nonzero": 706047,
+            "pause": false,
+            "peak": 16094,
+            "render_hz": 60,
+            "rewind_steps": 0,
+            "right": 762,
+            "samples": 706560,
+            "state_sha256": "84fdf700fed8a1d4c1490fdf8c965aaf5e542eedfac224f30bd9cc609a53ff37",
+            "ticks": 180
+          }
+        },
+        {
+          "game": "prehistorik",
+          "presentation_fps": 120,
+          "observation": {
+            "clipped": 0,
+            "frames": 766,
+            "jump": 151,
+            "left": 212,
+            "level": 1,
+            "logic_hz": 18.0,
+            "nonzero": 704000,
+            "pause": false,
+            "peak": 16094,
+            "render_hz": 120,
+            "rewind_steps": 0,
+            "right": 762,
+            "samples": 704512,
+            "state_sha256": "84fdf700fed8a1d4c1490fdf8c965aaf5e542eedfac224f30bd9cc609a53ff37",
+            "ticks": 180
+          }
+        }
+      ]
+    }
+  },
+  "fast_fox_state_unchanged": true,
+  "portable_saves": {
+    "fox": {
+      "schema_version": 1,
+      "game": "fox",
+      "slot_format": "fox.dos.json",
+      "checks": [
+        {
+          "source": "linux",
+          "target": "windows",
+          "loaded": true
+        },
+        {
+          "source": "windows",
+          "target": "linux",
+          "loaded": true
+        }
+      ]
+    },
+    "pre1": {
+      "schema_version": 1,
+      "game": "prehistorik",
+      "slot_format": "prehistorik.dos.json",
+      "checks": [
+        {
+          "source": "linux",
+          "target": "windows",
+          "loaded": true
+        },
+        {
+          "source": "windows",
+          "target": "linux",
+          "loaded": true
+        }
+      ]
+    }
+  },
+  "audio_buses_linux": [
+    {
+      "clipped": 0,
+      "effects_only_nonzero": 25588,
+      "game": "fox",
+      "music_only_nonzero": 18423,
+      "peak": 20209,
+      "reopen": true,
+      "silent_mix": true
+    },
+    {
+      "clipped": 0,
+      "effects_only_nonzero": 23054,
+      "game": "prehistorik",
+      "music_only_nonzero": 20463,
+      "peak": 12902,
+      "reopen": true,
+      "silent_mix": true
+    }
+  ],
+  "audio_buses_windows": [
+    {
+      "clipped": 0,
+      "effects_only_nonzero": 23958,
+      "game": "fox",
+      "music_only_nonzero": 18421,
+      "peak": 11116,
+      "reopen": true,
+      "silent_mix": true
+    },
+    {
+      "clipped": 0,
+      "effects_only_nonzero": 23054,
+      "game": "prehistorik",
+      "music_only_nonzero": 18411,
+      "peak": 12902,
+      "reopen": true,
+      "silent_mix": true
+    }
+  ],
+  "sanitizers": {
+    "fox": "15 levels, prolonged routes and snapshots, seven world elevator checks, intro, ending, completion and bonus accounting; ASan/UBSan/LSan clean with halt_on_error",
+    "prehistorik": "7 stages, state roundtrip/replay and framing; ASan/UBSan/LSan clean",
+    "amiga_serializer_default_preserved": true
+  },
+  "accepted_amiga_regressions": {
+    "fox": {
+      "schema_version": 1,
+      "platform": "linux",
+      "checks": [
+        "eight native slots, payload/preview hashes and library thumbnails",
+        "library load and return command",
+        {
+          "gameplay_audio_pause_rewind": {
+            "clipped": 0,
+            "frames": 1815,
+            "jump": 80,
+            "left": 138,
+            "level": 1,
+            "nonzero": 367728,
+            "pause": true,
+            "peak": 13440,
+            "rewind_steps": 21,
+            "right": 230,
+            "samples": 387072,
+            "ticks": 197
+          }
+        },
+        "edition options, bindings and temporary override recovery",
+        "future preferences, load failure, missing result and subsequent recovery",
+        "damaged and incompatible saves are preserved and isolated"
+      ],
+      "originals_unchanged": true,
+      "original_files": 89
+    },
+    "pre1": {
+      "schema_version": 1,
+      "platform": "linux",
+      "checks": [
+        "eight native slots, payload/preview hashes and library thumbnails",
+        "library load and return command",
+        {
+          "gameplay_audio_pause_rewind": {
+            "clipped": 0,
+            "frames": 1822,
+            "jump": 93,
+            "left": 128,
+            "level": 1,
+            "logic_hz": 20.0,
+            "nonzero": 389859,
+            "pause": true,
+            "peak": 5632,
+            "rewind_steps": 8,
+            "right": 136,
+            "samples": 407552,
+            "ticks": 79
+          }
+        },
+        "edition options, bindings and temporary override recovery",
+        "20 Hz default and persistent 12.5 Hz original menu option",
+        "future preferences, load failure, missing result and subsequent recovery",
+        "damaged and incompatible saves are preserved and isolated"
+      ],
+      "originals_unchanged": true,
+      "original_files": 71
+    }
+  },
+  "originals": {
+    "files": 462,
+    "all_sizes_mtimes_sha256_unchanged": true
+  },
+  "final_windows_managed_ready": [
+    {
+      "game": "fox",
+      "ready": true,
+      "build_revision": "96ec68df1e515b620336befa961170a5f6473720-px"
+    },
+    {
+      "game": "prehistorik",
+      "ready": true,
+      "build_revision": "96ec68df1e515b620336befa961170a5f6473720-px"
+    }
+  ],
+  "launcher_windows_smoke": {
+    "fullscreen": false,
+    "games": 5,
+    "installations": 8,
+    "selected_game": "blues",
+    "ui_checks": 32
+  },
+  "delivery": {
+    "format": "exe_link_in_complete_folder_no_zip",
+    "windows_exe": "build/px-package-windows-r2/bin/titus-engine.exe",
+    "registered_engines": 5,
+    "sha256": {
+      "titus-engine.exe": "c27f9f800fdff047aa2c5b7355fbf5207d8bafb82f569fcce4e58ab296371a78",
+      "engines/blues-family/blues-family-runtime.exe": "7348d76a99ff93db94878869ddfd40e1fbe335b7f7d2aaf12cdf75d386ab008a",
+      "engines/opentitus/opentitus-runtime.exe": "648297a9102335abb8bf72802db50aac0faf878ff968c6ca9b56724f9ce15bbe",
+      "engines/olduvai/olduvai-runtime.exe": "8d297995294f934c3c394613d8b3c5203d1335edd6d01a51b796c29b7746e787",
+      "engines/fox_amiga/titus-fox-amiga.exe": "5f116cf38998bb2641df181c14a7ecbe4ea686a8f1b1071c051631a7496058f4",
+      "engines/pre1_amiga/titus-pre1-amiga.exe": "afba24c91e2bc84f595414fe7cea26a8c1dadf3061b046e18f439e84cd664350"
+    }
+  },
+  "manual_pending": [
+    "full campaigns and puzzles",
+    "physical display and controller",
+    "physical audio listening and device disconnect/reconnect",
+    "user acceptance"
+  ]
+}
