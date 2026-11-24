@@ -321,6 +321,12 @@ uint16_t random_get_number3(uint16_t x) {
 static void game_run() {
 	video_init();
 	video_convert_tiles(g_res.uniondat, g_res.unionlen);
+#ifdef TITUS_MANAGED
+ if(titus_native_load_slot()){
+  int level=titus_native_prepare_load(titus_native_load_slot());if(level<0)titus_runtime_load_failed();
+  g_vars.level_num=level;g_vars.starttime=g_sys.get_timestamp();do_level();return;
+ }
+#endif
 	g_vars.level_num = g_options.start_level;
 	do_programmed_in_1992_screen();
 	if (!g_sys.input.space && !g_sys.input.quit) {
@@ -367,5 +373,5 @@ EXPORT_SYMBOL struct game_t game_p2 = {
 	res_fini,
 	sound_init,
 	sound_fini,
-	game_run
+	game_run, family_native_inspect, family_native_preview, family_native_prepare
 };

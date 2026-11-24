@@ -9,6 +9,7 @@
 #else
 #include "../p2/level.c"
 #endif
+#include "family_save_regressions.h"
 struct options_t g_options;
 static uint32_t frozen() { return 1234; }
 static uint32_t checksum(const uint8_t *p, size_t n) {
@@ -445,6 +446,7 @@ int main(int argc, char **argv) {
   g_sys.init();
   g_sys.set_screen_size(320, 200, "Family presentation probe", 2, NULL, false);
   g_sys.get_timestamp = frozen;
+  g_options.dos_datapath=argv[1];
   res_init(argv[1], 64000);
 #ifdef PROBE_JA
   g_vars.level = argc > 2 ? atoi(argv[2]) : 1;
@@ -483,6 +485,9 @@ int main(int argc, char **argv) {
   g_vars.timestamp = 1234;
   family_begin();
   _family_before_draw = g_vars;
+  if(SDL_getenv("PF_SAVE_TEST")){
+    regression_family_save(SDL_getenv("PF_SAVE_TEST"));family_end();res_fini();g_sys.fini();puts("PASS: family persistent save");return 0;
+  }
 #ifdef PROBE_JA
   const char *regression = SDL_getenv("PF_REGRESSION");
   if (regression) {

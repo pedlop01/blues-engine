@@ -20,6 +20,11 @@ static int _family_requested_level = -1;
 static bool _family_character;
 static void family_present();
 static void family_cut();
+static bool family_save_game(int slot);
+static bool family_prepare_load(int slot);
+static void family_inspect_save(int slot,struct sys_save_slot *info);
+static const char *family_save_error();
+static bool family_apply_pending();
 #include "timeline.h"
 static void family_apply_volumes(int music, int effects) {
   g_options.music_volume = music;
@@ -45,6 +50,13 @@ static void family_begin() {
                        MAX(200, family_map_h() + 24));
   _family_before_draw = g_vars;
   family_timeline_init();
+  if(!family_apply_pending()){
+#ifdef TITUS_MANAGED
+    titus_runtime_load_failed();
+#else
+    print_error("Invalid family saved state");
+#endif
+  }
   family_timeline_record();
   family_cut();
   g_sys.set_pause_menu_enabled(true);
@@ -82,6 +94,8 @@ static bool family_before_tick() {
   g_sys.process_events();
   if (g_sys.input.menu) {
     struct sys_pause_options options = {0};
+    options.save_game=family_save_game;options.prepare_load=family_prepare_load;
+    options.inspect_save=family_inspect_save;options.save_error=family_save_error;
     options.camera = g_options.camera_mode;
     options.hud = g_options.hud_mode;
     options.render_rate = g_options.scroll_rate;
@@ -120,12 +134,15 @@ static bool family_before_tick() {
       g_options.initial_lives[0] = g_options.initial_lives[1] = 3;
     else if (options.lives[0] != lives_before)
       g_options.initial_lives[0] = options.lives[0];
-    _family_requested_level = options.requested_level;
+    if(!options.load_game)_family_requested_level = options.requested_level;
     _family_character = options.select_character;
     family_cut();
     if (g_sys.save_preferences)
       g_sys.save_preferences();
   }
+#ifdef TITUS_MANAGED
+  if(titus_runtime_probe_save()&&!family_save_game(0))print_error("Could not save family probe");
+#endif
   g_sys.set_assist_status(family_invulnerable(),
                           g_options.family_infinite_lives);
   if (!g_sys.input.quit && !_family_character && _family_requested_level < 0 &&

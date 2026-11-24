@@ -49,7 +49,7 @@ def main():
             folder=local(report['directory']);req=loads((folder/'request.json').read_text());validate(req)
             events=[loads(x) for x in (folder/'events.jsonl').read_text().splitlines()];result=loads((folder/'result.json').read_text());assert validate_session(req,events,result,0)
             ready=next(e['body'] for e in events if e['event']=='ready')
-            assert ready['save_slot_count']==0 and set(ready['features'])==({'return_to_library','native_pause','fullscreen','separate_volumes','controller_bindings','smooth_camera','dynamic_view','hud_modes','invulnerability','lives_options','level_select','rewind'}|({'character_select'} if game=='jukebox' else set()))
+            assert ready['save_slot_count']==8 and set(ready['features'])==({'return_to_library','native_pause','fullscreen','separate_volumes','controller_bindings','smooth_camera','dynamic_view','hud_modes','invulnerability','lives_options','level_select','rewind','save_slots','save_thumbnails'}|({'character_select'} if game=='jukebox' else set()))
             observation=loads((folder/'probe-observation.json').read_text())
             assert observation['gameplay'] and observation['pause'] and observation['frames']>=146
             assert observation['right']>40 and observation['left']>20 and observation['jump']>20,observation
@@ -62,7 +62,20 @@ def main():
             (work/'preferences.json').write_text(json.dumps(prefs))
             invoke('titus-session',command+['--test-ms','200'])
             saved=loads((work/'preferences.json').read_text());assert all(saved[k]==v for k,v in prefs.items())
-            assert (work/'preferences.ini').exists() and not (profile/'saves').exists()
+            assert (work/'preferences.ini').exists() and (profile/'saves/slot01.bbs').exists()
+            # Reopen a real saved frame from a new managed process, bypassing title/menu.
+            inspected=invoke('titus-session',command+['--inspect-only'])
+            index=inspected['inspection']['save_index'];assert index['slot_count']==8
+            slot=next(x for x in index['slots'] if x['slot']==1);assert slot['status']=='ready' and slot['has_preview']
+            details=loads((local(inspected['directory'])/'save-details.json').read_text())
+            summary=next(x for x in details['slots'] if x['slot']==1)
+            defaults=loads((work/'preferences.json').read_text())
+            loaded=invoke('titus-session',command+['--load-slot','1','--test-ms','200'])
+            after_load=loads((work/'preferences.json').read_text())
+            assert all(after_load[k]==defaults[k] for k in ['camera','hud','view_step','invulnerable','infinite_lives'])
+            restored=loads((local(loaded['directory'])/'restored-state.json').read_text())
+            assert all(restored[k]==summary[k] for k in ['level','x','y','frame','camera','hud','view']), (restored,summary)
+            assert (profile/'artwork-dos.bmp').read_bytes()[:2]==b'BM'
             print(game,json.dumps(observation),flush=True)
             # A future preferences version must survive untouched and fail before playing.
             future=json.dumps(dict(prefs,schema_version=2));(work/'preferences.json').write_text(future)

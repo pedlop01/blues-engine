@@ -64,3 +64,10 @@ void titus_native_family_options(struct titus_native_options *o){
     o->rate=g_options.scroll_rate;o->invulnerable=(g_options.cheats&CHEATS_NO_HIT)!=0;
     o->infinite_lives=g_options.family_infinite_lives;o->lives1=g_options.initial_lives[0];
 }
+
+extern int titus_blues_prepare_load(int slot);
+extern int titus_blues_preview(const uint8_t*,size_t,uint8_t*);
+extern void titus_blues_inspect(const uint8_t*,size_t,struct titus_slot_info*);
+int titus_native_prepare_load(int slot){return game->save_prepare?game->save_prepare(slot-1):titus_blues_prepare_load(slot);}
+int titus_native_preview(const uint8_t *data,size_t size,uint8_t *rgb){return game->save_preview?game->save_preview(data,size,rgb):titus_blues_preview(data,size,rgb);}
+void titus_native_inspect(const uint8_t *data,size_t size,struct titus_slot_info *info){if(game->save_inspect)game->save_inspect(data,size,info);else titus_blues_inspect(data,size,info);}

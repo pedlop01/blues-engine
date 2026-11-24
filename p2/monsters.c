@@ -2,6 +2,10 @@
 /* monsters logic */
 
 #include "game.h"
+	static const uint8_t family_monster_path[] = {
+		0x40, 0x28, 0x50, 0x26, 0x10, 0x30, 0x20, 0x36, 0x10, 0x3C,
+		0x08, 0x32, 0xF8, 0x32, 0xF0, 0x30, 0xE0, 0x28, 0xF0, 0xFF
+	};
 #include "resource.h"
 #include "util.h"
 
@@ -263,10 +267,7 @@ static void monster_func1_type5(struct object_t *obj) {
 }
 
 static void monster_func1_type6(struct object_t *obj) {
-	static const uint8_t data[] = {
-		0x40, 0x28, 0x50, 0x26, 0x10, 0x30, 0x20, 0x36, 0x10, 0x3C,
-		0x08, 0x32, 0xF8, 0x32, 0xF0, 0x30, 0xE0, 0x28, 0xF0, 0xFF
-	};
+	const uint8_t *data=family_monster_path;
 	monster_func1_helper(obj, obj->x_pos, obj->y_pos);
 	struct level_monster_t *m = obj->data.m.ref;
 	const int x_vel = (obj->x_pos <= g_vars.objects_tbl[1].x_pos) ? 1 : -1;
@@ -871,3 +872,6 @@ bool monster_func2(int type, struct level_monster_t *m) {
 	}
 	return false;
 }
+
+#include "engines/family_host/regions.h"
+const struct family_region *family_monster_regions(size_t *count){static const struct family_region r[]={{family_monster_path,sizeof(family_monster_path)}};*count=1;return r;}

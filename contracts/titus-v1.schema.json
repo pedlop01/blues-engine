@@ -643,6 +643,8 @@
         "format_id": {
           "enum": [
             "blues.bbs",
+            "jukebox.titusfs",
+            "prehistorik2.titusfs",
             "fox.amiga.json",
             "prehistorik.amiga.json",
             "fox.dos.json",
@@ -1616,7 +1618,9 @@
           "enum": [
             "blues",
             "fox",
-            "prehistorik"
+            "prehistorik",
+            "jukebox",
+            "prehistorik2"
           ]
         },
         "engine_id": {

@@ -25,6 +25,7 @@ public:
     return request_.at("sources")[0].at("fingerprint");
   }
   fs::path root() const { return root_; }
+  fs::path artwork_path()const{return fs::u8path(request_["paths"]["profile_directory"]["path"].get<std::string>())/"artwork-dos.bmp";}
   void ready(const char *scene);
   bool poll();
   void observe(const Json &);

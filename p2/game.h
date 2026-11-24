@@ -112,6 +112,7 @@ struct fly_t {
 };
 
 struct vars_t {
+ int16_t tile_attr2_work[6];
 	uint32_t starttime;
 	uint32_t timestamp;
 	struct {
@@ -324,6 +325,10 @@ extern uint16_t	random_get_number3(uint16_t x);
 
 /* level.c */
 extern void	do_level();
+struct titus_slot_info;
+int family_native_inspect(const uint8_t*,size_t,struct titus_slot_info*);
+int family_native_preview(const uint8_t*,size_t,uint8_t*);
+int family_native_prepare(int);
 extern uint8_t	level_get_tile(uint16_t offset);
 extern void	level_player_die();
 extern bool	level_objects_collide(const struct object_t *, const struct object_t *);

@@ -2525,9 +2525,9 @@ static void rewind_clear();
 #include "level_state.h"
 #ifdef TITUS_MANAGED
 #include "engines/blues-family/native.h"
-int titus_native_prepare_load(int slot){return prepare_game_load(slot-1)?_prepared_state->vars.level:-1;}
-int titus_native_preview(const uint8_t *data,size_t size,uint8_t *rgb){const uint8_t *p=bb_state_preview(data,size);if(!p)return 0;memcpy(rgb,p,SAVE_PREVIEW_BYTES);return 1;}
-void titus_native_inspect(const uint8_t *data,size_t size,struct titus_slot_info *info) {
+int titus_blues_prepare_load(int slot){return prepare_game_load(slot-1)?_prepared_state->vars.level:-1;}
+int titus_blues_preview(const uint8_t *data,size_t size,uint8_t *rgb){const uint8_t *p=bb_state_preview(data,size);if(!p)return 0;memcpy(rgb,p,SAVE_PREVIEW_BYTES);return 1;}
+void titus_blues_inspect(const uint8_t *data,size_t size,struct titus_slot_info *info) {
     memset(info,0,sizeof(*info));
     if(size>=24&&!memcmp(data,"BBSAVE\r\n",8)&&((READ_LE_UINT32(data+8)!=1&&READ_LE_UINT32(data+8)!=2)||READ_LE_UINT32(data+20)!=0x42423031)){info->version=-1;return;}
     struct bb_state *state=malloc(sizeof(*state));

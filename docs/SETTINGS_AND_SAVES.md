@@ -22,7 +22,7 @@ de la pantalla completa del juego.
 | Motor/juegos | Opciones comunes | Partidas en biblioteca |
 |---|---|---|
 | Blues DOS/Amiga | Pantalla, música/efectos, botones de acción/salto, cámara, HUD, encuadre, ayudas, vidas, nivel inicial y modo de audio | Ocho slots BBS con miniaturas; carga nativa |
-| Jukebox / Prehistorik 2 DOS | Pantalla, música/efectos, botones, cámara, HUD, encuadre, ayudas, vidas y nivel inicial; rewind en partida | Sin slots persistentes gestionados todavía |
+| Jukebox / Prehistorik 2 DOS | Pantalla, música/efectos, botones, cámara, HUD, encuadre, ayudas, vidas y nivel inicial; rewind en partida | Ocho slots TITUSFS con miniaturas y carga desde biblioteca |
 | Fox / Prehistorik 1 DOS y Amiga | Pantalla, música/efectos, botones, cámara, HUD, encuadre, ayudas, vidas y nivel inicial | Ocho slots nativos con miniaturas; carga y rebobinado |
 
 Globales puede mostrar ajustes que solo algunos juegos aplican. Las pestañas
@@ -129,3 +129,21 @@ Las pruebas usan directorios temporales ignorados y verifican los hashes,
 tamaños y fechas de los 462 archivos de `orig-games`. No sustituyen campañas,
 escucha ni pruebas físicas pendientes de TH-12/17. La distribución 18 continúa
 pospuesta.
+
+
+## Jukebox y Prehistorik 2: slots de la revisión r6
+
+En partida: Esc/P → Partida → Guardar partida. Selecciona uno de los ocho slots
+y confirma. Para continuar después de cerrar el juego: biblioteca → el juego →
+Partidas → slot → Cargar partida. También se puede cargar desde la pausa.
+
+Cada título conserva sus slots en un perfil separado. El inspector comprueba
+versión, juego, integridad y datos originales compatibles. Cargar reconstruye
+los recursos y restaura posición, actores, mapa modificado y presentación; el
+historial de rebobinado empieza de nuevo. Estos archivos no son intercambiables
+con los BBS de Blues 1 pese a compartir la extensión `.bbs`.
+
+Las imágenes de la biblioteca son pantallas de título originales, no ilustraciones
+generadas. Se conservan sus proporciones y pueden reemplazarse por carátulas
+propias en `bin/assets/covers`. La caché extraída se almacena en el perfil, sin
+escribir en las carpetas de los juegos.

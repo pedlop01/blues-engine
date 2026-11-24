@@ -52,7 +52,9 @@
         "lives_options",
         "level_select",
         "rewind",
-        "character_select"
+        "character_select",
+        "save_slots",
+        "save_thumbnails"
       ]
     },
     {
@@ -72,7 +74,9 @@
         "invulnerability",
         "lives_options",
         "level_select",
-        "rewind"
+        "rewind",
+        "save_slots",
+        "save_thumbnails"
       ]
     }
   ]

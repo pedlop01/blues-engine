@@ -2,6 +2,75 @@
 /* bosses logic : gorilla, tree, minotaur */
 
 #include "game.h"
+
+/* Named animation tables permit portable save references. */
+static const uint8_t family_boss_table_0[] = {
+				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0xF4
+			};
+static const uint8_t family_boss_table_1[] = {
+					0x00, 0x00, 0x00, 0x40, 0x40, 0x40, 0xFA
+				};
+static const uint8_t family_boss_table_2[] = {
+						0x04, 0xFF
+					};
+static const uint8_t family_boss_table_3[] = {
+						0x07, 0xFF
+					};
+static const uint8_t family_boss_table_4[] = {
+						0x03, 0xFF
+					};
+static const uint8_t family_boss_table_5[] = {
+						0x10, 0x50, 0x10, 0x11, 0x51, 0x11, 0x10, 0x50, 0x10, 0x11,
+						0x51, 0x11, 0x10, 0x50, 0x10, 0x11, 0x51, 0x11, 0x00, 0x00,
+						0x40, 0x40, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x40, 0x40,
+						0x00, 0x00, 0x40, 0x40, 0xDE
+					};
+static const uint8_t family_boss_table_6[] = {
+				0x03, 0xFF
+			};
+static const uint8_t family_boss_table_7[] = {
+							0x0D, 0x0D, 0x0E, 0x0E, 0xFC
+						};
+static const uint8_t family_boss_table_8[] = {
+							0x0D, 0x0D, 0x0C, 0x0C, 0xFC
+						};
+static const uint8_t family_boss_table_9[] = {
+					0x03, 0xFF
+				};
+static const uint8_t family_boss_table_10[] = {
+					0x0D, 0x0D, 0x0D, 0x0E, 0x0E, 0x0E, 0xFA
+				};
+static const uint8_t family_boss_table_11[] = {
+				0x12, 0x12, 0x52, 0x12, 0x0E, 0x0E, 0x4E, 0x0E, 0xF8
+			};
+static const uint8_t family_boss_table_12[] = {
+				0x05, 0xFF
+			};
+static const uint8_t family_boss_table_13[] = {
+			0x05, 0x05, 0x0F, 0x0F, 0xFC
+		};
+static const uint8_t family_boss_table_14[] = {
+				0x03, 0xFF
+			};
+static const uint8_t family_boss_table_15[] = {
+					0x04, 0xFF
+				};
+static const uint16_t family_boss_table_16[] = {
+			0x3D5, 0x7C1, 0x1AA, 0x3FA, 0x7B6, 0x1AB, 0x3E8, 0x7A8, 0x1AC,
+			0x3FF, 0x788, 0x1AD, 0x3D9, 0x79B, 0x1AE, 0x3FF, 0x7A8, 0x1AF,
+			0x405, 0x7A9, 0x1B7, 0, 0, 0xFFFF
+		};
+static const uint16_t family_boss_table_17[] = {
+		0x3A9, 0x7D4, 0x1A4, 0x3D1, 0x7B9, 0x1A5, 0x3A2, 0x7A6, 0x1A6,
+		0x3B4, 0x79F, 0x1A7, 0x396, 0x78A, 0x1A8, 0x3B6, 0x79C, 0x1A9,
+		0x3E0, 0x795, 0x1B6, 0, 0, 0xFFFF
+	};
+static const uint16_t family_boss_table_18[] = {
+		0x3E3, 0x773, 0x1B0, 0x3E4, 0x771, 0x1B1, 0x3E4, 0x773, 0x1B2
+	};
+static const uint16_t family_boss_table_19[] = {
+		0xA70F, 5, 0xA74E, 1, 0xA70F, 3, 0xA74E, 2, 0xA70F, 2, 0xA734, 1, 0xFFFF
+	};
 #include "resource.h"
 #include "util.h"
 
@@ -256,10 +325,8 @@ static void level_update_boss_gorilla() {
 	if (g_res.level.boss_state == 0) { /* waiting player to be near */
 		if (g_vars.boss.x_dist >= 250) {
 			g_vars.boss.change_counter = 0;
-			static const uint8_t data_st0[] = {
-				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0xF4
-			};
-			g_vars.boss.next_anim = data_st0;
+
+			g_vars.boss.next_anim = family_boss_table_0;
 		} else {
 			g_vars.boss.state_counter = 0;
 			g_res.level.boss_state = 1;
@@ -272,10 +339,8 @@ static void level_update_boss_gorilla() {
 			if (g_res.level.boss_energy < 60) {
 				g_res.level.boss_state = 2;
 			} else {
-				static const uint8_t data_st1[] = {
-					0x00, 0x00, 0x00, 0x40, 0x40, 0x40, 0xFA
-				};
-				g_vars.boss.next_anim = data_st1;
+
+				g_vars.boss.next_anim = family_boss_table_1;
 				if (g_vars.boss.state_counter >= 110) {
 					g_res.level.boss_state = 2;
 					level_update_boss_gorilla_tick();
@@ -296,23 +361,17 @@ static void level_update_boss_gorilla() {
 		if (g_vars.boss.state_counter != 44) {
 			if (g_vars.boss.state_counter > 44) {
 				if (g_vars.boss.y_velocity > 0) {
-					static const uint8_t data_st2a[] = {
-						0x04, 0xFF
-					};
-					static const uint8_t data_st2b[] = {
-						0x07, 0xFF
-					};
-					g_vars.boss.next_anim = (g_res.level.boss_energy >= 100) ? data_st2a : data_st2b;
+
+
+					g_vars.boss.next_anim = (g_res.level.boss_energy >= 100) ? family_boss_table_2 : family_boss_table_3;
 				}
 				if (g_vars.boss.x_dist <= 80) {
 					g_vars.boss.state_counter = 0;
 					g_res.level.boss_state = 3;
 					g_vars.boss.change_counter = 11;
 				} else if (g_vars.boss.state_counter == 88) {
-					static const uint8_t data_st2[] = {
-						0x03, 0xFF
-					};
-					g_vars.boss.next_anim = data_st2;
+
+					g_vars.boss.next_anim = family_boss_table_4;
 					int dx = g_res.level.boss_x_pos - g_vars.objects_tbl[1].x_pos;
 					int x_vel = 48;
 					int y_vel = abs(dx);
@@ -341,13 +400,8 @@ static void level_update_boss_gorilla() {
 					g_res.level.boss_state = 3;
 					g_vars.boss.state_counter = 0;
 				} else {
-					static const uint8_t data_st2[] = {
-						0x10, 0x50, 0x10, 0x11, 0x51, 0x11, 0x10, 0x50, 0x10, 0x11,
-						0x51, 0x11, 0x10, 0x50, 0x10, 0x11, 0x51, 0x11, 0x00, 0x00,
-						0x40, 0x40, 0x00, 0x00, 0x40, 0x40, 0x00, 0x00, 0x40, 0x40,
-						0x00, 0x00, 0x40, 0x40, 0xDE
-					};
-					g_vars.boss.next_anim = data_st2;
+
+					g_vars.boss.next_anim = family_boss_table_5;
 				}
 			}
 		} else {
@@ -357,10 +411,8 @@ static void level_update_boss_gorilla() {
 				g_res.level.boss_state = 4;
 				g_vars.boss.state_counter = 0;
 			}
-			static const uint8_t data_st2[] = {
-				0x03, 0xFF
-			};
-			g_vars.boss.next_anim = data_st2;
+
+			g_vars.boss.next_anim = family_boss_table_6;
 		}
 	} else if (g_res.level.boss_state == 3) { /* attack player */
 		level_update_boss_gorilla_hit_player();
@@ -372,10 +424,8 @@ static void level_update_boss_gorilla() {
 			if (g_vars.boss.y_velocity == 0) {
 				if (g_vars.boss.x_dist < 100) {
 					if (g_vars.boss.x_dist <= 25) {
-						static const uint8_t data_st3[] = {
-							0x0D, 0x0D, 0x0E, 0x0E, 0xFC
-						};
-						g_vars.boss.next_anim = data_st3;
+
+						g_vars.boss.next_anim = family_boss_table_7;
 					} else if (g_vars.boss.x_dist <= 35) {
 						g_res.level.boss_state = 4;
 						g_vars.boss.state_counter = 0;
@@ -384,25 +434,19 @@ static void level_update_boss_gorilla() {
 							g_res.level.boss_state = 7;
 							g_vars.boss.state_counter = 0;
 						}
-						static const uint8_t data_st3[] = {
-							0x0D, 0x0D, 0x0C, 0x0C, 0xFC
-						};
-						g_vars.boss.next_anim = data_st3;
+
+						g_vars.boss.next_anim = family_boss_table_8;
 					}
 				} else {
 					g_vars.boss.y_velocity = -81;
 					g_vars.boss.x_velocity = (g_vars.objects_tbl[1].x_pos > g_res.level.boss_x_pos) ? 80 : -80;
 				}
 			} else if (g_vars.boss.y_velocity < 0) {
-				static const uint8_t data_st3[] = {
-					0x03, 0xFF
-				};
-				g_vars.boss.next_anim = data_st3;
+
+				g_vars.boss.next_anim = family_boss_table_9;
 			} else {
-				static const uint8_t data_st3[] = {
-					0x0D, 0x0D, 0x0D, 0x0E, 0x0E, 0x0E, 0xFA
-				};
-				g_vars.boss.next_anim = data_st3;
+
+				g_vars.boss.next_anim = family_boss_table_10;
 			}
 		}
 	} else if (g_res.level.boss_state == 4) {
@@ -412,10 +456,8 @@ static void level_update_boss_gorilla() {
 			g_res.level.boss_state = 3;
 			g_vars.boss.state_counter = 0;
 		} else {
-			static const uint8_t data_st4[] = {
-				0x12, 0x12, 0x52, 0x12, 0x0E, 0x0E, 0x4E, 0x0E, 0xF8
-			};
-			g_vars.boss.next_anim = data_st4;
+
+			g_vars.boss.next_anim = family_boss_table_11;
 			if (g_vars.boss.y_velocity == 0) {
 				g_vars.shake_screen_counter = 4;
 			}
@@ -426,16 +468,12 @@ static void level_update_boss_gorilla() {
 			g_vars.boss.state_counter = 0;
 			g_res.level.boss_state = 1;
 		} else {
-			static const uint8_t data_st5[] = {
-				0x05, 0xFF
-			};
-			g_vars.boss.next_anim = data_st5;
+
+			g_vars.boss.next_anim = family_boss_table_12;
 		}
 	} else if (g_res.level.boss_state == 6) { /* defeated */
-		static const uint8_t data_st6[] = {
-			0x05, 0x05, 0x0F, 0x0F, 0xFC
-		};
-		g_vars.boss.next_anim = data_st6;
+
+		g_vars.boss.next_anim = family_boss_table_13;
 		if (g_vars.boss.y_velocity >= 0) {
 			g_res.level.boss_state = 0xFF;
 			for (int i = 0; i < 5; ++i) {
@@ -461,18 +499,14 @@ static void level_update_boss_gorilla() {
 		if (g_vars.boss.state_counter > 44) {
 			g_res.level.boss_state = 1;
 		} else {
-			static const uint8_t data_st7[] = {
-				0x03, 0xFF
-			};
-			g_vars.boss.next_anim = data_st7;
+
+			g_vars.boss.next_anim = family_boss_table_14;
 			if (g_vars.boss.y_velocity == 0) {
 				g_vars.boss.y_velocity = -97;
 				g_vars.boss.x_velocity = (g_vars.objects_tbl[1].x_pos > g_res.level.boss_x_pos) ? -48 : 48;
 			} else if (g_vars.boss.y_velocity > 0) {
-				static const uint8_t data_st7[] = {
-					0x04, 0xFF
-				};
-				g_vars.boss.next_anim = data_st7;
+
+				g_vars.boss.next_anim = family_boss_table_15;
 			}
 		}
 	}
@@ -542,12 +576,8 @@ static void level_update_boss_tree() {
 	g_vars.objects_tbl[105].spr_num = 0xFFFF;
 	g_vars.objects_tbl[104].spr_num = 0xFFFF;
 	if (g_vars.boss_level5.state < 2) {
-		static const uint16_t pos2_data[] = {
-			0x3D5, 0x7C1, 0x1AA, 0x3FA, 0x7B6, 0x1AB, 0x3E8, 0x7A8, 0x1AC,
-			0x3FF, 0x788, 0x1AD, 0x3D9, 0x79B, 0x1AE, 0x3FF, 0x7A8, 0x1AF,
-			0x405, 0x7A9, 0x1B7, 0, 0, 0xFFFF
-		};
-		const uint16_t *p = &pos2_data[g_vars.boss_level5.state * 6];
+
+		const uint16_t *p = &family_boss_table_16[g_vars.boss_level5.state * 6];
 		g_vars.objects_tbl[105].x_pos = p[0];
 		g_vars.objects_tbl[105].y_pos = p[1];
 		g_vars.objects_tbl[105].spr_num = p[2];
@@ -555,22 +585,16 @@ static void level_update_boss_tree() {
 		g_vars.objects_tbl[104].y_pos = p[4];
 		g_vars.objects_tbl[104].spr_num = p[5];
 	}
-	static const uint16_t pos1_data[] = {
-		0x3A9, 0x7D4, 0x1A4, 0x3D1, 0x7B9, 0x1A5, 0x3A2, 0x7A6, 0x1A6,
-		0x3B4, 0x79F, 0x1A7, 0x396, 0x78A, 0x1A8, 0x3B6, 0x79C, 0x1A9,
-		0x3E0, 0x795, 0x1B6, 0, 0, 0xFFFF
-	};
-	const uint16_t *p = &pos1_data[g_vars.boss_level5.spr106_pos * 6];
+
+	const uint16_t *p = &family_boss_table_17[g_vars.boss_level5.spr106_pos * 6];
 	g_vars.objects_tbl[107].x_pos = p[0];
 	g_vars.objects_tbl[107].y_pos = p[1];
 	g_vars.objects_tbl[107].spr_num = p[2];
 	g_vars.objects_tbl[106].x_pos = p[3];
 	g_vars.objects_tbl[106].y_pos = p[4];
 	g_vars.objects_tbl[106].spr_num = p[5];
-	static const uint16_t pos3_data[] = {
-		0x3E3, 0x773, 0x1B0, 0x3E4, 0x771, 0x1B1, 0x3E4, 0x773, 0x1B2
-	};
-	const uint16_t *q = &pos3_data[g_vars.boss_level5.spr103_pos * 3];
+
+	const uint16_t *q = &family_boss_table_18[g_vars.boss_level5.spr103_pos * 3];
 	g_vars.objects_tbl[103].x_pos = q[0];
 	g_vars.objects_tbl[103].y_pos = q[1];
 	g_vars.objects_tbl[103].spr_num = (g_vars.boss_level5.state != 0) ? 0xFFFF : q[2];
@@ -769,11 +793,9 @@ static void level_update_boss_minotaur_add_spr_0x1CB() { /* ceiling chandelier *
 }
 
 static void level_update_boss_minotaur() {
-	static const uint16_t data[] = {
-		0xA70F, 5, 0xA74E, 1, 0xA70F, 3, 0xA74E, 2, 0xA70F, 2, 0xA734, 1, 0xFFFF
-	};
+
 	if (!g_vars.boss_level9.seq) {
-		g_vars.boss_level9.anim = data;
+		g_vars.boss_level9.anim = family_boss_table_19;
 		g_vars.boss_level9.energy = 24;
 		g_vars.boss_level9.seq_counter = 0;
 		g_vars.boss_level9.hit_counter = 3;
@@ -786,7 +808,7 @@ static void level_update_boss_minotaur() {
 	if (g_vars.boss_level9.seq_counter == 0) {
 		const uint16_t *p = g_vars.boss_level9.anim;
 		if (p[0] == 0xFFFF) {
-			p = data;
+			p = family_boss_table_19;
 		}
 		assert(p[0] >= 0xA70F);
 		g_vars.boss_level9.seq = &boss_minotaur_seq_data[p[0] - 0xA70F];
@@ -850,4 +872,31 @@ void boss_update() {
 	if (g_vars.level_num == 9) {
 		level_update_boss_minotaur();
 	}
+}
+
+#include "engines/family_host/regions.h"
+const struct family_region *family_boss_regions(size_t *count){
+ static const struct family_region regions[]={
+  {family_boss_table_0,sizeof(family_boss_table_0)},
+  {family_boss_table_1,sizeof(family_boss_table_1)},
+  {family_boss_table_2,sizeof(family_boss_table_2)},
+  {family_boss_table_3,sizeof(family_boss_table_3)},
+  {family_boss_table_4,sizeof(family_boss_table_4)},
+  {family_boss_table_5,sizeof(family_boss_table_5)},
+  {family_boss_table_6,sizeof(family_boss_table_6)},
+  {family_boss_table_7,sizeof(family_boss_table_7)},
+  {family_boss_table_8,sizeof(family_boss_table_8)},
+  {family_boss_table_9,sizeof(family_boss_table_9)},
+  {family_boss_table_10,sizeof(family_boss_table_10)},
+  {family_boss_table_11,sizeof(family_boss_table_11)},
+  {family_boss_table_12,sizeof(family_boss_table_12)},
+  {family_boss_table_13,sizeof(family_boss_table_13)},
+  {family_boss_table_14,sizeof(family_boss_table_14)},
+  {family_boss_table_15,sizeof(family_boss_table_15)},
+  {family_boss_table_16,sizeof(family_boss_table_16)},
+  {family_boss_table_17,sizeof(family_boss_table_17)},
+  {family_boss_table_18,sizeof(family_boss_table_18)},
+  {family_boss_table_19,sizeof(family_boss_table_19)},
+ };
+ *count=sizeof(regions)/sizeof(regions[0]);return regions;
 }

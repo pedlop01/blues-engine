@@ -18,7 +18,7 @@ expansión validada. El detalle de TH-00–TH-16 y la fase de paridad PX-01–PX
 - Blues: **17 en curso** con las pruebas del usuario; **18 pospuesta** hasta la expansión.
 - Titus Engine: **TH-00–TH-13 completadas (100 %)**; TH-12 cerrada por el usuario y TH-13 documentada en [viabilidad Amiga](docs/AMIGA_FEASIBILITY.md). **TH-14 completada y aceptada (100 %)**. **TH-15 completada y aceptada (100 %)** el 24-11-2026: Prehistorik 1 Amiga nativo, campaña/final, audio y opciones comunes, con las correcciones de revisión r2–r4. Ver [runtime Amiga](docs/PREHISTORIK_AMIGA_RUNTIME.md).
 - Paridad Fox/Prehistorik: **PX-01–PX-08 completadas y aceptadas (100 %)**. DOS mantiene simulaciones propias, con menú, cámara/zoom, audio, ayudas, ocho slots y rewind. Ver [paridad DOS](docs/DOS_PARITY_RUNTIME.md).
-- Paridad de Jukebox/Prehistorik 2: **PF-01–PF-08 en curso**; primera entrega con presentación/cámara/zoom, HUD, menú/ayudas y rewind. Guardados persistentes pendientes. Ver [plan PF](docs/FAMILY_PARITY_PLAN.md).
+- Paridad de Jukebox/Prehistorik 2: **PF-01–PF-08 en curso**; primera entrega con presentación/cámara/zoom, HUD, menú/ayudas y rewind. Guardados persistentes implementados en r6, pendientes de revisión jugando. Ver [plan PF](docs/FAMILY_PARITY_PLAN.md).
 - Corrección de escaleras validada por el usuario.
 - El punto recuperable previo a la expansión es `dd07383`, etiqueta `blues-baseline-2026-11-23`.
 
@@ -230,3 +230,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-24 | PF-01/PF-02 | El usuario acepta Jukebox r3. R4 corrige en P2 el recorte de columnas impares, separa fondo/cámara fraccionaria y evita interpolar el primer plano como un actor. Pruebas específicas de bordes, movimiento y rewind. | P2 pendiente de revisión jugando; PF sigue abierto y PF-06 al 0 %. |
 
 | 2026-11-24 | Biblioteca | P2 r4 aceptado por el usuario. Corregida doble conversión del ratón en pantalla completa; retorno de ventana con activación Windows y aviso si el SO la rechaza. Selector visual con portada, DOS/Amiga y acceso a gestión; carátulas pendientes de localizar. Documentadas herencia y opciones. | Revisar biblioteca r5 jugando; PF-06 sigue pendiente. |
+
+| 2026-11-24 | PF-06 / Biblioteca | Ocho slots persistentes TITUSFS por juego para Jukebox/P2, miniaturas, Guardar/Cargar en pausa y carga desde la biblioteca; estado portable con referencias simbólicas, CRC e identidad de recursos. Biblioteca con imágenes de título reales de los cinco juegos y caché privada. | PF-06 al 95 %, pendiente de revisión jugando. 17 sigue abierta y 18 pospuesta. |

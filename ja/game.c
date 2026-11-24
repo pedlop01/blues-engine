@@ -318,6 +318,13 @@ void do_game_win_screen() {
 void family_select_character(){do_select_screen();}
 
 static void game_run() {
+#ifdef TITUS_MANAGED
+ if(titus_native_load_slot()){
+  int level=titus_native_prepare_load(titus_native_load_slot());if(level<0)titus_runtime_load_failed();
+  g_vars.level=level+1;g_vars.player=0;
+  g_sys.set_screen_palette(common_palette_data,0,128,6);video_load_sprites();do_level();return;
+ }
+#endif
 	play_music(0);
 	do_splash_screen();
 	g_sys.set_screen_palette(common_palette_data, 0, 128, 6);
@@ -357,5 +364,5 @@ EXPORT_SYMBOL struct game_t game_ja = {
 	res_fini,
 	sound_init,
 	sound_fini,
-	game_run
+	game_run, family_native_inspect, family_native_preview, family_native_prepare
 };

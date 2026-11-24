@@ -47,8 +47,9 @@ DOS simulation remains separate from the Amiga engines. PX-01–PX-08 were accep
 see [DOS parity](docs/DOS_PARITY_RUNTIME.md).
 Jukebox Adventure DOS and Prehistorik 2 DOS are receiving the same experience
 in [PF-01–PF-08](docs/FAMILY_PARITY_PLAN.md): the first review build adds
-camera/map zoom/HUD, in-game options, assists and VHS rewind. Persistent saves
-remain pending; the launcher still reports zero slots for these two games.
+camera/map zoom/HUD, in-game options, assists and VHS rewind. Review r6 adds
+eight persistent thumbnail slots for both games, including loading from the
+library. The visual selector uses original title artwork cached from local game data.
 Fox Amiga uses our independent [native C++/SDL2 runtime](docs/FOX_AMIGA_RUNTIME.md),
 with smooth camera/dynamic framing, original/fixed HUD, assists, level selection,
 independent volumes, controller bindings, VHS rewind and eight thumbnail saves.

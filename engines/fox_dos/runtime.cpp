@@ -30,7 +30,7 @@ int run(const std::vector<std::string> &input_args) {
     }
     args = managed->arguments();
   }
-  fs::path root, work, capture, script;
+  fs::path root, work, capture, script, artwork;
   unsigned level = 1, test_ms = 0, render_hz = 60, probe_ticks = 0;
   bool level_argument = false;
   for (unsigned i = 1; i < args.size(); i += 2) {
@@ -46,6 +46,8 @@ int run(const std::vector<std::string> &input_args) {
       render_hz = unsigned(std::stoul(v));
     else if (key == "--workdir")
       work = fs::u8path(v);
+    else if (key == "--artwork")
+      artwork=fs::u8path(v);
     else if (key == "--capture")
       capture = fs::u8path(v);
     else if (key == "--test-script")
@@ -85,6 +87,10 @@ int run(const std::vector<std::string> &input_args) {
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER |
                SDL_INIT_TIMER))
     throw std::runtime_error(SDL_GetError());
+  if(managed||!artwork.empty())try{
+    auto file=managed?managed->artwork_path():artwork;
+    bmp(file,picture(1,1));
+  }catch(const std::exception& e){if(!managed)throw;std::cerr<<"Artwork cache: "<<e.what()<<"\n";}
   struct Quit {
     ~Quit() { SDL_Quit(); }
   } quit;

@@ -15,7 +15,7 @@ final de paridad. Los porcentajes no son una estimación de horas restantes.
 | PF-03 | Menú centrado con Esc/P, controles editables, preferencias aisladas y retorno confirmado a biblioteca | 90 % | 90 % |
 | PF-04 | Música/efectos separados, pausa y mute/reanudación de rewind; revisar escucha, rampas y dispositivos | 80 % | 80 % |
 | PF-05 | Invulnerabilidad, vidas 1–99/infinitas, selector/reinicio y selección de personaje donde exista | 85 % | 85 % |
-| PF-06 | Ocho slots persistentes con miniaturas, estado completo, formato versionado, referencias portables, firma de recursos y carga desde biblioteca | 0 % | 0 % |
+| PF-06 | Ocho slots persistentes con miniaturas, estado completo, formato versionado, referencias portables, firma de recursos y carga desde biblioteca | 95 % | 95 % |
 | PF-07 | Ocho segundos de rewind, acción/cámara en marcha atrás, efecto VHS y descarte del futuro; completar interacción con guardados | 85 % | 85 % |
 | PF-08 | Matriz de niveles, zoom/HUD/FPS, continuidad determinista, memoria y regresiones Linux/Windows; revisión humana y aceptación | 60 % | 60 % |
 
@@ -41,9 +41,9 @@ final de paridad. Los porcentajes no son una estimación de horas restantes.
   acotado en memoria, restauración de variables, mapa mutable, referencias
   internas, paleta y cámara. Se limpia antes de recargar recursos. Tras soltar,
   se descartan el futuro y los efectos pendientes; la pista musical reinicia.
-- **No hay guardados en disco todavía.** La biblioteca anuncia cero slots y el
-  menú lo explica. Las instantáneas internas no se presentan como un formato
-  portable ni se escriben punteros a un archivo.
+- **R6 añade ocho guardados en disco por juego**, con miniaturas y carga desde
+  la biblioteca. El formato TITUSFS portable es independiente de las instantáneas
+  de rewind y de BBS de Blues 1; no se escriben punteros a archivos.
 
 ## Verificación y límites
 
@@ -72,7 +72,7 @@ PF-01/PF-08 incluyen revisar los actores que se ven al alejar el zoom. No se
 promete todavía una campaña completa, dispositivos físicos, guardados portables
 ni paridad cerrada al 100 %. La tarea 17 de Blues continúa abierta y 18 pospuesta.
 
-Entrega de revisión: `build/pf-package-windows-r4/bin/titus-engine.exe`, con todas
+Entrega de revisión: `build/library-package-windows-r6/bin/titus-engine.exe`, con todas
 sus dependencias al lado; no es un ejecutable autónomo ni una distribución final.
 
 Resultados de la primera entrega: 47 etapas en Linux (31 JA + 16 P2), siete
@@ -175,3 +175,38 @@ La regresión específica cubre 700 recortes, fondo, cámara/bordes, primer plan
 cuatro rutas nativas de 360 frames a 60/120 Hz con ambos HUD y rebobinado.
 La entrega r4 queda pendiente de revisión jugando en P2. PF permanece abierto;
 PF-06 continúa al 0 %. Evidencia: [pf-r4-validation.json](measurements/pf-r4-validation.json).
+
+
+## Revisión r6: guardados persistentes y biblioteca ilustrada (24-11-2026)
+
+Jukebox y Prehistorik 2 incorporan ocho slots reales, Guardar/Cargar en pausa
+y carga desde Partidas en la biblioteca. El anterior menú compartido no implicaba
+que el formato de Blues 1 sirviera para estos juegos. PF-06 queda al 95 % hasta
+revisión jugando; no se declara cerrado el bloque PF completo.
+
+Cada juego usa `saves/slot01.bbs`–`slot08.bbs` en su propio perfil, con formato
+**TITUSFS v1**, identidad de juego, firma de recursos, CRC32 y miniatura RGB
+128×80. El contenido de los ficheros no es BBS de Blues 1. El estado se recorre
+campo por campo en little endian; las referencias se convierten en identificadores
+de tablas/elementos y desplazamientos. No se escriben direcciones de proceso,
+padding ni estructuras nativas completas. Se incluyen mapas modificados,
+actores, animaciones, RNG, paleta, cámara, encuadre y ayudas. El motor reconstruye
+los recursos antes de restaurar y limpia el historial de rewind. Audio y controles
+siguen siendo preferencias. Escritura atómica con el almacenamiento SDL común.
+
+Los campos generados en `ja/state_fields.h` y `p2/state_fields.h` se mantienen con
+`tools/generate_family_fields.py` (pycparser solo para regenerar, no para compilar).
+Cambiar el esquema persistente exige versionar el formato; los identificadores de
+las tablas se conservan estables. Jukebox limita estos slots al modo de un jugador.
+
+Validación: reapertura independiente en los 47 niveles, archivos dañados/futuros,
+identidad y recursos ajenos, carga por los botones reales de la biblioteca,
+miniaturas y comparación de metadatos restaurados. Se añaden pruebas Windows,
+intercambio Linux/Windows y sanitizadores; detalle final en
+[library-r6-validation.json](measurements/library-r6-validation.json).
+
+La biblioteca muestra imágenes originales de título, con proporción conservada,
+portada grande y miniaturas. Los datos originales no se modifican. La entrega
+local contiene imágenes extraídas de los datos del usuario; no se añaden al Git.
+Blues/Jukebox/P2 y Fox/Prehistorik DOS generan además una caché privada de título
+al abrirlos. Una carátula BMP aportada por el usuario puede sustituir esa imagen.

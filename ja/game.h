@@ -125,6 +125,9 @@ struct player_t {
 */
 
 struct vars_t {
+ bool random_initialized;
+ uint8_t random_a,random_b,random_c;
+ uint16_t random_d;
 	int level;
 	int player;
 	bool input_keystate[128];
@@ -207,6 +210,10 @@ extern void	do_level_number_screen();
 
 /* level.c */
 extern void	do_level();
+struct titus_slot_info;
+int family_native_inspect(const uint8_t*,size_t,struct titus_slot_info*);
+int family_native_preview(const uint8_t*,size_t,uint8_t*);
+int family_native_prepare(int);
 
 /* screen.c */
 extern void	video_draw_dot_pattern(int offset);

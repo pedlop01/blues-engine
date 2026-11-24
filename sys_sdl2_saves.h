@@ -8,6 +8,20 @@ static char *save_path(int slot) {
 	const char *override=SDL_getenv("BLUES_SAVE_DIR");
 	if (override && !*override) return NULL;
 	char *directory=override ? SDL_strdup(override) : SDL_GetPrefPath("pedlop01","blues-engine");
+#ifdef _WIN32
+    /* CRT getenv may encode an inherited Windows path in the ANSI code page.
+     * Managed paths set through SDL_setenv are already UTF-8 and stay intact. */
+    if(directory && override && !MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,directory,-1,NULL,0)){
+        DWORD n=GetEnvironmentVariableW(L"BLUES_SAVE_DIR",NULL,0);
+        wchar_t *wide=n?SDL_malloc(n*sizeof(wchar_t)):NULL;
+        if(wide&&GetEnvironmentVariableW(L"BLUES_SAVE_DIR",wide,n)){
+            int bytes=WideCharToMultiByte(CP_UTF8,0,wide,-1,NULL,0,NULL,NULL);
+            char *utf8=bytes?SDL_malloc(bytes):NULL;
+            if(utf8){WideCharToMultiByte(CP_UTF8,0,wide,-1,utf8,bytes,NULL,NULL);SDL_free(directory);directory=utf8;}
+        }
+        SDL_free(wide);
+    }
+#endif
 	if (!directory) return NULL;
 	const size_t capacity=strlen(directory)+40;
 	char *path=SDL_malloc(capacity);

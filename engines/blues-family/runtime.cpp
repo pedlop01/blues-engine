@@ -51,8 +51,8 @@ titus_native_options options(){titus_native_options o{};o.game=request["game_id"
 }
 Json inspect_saves(){Json slots=Json::array(),details=Json::array();auto profile=fs::u8path(request["paths"]["profile_directory"]["path"].get<std::string>());
     for(int slot=1;slot<=runtime_slot_count(request);++slot){char name[32];snprintf(name,sizeof name,"saves/slot%02d.bbs",slot);auto path=profile/name;if(!path_exists(path))continue;
-        Json item={{"slot",slot},{"file",name},{"format_id","blues.bbs"},{"format_version",nullptr},{"edition_id",nullptr},{"resource_fingerprint",nullptr},{"native_resource_crc32",nullptr},{"payload_sha256",nullptr},{"has_preview",false},{"status","unreadable"}};
-        try{auto data=read_document(path,128*1024);item["payload_sha256"]=sha256(data);titus_slot_info info{};titus_native_inspect(reinterpret_cast<const uint8_t*>(data.data()),data.size(),&info);
+        Json item={{"slot",slot},{"file",name},{"format_id",request["game_id"]=="blues"?"blues.bbs":request["game_id"].get<std::string>()+".titusfs"},{"format_version",nullptr},{"edition_id",nullptr},{"resource_fingerprint",nullptr},{"native_resource_crc32",nullptr},{"payload_sha256",nullptr},{"has_preview",false},{"status","unreadable"}};
+        try{auto data=read_document(path,1024*1024);item["payload_sha256"]=sha256(data);titus_slot_info info{};titus_native_inspect(reinterpret_cast<const uint8_t*>(data.data()),data.size(),&info);
             item["status"]=info.version==-1?"incompatible":"damaged";if(info.decoded){item["format_version"]=info.version;item["edition_id"]=info.amiga?"amiga":"dos";item["has_preview"]=bool(info.preview);item["status"]=info.compatible?"ready":"incompatible";
                 Json detail={{"slot",slot},{"payload_sha256",item["payload_sha256"]},{"level",info.level},{"x",info.x},{"y",info.y},{"frame",info.frame},{"camera",info.camera},{"hud",info.hud},{"view",info.view},{"lives1",info.lives1},{"lives2",info.lives2},{"timestamp",info.timestamp},{"preview_rgb",nullptr}};
                 uint8_t rgb[128*80*3];if(info.preview&&titus_native_preview(reinterpret_cast<const uint8_t*>(data.data()),data.size(),rgb)){std::string hex;const char* digits="0123456789abcdef";hex.reserve(sizeof(rgb)*2);for(auto b:rgb){hex+=digits[b>>4];hex+=digits[b&15];}detail["preview_rgb"]=hex;}details.push_back(detail);
@@ -94,7 +94,7 @@ int run(const std::vector<std::string>& args){bool inspecting=false;bool loaded=
         if(request.at("engine_id")!="blues-family")throw Error("E_GAME","Wrong runtime executable");
         validate_engine_request(request,file);verify_profile_lock(request);features=runtime_features(request["game_id"],request["sources"].size()==2);set_storage();
         auto native=options();titus_native_options_init(&native,1);
-        if(inspecting){if(request["game_id"]=="blues")native_settings(request);Json result={{"schema_version",1},{"kind","inspection"},{"inspection_id",request["inspection_id"]},{"profile_id",request["profile_id"]},{"game_id",request["game_id"]},{"engine_id","blues-family"},{"save_compatibility_id",request["save_compatibility_id"]},{"status","ok"},{"features",features},{"save_slot_count",runtime_slot_count(request)},{"preparation_ids",Json::array()},{"save_index",request["game_id"]=="blues"?inspect_saves():Json(nullptr)},{"error",nullptr}};write_document(directory/"inspection.json",result);return 0;}
+        if(inspecting){if(request["game_id"]=="blues")native_settings(request);Json result={{"schema_version",1},{"kind","inspection"},{"inspection_id",request["inspection_id"]},{"profile_id",request["profile_id"]},{"game_id",request["game_id"]},{"engine_id","blues-family"},{"save_compatibility_id",request["save_compatibility_id"]},{"status","ok"},{"features",features},{"save_slot_count",runtime_slot_count(request)},{"preparation_ids",Json::array()},{"save_index",inspect_saves()},{"error",nullptr}};write_document(directory/"inspection.json",result);return 0;}
         events.open(filesystem_path(directory/"events.jsonl"),std::ios::binary|std::ios::app);emit("hello",{{"engine_id","blues-family"},{"build_revision",TITUS_BUILD_REVISION},{"protocol",1}});emit("progress",{{"phase","initialize"},{"percent",90}});
         auto probe=std::getenv("TITUS_TEST_GAMEPLAY");gameplay_probe=probe&&std::string(probe)=="1";
         auto test=std::getenv("TITUS_TEST_RUNTIME_MS");if(test)test_ms=std::max(0,std::min(10000,std::atoi(test)));
@@ -152,6 +152,10 @@ extern "C" void titus_runtime_gameplay(void){if(!gameplay){gameplay=true;gamepla
 extern "C" int titus_runtime_probe_save(void){if(gameplay_probe&&gameplay&&!saved_probe&&SDL_GetTicks()-gameplay_at>800){saved_probe=true;return 1;}return 0;}
 extern "C" void titus_runtime_ready(const char* scene){if(ready)return;bool audio=SDL_GetAudioStatus()!=SDL_AUDIO_STOPPED;
     if(!audio&&!request["allow_silent_audio"].get<bool>())throw Error("E_AUDIO","No se pudo abrir el dispositivo de audio.");
+    if(std::string(scene)!="gameplay"){
+        auto profile=fs::u8path(request["paths"]["profile_directory"]["path"].get<std::string>());
+        titus_native_cache_artwork((profile/("artwork-"+request["edition_id"].get<std::string>()+".bmp")).u8string().c_str());
+    }
     ready=true;ready_at=SDL_GetTicks();emit("ready",{{"features",features},{"scene",scene},{"save_slot_count",runtime_slot_count(request)},{"audio_active",audio}});
 }
 extern "C" int titus_runtime_poll(void){

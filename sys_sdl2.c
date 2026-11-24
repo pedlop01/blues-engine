@@ -1410,13 +1410,16 @@ struct sys_t g_sys = {
 };
 
 #ifdef TITUS_MANAGED
-void titus_native_capture(const char *path){
-    int w,h;SDL_GetRendererOutputSize(_renderer,&w,&h);
+int titus_native_cache_artwork(const char *path){
+    _save_preview_capture=true;sdl2_draw_screen(0,0,1);_save_preview_capture=false;
+    int w,h;if(SDL_GetRendererOutputSize(_renderer,&w,&h))return 0;
     SDL_Surface *image=SDL_CreateRGBSurfaceWithFormat(0,w,h,32,SDL_PIXELFORMAT_ARGB8888);
-    if(!image)print_error("Cannot allocate probe screenshot");
-    if(SDL_RenderReadPixels(_renderer,0,image->format->format,image->pixels,image->pitch)!=0||SDL_SaveBMP(image,path)!=0)print_error("Cannot capture native gameplay");
-    SDL_FreeSurface(image);
+    if(!image)return 0;
+    const bool ok=SDL_RenderReadPixels(_renderer,0,image->format->format,image->pixels,image->pitch)==0&&SDL_SaveBMP(image,path)==0;
+    SDL_FreeSurface(image);return ok;
 }
+void titus_native_capture(const char *path){if(!titus_native_cache_artwork(path))print_error("Cannot capture native gameplay");}
+
 #endif
 
 #ifdef TITUS_MANAGED

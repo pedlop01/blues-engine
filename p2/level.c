@@ -771,7 +771,7 @@ static void level_update_tile_attr2_type1() {
 	if (spr_num == 10 || spr_num == 21) {
 		return;
 	}
-	static int16_t data[6];
+	int16_t *data=g_vars.tile_attr2_work;
 	const uint8_t bh = (data[1] >> 4) & 255;
 	const uint8_t bl = (data[0] >> 4) & 255;
 	uint16_t offset = (bh << 8) | bl;
@@ -3892,6 +3892,7 @@ void do_gameover_animation() {
 	video_set_sprite_pos_flags(0);
 }
 
+#define FAMILY_SAVE_GAME 2
 #define FAMILY_FRACTIONAL_CAMERA
 #define FAMILY_SEPARATE_BACKDROP
 #define FAMILY_LEVEL_COUNT 16
@@ -4016,6 +4017,8 @@ static uint8_t family_map_pixel(int wx,int wy,int sx,int sy){
   const uint8_t color=family_map_layer_pixel(wx,wy);
   return color?color:family_backdrop_pixel(sx,sy);
 }
+
+#include "engines/family_host/save_codec.h"
 
 void do_level() {
   static const uint8_t music_tbl[] = {9,  9,  0,  0,  0,  13, 4,  4,

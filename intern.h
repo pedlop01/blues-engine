@@ -87,6 +87,7 @@ struct options_t {
 	const char *amiga_datapath;
 };
 
+struct titus_slot_info;
 struct game_t {
 	const char *name;
 	void (*res_init)(const char *data_path, int vga_size);
@@ -94,6 +95,9 @@ struct game_t {
 	void (*snd_init)();
 	void (*snd_fini)();
 	void (*run)();
+ int (*save_inspect)(const uint8_t*,size_t,struct titus_slot_info*);
+ int (*save_preview)(const uint8_t*,size_t,uint8_t*);
+ int (*save_prepare)(int);
 };
 
 #ifdef _WIN32

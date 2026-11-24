@@ -80,7 +80,7 @@ void Session::start_inspection(bool prepare){
     state=prepare?State::Preparing:State::Inspecting;started_=last_event_=std::chrono::steady_clock::now();message_=prepare?"Preparando los datos del juego…":"Comprobando datos y perfil…";
 }
 void Session::migrate(){
-    if(request_["game_id"]!="blues"){ensure_directory(profile_/fs::u8path("native/"+request_["engine_id"].get<std::string>()));return;}
+    if(request_["game_id"]!="blues"){ensure_directory(profile_/fs::u8path("native/"+request_["engine_id"].get<std::string>()));if(request_["engine_id"]=="blues-family")ensure_directory(profile_/"saves");return;}
     if(!options_.legacy_import&&path_exists(profile_)&&!path_is_empty(profile_)){ensure(path_is_directory(profile_),"El perfil no es un directorio.");ensure_directory(profile_/"native/blues-family");ensure_directory(profile_/"saves");return;}
     staging_=profile_.parent_path()/fs::u8path("."+profile_.filename().u8string()+".import-"+uuid());
     ensure_directory(staging_/"native/blues-family");ensure_directory(staging_/"saves");

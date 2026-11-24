@@ -24,6 +24,7 @@ void titus_native_family_options(struct titus_native_options *options);
 void titus_native_preferences(int *fullscreen,int *music,int *effects);
 void titus_runtime_actor(int x,int y);
 void titus_native_capture(const char *path);
+int titus_native_cache_artwork(const char *path);
 void titus_native_audio_stats(uint64_t *samples,uint64_t *nonzero,uint64_t *clipped,int *peak,int *effects);
 void titus_native_inspect(const uint8_t *data,size_t size,struct titus_slot_info *info);
 void titus_runtime_gameplay(void);

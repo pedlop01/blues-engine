@@ -22,3 +22,6 @@ __pycache__/
 # Operating-system metadata
 .DS_Store
 Thumbs.db
+
+# Local artwork extracted from the user's game data
+/assets/covers/*.bmp

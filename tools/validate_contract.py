@@ -154,7 +154,7 @@ def validate(document):
         unique(document["slots"], "slot", "Duplicate save slot")
         for slot in document["slots"]:
             require(slot["file"] == (f"slot-{slot['slot']}.json" if document["game_id"] in {"fox","prehistorik"} else f"saves/slot{slot['slot']:02}.bbs"), "Wrong native slot filename")
-            require(slot["format_id"]==(document["game_id"]+(".amiga.json" if document["engine_id"] in {"fox-amiga-native","pre1-amiga-native"} else ".dos.json") if document["game_id"] in {"fox","prehistorik"} else "blues.bbs"),"Wrong native save format")
+            require(slot["format_id"]==(document["game_id"]+(".amiga.json" if document["engine_id"] in {"fox-amiga-native","pre1-amiga-native"} else ".dos.json") if document["game_id"] in {"fox","prehistorik"} else "blues.bbs" if document["game_id"]=="blues" else document["game_id"]+".titusfs"),"Wrong native save format")
     elif kind == "inspect_request":
         validate(inspection_as_launch(document))
     elif kind == "inspection":

@@ -1046,10 +1046,11 @@ static void init_object82(int type, int x_pos, int y_pos, struct object_t *obj, 
 }
 
 static uint8_t get_random_number() {
-	static uint8_t random_a = 5;
-	static uint8_t random_b = 34;
-	static uint8_t random_c = 134;
-	static uint16_t random_d = 58765;
+	if(!g_vars.random_initialized){g_vars.random_initialized=true;g_vars.random_a=5;g_vars.random_b=34;g_vars.random_c=134;g_vars.random_d=58765;}
+#define random_a g_vars.random_a
+#define random_b g_vars.random_b
+#define random_c g_vars.random_c
+#define random_d g_vars.random_d
 
 	random_d += random_a;
 	random_a += 3 + (random_d >> 8);
@@ -1062,6 +1063,10 @@ static uint8_t get_random_number() {
 	random_c ^= random_b;
 
 	return random_b;
+#undef random_a
+#undef random_b
+#undef random_c
+#undef random_d
 }
 
 static void level_init_object102_1(struct object_t *obj22, int x, int y, int num) {
@@ -3016,6 +3021,7 @@ static bool change_level(bool first_level) {
 }
 
 extern void family_select_character();
+#define FAMILY_SAVE_GAME 1
 #define FAMILY_FRACTIONAL_CAMERA
 #define FAMILY_SEPARATE_BACKDROP
 #define FAMILY_LEVEL_COUNT 31
@@ -3131,8 +3137,11 @@ static uint8_t family_map_pixel(int wx,int wy,int sx,int sy){
   return color ? color : family_backdrop_pixel(sx,sy);
 }
 
+#include "engines/family_host/save_codec.h"
+
 void do_level() {
-  change_level(true);
+  if(_family_pending_save){play_music(((g_vars.level>>3)&3)+1);init_level(get_level());}
+  else change_level(true);
   family_begin();
   while (!g_sys.input.quit) {
 #ifdef TITUS_MANAGED
@@ -3156,7 +3165,8 @@ void do_level() {
       }
       g_vars.level = _family_requested_level + 1;
       family_end();
-      change_level(false);
+      if(_family_pending_save){play_music(((g_vars.level>>3)&3)+1);init_level(get_level());}
+      else change_level(false);
       family_begin();
       continue;
     }

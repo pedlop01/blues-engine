@@ -71,6 +71,7 @@ class App {
     void open_saves(){if(!library.can_play())return;save_preparation_required=false;browsing_saves=true;begin_play(0,true);}
     void load_selected_save(){for(const auto& slot:save_index["slots"])if(slot["slot"]==selected_slot&&slot["status"]=="ready"){library.select_edition(slot["edition_id"]);browsing_saves=false;begin_play(selected_slot);return;}}
 
+    bool family_save_probe=false;
     bool test_play=false,test_family=false,test_fox=false,test_pre1=false,test_fox_amiga=false,test_pre1_amiga=false,settings_probe=false;
     int play_test_stage=0;
     Uint32 play_test_started=0;
@@ -153,7 +154,7 @@ class App {
         bool success=session->state==Session::State::Done;
         notice=success?session->message():session->error();
         if(browsing_saves){browsing_saves=false;clear_previews();save_preparation_required=session->inspection().value("status",std::string())=="preparation_required";save_index=session->inspection().value("save_index",Json(nullptr));save_details=Json::object();auto details=session->directory()/"save-details.json";if(success&&path_exists(details))try{save_details=parse_json(read_document(details));}catch(const std::exception& e){notice=e.what();}session.reset();if(success){set_modal("slots");focus="cancel";}else modal.clear();return;}
-        session.reset();modal.clear();
+        session.reset();modal.clear();for(auto& p:covers)SDL_DestroyTexture(p.second);covers.clear();
         restore_library_window();SDL_ShowCursor(SDL_ENABLE);session_hidden=false;
         focused=true;int count=0;auto keys=SDL_GetKeyboardState(&count);for(int i=0;i<count&&i<SDL_NUM_SCANCODES;++i)blocked[i]=keys[i]!=0;
         for(int i=0;i<SDL_NumJoysticks();++i)open_controller(i);reset_controller_input();focus=library.selected()?"game:"+std::string(library.info().id):"add";
@@ -314,6 +315,12 @@ class App {
         std::string id=g.id;
         if(!covers.count(id)){
             auto file=package_root/"assets/covers"/fs::u8path(id+".bmp");
+            if(!path_exists(file))for(const auto& item:library.catalog["installations"]){
+                if(item["game_id"]!=id)continue;
+                auto profile=paths.profile_directory(library.catalog["profiles"][0]["id"],id,item["save_compatibility_id"]);
+                auto candidate=profile/("artwork-"+item["edition_id"].get<std::string>()+".bmp");
+                if(path_exists(candidate)){file=candidate;break;}
+            }
             auto surface=SDL_LoadBMP(file.u8string().c_str());
             covers[id]=surface?SDL_CreateTextureFromSurface(renderer,surface):nullptr;
             if(surface)SDL_FreeSurface(surface);
@@ -341,26 +348,26 @@ class App {
         button("exit","Salir",{950,24,116,42},[this](){set_modal("quit");});
         if(!library.healthy||!library.selected()){manage_page();return;}
         const auto& g=library.info();auto i=library.selected();
-        cover(g,{52,108,238,326});
-        text("TU COLECCIÓN  /  "+std::to_string(library.games.size())+" JUEGOS",326,112,13,aqua);
-        text(g.title,324,145,36,ink,724);text(g.description,326,200,17,muted,720);
+        cover(g,{44,112,480,300});
+        text("TU COLECCIÓN  /  "+std::to_string(library.games.size())+" JUEGOS",560,112,13,aqua);
+        text(g.title,558,145,30,ink,492);text(g.description,560,198,16,muted,490,true);
         bool dos=false,amiga=false;auto choices=library.installations();
         for(const auto& c:choices){dos|=c["edition_id"]=="dos";amiga|=c["edition_id"]=="amiga";}
-        text("VERSIÓN",326,248,12,muted);
-        button("dos","DOS",{326,273,112,42},[this](){library.select_edition("dos");},dos,i->at("edition_id")=="dos");
-        button("amiga","Amiga",{450,273,112,42},[this](){library.select_edition("amiga");},amiga,i->at("edition_id")=="amiga");
-        button("edition","Instalación  ›",{578,273,210,42},[this](){library.select_installation(1);},choices.size()>1);
-        text(library.data_status(),326,332,16,library.can_play()?aqua:gold,710);
-        button("play","▶ Jugar",{326,376,208,48},[this](){begin_play();},library.can_play(),true);
-        button("saves","Partidas",{548,376,160,48},[this](){open_saves();},library.can_play());
+        text("VERSIÓN",560,248,12,muted);
+        button("dos","DOS",{560,273,100,42},[this](){library.select_edition("dos");},dos,i->at("edition_id")=="dos");
+        button("amiga","Amiga",{672,273,112,42},[this](){library.select_edition("amiga");},amiga,i->at("edition_id")=="amiga");
+        button("edition","Instalación  ›",{798,273,250,42},[this](){library.select_installation(1);},choices.size()>1);
+        text(library.data_status(),560,332,16,library.can_play()?aqua:gold,710);
+        button("play","▶ Jugar",{560,376,208,48},[this](){begin_play();},library.can_play(),true);
+        button("saves","Partidas",{782,376,190,48},[this](){open_saves();},library.can_play());
         text("ELIGE TU PRÓXIMA AVENTURA",52,458,12,muted);
         int n=0;
         for(const auto& id:library.games){
             const auto& item=*std::find_if(game_info.begin(),game_info.end(),[&](const GameInfo& v){return id==v.id;});
             SDL_Rect card{52+n*202,486,184,176};bool selected=id==g.id;
             panel(card,color(selected?0x30475b:0x182636),10);
-            cover(item,{card.x+8,card.y+8,72,116});
-            text(item.title,card.x+90,card.y+18,14,ink,84,true);
+            cover(item,{card.x+8,card.y+8,168,105});
+            text(item.title,card.x+10,card.y+123,14,ink,164);
             text(selected?"SELECCIONADO":"",card.x+10,card.y+145,10,aqua,164);
             if(selected||focus=="game:"+id)outline({card.x-2,card.y-2,card.w+4,card.h+4},selected?aqua:muted);
             widget("game:"+id,card,[this,id](){library.choose_game(id);});++n;
@@ -534,6 +541,22 @@ class App {
             library.choose_game(choices[next].first);library.select_edition(choices[next].second);check(library.can_play(),"native game play enabled");focus="play";draw();push_key(SDLK_RETURN);++play_test_stage;
         }
     }
+    void family_save_test_tick(){
+        if(SDL_GetTicks()-play_test_started>180000)throw Error("E_UI_TEST","Family save UI timed out");
+        if(starting_session.valid()||session)return;
+        if(play_test_stage==0||play_test_stage==3){
+            library.choose_game(play_test_stage==0?"jukebox":"prehistorik2");
+            library.select_edition("dos");focus="saves";draw();push_key(SDLK_RETURN);++play_test_stage;
+        }else if(play_test_stage==1||play_test_stage==4){
+            check(modal=="slots"&&!save_index.is_null()&&save_index["slot_count"]==8,"family slots visible in library");
+            check(save_previews.count(1),"family slot thumbnail decoded");
+            selected_slot=1;draw();capture_state(play_test_stage==1?"jukebox-slots":"p2-slots");
+            focus="load-save";push_key(SDLK_RETURN);++play_test_stage;
+        }else if(play_test_stage==6){
+            check(modal.empty()&&!session_hidden,"family save returns to library");
+            std::cout<<Json({{"family_save_ui_checks",smoke_checks},{"loaded_games",2}}).dump()<<'\n';running=false;
+        }
+    }
     void settings_test_tick(){
         if(SDL_GetTicks()-play_test_started>60000)throw Error("E_UI_TEST","Settings UI timed out");
         if(starting_session.valid()||session)return;
@@ -605,7 +628,7 @@ class App {
     }
 public:
     App(Paths p,bool test,fs::path capture_path,fs::path initial_browse,fs::path import_source,int play_probe):paths(std::move(p)),library(paths),smoke(test),screenshot(std::move(capture_path)),workflow_source(std::move(import_source)){
-        settings_probe=play_probe==-1;test_play=play_probe>0;test_family=play_probe>=2&&play_probe<=4;test_fox=play_probe>=3&&play_probe<=4;test_pre1=play_probe==4;test_fox_amiga=play_probe==5;test_pre1_amiga=play_probe==6;play_test_started=SDL_GetTicks();
+        family_save_probe=play_probe==7;settings_probe=play_probe==-1;test_play=play_probe>0;test_family=play_probe>=2&&play_probe<=4;test_fox=play_probe>=3&&play_probe<=4;test_pre1=play_probe==4;test_fox_amiga=play_probe==5;test_pre1_amiga=play_probe==6;play_test_started=SDL_GetTicks();
         char* base=SDL_GetBasePath();if(!base)throw Error("E_PATH",SDL_GetError());package_root=fs::u8path(base);SDL_free(base);
         try{auto registry=parse_json(read_document(package_root/"engines/registry.json"));
             for(const auto& entry:registry.at("engines"))if(entry.at("adapter_state")=="validated"&&registry.at("role")=="package"){bool installed=fs::is_regular_file(package_root/fs::u8path(entry.at("executables").at(platform()).get<std::string>()));if(entry.at("engine_id")=="blues-family")library.blues_runtime_installed=installed;if(entry.at("engine_id")=="fox-amiga-native")library.fox_amiga_runtime_installed=installed;if(entry.at("engine_id")=="pre1-amiga-native")library.pre1_amiga_runtime_installed=installed;
@@ -631,7 +654,7 @@ public:
     ~App(){for(auto& p:covers)SDL_DestroyTexture(p.second);clear_previews();if(job.valid())job.wait();if(virtual_pad)SDL_JoystickClose(virtual_pad);if(virtual_device>=0)SDL_JoystickDetachVirtual(virtual_device);for(auto& p:text_cache)SDL_DestroyTexture(p.second.texture);for(auto& p:fonts)TTF_CloseFont(p.second);
         if(controller)SDL_GameControllerClose(controller);if(renderer)SDL_DestroyRenderer(renderer);if(window)SDL_DestroyWindow(window);TTF_Quit();SDL_Quit();}
     int run(){draw();SDL_RenderPresent(renderer);while(running){SDL_Event e;while(SDL_PollEvent(&e)){auto previous_modal=modal;event(e);if(modal!=previous_modal&&!session_hidden)draw();}finish_job();poll_session();
-            if(!session_hidden){draw();if(smoke)smoke_tick();if(test_play)play_test_tick();if(settings_probe)settings_test_tick();SDL_RenderPresent(renderer);}
+            if(!session_hidden){draw();if(smoke)smoke_tick();if(family_save_probe)family_save_test_tick();else if(test_play)play_test_tick();if(settings_probe)settings_test_tick();SDL_RenderPresent(renderer);}
             if(!job.valid()&&!starting_session.valid()&&!session&&library.dirty&&SDL_GetTicks()-last_save>600){library.persist();last_save=SDL_GetTicks();}
             SDL_Delay(session_hidden?25:smoke?20:8);
         }library.persist();return 0;}
@@ -639,6 +662,7 @@ public:
 int run(const std::vector<std::string>& args){
     try{fs::path user,screenshot,browse,import_source;bool smoke=false;int play_probe=0;
         for(size_t i=1;i<args.size();++i){auto option=args[i];if(option=="--smoke-test")smoke=true;
+            else if(option=="--family-save-smoke-test")play_probe=7;
             else if(option=="--settings-smoke-test")play_probe=-1;
             else if(option=="--session-smoke-test")play_probe=1;
             else if(option=="--family-session-smoke-test")play_probe=2;
