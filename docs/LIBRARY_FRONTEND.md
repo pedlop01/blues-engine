@@ -27,15 +27,18 @@ nativa privada. [TH-09](PREHISTORIK_RUNTIME.md) añade Prehistorik 1 DOS mediant
 
 ## Abrir y añadir los juegos
 
-El ejecutable preparado en esta máquina es:
+Las entregas actuales conservadas tras la limpieza del espacio de trabajo son:
 
 ```text
-build/launcher-windows/titus-engine.exe
+Windows: build/library-package-windows-r6/bin/titus-engine.exe
+Linux:   build/library-package-linux-r6/bin/titus-engine
 ```
 
-Mantener junto a él `SDL2.dll`, `SDL2_ttf.dll`, `assets/fonts/` y `engines/`. La aplicación
-Windows abre una ventana gráfica sin consola auxiliar. Linux usa
-`build/launcher/titus-engine` con sus bibliotecas SDL instaladas.
+Conserva las carpetas y dependencias de cada paquete. La revisión r6 incluye
+selector con imágenes reales de título y ocho slots de Jukebox/P2 accesibles
+desde Partidas. Los builds de desarrollo siguen en `build/th14-release` y
+`build/th14-windows`; las recetas posteriores permiten crear builds nuevos.
+Ver [limpieza y respaldos locales](WORKSPACE_CLEANUP.md).
 
 La primera apertura muestra una biblioteca vacía si todavía no existe catálogo.
 Pulsa **Añadir juegos**. Con Ctrl+L puedes pegar la carpeta del inventario:
@@ -53,8 +56,8 @@ El explorador no selecciona automáticamente el primer ADF al abrir una carpeta.
 Opciones útiles:
 
 ```sh
-build/launcher/titus-engine --browse-dir /ruta/a/mis/juegos
-build/launcher/titus-engine --user-dir /ruta/absoluta/a/un/perfil/de/prueba
+build/library-package-linux-r6/bin/titus-engine --browse-dir /ruta/a/mis/juegos
+build/library-package-linux-r6/bin/titus-engine --user-dir /ruta/absoluta/a/un/perfil/de/prueba
 ```
 
 `--browse-dir` configura la ubicación inicial del explorador, sin registrar datos

@@ -26,7 +26,8 @@ this transition.
 [DOS feature parity and review](docs/DOS_PARITY_RUNTIME.md) ·
 [Architecture and v1 contracts](docs/TITUS_ARCHITECTURE.md) ·
 [Catalog core: build, commands and tests](docs/CATALOG_CORE.md) ·
-[Global library: build, controls and tests](docs/LIBRARY_FRONTEND.md)
+[Global library: build, controls and tests](docs/LIBRARY_FRONTEND.md) ·
+[Local workspace cleanup](docs/WORKSPACE_CLEANUP.md)
 
 The independent `titus-catalog` tool recognizes the eight audited DOS/Amiga
 resource sets, links known ADF sources and manages installation references without
