@@ -109,3 +109,6 @@ Amiga coincide con el ADF: SHA-256
 Resultado y límites actualizados en [AMIGA_FEASIBILITY.md](AMIGA_FEASIBILITY.md):
 comparación ADF reproducida y reutilización LZSS/MAT de Prehistorik demostrada.
 No habilita todavía nuevos juegos Amiga.
+
+Prehistorik 2 no salió para Amiga; TH-16 queda cancelada/no aplicable. La
+carpeta `prehistorik2-amiga` corresponde a Prehistorik 1 y conserva su ruta.

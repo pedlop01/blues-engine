@@ -11,7 +11,7 @@ una promesa de que el motor DOS pueda cargar directamente estos datos.
 |---|---|---|
 | Titus the Fox | 89 archivos coinciden byte a byte con `fox.adf`; ejecutable Hunk y recursos propios BIN/TBL/SPR/PAT. | Candidato a TH-14, con riesgo alto: resolver primero descompresión y representar una escena Amiga estática. Continuar al juego solo tras comprobar ese hito. |
 | Prehistorik 1 | 71 archivos coinciden con `Prehistorik.adf`. Los 21 MAT comprimidos pasan LZSS estricto y sus registros completos de sprites. Hay 13 efectos IFF 8SVX. | Vía parcial demostrada para reutilizar lectura de recursos en TH-15; faltan formatos y lógica. Primer hito: visor de sprites e imágenes con paletas y máscaras verificadas. |
-| Prehistorik 2 | Ningún conjunto Amiga identificado entre los originales entregados. `prehistorik2-amiga` contiene Prehistorik 1. | TH-16 bloqueada por identificación/datos. No se deduce de esto que una edición no exista en ningún otro lugar. |
+| Prehistorik 2 | No salió para Amiga. `prehistorik2-amiga` contiene Prehistorik 1. | TH-16 cancelada / no aplicable; no requiere buscar datos ni implementar un adaptador. |
 
 Se conserva el nombre de la carpeta `prehistorik2-amiga` para no romper rutas.
 Ambos ADF tienen 901120 bytes y firma `DOS\0` (OFS). Las comparaciones prueban
@@ -99,3 +99,10 @@ Informes de metadatos: [Fox ADF](measurements/th13-fox-adf.json),
 [formatos y hashes](measurements/th13-formats.json). No incluyen recursos
 descomprimidos. Las pruebas sintéticas cubren literales, solapamiento, vuelta de
 ventana, ventana inicial vacía, truncamiento, tamaño excesivo y límites MAT.
+
+## Corrección de alcance
+
+Prehistorik 2 tuvo versiones originales DOS y Amstrad CPC, no Amiga; véase el
+[registro de ediciones](https://www.mobygames.com/game/525/prehistorik-2/releases/).
+Se corrige la hipótesis inicial de TH-16: no está bloqueada por falta de datos,
+sino retirada del alcance como no aplicable. No se renumeran las demás tareas.

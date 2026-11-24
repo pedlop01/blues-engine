@@ -43,7 +43,7 @@ que un motor pueda ejecutarla.
 |---|---|---|---|---|
 | The Blues Brothers | Nuestra extensión de cyxx/blues | Implementado y probado | Implementado; continúa la validación visual | Primer juego para integrar; conservar sus mejoras y datos actuales. |
 | Blues Brothers: Jukebox Adventure | Módulo `ja/` de cyxx/blues | Soportado por el proyecto base | Sin soporte verificado | Ruta corta, controles/audio y cierre comprobados en Linux y Windows x64 sobre ARM64; integración pendiente. |
-| Prehistorik 2 | Módulo `p2/` de cyxx/blues | Datos en `prehistorik2-dos/`; soportado por el proyecto base | Datos Amiga identificados como Prehistorik 1, no 2 | Ruta corta y audio comprobados en Linux/Windows; saturación registrada para TH-07. Sin datos Amiga de esta entrega identificados. |
+| Prehistorik 2 | Módulo `p2/` de cyxx/blues | Datos en `prehistorik2-dos/`; soportado por el proyecto base | No tuvo edición Amiga | DOS integrado en TH-07; no se planifica un adaptador Amiga. La carpeta mal nombrada contiene Prehistorik 1. |
 | Titus the Fox | OpenTitus, revisión fijada en auditoría | Datos y audio del COM preparados; recorrido de referencia Linux/Windows comprobado | `fox-amiga/` y `fox.adf` idénticos; motor pendiente | DOS integrado en TH-08; edición Amiga sujeta a viabilidad. |
 | Prehistorik 1 | Olduvai | DIET preparado; siete cargas y ruta/audio Linux/Windows comprobados | `Prehistorik.adf` y `prehistorik2-amiga/` coinciden: Prehistorik 1 | DOS integrado en TH-09; edición Amiga sujeta a viabilidad. |
 | Moktar | OpenTitus | Declarado por OpenTitus | Sin soporte verificado | Posible ampliación posterior; fuera del mínimo inicial. |
@@ -197,9 +197,9 @@ inventario no equivale a haber integrado o validado un nuevo juego.
 | TH-13 | Investigar datos Amiga adicionales | Examinar imágenes y carpetas Amiga extraídas, identificar Prehistorik 1/2, formato de disco y recursos sin modificarlos. Reutilizar herramientas disponibles si son aplicables; identificar motores/código o trabajo de ingeniería inversa y entregar viabilidad por juego. | TH-01 | Investigación completada: Fox requiere descompresión; Prehistorik 1 reutiliza LZSS/MAT; sin datos identificados de Prehistorik 2. Ver AMIGA_FEASIBILITY.md | 100 % |
 | TH-14 | Añadir Titus the Fox Amiga | Si TH-13 confirma una vía viable, implementar su adaptador y verificar gráficos, física, niveles, audio y final. Registrar la edición en el selector tras validarla. | TH-13, TH-08 | Candidato: primer hito descompresor/escena; riesgo alto | 0 % |
 | TH-15 | Añadir Prehistorik 1 Amiga | Si TH-13 confirma una vía viable, implementar su adaptador y verificar gráficos, física, niveles, audio y final. Registrar la edición en el selector tras validarla. | TH-13, TH-09 | Vía parcial demostrada: lectores/visor antes del runtime | 0 % |
-| TH-16 | Añadir Prehistorik 2 Amiga si se confirma el conjunto | Tras identificar los recursos y la vía de motor, implementar el adaptador y verificar gráficos, física, niveles, audio y final. No confundirlo con Prehistorik 1 ni asumir compatibilidad del motor DOS. | TH-13, TH-07 | Pendiente de identificación/viabilidad | 0 % |
+| TH-16 | Prehistorik 2 Amiga: no aplicable | Retirada del alcance: Prehistorik 2 no salió para Amiga. Se conserva el identificador para mantener el historial, sin buscar datos ni desarrollar un adaptador. | — | Cancelada / no aplicable; excluida del progreso de implementación | N/A |
 
-La disponibilidad de ADF no permite dar TH-14/TH-15/TH-16 por implementadas. La primera
+La disponibilidad de ADF no permite dar TH-14/TH-15 por implementadas. La primera
 expansión tiene como mínimo los cinco juegos DOS y Blues Brothers Amiga. Las
 ediciones Amiga adicionales tienen seguimiento propio y no bloquean esa primera
 entrega si la investigación determina que requieren un port independiente.
@@ -211,8 +211,8 @@ Prehistorik 1, manteniendo procesos separados y su presentación original.
 [PX-01–PX-08](EXPERIENCE_PARITY_PLAN.md) incorpora tareas por juego y porcentajes,
 con **scroll super suave, cámara y encuadre** primero. Estas tareas están al 0 %;
 no se confunden con haber integrado sus motores. Después de la validación actual,
-esta fase tiene prioridad sobre ampliar las ediciones Amiga. TH-13–TH-16 siguen
-vigentes como investigación e integraciones condicionadas por viabilidad.
+esta fase tiene prioridad sobre ampliar las ediciones Amiga. TH-13–TH-15 mantienen el seguimiento de investigación e integraciones Amiga.
+TH-16 queda cancelada como no aplicable y no cuenta como implementación completada.
 
 La tarea **18** se mantiene en el plan principal: preparar después el paquete
 Windows de Titus Engine, con ejecutables/dependencias, lanzador, instrucciones,
@@ -227,8 +227,8 @@ catálogo soportado y prueba desde una carpeta nueva. Evitar duplicarla en TH-12
 3. **Tercera entrega:** Titus the Fox y Prehistorik 1. Su orden podrá cambiar si la
    auditoría encuentra una base más sencilla o un bloqueo en alguno de ellos.
 4. **Ediciones Amiga adicionales:** investigar las imágenes y carpetas extraídas disponibles mediante
-   TH-13 y, cuando sea viable, incorporar Fox y las ediciones de Prehistorik
-   identificadas mediante TH-14/TH-15/TH-16.
+   TH-13 y, cuando sea viable, incorporar Fox y Prehistorik 1
+   mediante TH-14/TH-15. Prehistorik 2 queda limitado a DOS en este catálogo.
 5. **Distribución:** tarea 18, después de la primera expansión validada y el cierre
    de 17. Otras mejoras por motor y Moktar podrán plantearse en entregas posteriores.
 

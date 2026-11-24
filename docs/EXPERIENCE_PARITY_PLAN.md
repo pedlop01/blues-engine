@@ -7,8 +7,9 @@ motor. Reconocer una capacidad en el launcher no la implementa en el juego.
 
 Esta fase va después de validar la integración actual en TH-12. Se priorizan
 scroll suave, cámara y encuadre antes de ampliar a nuevas ediciones Amiga.
-TH-13–TH-16 conservan sus identificadores y su investigación de viabilidad;
+TH-13–TH-15 conservan sus identificadores para investigación y soporte Amiga;
 las tareas PX no las sustituyen ni dan por soportadas esas ediciones.
+TH-16 está cancelada / no aplicable: Prehistorik 2 no salió para Amiga.
 
 | ID | Tarea y criterio de aceptación | Fox DOS | Prehistorik 1 DOS | Dependencia |
 |---|---|---:|---:|---|

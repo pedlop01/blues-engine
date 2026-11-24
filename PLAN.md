@@ -88,7 +88,7 @@ distintos. Para el resumen se utiliza el número de tareas completadas.
 6. Pulir cámara y HUD: **04–05**.
 7. Continuar la campaña de Blues **17** mientras se desarrolla **TH-01–TH-12**.
 8. Investigar los ADF y conjuntos Amiga de Fox/Prehistorik en **TH-13** y sus adaptadores Amiga
-   **TH-14/TH-15/TH-16** si existe una vía viable.
+   **TH-14/TH-15** si existe una vía viable. **TH-16 no aplicable**: Prehistorik 2 no salió para Amiga.
 9. Preparar la distribución **18** tras validar la primera expansión y cerrar 17.
 
 La tarea 17 acompaña cada etapa; no se aplaza toda la validación hasta el final.
@@ -109,7 +109,7 @@ La tarea 17 acompaña cada etapa; no se aplaza toda la validación hasta el fina
 │   ├── blues-amiga/
 │   ├── blues2-dos/
 │   ├── prehistorik2-dos/
-│   ├── prehistorik2-amiga/  # Título/edición por identificar
+│   ├── prehistorik2-amiga/  # Prehistorik 1 Amiga; nombre heredado
 │   ├── fox-dos/
 │   ├── fox-amiga/
 │   ├── prehistorik-dos/
@@ -191,3 +191,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-24 | TH-12 | Batería automática Linux/Windows completada: cinco juegos/seis arranques, tres aperturas correctas por combinación, errores/reinicio, opciones y perfiles aislados, BBS Linux→Windows, cachés/importación/índice/UI y rutas largas Unicode. Error interno traducido al enum v1 y slot cero rechazado. Regresión clásica Blues en los seis niveles/ediciones para scroll, capas/ascensores, cámaras/HUD, estados y rewind. 462 originales intactos; informes y checklist en docs/EXPANSION_VALIDATION.md. Paridad PX documentada. | 90 %: completar campañas/escucha/mando y pantalla reales del bloque manual. No se cierran 17 ni 18; PX-01/02 tendrán prioridad después de esta validación. |
 
 | 2026-11-24 | TH-12/13 | El usuario cierra TH-12. Auditoría Amiga reproducible: 89/71 archivos coinciden con sus ADF; 21 MAT Prehistorik pasan LZSS y límites de registros. Viabilidad y hitos en docs/AMIGA_FEASIBILITY.md, sin habilitar runtimes nuevos. | TH-14: descompresión/escena Fox primero; PX sigue vigente. 17 abierta y 18 pospuesta. |
+
+| 2026-11-24 | TH-16 | Corrección del usuario: Prehistorik 2 no salió para Amiga. TH-16 cancelada/no aplicable, fuera del cálculo de progreso; se conserva el ID histórico. | Amiga adicional: solo Fox (TH-14) y Prehistorik 1 (TH-15). |
