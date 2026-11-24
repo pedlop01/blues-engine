@@ -216,3 +216,9 @@ demostrada, que hoy es una herramienta de auditoría externa.
 TH-03 concretará el
 contrato del lanzador, conservando estos motores como procesos separados en la
 primera etapa y las capacidades exclusivas de Blues dentro de su adaptador.
+
+## Investigación Amiga posterior (TH-13)
+
+Resultado y límites actualizados en [AMIGA_FEASIBILITY.md](AMIGA_FEASIBILITY.md):
+comparación ADF reproducida y reutilización LZSS/MAT de Prehistorik demostrada.
+No habilita todavía nuevos juegos Amiga.

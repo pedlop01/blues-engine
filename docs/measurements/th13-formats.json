@@ -1,0 +1,1113 @@
+{
+  "fox": [
+    {
+      "path": "ANAISCHLOE",
+      "size": 7188,
+      "sha256": "581e5f3f00539579a3fb6be16cf0e066470be39e220fa60c892b2baff0f357ba",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BONUS.PAT",
+      "size": 1523,
+      "sha256": "00afd5d4399e2f11085c381b91b4a367e63539aea28ef12265527d6e90d019ce",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "BRIK01.BIN",
+      "size": 19899,
+      "sha256": "8ae00d92f2d0f0a7208a0c0320ddbe29bfa02aaa60136bac538b38e6965affa5",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK02.BIN",
+      "size": 20829,
+      "sha256": "1067470e556c828f241fc306254ec33c6933d6f5c6297a0920b10eb4b3ae4e26",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK03.BIN",
+      "size": 20315,
+      "sha256": "523a3cf13c69484e43192f72ab1064e5713752e8df86af3078080c2ab65cfa5f",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK04.BIN",
+      "size": 19150,
+      "sha256": "063312ef864e7866f917e15fecbbea20eac7ba2c9aece4fee0dfae67596491aa",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK05.BIN",
+      "size": 25423,
+      "sha256": "bc4fb2a7a81de9ed3520eccefc02769c1df46c3854b685a7f4a9d5ce875e0659",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK06.BIN",
+      "size": 15739,
+      "sha256": "bc52b513aaa0b53713e569ef470dc88d2e71cbe097a8db8f13cd7696962fcb36",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK07.BIN",
+      "size": 12665,
+      "sha256": "65a95e686811ded5c93c68b72db40c1d4afd4924061c7e05f33a713c4d24c627",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK08.BIN",
+      "size": 24513,
+      "sha256": "18bef25f25f5ed5243f729bb162a2d0a18642434983042783be98b048e68a973",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK09.BIN",
+      "size": 25164,
+      "sha256": "9b9feac266fa8f4d229129f1a598283cb8c5bee76d96503ca7e491e5952ad4d3",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK10.BIN",
+      "size": 21881,
+      "sha256": "cf6b3a46eafe470b8a373818aedf341da76d92ef68bd04fae00ecefc53c91e3a",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK11.BIN",
+      "size": 22826,
+      "sha256": "4556a94a6f769ac4414103bc495fab4ba59dc99d56054d00fc5f1b8243342d62",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK12.BIN",
+      "size": 18261,
+      "sha256": "676b688de8d9bda36f2703b22abe9945d4e6331f7a5ba4b51c4716f1802071d4",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK13.BIN",
+      "size": 23210,
+      "sha256": "d58ff1b67acd5bf7a1dd55ffeefa085fbc58b9c49a090bbc4acdc67a3881e3f3",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK14.BIN",
+      "size": 16294,
+      "sha256": "73ccd1226e598d98dc8a1c3be5ae0148649b7b8b9286bcbef0b9383400dcfd24",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "BRIK16.BIN",
+      "size": 13314,
+      "sha256": "d138c65e02653a251e7b239e1ea2811fc9e0050ed4d7065dfbd63182d0a94b31",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "CBA1.PAT",
+      "size": 285,
+      "sha256": "b02674c66a4123ae398fbe8d7959ba9d180827cdce25e49ce818697ff78e2c75",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "CHRISTOPHE",
+      "size": 5092,
+      "sha256": "a636c069ed59a3765ea3e3eb04e34c461e3484c96c1c7603d11213b3ee115b4b",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "CORINNE",
+      "size": 2032,
+      "sha256": "73169000b1d37cdb9eb7b11b3ce35b1065fd022a02c73403af96dafec0f8df94",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "CRISTELLE",
+      "size": 5970,
+      "sha256": "77b24b14ba7055306c6a609dbc58aa24cf216a06eb7ad11e521a6dbd03245d15",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "FRANCIS",
+      "size": 1400,
+      "sha256": "fd240ffa6a7d88a963db7b878b478c63afb3b85d3f3bbe8356f463ab434d5094",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "GIL",
+      "size": 5462,
+      "sha256": "b2f10b118aaa7fb23defd350ca14ca1d72fe7316fb6a993914205ffc2f225408",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "INDIC.CHA",
+      "size": 926,
+      "sha256": "941bdfeb4ca56196c8910c58ba0f727821ffbc309313ac9cc70db1e8f5622736",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "JEU1.PAT",
+      "size": 1403,
+      "sha256": "c5b11030391c587688508493f84b72f1b57f83f09cadb73064178b2042998917",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "JEU5.PAT",
+      "size": 1890,
+      "sha256": "4cca880a60bb9a24a56a5b0361af2e85692db4abed95553b36d6a8683e6f2edc",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "KIKI",
+      "size": 5172,
+      "sha256": "ec87325eabdbdd0da2f67f44f03c1f35b78a1ad24829fb7fe3b6a4a526dd69c5",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL01.TBL",
+      "size": 3578,
+      "sha256": "b2b3be320e6b111e36b4c5ff29c7ee9a5fc78ff282f3cd0d228f83c591d2fb29",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL02.TBL",
+      "size": 1946,
+      "sha256": "2e2887c29457581af72b4a4b52865d18317f5b26b737b4f531eea65f89c4e844",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL03.TBL",
+      "size": 5228,
+      "sha256": "1cbf1bea075c5ad68898dde1f8d8d3bec1314c23e7d73ddb07c18d5f1851ca31",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL04.TBL",
+      "size": 3084,
+      "sha256": "2d0e504c441d1c085ca418f1ac2c2b23a5773fec9ded1edbc76a8eff73901e50",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL05.TBL",
+      "size": 4601,
+      "sha256": "2acbe6da77275f5eac50f373fc73a73a77c6df57ccd045d7d5acdbf3f50c4874",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL06.TBL",
+      "size": 7837,
+      "sha256": "f55bd99f33f6ba19b47143582b0ba3c83a9df216b3feb7fb01ad963ae434a106",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL07.TBL",
+      "size": 4643,
+      "sha256": "ea60eb8ee900196c0f51f1c4d63f7980efaf311b6a6a7abbd95afa72b124244b",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL08.TBL",
+      "size": 13979,
+      "sha256": "23d4653a4281e5b9603b3300e3983d357f7471f7eace5a2183e73c3c47f2f7ce",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL09.TBL",
+      "size": 6727,
+      "sha256": "bdde3d6087f3baa92956a2962a821cbf098ff00712a4c1fe18f381ebb35635ef",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL10.TBL",
+      "size": 8681,
+      "sha256": "b00b24578e037475d8c401234cd17f8d1115c810c97109f14395d81675441248",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL11.TBL",
+      "size": 13805,
+      "sha256": "193fa974b69117f72b68cade09fbd0512c68ebe9bbc6e8d102fe52b632ece39f",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL12.TBL",
+      "size": 5502,
+      "sha256": "224aabc1e9572b16665d0c9290562bb9cbae214dcdf03d3a5b45daef8bc5d60d",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL13.TBL",
+      "size": 16420,
+      "sha256": "a37f36d0647f0f296d64b662f2f80ec58b536dee7b9603cfb09ec7c833313968",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL14.TBL",
+      "size": 3257,
+      "sha256": "ea24cac65ce73443b92f058a87f0347c1b5b5e1365239ef7f87eccb60d24770b",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL16.TBL",
+      "size": 354,
+      "sha256": "91e09ee057febfa38159b9fdf413bc5ccec18c1520117f92a5d025e583b2b284",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LUISA",
+      "size": 3840,
+      "sha256": "8b2dc7e55277171ba5fcafa353800492c122c43bada31cfdd5e44a5051535dcd",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "MANOU",
+      "size": 2258,
+      "sha256": "e214fe7db6ff2230419327f4bb6adf28abce95868e7aa0b447a7f9316e8f547d",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "MORT.PAT",
+      "size": 254,
+      "sha256": "c48d38b147dc8cb71aeba8761c91f81947fa29956bc480edb8b181eb1ac29c20",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "PERCONTI",
+      "size": 2918,
+      "sha256": "1f8d9551e895f71dc631998e5e79f73e1bbc662731c5efefa5ad5d858e506154",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL01.BIN",
+      "size": 672,
+      "sha256": "c537a04c56474942803b532ae861e24b8ed0aae288448b0f4274e05713229e6d",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL02.BIN",
+      "size": 770,
+      "sha256": "c07bb03ec8a23f15ee51c4b93768556a4c62953fd48b2b7ffbaf550c6dc0bc28",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL03.BIN",
+      "size": 1377,
+      "sha256": "76010181c641b5fd16f3ccbee15e8325cf9b669a15575b156c9da2e8e3923229",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL04.BIN",
+      "size": 1633,
+      "sha256": "f5913c8c48902dc0bdc624648cda31f595ad3ff2af5891f47894b1ff09e32615",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL05.BIN",
+      "size": 1730,
+      "sha256": "64983084e8b1bb1a596dd05e6c8855ce729e8308f56899ac1b9687e360d940bb",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL06.BIN",
+      "size": 1487,
+      "sha256": "f55870f4d05c3e18ae06eed4fc900a4ab73486c5b2eefc985df70a149ea461af",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL07.BIN",
+      "size": 1554,
+      "sha256": "2b5446e667491377781d45ab14fe4504c11b6f3c0903cb5d685cd4abe95d8885",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL08.BIN",
+      "size": 1822,
+      "sha256": "9adcaedad25e43d0f9effd838008d3fcdd34c98ca41479a4ef6c21819ead28b8",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL09.BIN",
+      "size": 1656,
+      "sha256": "d70bd7c2b5c14d961339aeb79264adeefb13da30a46073ab5640cfe0cc8fb8e0",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL10.BIN",
+      "size": 1325,
+      "sha256": "8e320fdf2e02fc870175c3dc9ddcca4263995fcf77d65ffa50192a7200b4859b",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL11.BIN",
+      "size": 1476,
+      "sha256": "d1b70cc0d931c6b86eb5a2c65d30290022d54841f184546f653cc66f1ca715ec",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL12.BIN",
+      "size": 985,
+      "sha256": "33d3c6c47f7501d262198f8da3e7cd9cdff61188b1286046a25450b57989dd82",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL13.BIN",
+      "size": 675,
+      "sha256": "c39dbf75fd79514f4f48e719ba72620fdc4fd780bc5b5defc478605dd613a7b2",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL14.BIN",
+      "size": 909,
+      "sha256": "36d91772f64ac8352bdb3228cfd17e8c08734dd17174a4339037b56b4d778ca9",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "POIL16.BIN",
+      "size": 195,
+      "sha256": "c17d1be963f5d8475e5e2f5064d7f477437526fdc0cb49822126e8cc7209de72",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "PRES2.PAT",
+      "size": 1047,
+      "sha256": "63be981fed46f7da88357ad765d2519a076ccc5c01dbb94ae1199357817792fd",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "QUIQUI",
+      "size": 6978,
+      "sha256": "70e2148075d804a1dc6b78a3f4a156f40006e2acd21b94a392714d83a90aee1c",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "Train",
+      "size": 48232,
+      "sha256": "06d0022656975adc98ab94eec17085bf243cdca3ce55567f0c1a7aea96cf3955",
+      "format": "Amiga HUNK_HEADER (not executed)"
+    },
+    {
+      "path": "ZZ",
+      "size": 2848,
+      "sha256": "629d1db8d1f355dc18468aa6a7030114558e0cd006bad16e93a107031b5af657",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "ballon",
+      "size": 4624,
+      "sha256": "c3ade6dfb143d63a73b30caf785d2c6cf050c23641435aed2d74b17073e38380",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "bisou2.spr",
+      "size": 5865,
+      "sha256": "a195214e0b3d3dac5758b23ec81449aa6ec60745012ed74c5cf2eab2ecef8e24",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "char_set1.mat",
+      "size": 1346,
+      "sha256": "8e7853fc1d67c13229349848ea192b6a1e1327e4d8cce910f15ac9057eb1e728",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "coup",
+      "size": 1556,
+      "sha256": "f39e814a2ed75e75d5e36e7e0d5c1500f515a5e49d4cc0c5912495d0714558dc",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "devs/system-configuration",
+      "size": 232,
+      "sha256": "474e6750e817425fc76a606206c5ba07952ba31a4fe10a8d3762210396393f68",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "fonte.spr",
+      "size": 1206,
+      "sha256": "47fd969da23f5cf80c0620628d413b48d06a65c7e9fdcedf4957a348c6248b0d",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "fox",
+      "size": 2520,
+      "sha256": "3dfdf6986f5355b97bf3be7cb16e9ae1922e8eb76ba08e3e3504eb175817404e",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "fox.spr",
+      "size": 9596,
+      "sha256": "4ff9df48d5e31819e8314cde615841b9a7108de3bce4f56b2ee08b34e5754291",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "gagne2.pat",
+      "size": 1333,
+      "sha256": "a423fd9cd192b03dd05c7e3db3aa5b99b47c674f9501951b00c1692d241162f5",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "jeu22.pat",
+      "size": 1958,
+      "sha256": "c0f33f4b4023979306c07a21ec73fcc3eba7f925052a907155d8e41b352f2330",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "jeu32.pat",
+      "size": 2114,
+      "sha256": "f644bc18b0522d1ba9ffbf8ef31c68672b009ecdf5a09616c3254b08e6572433",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "jeu42.pat",
+      "size": 2177,
+      "sha256": "c61c81e13c0acea5a3986397e79f2b7bb77878df422f2ac938c5124581271df1",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "jumbo.prg",
+      "size": 32,
+      "sha256": "202f00a7ab090986b28070600a590808063dd43fab965585bd0c614c1ca23f72",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "main",
+      "size": 51048,
+      "sha256": "18ca46dd02a3ad3623b03d425f0e0ae489b5090498882aea6d2578161010bc45",
+      "format": "Amiga HUNK_HEADER (not executed)"
+    },
+    {
+      "path": "monster2.spr",
+      "size": 84972,
+      "sha256": "311aba8e53c297f17adc92d99fece02ebf1db4f5df65f1e7c224752957386d2d",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "objet2.spr",
+      "size": 9856,
+      "sha256": "9a1ccf63861d65845923c280757b2147d19ea709e6ee0feb0b7589b62297d707",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "over2.pat",
+      "size": 1963,
+      "sha256": "4f25e851817d33474d09f334f75e6621033a00f3a9bc26e1eeb150f1b826fbd2",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "present2.pc1",
+      "size": 29855,
+      "sha256": "1d6124d59bd17b08e3de6daa1ef42d47c08034b45d5b93957d4e12f9680483fb",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "ressort",
+      "size": 1542,
+      "sha256": "2248f4f46af72472189d1dab3540d3ad7ad5c6075c125c282f3b200db825a64f",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "s/startup-sequence",
+      "size": 15,
+      "sha256": "a2f4642c90626fb566b25948de0fcf41d5680314ad25d4ffd32770f8a79a3324",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "theend.spr",
+      "size": 5415,
+      "sha256": "b756ddb393d98386ca84e90e2829b451503b551bebb9b5c4f18100e858bf77cd",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "tirperso",
+      "size": 1536,
+      "sha256": "bb9a6d1899ab5101b79adb65453a1a382087e1b1349197b27dbd81a1ea3c5371",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "titre2.pc1",
+      "size": 9509,
+      "sha256": "7d49d08684c6b40ac188e8b1e02a1afd65912126570e8cfb1ced86cc33b831fc",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "titus.pc1",
+      "size": 3788,
+      "sha256": "6239fe04b1be0e896897ba8cb3c65c1018dd7410ec2cb0a4c9b9369ca2e7e6bc",
+      "format": "unverified/raw resource"
+    }
+  ],
+  "prehistorik1": [
+    {
+      "path": "BULLE.PC1",
+      "size": 10698,
+      "sha256": "fa59d753cc631944da74bad64dd2006b8fad4a820aa9fd3837ec65364687b855",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "COOL2.MAT",
+      "size": 6071,
+      "sha256": "d2447d6c093513493f34212aa540234b085281e1481c5ae1e95a7480846f473c",
+      "format": "LZSS decoded",
+      "decoded_size": 8236,
+      "decoded_sha256": "6989046f14a9bc48586f92d1877d173fccc7da33f6e9b3c517a7c8f13429e063",
+      "remaining_bits": 8,
+      "mat_records": {
+        "sprite_count": 1,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "COOL3.PC1",
+      "size": 16288,
+      "sha256": "99cfdf3263cb35e14e55ab7b69e6343fca67eb3b01add8cddafd5ba0182491a1",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "ELEML1.MAT",
+      "size": 14299,
+      "sha256": "1bc06149e7d0eda103aae184df373247a4bdb3529db1ae839f3aea126aa7c296",
+      "format": "LZSS decoded",
+      "decoded_size": 18839,
+      "decoded_sha256": "e6aebebec492325bed20e30218bdadec474071a0b4ce8f33654fcb21706620ee",
+      "remaining_bits": 2,
+      "mat_records": {
+        "sprite_count": 22,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "ELEML2.MAT",
+      "size": 8001,
+      "sha256": "3bb7ae0a54a5903981453412ed5a57df75e43bb3b38b08f63c142d68f355c3f1",
+      "format": "LZSS decoded",
+      "decoded_size": 10043,
+      "decoded_sha256": "fd755ab4d095d1e35ed4908aec8b37512350029de849a787fd193e3f1a5a8342",
+      "remaining_bits": 2,
+      "mat_records": {
+        "sprite_count": 1,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "ELEML3.MAT",
+      "size": 24211,
+      "sha256": "6afb6cc9b00ce9807a355eac702e638c513951317ee78f6d70a577a3ab4c50d6",
+      "format": "LZSS decoded",
+      "decoded_size": 26829,
+      "decoded_sha256": "b693acf77f62219426d312bcb59c29630498549b8bf530f618f90f376095972d",
+      "remaining_bits": 1,
+      "mat_records": {
+        "sprite_count": 28,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "ELEML3B.MAT",
+      "size": 9184,
+      "sha256": "3a9334dec32d68cbbd1a6fc2d5b4211bd9425cc13ed66c9e34e38ac50b7d6c20",
+      "format": "LZSS decoded",
+      "decoded_size": 12763,
+      "decoded_sha256": "399e3eacef61b97129836ac4dc8495ddaa67e5aa5d4e0d9d946b4f263415426e",
+      "remaining_bits": 6,
+      "mat_records": {
+        "sprite_count": 5,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "ELEML5.MAT",
+      "size": 13825,
+      "sha256": "d24026212148ce0c7293210a34e3c469320f561f1c61be9e48961826bf947db8",
+      "format": "LZSS decoded",
+      "decoded_size": 17529,
+      "decoded_sha256": "c2332f9b2db5220136c5da33b96e6aa5c367a8dd8eaec908c5505fcd06c30b12",
+      "remaining_bits": 8,
+      "mat_records": {
+        "sprite_count": 22,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "ELEML7.MAT",
+      "size": 12767,
+      "sha256": "94b8b249cfe88914cf152872ce47b929491739925665b20563b5c1d615e73c1f",
+      "format": "LZSS decoded",
+      "decoded_size": 15629,
+      "decoded_sha256": "f1489b15a6dc9645849df31509547d662b1cd7024f2e24890feee7d5e9c4c417",
+      "remaining_bits": 4,
+      "mat_records": {
+        "sprite_count": 32,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "FOND1.PC1",
+      "size": 11603,
+      "sha256": "57f969af98955eb8fad196e25c876751a1ba551db057455cf228deb3db6bcbff",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "FOND5.PC1",
+      "size": 6171,
+      "sha256": "2b84b00dd3810c6e48648901dda5faee06881e467c6dce3dab78baf46dc9e673",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "FOND7.PC1",
+      "size": 1304,
+      "sha256": "ab7683305a206ac0fc725f88669faa6de00a07bcb41f84262c258bb4a8cf4ecc",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "GROT1.MAT",
+      "size": 5589,
+      "sha256": "5d5935bc843512ef06bedeb5f8c0de8431004d760286aef6bd40a36fdc3ec4ae",
+      "format": "LZSS decoded",
+      "decoded_size": 6268,
+      "decoded_sha256": "6f6f008fc69f75c77892cafb9d39e4929a9939bce2335a34117bc5568980e151",
+      "remaining_bits": 3,
+      "mat_records": {
+        "sprite_count": 2,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "GROT3.MAT",
+      "size": 6146,
+      "sha256": "a1db53eaab281299c00f17a2efd7caafe0ed4d4a8a1fe09c7352b547a1ba2c4b",
+      "format": "LZSS decoded",
+      "decoded_size": 6214,
+      "decoded_sha256": "1ebe0f6b618014e0ba74024c6a164ab05d62715b22d9eb2f5a792b57d74e177d",
+      "remaining_bits": 3,
+      "mat_records": {
+        "sprite_count": 2,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "GROT5.MAT",
+      "size": 6445,
+      "sha256": "c6bcea5a8b4521692f6555f4fd36cd20979ff8d9cc2d682ed271301e7846a8a1",
+      "format": "LZSS decoded",
+      "decoded_size": 6352,
+      "decoded_sha256": "ed16d916daa865dbcca3d167b31ea76d023c1a901177c3c6697e607b0030fe13",
+      "remaining_bits": 7,
+      "mat_records": {
+        "sprite_count": 2,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "H1.MAT",
+      "size": 15511,
+      "sha256": "215b34300c70201fc2aeeba3d1bbdf8369b739cfcfb7135c77fdbbc1be0332b8",
+      "format": "LZSS decoded",
+      "decoded_size": 17691,
+      "decoded_sha256": "5abc3eaf14fe69259b50dc0003c0cdabf28bdfc97689b6ee9a0237144a9396ad",
+      "remaining_bits": 2,
+      "mat_records": {
+        "sprite_count": 1,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "H2.MAT",
+      "size": 15937,
+      "sha256": "c1da4343f5c51684c6029713f8c32028f6299afddd1462a3cbe2a2579c6109cb",
+      "format": "LZSS decoded",
+      "decoded_size": 18174,
+      "decoded_sha256": "0af0448e57b49359db9112512c4c796252d2820f53ff5ce7c6a6a8eb8f2a3b92",
+      "remaining_bits": 2,
+      "mat_records": {
+        "sprite_count": 1,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "H3.MAT",
+      "size": 15186,
+      "sha256": "08fdd3531a824d8a0a9af479e1d1c49fe0492fdc7155d6402d60c59b2d338e39",
+      "format": "LZSS decoded",
+      "decoded_size": 17262,
+      "decoded_sha256": "9e775f754bd28aa7d009cf504ecd9b9138d8e596c1dee2249a6f4b2cd619aea9",
+      "remaining_bits": 8,
+      "mat_records": {
+        "sprite_count": 1,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "H4.MAT",
+      "size": 7782,
+      "sha256": "0f8328699108f19903882f45188ce6cf5e68ada9dd8810568084e10a703c7c46",
+      "format": "LZSS decoded",
+      "decoded_size": 8340,
+      "decoded_sha256": "52f43803a1e1c6a2d95176e4dda01090d0f41fbc11cdbda245ebaf56f9dbd9fd",
+      "remaining_bits": 2,
+      "mat_records": {
+        "sprite_count": 4,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "L1SPR.MAT",
+      "size": 42119,
+      "sha256": "f21ff559bfa00e2e2ccb8a91a31084308fd1632f3fe8a9345a86d51eb86814ee",
+      "format": "LZSS decoded",
+      "decoded_size": 65212,
+      "decoded_sha256": "40142396870282f67c3502e4d00436e35624e51dfd605e7a0c7b3bd7388e8f1a",
+      "remaining_bits": 2,
+      "mat_records": {
+        "sprite_count": 147,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "L2SPR.MAT",
+      "size": 31756,
+      "sha256": "9a76fbc8b03bab5c3df221d3d01fb72bbda38a9d84b79a7cf958ea7b4286e629",
+      "format": "LZSS decoded",
+      "decoded_size": 42319,
+      "decoded_sha256": "efc512f6274247a6eaee698d7b3381f11f293d6325a2d897e47a16863c0f1879",
+      "remaining_bits": 7,
+      "mat_records": {
+        "sprite_count": 58,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "L3SPR.MAT",
+      "size": 41218,
+      "sha256": "659ee344533f2abe33430c253a85e62d69adaf6ff71edc21e7210915c68c1ea9",
+      "format": "LZSS decoded",
+      "decoded_size": 62119,
+      "decoded_sha256": "96fc4c7608bdc606ceb8ba764d383b0aa18de7cc4af8dc63290180e933134bbd",
+      "remaining_bits": 6,
+      "mat_records": {
+        "sprite_count": 154,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "L4SPR.MAT",
+      "size": 25423,
+      "sha256": "b0e4dd92a2182d1e0c435216129cb721a1529e03011bf954c9335a53b4174a2f",
+      "format": "LZSS decoded",
+      "decoded_size": 36181,
+      "decoded_sha256": "6845ff45d9887496423a1ced588cf823c8aed1621709f719a1d652c0d3a91ea9",
+      "remaining_bits": 3,
+      "mat_records": {
+        "sprite_count": 62,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "L5SPR.MAT",
+      "size": 41679,
+      "sha256": "36bee85edb5962426f51589a520859faeddcfef181a5001722e2e1a0feb54cd5",
+      "format": "LZSS decoded",
+      "decoded_size": 63399,
+      "decoded_sha256": "a1512fa2ebafcecfd57913ee09cb8cedfa4ada4f44edc290daf939c8defa5ed2",
+      "remaining_bits": 4,
+      "mat_records": {
+        "sprite_count": 146,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "L6SPR.MAT",
+      "size": 15607,
+      "sha256": "9be561eb8300c315e967b6bffbde113f74df2e069bc4e3e5ca5d3da2021000d9",
+      "format": "LZSS decoded",
+      "decoded_size": 24276,
+      "decoded_sha256": "880dac24090ece2dacc2bef803cb8a0bcaff9db945d6f5bbd2044937000e06f5",
+      "remaining_bits": 1,
+      "mat_records": {
+        "sprite_count": 62,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "L7SPR.MAT",
+      "size": 39427,
+      "sha256": "e3b4c211a15ee20a12ae38f1f2bb34b5898ae2a1b364c14edf2f72b347b4f79c",
+      "format": "LZSS decoded",
+      "decoded_size": 58923,
+      "decoded_sha256": "bc5529fc6a22175cc2c5dd95e0003b8d608d7590eef6f9fbb2fb91f7743a782e",
+      "remaining_bits": 7,
+      "mat_records": {
+        "sprite_count": 148,
+        "trailing_bytes": 0
+      }
+    },
+    {
+      "path": "LEGEND",
+      "size": 29180,
+      "sha256": "18634c6988552eafdb745cadcdf63416b8980382c2e1b616a47af2fa2d8e159f",
+      "format": "Amiga HUNK_HEADER (not executed)"
+    },
+    {
+      "path": "LEVEL1.DUR",
+      "size": 960,
+      "sha256": "80bdb568dff09047995062f42c75f92d82140ceeaa660d3595d1d6d4a67a5e10",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL3.DUR",
+      "size": 960,
+      "sha256": "68a6924642f06fbb47e473bd6992f40e417cc4ecf3e500a2ff8c6b9957df83c1",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL5.DUR",
+      "size": 960,
+      "sha256": "a4f419d5a53abced502c5b6c24d5272af22406be69d5e29d4ecf4c174b4b9106",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "LEVEL7.DUR",
+      "size": 960,
+      "sha256": "88223e169aa547b0b000134aca32a26450c36759970d97530206f241c8a2bb58",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "RING.PC1",
+      "size": 18249,
+      "sha256": "e8dbf50dfd9a34d8d2ab3e40bdbcfe2f7bd021b273f55b3b063dc32b957626ef",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "THEEND.PC1",
+      "size": 5143,
+      "sha256": "a56e12bac24daa24a36e88da3763f24d8971b8966271ef632309b8d6473eb5d6",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "TITRE1.PC1",
+      "size": 19775,
+      "sha256": "0d7c742c16af80ba3f9bd6550291018e136fb42ea61e27113706969ffed1683d",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "TITRE2.PC1",
+      "size": 8673,
+      "sha256": "128d559f0cb1728ff00f45c163df90e6bb8876cbad65977d311015969e32f57f",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "TITUS.PC1",
+      "size": 5792,
+      "sha256": "7fdc7197cc67b2ed905bdd115397f2763b9d1c605f26ef8ed9fe8e8395d9b028",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "alphab.cha",
+      "size": 1560,
+      "sha256": "2179e035ed6bf2135eb3daf0f34369046c4498de6e1a0e7b8c579a1ed216fc16",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "bongo1",
+      "size": 2220,
+      "sha256": "3e2735d578c9cc316598208fa552aaa84a4fb6f41357878d06c3bf2005b0df47",
+      "format": "IFF 8SVX"
+    },
+    {
+      "path": "bonus",
+      "size": 2390,
+      "sha256": "37e6f952855eed18185da97fc285c7280f20cb0ce94c750ed4da98600a599570",
+      "format": "IFF 8SVX"
+    },
+    {
+      "path": "bonus.pat",
+      "size": 1624,
+      "sha256": "bc2c25fecdcee618c84baedeefc738ec417892d75506562348ec57dc36a6321b",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "boy16.pat",
+      "size": 8792,
+      "sha256": "dde858739c70f84e7d0745e56f8d3c6c29ee3ea10724b230ba7851460621de41",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "char_set1.mat",
+      "size": 1346,
+      "sha256": "8e7853fc1d67c13229349848ea192b6a1e1327e4d8cce910f15ac9057eb1e728",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "cowbell2",
+      "size": 804,
+      "sha256": "9532dc590d08c31525af595c826c9c9c9f824d6ef359459dd7d170e213f4e8f1",
+      "format": "IFF 8SVX"
+    },
+    {
+      "path": "cri2",
+      "size": 5100,
+      "sha256": "a328a7d53fdc520f8e80f867727105c62f287b2135cca01667012c527612ee91",
+      "format": "IFF 8SVX"
+    },
+    {
+      "path": "devs/system-configuration",
+      "size": 232,
+      "sha256": "0dd6029b22cb518c6cf41f229ba19b49fe4e0623b5d6559b3a60046c8b991971",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "fin.pat",
+      "size": 3672,
+      "sha256": "478755dd8399bc5f121f6ac959e162aad8c147f90e3ca19eb7fa8ba37c9e588e",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "hapsi",
+      "size": 5078,
+      "sha256": "3cd2650a83f6249176283cf51c74fcc12ac90b0f6b07308e5d3253d3143b4c0f",
+      "format": "IFF 8SVX"
+    },
+    {
+      "path": "icerain",
+      "size": 4222,
+      "sha256": "572f055e12498018b5087daaa75997a88b7838f19189310548e4f2814d6301a2",
+      "format": "IFF 8SVX"
+    },
+    {
+      "path": "intro.pat",
+      "size": 3672,
+      "sha256": "99e2c50ee4e3f688c3e572fa6b3eec41a6793a14fa42c951a2d824a8c984383e",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "jumbo.prg",
+      "size": 32,
+      "sha256": "202f00a7ab090986b28070600a590808063dd43fab965585bd0c614c1ca23f72",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "level1.dat",
+      "size": 3550,
+      "sha256": "8a93c493492973a4cc39e54d10d7085181ed25a906f1bc0241bd302d472cf643",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "level3.dat",
+      "size": 5068,
+      "sha256": "dba53cce13cc98b251b096e7d259723f1a474c41b4e9624b9fdc5840aca09504",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "level5.dat",
+      "size": 3978,
+      "sha256": "843d8491cf8b312223c2134cac732369a69304513b06288f346eedd038da293a",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "level7.dat",
+      "size": 7542,
+      "sha256": "9ec3c3ce40bdd26e2845f215753c9b04f177d284b615424d7a1436559d7e2a1a",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "licks2",
+      "size": 5000,
+      "sha256": "c4aa8f9a6583ce71a1ce2d805028d33f32c121a6f93eb462937994c78b886dff",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "main",
+      "size": 117760,
+      "sha256": "d48f952eca0d74547d9e99531b54ac05beaabb42a55203fec510279bd9bd5295",
+      "format": "Amiga HUNK_HEADER (not executed)"
+    },
+    {
+      "path": "massue2",
+      "size": 1174,
+      "sha256": "5fad475f7cf17fd095fe9ed3b08ab0472433d4cdf6c1b5b438ff1682ebfebe11",
+      "format": "IFF 8SVX"
+    },
+    {
+      "path": "mort.pat",
+      "size": 1624,
+      "sha256": "d6c654ef6e70345719c0adedb8d2374d76638e5d44d72794593f8172c428ae35",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "popsnare1",
+      "size": 1732,
+      "sha256": "167dfe5b6a5f066501261cd11f5ca1baa32f9b6cf8c5b84e549d571ec97ccb77",
+      "format": "IFF 8SVX"
+    },
+    {
+      "path": "reflex",
+      "size": 4644,
+      "sha256": "9d6e86d24513e6a979e52f4d8aae8e322af54ee8aa5cf94541c6d60ad63caa0d",
+      "format": "IFF 8SVX"
+    },
+    {
+      "path": "ressort",
+      "size": 1648,
+      "sha256": "ef1223c8717f6b4a2aff962634d40a00275534d7bd1e9200097a233195bea05f",
+      "format": "IFF 8SVX"
+    },
+    {
+      "path": "rik1.pat",
+      "size": 14936,
+      "sha256": "1b1576f89dcdd4bb41abfba218e43227ba6dd4d0ceb06bd1b306318208d74e49",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "rik6.pat",
+      "size": 19032,
+      "sha256": "abd6decdbfc6954f42308608b23aca80054fe7ea2c4be9f8bb0daf5aab6af41b",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "rik8.pat",
+      "size": 8792,
+      "sha256": "7dbfb4c4fdd43df7c8c4dd351dd59ee70939c753b961339b0af323c7331a6a2e",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "rocky.pat",
+      "size": 8792,
+      "sha256": "fd6626ca1676d0a549435d65e0dda1a55d93740d822e8a0feb8f5a041fbdd428",
+      "format": "PAT sequencer: decoder unverified"
+    },
+    {
+      "path": "s/startup-sequence",
+      "size": 24,
+      "sha256": "dec7af6a2cf3ebd62d5b1700d1b1c5b0df2af07edcf05c7c34d24d67d7276e3e",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "snaredrum",
+      "size": 4302,
+      "sha256": "7353b4e609d641af1c91f1e25061eed6cde37934b0afe1a0826e68bd427d047b",
+      "format": "IFF 8SVX"
+    },
+    {
+      "path": "take",
+      "size": 4598,
+      "sha256": "2a1009b283c3fefb8e9c12195893d8c31fb3dfa35a615ff6ffcea58ea3890b21",
+      "format": "IFF 8SVX"
+    },
+    {
+      "path": "text",
+      "size": 318,
+      "sha256": "22dd518b7a70317538235b97762e25423d73d856f65174ce824919f7072c127b",
+      "format": "unverified/raw resource"
+    },
+    {
+      "path": "type",
+      "size": 2284,
+      "sha256": "bb3f3861a705d55facaed39266a1c85c0c7a596ccac52a0f06f5eb894cef947c",
+      "format": "Amiga HUNK_HEADER (not executed)"
+    },
+    {
+      "path": "warmth",
+      "size": 4548,
+      "sha256": "87d5c59e3b6919915b3077fb646e8ba1b8eec380c2a586cac67a9803e5c24945",
+      "format": "IFF 8SVX"
+    }
+  ]
+}

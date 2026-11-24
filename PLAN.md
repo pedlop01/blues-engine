@@ -16,7 +16,7 @@ expansión validada. El detalle de TH-00–TH-16 y la fase de paridad PX-01–PX
 - Tareas completadas: **16 de 18**.
 - Completadas: **01–16**.
 - Blues: **17 en curso** con las pruebas del usuario; **18 pospuesta** hasta la expansión.
-- Titus Engine: **TH-00–TH-11 completadas (100 %)**; **TH-12 al 90 %**, automática Linux/Windows superada y pasada manual pendiente.
+- Titus Engine: **TH-00–TH-13 completadas (100 %)**; TH-12 cerrada por el usuario y TH-13 documentada en [viabilidad Amiga](docs/AMIGA_FEASIBILITY.md).
 - Paridad Fox/Prehistorik: **PX-01–PX-08 planificadas (0 %)**, con scroll, cámara y encuadre primero.
 - Corrección de escaleras validada por el usuario.
 - El punto recuperable previo a la expansión es `dd07383`, etiqueta `blues-baseline-2026-11-23`.
@@ -189,3 +189,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-23 | TH-11 | El usuario valida TH-10. Piloto Olduvai real en host SDL compartido frente al mismo bootstrap en proceso hijo, Linux/Windows: tres entradas, movimiento/salto/pausa/audio, errores y caída controlada. Compartir proceso invalida recursos SDL del host en retornos normales y deja una ventana viva en la excepción; la caída termina el host completo. Mediciones de arranque/CPU/memoria y evidencia reproducible en docs/INPROCESS_EVALUATION.md. Decisión: mantener todos los adaptadores separados; piloto opcional sin instalación/registro. Originales intactos. | TH-12: validación completa de la expansión. 17 abierta y 18 pospuesta. |
 
 | 2026-11-24 | TH-12 | Batería automática Linux/Windows completada: cinco juegos/seis arranques, tres aperturas correctas por combinación, errores/reinicio, opciones y perfiles aislados, BBS Linux→Windows, cachés/importación/índice/UI y rutas largas Unicode. Error interno traducido al enum v1 y slot cero rechazado. Regresión clásica Blues en los seis niveles/ediciones para scroll, capas/ascensores, cámaras/HUD, estados y rewind. 462 originales intactos; informes y checklist en docs/EXPANSION_VALIDATION.md. Paridad PX documentada. | 90 %: completar campañas/escucha/mando y pantalla reales del bloque manual. No se cierran 17 ni 18; PX-01/02 tendrán prioridad después de esta validación. |
+
+| 2026-11-24 | TH-12/13 | El usuario cierra TH-12. Auditoría Amiga reproducible: 89/71 archivos coinciden con sus ADF; 21 MAT Prehistorik pasan LZSS y límites de registros. Viabilidad y hitos en docs/AMIGA_FEASIBILITY.md, sin habilitar runtimes nuevos. | TH-14: descompresión/escena Fox primero; PX sigue vigente. 17 abierta y 18 pospuesta. |

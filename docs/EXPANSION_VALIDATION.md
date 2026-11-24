@@ -2,8 +2,9 @@
 
 La validación distingue la evidencia automática de la pasada manual en vídeo,
 audio y dispositivos reales. **Una ruta corta reproducible no certifica una
-campaña completa.** El cierre de TH-12 requiere ambas partes; la distribución
-18 requiere además cerrar las pruebas de Blues 17.
+campaña completa.** TH-12 queda cerrada por aceptación expresa del usuario el 24 de noviembre de
+2026. No se infiere una campaña ni una prueba física concreta de esa aceptación.
+La distribución 18 requiere además cerrar las pruebas de Blues 17.
 
 ## Catálogo real
 
@@ -23,8 +24,9 @@ con scroll super suave y cámara/encuadre como primera prioridad.
 
 ## Resultado actual
 
-**Batería automática superada en Linux y Windows; TH-12 al 90 %, pendiente de
-la pasada manual del bloque 10.** Informes: [Linux](measurements/th12-linux.json),
+**TH-12 cerrada (100 %) por el usuario el 24/11/2026. Batería automática
+superada en Linux y Windows.** La checklist inferior conserva los casos manuales
+sin evidencia individual registrada; los JSON históricos no se alteran. Informes: [Linux](measurements/th12-linux.json),
 [Windows](measurements/th12-windows.json) y
 [regresión clásica de Blues](measurements/th12-blues-baseline.json).
 
@@ -94,7 +96,7 @@ binarios exige una validación nueva. Los casos fallidos se vuelven a ejecutar.
 | 9. Contratos/plataformas/originales | CTest/core sin SDL, validadores C++/JSON y conservación de hashes/tamaños/fechas de originales; rutas Unicode y almacenamiento largo |
 | 10. Validación manual | Campañas, escucha, mando físico y pantalla real: pendiente de la checklist inferior |
 
-Los nueve primeros bloques completados representan **90 %** de TH-12; no es una
+Antes de la aceptación del usuario, los nueve primeros bloques representaban **90 %**; no es una
 estimación de horas. La pasada manual es el bloque final y no se marca por el
 hecho de que un test headless pase. Los informes `report.json` conservan el
 estado automático y `manual_status: pending`.

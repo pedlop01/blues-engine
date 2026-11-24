@@ -1,7 +1,7 @@
 # Titus Engine: plan de expansión
 
 Actualización: **24 de noviembre de 2026**.
-Estado: **expansión autorizada; TH-00–TH-11 completadas; TH-12 al 90 %: validación automática superada, pasada manual pendiente**.
+Estado: **expansión autorizada; TH-00–TH-13 completadas; TH-12 cerrada por el usuario; viabilidad Amiga documentada**.
 Nombre de producto acordado: **Titus Engine** (`titus-engine`).
 
 ## Prioridades y punto de partida
@@ -193,10 +193,10 @@ inventario no equivale a haber integrado o validado un nuevo juego.
 | TH-09 | Incorporar Prehistorik 1 DOS | Adaptador Olduvai con identificación del conjunto `FILES*`/`PRE1.EXE` por contenido, sin renombrar originales. Arranque, controles, audio, cierre y retorno comprobados. | TH-02, TH-06 | Completada: Olduvai DOS separado, DIET nativo verificado, caché/perfil privados y controles/audio/pausa/retorno Linux/Windows; ver PREHISTORIK_RUNTIME.md | 100 % |
 | TH-10 | Unificar ajustes y partidas | Valores globales y particulares por juego/edición; capacidades reales, volúmenes, mandos y catálogo de partidas. Migración reversible de Blues, rechazo de saves ajenos y conservación de formatos por motor. | TH-07, TH-08, TH-09 | Completada: opciones por capas y capacidades, persistencia/recuperación, mandos virtuales y catálogo/carga nativos de Blues; reimportación comparada con copia reversible. Ver SETTINGS_AND_SAVES.md | 100 % |
 | TH-11 | Evaluar integración en proceso | Piloto con un motor; propiedad y ciclo de SDL/audio/vídeo, errores y rendimiento comparados con procesos separados. Registrar qué adaptadores se integran y cuáles permanecen aislados. | TH-03, TH-10 | Completada: piloto Olduvai Linux/Windows con retornos, audio, excepciones y caída controlada; mediciones registradas. Todos los adaptadores permanecen en procesos separados. Ver INPROCESS_EVALUATION.md | 100 % |
-| TH-12 | Validar la primera expansión | Matriz por juego/edición, arranque/salida repetidos, aislamiento de datos/ajustes, fallos recuperables, regresiones de Blues y documentación del catálogo realmente soportado. Habilita la tarea 18 tras cerrar también 17. | TH-10; decisión TH-11 | Automática completada Linux/Windows: matriz de seis arranques, aislamiento, fallos, partidas/UI y regresión Blues; falta campaña/escucha/dispositivos reales. Ver EXPANSION_VALIDATION.md | 90 % |
-| TH-13 | Investigar datos Amiga adicionales | Examinar imágenes y carpetas Amiga extraídas, identificar Prehistorik 1/2, formato de disco y recursos sin modificarlos. Reutilizar herramientas disponibles si son aplicables; identificar motores/código o trabajo de ingeniería inversa y entregar viabilidad por juego. | TH-01 | Sin iniciar | 0 % |
-| TH-14 | Añadir Titus the Fox Amiga | Si TH-13 confirma una vía viable, implementar su adaptador y verificar gráficos, física, niveles, audio y final. Registrar la edición en el selector tras validarla. | TH-13, TH-08 | Pendiente de viabilidad | 0 % |
-| TH-15 | Añadir Prehistorik 1 Amiga | Si TH-13 confirma una vía viable, implementar su adaptador y verificar gráficos, física, niveles, audio y final. Registrar la edición en el selector tras validarla. | TH-13, TH-09 | Pendiente de viabilidad | 0 % |
+| TH-12 | Validar la primera expansión | Matriz por juego/edición, arranque/salida repetidos, aislamiento de datos/ajustes, fallos recuperables, regresiones de Blues y documentación del catálogo realmente soportado. Habilita la tarea 18 tras cerrar también 17. | TH-10; decisión TH-11 | Cerrada por aceptación del usuario el 24/11; evidencia automática y límites manuales conservados en EXPANSION_VALIDATION.md | 100 % |
+| TH-13 | Investigar datos Amiga adicionales | Examinar imágenes y carpetas Amiga extraídas, identificar Prehistorik 1/2, formato de disco y recursos sin modificarlos. Reutilizar herramientas disponibles si son aplicables; identificar motores/código o trabajo de ingeniería inversa y entregar viabilidad por juego. | TH-01 | Investigación completada: Fox requiere descompresión; Prehistorik 1 reutiliza LZSS/MAT; sin datos identificados de Prehistorik 2. Ver AMIGA_FEASIBILITY.md | 100 % |
+| TH-14 | Añadir Titus the Fox Amiga | Si TH-13 confirma una vía viable, implementar su adaptador y verificar gráficos, física, niveles, audio y final. Registrar la edición en el selector tras validarla. | TH-13, TH-08 | Candidato: primer hito descompresor/escena; riesgo alto | 0 % |
+| TH-15 | Añadir Prehistorik 1 Amiga | Si TH-13 confirma una vía viable, implementar su adaptador y verificar gráficos, física, niveles, audio y final. Registrar la edición en el selector tras validarla. | TH-13, TH-09 | Vía parcial demostrada: lectores/visor antes del runtime | 0 % |
 | TH-16 | Añadir Prehistorik 2 Amiga si se confirma el conjunto | Tras identificar los recursos y la vía de motor, implementar el adaptador y verificar gráficos, física, niveles, audio y final. No confundirlo con Prehistorik 1 ni asumir compatibilidad del motor DOS. | TH-13, TH-07 | Pendiente de identificación/viabilidad | 0 % |
 
 La disponibilidad de ADF no permite dar TH-14/TH-15/TH-16 por implementadas. La primera
@@ -258,9 +258,9 @@ TH-04 completa el catálogo definido en TH-03; [implementación y pruebas](CATAL
 - Qué adaptadores merece la pena integrar en proceso y cuáles seguirán separados.
 - Qué mejoras adicionales recibirá cada juego después de asegurar su fidelidad.
 
-Siguiente cierre: **TH-12**, completar la pasada manual descrita en
-[EXPANSION_VALIDATION.md](EXPANSION_VALIDATION.md); la matriz automática ya está
-comprobada. Después, priorizar PX-01/PX-02 para la paridad Fox/Prehistorik con
-Blues. TH-11 mantiene los adaptadores en procesos separados. En paralelo, atender
-los errores que el usuario encuentre en la tarea 17.
-La distribución 18 se retoma después de la primera expansión validada.
+TH-12 queda cerrada por aceptación del usuario el 24 de noviembre, sin atribuir
+a las pruebas automáticas una campaña o dispositivos físicos no documentados.
+TH-13 completada: [viabilidad Amiga](AMIGA_FEASIBILITY.md). Siguiente tarea
+Amiga: TH-14, comenzando por su hito de descompresión y escena. La paridad
+PX-01/PX-02 sigue pendiente y vigente. TH-11 mantiene adaptadores separados.
+La tarea 17 continúa abierta; la distribución 18 sigue pospuesta.

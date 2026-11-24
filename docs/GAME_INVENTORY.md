@@ -103,3 +103,9 @@ La preparación DIET genera temporalmente un MZ de **164166 bytes**, SHA-256
 No se incluye en Git ni se sustituye `PRE1.EXE`. `TITRE1.PC1` de Prehistorik
 Amiga coincide con el ADF: SHA-256
 `0d7c742c16af80ba3f9bd6550291018e136fb42ea61e27113706969ffed1683d`.
+
+## Investigación Amiga posterior (TH-13)
+
+Resultado y límites actualizados en [AMIGA_FEASIBILITY.md](AMIGA_FEASIBILITY.md):
+comparación ADF reproducida y reutilización LZSS/MAT de Prehistorik demostrada.
+No habilita todavía nuevos juegos Amiga.
