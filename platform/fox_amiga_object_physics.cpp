@@ -9,13 +9,15 @@ Collision sample(const Level& level,int x,int y){
     if(x<0 || x>=4096 || y<0 || y>=int(level.height_tiles*16))return {};
     return collision_at(level,x,y);
 }
-bool visible(ObjectBody& o,const ObjectRule& rule,Point camera){
+bool visible(ObjectBody& o,const ObjectRule& rule,const Viewport& view){
+    if(!view.width || !view.height || view.width>4096 || view.height>4096)throw std::runtime_error("Invalid object viewport");
+    const auto camera=view.camera;
     const int x=o.feet.x-camera.x,y=o.feet.y-camera.y;
-    if(x<=-48 || x>=352 || y<=-48 || y>=240)return false;
+    if(x<=-48 || x>=int(view.width)+32 || y<=-48 || y>=int(view.height)+64)return false;
     o.width=rule.width;o.height=rule.height;
     const int ax=rule.anchor_x<0?int(o.width/2):rule.anchor_x,ay=rule.anchor_y<0?int(o.height):rule.anchor_y;
     const int left=x-(o.vx<0?int(o.width)-ax:ax)+(camera.x&15),top=y-ay+1;
-    return top<=175 && left<=335 && left+int(o.width)>0 && top+int(o.height)>0;
+    return top<int(view.height) && left<int(view.width)+16 && left+int(o.width)>0 && top+int(o.height)>0;
 }
 void object_contact(ObjectWorld& world,unsigned index){
     auto& o=world.objects[index];const int foot=o.feet.y+1,left=o.feet.x-int(o.width/2);
@@ -174,7 +176,7 @@ void step_objects(const Level& level,ObjectWorld& world,Body& player,ObjectStepC
         o.flags&=~0x8000u;
         const auto& rule=rules.kinds[o.kind-1];
         if(!rule.width || rule.width>4096 || !rule.height || rule.height>4096 || rule.anchor_x<-1 || rule.anchor_x>4096 || rule.anchor_y<-1 || rule.anchor_y>4096)throw std::runtime_error("Invalid object display rule");
-        const bool on_screen=visible(o,rule,ctx.camera);
+        const bool on_screen=visible(o,rule,ctx.view.value_or(Viewport{ctx.camera,320,176}));
         if(on_screen){o.width=rule.width;o.height=rule.height;o.flags|=0x8000;}
         if(o.held)continue;
         if((o.flags&0x8000) && !(o.flags&16) && (o.vx || (o.counter>8 && o.vy>0)))world.impact_list.push_back(index);

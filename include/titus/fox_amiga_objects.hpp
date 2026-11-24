@@ -27,7 +27,7 @@ void drop_object(const Level&,ObjectWorld&,const Body&);
 void throw_object(ObjectWorld&,const Body&,bool upward);
 void attach_object(ObjectWorld&,Point player_feet);
 Body object_player_step(const Level&,Body,const BodyInput&,const MotionRules&,ObjectWorld&,bool action,const MotionContext& context={});
-struct ObjectStepContext { unsigned frame=0,down_ticks=0,invulnerability=0;Point camera;bool up=false,down=false; };
+struct ObjectStepContext { unsigned frame=0,down_ticks=0,invulnerability=0;Point camera;bool up=false,down=false;std::optional<Viewport> view={}; };
 void step_objects(const Level&,ObjectWorld&,Body&,ObjectStepContext&,const ObjectRules&);
 Bytes dynamic_object_projection(const ObjectWorld&);
 }

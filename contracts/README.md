@@ -33,3 +33,11 @@ rechaza opciones ajenas. Los ejemplos siguen siendo fixtures de diseño.
 TH-12 unifica los errores emitidos por los tres runtimes con el enum v1; C++
 y JSON rechazan códigos internos ajenos al contrato. La matriz valida también
 los paquetes de fallo y su arranque posterior, no solo las salidas correctas.
+
+TH-14 incorpora `fox-amiga-native` para `fox/amiga`, con compatibilidad
+`fox.amiga.full.audited`, ocho slots `fox.amiga.json` versión 1 y capacidades
+propias de cámara, HUD, zoom, ayudas, rebobinado y audio. La selección de motor y
+capacidades distingue edición; Fox DOS conserva OpenTitus y cero slots. El
+catálogo anterior de Amiga sin motor admite reverificación sin perder perfiles.
+Las pruebas reales están en `tests/check_fox_amiga_sessions.py`; los ejemplos
+de diseño no se convierten en partidas ni recursos comerciales.

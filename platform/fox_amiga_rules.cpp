@@ -15,6 +15,8 @@ NativeRules native_rules(const Bytes& main_file){
     for(unsigned i=0;i<4;++i)result.section_sha256[i]=hash(unpacked.sections[i]);
     const auto& data=unpacked.sections[2];const auto& code=unpacked.sections[3];
     for(unsigned i=0;i<16;++i){result.palette[i]=word(data,0x2aa+i*2);result.level_color14[i]=word(data,0x340+i*2);result.player_palette[i]=word(data,0x1dc+i*2);result.hud_palette[i]=word(data,0x2cc+i*2);}
+    // The Copper changes COLOR14 per scanline, including the original 7-line dither.
+    for(unsigned i=0;i<16;++i){unsigned kind=data.at(0x1abc+i);if(kind>6)throw std::runtime_error("Invalid Copper gradient");for(unsigned y=0;y<176;++y)result.copper_color14[i][y]=kind?word(data,0x1978+(kind-1)*54+2*(y/7+(y%7==5))):result.level_color14[i];}
     for(unsigned i=0;i<16;++i){
         const unsigned p=0x4e6+i*4,address=(word(data,p)<<16)|word(data,p+2);
         if(address<0xb0000 || address>=0xb0000+data.size())throw std::runtime_error("Amiga song name outside data");
@@ -24,6 +26,7 @@ NativeRules native_rules(const Bytes& main_file){
         name=name.substr(4);if(name.empty() || name.find_first_not_of("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-")!=std::string::npos)throw std::runtime_error("Unsafe Amiga song name");
         result.level_songs[i]=std::move(name);
     }
+    for(unsigned i=0;i<16;++i){unsigned offset=0x2ec+i*5;if(offset+4>data.size())throw std::runtime_error("Truncated original level code");result.level_codes[i]=std::string(data.begin()+offset,data.begin()+offset+4);if(result.level_codes[i].find_first_not_of("0123456789")!=std::string::npos)throw std::runtime_error("Invalid original level code");}
     for(unsigned i=0;i<5;++i)result.effect_frequencies[i]=(word(data,0x1cb0+i*4)<<16)|word(data,0x1cb2+i*4);
     for(unsigned i=0;i<14;++i)result.motion.walk_frames[i]=word(code,0x7a8e + i*2);
     for(unsigned i=0;i<5;++i)result.motion.jump_impulses[i]=signed_word(word(code,0x7a82+i*2));

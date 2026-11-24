@@ -24,11 +24,14 @@ builds on that work; it does not claim authorship of the original engine.
 Maintained by [pedlop01](https://github.com/pedlop01) at
 [pedlop01/blues-engine](https://github.com/pedlop01/blues-engine).
 
-The current work focuses on the first Blues Brothers game: a native Windows
-build, smoother camera presentation, dynamic framing, DOS AdLib music/effects,
-live DOS/Amiga presentation switching and regression tests. See
-[README.md](README.md) for implemented features and [PLAN.md](PLAN.md) for the
-planned in-game menu, saves, rewind and other improvements.
+The extension adds the global Titus library and managed adapters, alongside the
+Blues Brothers Windows port, smooth presentation, dynamic framing, DOS audio,
+menus, assists, saves and rewind. Its independent native Titus the Fox Amiga
+runtime implements simulation, rendering, PAT/Paula audio and library integration
+from user-supplied original data; see [TH-14](docs/FOX_AMIGA_RUNTIME.md) and its
+[notice](engines/fox_amiga/NOTICE.md). Fox DOS and Prehistorik DOS retain their
+separate OpenTitus and Olduvai engines and attribution. See [README.md](README.md),
+[PLAN.md](PLAN.md) and the [platform plan](docs/TITUS_PLATFORM_PLAN.md).
 
 ## Original games and data
 

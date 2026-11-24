@@ -37,18 +37,25 @@ The new `titus-engine` frontend lists installed games and DOS/Amiga releases,
 remembers per-game selections and provides a folder/ADF browser, verification
 and installation management. Keyboard, mouse, controller and fullscreen are
 supported. **Blues Brothers DOS/Amiga, Jukebox Adventure DOS, Prehistorik 2 DOS and Titus
-the Fox DOS and Prehistorik 1 DOS now launch from the library**, with a clean return and per-game preferences.
-Blues also imports classic preferences and saves reversibly. Fox uses a separate OpenTitus runtime with native private data preparation.
+the Fox DOS/Amiga and Prehistorik 1 DOS now launch from the library**, with a clean return and per-game preferences.
+Blues also imports classic preferences and saves reversibly. Fox DOS uses a separate OpenTitus runtime with native private data preparation.
+Fox Amiga uses our independent [native C++/SDL2 runtime](docs/FOX_AMIGA_RUNTIME.md),
+with smooth camera/dynamic framing, original/fixed HUD, assists, level selection,
+independent volumes, controller bindings, VHS rewind and eight thumbnail saves.
+TH-14 is implemented at 95%, awaiting user gameplay review before acceptance.
 Prehistorik 1 uses Olduvai with native private DIET preparation ([guide](docs/PREHISTORIK_RUNTIME.md)). See the [family runtime](docs/FAMILY_RUNTIME.md),
 [Blues runtime](docs/BLUES_RUNTIME.md), [Fox runtime](docs/FOX_RUNTIME.md) and [library](docs/LIBRARY_FRONTEND.md) guides.
 Build with `-DTITUS_BUILD_LAUNCHER=ON`, Python 3 and SDL2/SDL2_ttf/libmodplug
 development files. Fox additionally needs `TITUS_BUILD_FOX_RUNTIME=ON` and the
 pinned SDL 1.2/OPL source setup in its guide. Prehistorik 1 needs
 `TITUS_BUILD_PRE1_RUNTIME=ON` and its pinned Olduvai source export.
+Fox Amiga is enabled with the launcher by default, or explicitly with
+`TITUS_BUILD_FOX_AMIGA_RUNTIME=ON`; it needs SDL2 and user-supplied Amiga files,
+without OpenTitus, Unicorn or an Amiga emulator.
 The classic game executable still works.
 
 The library now offers [layered settings and a native save browser](docs/SETTINGS_AND_SAVES.md):
-global/game/edition/session options, supported controller bindings, and Blues
+global/game/edition/session options, supported controller bindings, and Blues and Fox Amiga
 eight-slot thumbnails/resume with reversible legacy reimport.
 
 The [TH-11 integration pilot](docs/INPROCESS_EVALUATION.md) compares a real engine

@@ -74,4 +74,38 @@ Bytes dynamic_enemy_projection(const EnemyWorld& world){
     for(const auto& enemy:world.enemies)for(auto word:enemy.words){bytes.push_back(std::uint8_t(word>>8));bytes.push_back(std::uint8_t(word));}
     return bytes;
 }
+bool pick_enemy(EnemyWorld& world,const Body& player){
+    if(world.carried || world.enemies.size()>50)return false;
+    for(unsigned index=0;index<world.enemies.size();++index){auto& enemy=world.enemies[index];
+        if(!enemy.get(0) || (enemy.get(24)&192) || !(enemy.get(90)&255) || !(enemy.get(18)&0x8000) || std::abs(player.feet.y-enemy.signed_get(4))>4)continue;
+        int x=enemy.signed_get(2),width=int(enemy.get(20));
+        if(player.facing_right?(x<=player.feet.x || player.feet.x<=x-width):(player.feet.x<=x || player.feet.x>x+width))continue;
+        enemy.set(16,1);world.attachment={x-player.feet.x,enemy.signed_get(4)-player.feet.y};enemy.set(6,0);enemy.set(8,0);enemy.set(0,(enemy.get(90)&255)+1);enemy.set(24,192);
+        unsigned last=unsigned(world.enemies.size()-1);std::swap(enemy,world.enemies[last]);world.carried=last;return true;
+    }
+    return false;
+}
+void throw_enemy(EnemyWorld& world,const Body& player,bool upward){
+    if(!world.carried)return;
+    if(*world.carried>=world.enemies.size())throw std::runtime_error("Invalid carried enemy");
+    auto& enemy=world.enemies[*world.carried];enemy.set(16,0);enemy.set(14,0);
+    if(upward)enemy.set(8,-160);
+    else{enemy.set(6,player.facing_right?160:-160);enemy.set(8,enemy.get(18)&4?1:0);if(!(enemy.get(18)&4))enemy.set(18,enemy.get(18)|128);enemy.set(4,player.feet.y-16);}
+    world.carried.reset();
+}
+void drop_enemy(const Level& level,EnemyWorld& world,const Body& player){
+    if(!world.carried)return;
+    if(*world.carried>=world.enemies.size())throw std::runtime_error("Invalid carried enemy");
+    auto& enemy=world.enemies[*world.carried];enemy.set(6,0);enemy.set(16,0);enemy.set(8,16);enemy.set(14,0);world.carried.reset();
+    int x=std::clamp(enemy.signed_get(2),int(enemy.get(20)/2),4096-int(enemy.get(20)/2)),y=enemy.signed_get(4);
+    if(collision_at(level,x,y).horizontal&1)x=player.feet.x;
+    if((collision_at(level,x,y).floor&1) || collision_at(level,x,y).ceiling)y=player.feet.y;
+    enemy.set(2,x);enemy.set(4,y);
+}
+void attach_enemy(EnemyWorld& world,Point player_feet,Point attachment){
+    if(!world.carried)return;
+    if(*world.carried>=world.enemies.size())throw std::runtime_error("Invalid carried enemy");
+    world.attachment=attachment;auto& enemy=world.enemies[*world.carried];enemy.set(2,player_feet.x+attachment.x);enemy.set(4,player_feet.y+attachment.y);
+}
+
 }

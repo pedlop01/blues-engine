@@ -14,7 +14,8 @@ std::vector<PlatformBody> initialize_platforms(const Level& level){
     }
     return result;
 }
-void step_platforms(std::vector<PlatformBody>& platforms,Body& player,Point camera,const NativeRules& rules){
+void step_platforms(std::vector<PlatformBody>& platforms,Body& player,Point camera,const NativeRules& rules,const std::optional<Viewport>& viewport){
+    const auto view=viewport.value_or(Viewport{camera,320,176});camera=view.camera;if(!view.width || !view.height || view.width>4096 || view.height>4096)throw std::runtime_error("Invalid platform viewport");
     if(platforms.size()>10)throw std::runtime_error("Too many native platforms");
     for(auto& platform:platforms){auto& body=platform.body;if(!body.kind)continue;
         if(body.kind>71)throw std::runtime_error("Invalid native platform sprite");
@@ -28,7 +29,7 @@ void step_platforms(std::vector<PlatformBody>& platforms,Body& player,Point came
         if(platform.direction<4 && ++platform.counter==platform.range){platform.direction^=2;platform.counter=0;}
         body.flags&=0x7fff;const auto& sprite=rules.sprites[30+body.kind-1];body.width=sprite.width;body.height=sprite.height;
         int left=body.feet.x-camera.x-sprite.anchor_x+(camera.x&15),top=body.feet.y-camera.y-sprite.anchor_y+1;
-        if(top>175 || left>335 || left+int(sprite.width)<=0 || top+int(sprite.height)<=0)continue;
+        if(top>=int(view.height) || left>=int(view.width)+16 || left+int(sprite.width)<=0 || top+int(sprite.height)<=0)continue;
         body.flags=(body.flags|0x8000)&~0x4000u;
         // Original support test uses the lower edge plus height, rather than
         // the visual anchor. Keep this separate from drawing coordinates.

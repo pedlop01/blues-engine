@@ -1,0 +1,11 @@
+{
+  "engine_id": "fox-amiga-native",
+  "adapter_state": "validated",
+  "expected_protocol": 1,
+  "source_revision": "@TITUS_FOX_AMIGA_REV@",
+  "executables": {
+    "linux": "engines/fox_amiga/titus-fox-amiga",
+    "windows": "engines/fox_amiga/titus-fox-amiga.exe"
+  },
+  "games": [{"game_id":"fox","editions":["amiga"],"reference_native_features":["return_to_library","native_pause","fullscreen","save_slots","save_thumbnails","rewind","dynamic_view","smooth_camera","hud_modes","invulnerability","lives_options","level_select","separate_volumes","controller_bindings"]}]
+}

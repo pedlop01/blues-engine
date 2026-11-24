@@ -62,7 +62,7 @@ class App {
     void compare_legacy(){legacy_comparison.clear();try{auto sources=legacy_sources();auto id=identity();auto profile=paths.profile_directory(id["profile_id"],id["game_id"],id["save_compatibility_id"]);for(int n=0;n<=8;++n){char name[32];snprintf(name,sizeof name,"slot%02d.bbs",n);auto from=n?sources.saves/name:sources.preferences;auto to=n?profile/"saves"/name:profile/"native/blues-family/preferences.ini";std::string label=n?"Slot "+std::to_string(n):"Opciones";legacy_comparison.push_back(label+": "+(!path_exists(from)?"sin archivo legado":!path_exists(to)?"nuevo":file_sha256(from)==file_sha256(to)?"idéntico":"diferente"));}set_modal("legacy");}catch(const std::exception& e){notice=e.what();}}
     Json identity()const{auto r=*library.selected();r["profile_id"]=library.catalog["profiles"][0]["id"];return r;}
     void clear_previews(){for(auto& x:save_previews)SDL_DestroyTexture(x.second);save_previews.clear();}
-    std::string value_label(const Setting& spec,const Json& v){if(v.is_boolean())return v.get<bool>()?"Sí":"No";if(spec.group=="input"){const std::map<int,std::string> names={{0,"A"},{1,"B"},{2,"X"},{3,"Y"},{7,"L3"},{8,"R3"},{10,"RB"}};return names.at(v.get<int>());}if(v.is_number_integer()){int n=v.get<int>();return std::to_string(spec.key=="start_level"?n+1:n)+(spec.group=="audio"?" %":"");}auto str=v.get<std::string>();if(str=="classic")return "Original";if(str=="smooth")return "Suavizada";if(str=="fixed")return "Fijo";if(str=="auto")return "Automático";return str=="dos"?"DOS":"Amiga";}
+    std::string value_label(const Setting& spec,const Json& v){if(v.is_boolean())return v.get<bool>()?"Sí":"No";if(spec.group=="input"){const std::map<int,std::string> names={{0,"A"},{1,"B"},{2,"X"},{3,"Y"},{7,"L3"},{8,"R3"},{10,"RB"}};return names.at(v.get<int>());}if(v.is_number_integer()){int n=v.get<int>();return std::to_string(spec.key=="start_level"&&spec.group=="blues"?n+1:n)+(spec.group=="audio"?" %":"");}auto str=v.get<std::string>();if(str=="classic")return "Original";if(str=="smooth")return "Suavizada";if(str=="fixed")return "Fijo";if(str=="auto")return "Automático";return str=="dos"?"DOS":"Amiga";}
     void open_settings(){try{settings_doc=SettingsStore(paths).load();settings_scope="game";settings_page=0;settings_error.clear();settings_draft=SettingsStore(paths).scope(settings_doc,identity(),settings_scope);set_modal("settings");}catch(const std::exception& e){notice=friendly_error(e);}}
     void settings_tab(const std::string& scope){settings_scope=scope;settings_page=0;settings_error.clear();settings_draft=scope=="session"?session_settings.count(library.selected()->at("id").get<std::string>())?session_settings.at(library.selected()->at("id").get<std::string>()):Json::object():SettingsStore(paths).scope(settings_doc,identity(),scope);}
     void cycle_setting(const Setting& spec){auto& group=settings_draft[spec.group];if(!group.contains(spec.key))group[spec.key]=spec.values[0];else{auto it=std::find(spec.values.begin(),spec.values.end(),group[spec.key]);if(it==spec.values.end()||++it==spec.values.end())group.erase(spec.key);else group[spec.key]=*it;}if(group.empty())settings_draft.erase(spec.group);settings_error.clear();}
@@ -70,7 +70,7 @@ class App {
     void open_saves(){if(!library.can_play())return;browsing_saves=true;begin_play(0,true);}
     void load_selected_save(){for(const auto& slot:save_index["slots"])if(slot["slot"]==selected_slot&&slot["status"]=="ready"){library.select_edition(slot["edition_id"]);browsing_saves=false;begin_play(selected_slot);return;}}
 
-    bool test_play=false,test_family=false,test_fox=false,test_pre1=false,settings_probe=false;
+    bool test_play=false,test_family=false,test_fox=false,test_pre1=false,test_fox_amiga=false,settings_probe=false;
     int play_test_stage=0;
     Uint32 play_test_started=0;
     bool smoke=false;
@@ -341,11 +341,11 @@ class App {
             panel({200,80,700,570},color(0x213146));text("Opciones · "+std::string(library.info().title),228,101,24,ink,640);
             const char* labels[]={"Globales","Juego","Edición","Esta sesión"};const char* scopes[]={"global","game","edition","session"};for(int n=0;n<4;++n){std::string scope=scopes[n];button("scope:"+scope,labels[n],{228+n*160,147,150,36},[this,scope](){settings_tab(scope);},true,settings_scope==scope);}
             text("Heredar usa el valor de la capa anterior. Cambia de pestaña tras guardar.",228,198,13,muted,640);
-            auto specs=game_settings(settings_scope=="global"?"blues":library.info().id);Json effective;
+            auto specs=game_settings(settings_scope=="global"?"blues":library.info().id);if(settings_scope!="global" && library.selected() && library.selected()->at("game_id")=="fox" && library.selected()->at("edition_id")=="dos")specs=game_settings("prehistorik");Json effective;
             try{effective=SettingsStore(paths).preview(settings_doc,identity(),settings_scope,settings_draft);}catch(const std::exception& e){settings_error=e.what();}
             const int per_page=5;for(int n=settings_page*per_page;n<std::min(int(specs.size()),(settings_page+1)*per_page);++n){auto spec=specs[n];int y=232+(n%per_page)*52;text(spec.label,228,y+9,17,ink,270);bool explicit_value=settings_draft.contains(spec.group)&&settings_draft[spec.group].contains(spec.key);auto val=explicit_value?settings_draft[spec.group][spec.key]:effective.contains(spec.group)&&effective[spec.group].contains(spec.key)?effective[spec.group][spec.key]:spec.initial;button("option:"+spec.key,(explicit_value?"":"Heredar · ")+value_label(spec,val),{530,y,340,40},[this,spec](){cycle_setting(spec);});}
             button("previous","‹",{228,500,52,36},[this](){--settings_page;},settings_page>0);text(std::to_string(settings_page+1)+" / "+std::to_string((specs.size()+4)/5),298,508,16,muted);button("next","›",{378,500,52,36},[this](){++settings_page;},(settings_page+1)*5<int(specs.size()));
-            text(settings_error.empty()?"Mando: nombres de botones SDL. Fox y Prehistorik mantienen sus controles nativos.":settings_error,228,546,14,settings_error.empty()?muted:gold,640,true);
+            text(settings_error.empty()?"Mando: nombres de botones SDL. Fox DOS y Prehistorik mantienen sus controles nativos.":settings_error,228,546,14,settings_error.empty()?muted:gold,640,true);
             button("save-settings","Guardar",{228,592,300,38},[this](){save_settings();},true,true);button("cancel","Cancelar",{548,592,322,38},[this](){close_modal();});return;
         }
         if(modal=="legacy"){
@@ -441,6 +441,7 @@ class App {
         if(test_fox)choices.push_back({"fox","dos"});
         if(test_pre1)choices.push_back({"prehistorik","dos"});
         choices.push_back({"blues","amiga"});
+        if(test_fox_amiga)choices={{"fox","amiga"}};
         if(play_test_stage%2==0){
             if(play_test_stage>0)check(!session_hidden&&(SDL_GetWindowFlags(window)&SDL_WINDOW_SHOWN),"library window restored after game");
             size_t next=static_cast<size_t>(play_test_stage/2);
@@ -513,10 +514,10 @@ class App {
     }
 public:
     App(Paths p,bool test,fs::path capture_path,fs::path initial_browse,fs::path import_source,int play_probe):paths(std::move(p)),library(paths),smoke(test),screenshot(std::move(capture_path)),workflow_source(std::move(import_source)){
-        settings_probe=play_probe==-1;test_play=play_probe>0;test_family=play_probe>=2;test_fox=play_probe>=3;test_pre1=play_probe==4;play_test_started=SDL_GetTicks();
+        settings_probe=play_probe==-1;test_play=play_probe>0;test_family=play_probe>=2&&play_probe<=4;test_fox=play_probe>=3&&play_probe<=4;test_pre1=play_probe==4;test_fox_amiga=play_probe==5;play_test_started=SDL_GetTicks();
         char* base=SDL_GetBasePath();if(!base)throw Error("E_PATH",SDL_GetError());package_root=fs::u8path(base);SDL_free(base);
         try{auto registry=parse_json(read_document(package_root/"engines/registry.json"));
-            for(const auto& entry:registry.at("engines"))if(entry.at("adapter_state")=="validated"&&registry.at("role")=="package"){bool installed=fs::is_regular_file(package_root/fs::u8path(entry.at("executables").at(platform()).get<std::string>()));if(entry.at("engine_id")=="blues-family")library.blues_runtime_installed=installed;
+            for(const auto& entry:registry.at("engines"))if(entry.at("adapter_state")=="validated"&&registry.at("role")=="package"){bool installed=fs::is_regular_file(package_root/fs::u8path(entry.at("executables").at(platform()).get<std::string>()));if(entry.at("engine_id")=="blues-family")library.blues_runtime_installed=installed;if(entry.at("engine_id")=="fox-amiga-native")library.fox_amiga_runtime_installed=installed;
                 if(installed)for(const auto& g:entry.at("games"))for(const auto& edition:g.at("editions"))if(edition=="dos")library.runtime_games.insert(g.at("game_id"));}
         }catch(const std::exception&){}
         if(!initial_browse.empty()){library.preferences["browse_path"]=normalized_path(initial_browse).u8string();library.dirty=true;}
@@ -550,6 +551,7 @@ int run(const std::vector<std::string>& args){
             else if(option=="--family-session-smoke-test")play_probe=2;
             else if(option=="--fox-session-smoke-test")play_probe=3;
             else if(option=="--pre1-session-smoke-test")play_probe=4;
+            else if(option=="--fox-amiga-session-smoke-test")play_probe=5;
             else if(option=="--user-dir"||option=="--screenshot"||option=="--browse-dir"||option=="--test-import"){if(++i==args.size())throw Error("E_ARGUMENT","Missing option value");auto p=fs::u8path(args[i]);if(option=="--user-dir")user=p;else if(option=="--screenshot")screenshot=p;else if(option=="--browse-dir")browse=p;else import_source=p;}
             else if(option=="--help"){std::cout<<"titus-engine [--user-dir ABS] [--browse-dir PATH]\n  F11: fullscreen; Tab/arrows/Enter: navigation; A: add; Esc: cancel/quit\n  --smoke-test [--screenshot FILE.bmp]: bounded UI regression test\n";return 0;}
             else throw Error("E_ARGUMENT","Unknown option: "+option);}

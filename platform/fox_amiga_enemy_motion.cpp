@@ -155,15 +155,15 @@ struct Actor {
 }
 void step_enemies(const Level& level,EnemyWorld& world,Body& player,EnemyStepContext& ctx,const NativeRules& rules){
     if(world.enemies.size()>50)throw std::runtime_error("Too many native enemies");
-    ctx.attacks.clear();ctx.visible_enemies.clear();
+    ctx.attacks.clear();ctx.visible_enemies.clear();const auto view=ctx.view.value_or(Viewport{ctx.camera,320,176});if(!view.width || !view.height || view.width>4096 || view.height>4096)throw std::runtime_error("Invalid enemy viewport");
     for(unsigned i=0;i<world.enemies.size();++i){auto& e=world.enemies[i];if(!e.get(0))continue;
         if(!e.get(16)){Actor actor{e,level,rules,player,ctx,e.signed_get(2),e.signed_get(4),i};actor.update(e.get(24)&63);if(!e.get(0))continue;e.set(2,actor.x);e.set(4,actor.y);if((e.get(18)&0x8000) && !(e.get(24)&192))animate(e,rules);}
-        e.set(18,e.get(18)&0x7fff);int x=e.signed_get(2)-ctx.camera.x,y=e.signed_get(4)-ctx.camera.y;
-        if(x<=-48 || x>=352 || y<=-48 || y>=240 || e.get(0)==0x55ab)continue;
+        e.set(18,e.get(18)&0x7fff);int x=e.signed_get(2)-view.camera.x,y=e.signed_get(4)-view.camera.y;
+        if(x<=-48 || x>=int(view.width)+32 || y<=-48 || y>=int(view.height)+64 || e.get(0)==0x55ab)continue;
         unsigned frame=(e.get(0)-1)&8191;if(frame>=232)throw std::runtime_error("Invalid native enemy sprite");
         const auto& sprite=rules.sprites[101+frame];e.set(20,sprite.width);e.set(22,sprite.height);
-        int left=x-(e.signed_get(6)<0?int(sprite.width)-sprite.anchor_x:sprite.anchor_x)+(ctx.camera.x&15),top=y-sprite.anchor_y+1;
-        if(top>175 || left>335 || left+int(sprite.width)<=0 || top+int(sprite.height)<=0)continue;
+        int left=x-(e.signed_get(6)<0?int(sprite.width)-sprite.anchor_x:sprite.anchor_x)+(view.camera.x&15),top=y-sprite.anchor_y+1;
+        if(top>=int(view.height) || left>=int(view.width)+16 || left+int(sprite.width)<=0 || top+int(sprite.height)<=0)continue;
         e.set(18,e.get(18)|0x8000);unsigned type=e.get(24)&63;
         if(!(e.get(24)&192) && type!=12 && type!=15){
             ctx.visible_enemies.push_back(i);
@@ -176,13 +176,14 @@ void step_enemies(const Level& level,EnemyWorld& world,Body& player,EnemyStepCon
     }
 }
 void step_enemy_projectiles(Body& player,EnemyStepContext& ctx,const NativeRules& rules){
+    const auto view=ctx.view.value_or(Viewport{ctx.camera,320,176});if(!view.width || !view.height || view.width>4096 || view.height>4096)throw std::runtime_error("Invalid enemy viewport");
     for(auto& shot:ctx.projectiles){if(!shot.kind)continue;
         if(shot.kind>71)throw std::runtime_error("Invalid native projectile");
         shot.feet.x-=shot.vx;shot.feet.y+=shot.vy;if(shot.vy && shot.vy<4)++shot.vy;
         shot.flags&=0x7fff;const auto& sprite=rules.sprites[30+shot.kind-1];shot.width=sprite.width;shot.height=sprite.height;
-        int left=shot.feet.x-ctx.camera.x-(shot.vx<0?int(sprite.width)-sprite.anchor_x:sprite.anchor_x)+(ctx.camera.x&15);
-        int top=shot.feet.y-ctx.camera.y-sprite.anchor_y+1;
-        if(top>175 || left>335 || left+int(sprite.width)<=0 || top+int(sprite.height)<=0){shot.kind=0;continue;}
+        int left=shot.feet.x-view.camera.x-(shot.vx<0?int(sprite.width)-sprite.anchor_x:sprite.anchor_x)+(view.camera.x&15);
+        int top=shot.feet.y-view.camera.y-sprite.anchor_y+1;
+        if(top>=int(view.height) || left>=int(view.width)+16 || left+int(sprite.width)<=0 || top+int(sprite.height)<=0){shot.kind=0;continue;}
         shot.flags|=0x8000;
         if(!ctx.invulnerable && !ctx.invulnerability && !player.lock_ticks && player_overlap(player,shot.feet.x,shot.feet.y,shot.vy?2:shot.width/2,shot.height)){
             shot.kind=0;hurt(player,ctx,shot.feet.x,70,28);

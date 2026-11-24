@@ -12,18 +12,22 @@ struct EnemyBody {
     std::uint32_t animation()const;
     void animation(std::uint32_t address);
 };
-struct EnemyWorld { std::vector<EnemyBody> enemies;unsigned boss_power=0,hit_cooldown=0; };
+struct EnemyWorld { std::vector<EnemyBody> enemies;unsigned boss_power=0,hit_cooldown=0;std::optional<unsigned> carried;Point attachment; };
 EnemyWorld initialize_enemies(const Level&,const NativeRules&);
 struct EnemyStepContext {
     unsigned frame=0,invulnerability=0,sound_event=0;
     Point camera;
-    bool invulnerable=false;
+    bool invulnerable=false;std::optional<Viewport> view={};
     std::array<ObjectBody,4> projectiles{};
     std::vector<unsigned> attacks,visible_enemies;
 };
 // Updates original logical records. Rendering and collision resolution consume
 // the resulting lists separately, preserving the original simulation order.
 void step_enemies(const Level&,EnemyWorld&,Body&,EnemyStepContext&,const NativeRules&);
+bool pick_enemy(EnemyWorld&,const Body&);
+void throw_enemy(EnemyWorld&,const Body&,bool upward);
+void drop_enemy(const Level&,EnemyWorld&,const Body&);
+void attach_enemy(EnemyWorld&,Point player_feet,Point attachment);
 void step_enemy_projectiles(Body&,EnemyStepContext&,const NativeRules&);
 void resolve_enemy_impacts(EnemyWorld&,ObjectWorld&,EnemyStepContext&);
 Bytes dynamic_enemy_projection(const EnemyWorld&);

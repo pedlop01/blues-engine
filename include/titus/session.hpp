@@ -6,6 +6,7 @@ Json blues_features(bool dual);
 Json runtime_error(const std::exception& error,bool ready);
 std::string runtime_engine(const Json& request);
 Json runtime_features(const std::string& game,bool dual);
+Json runtime_features(const Json& request);
 int runtime_slot_count(const Json& request);
 void validate_runtime_event(const Json& event,const Json& request);
 void validate_runtime_result(const Json& result,const Json& request);

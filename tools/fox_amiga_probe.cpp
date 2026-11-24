@@ -83,7 +83,7 @@ Json object_snapshot(const ObjectWorld& world){
     return {{"objects",hex.str()},{"state",Json::array({world.carried?int(*world.carried):-1,world.attachment.x,world.attachment.y,int(world.special_item),world.contact_cooldown,world.sound_event,int(world.action_latched)})}};
 }
 int probe_main(int argc,char** argv) try {
-    std::string audio_name;unsigned audio_ticks=1000,rules_only=0,audio_effects=0,enemy_init=0,enemy_ticks=0,platform_ticks=0,game_ticks=0;
+    std::string audio_name;unsigned audio_ticks=1000,rules_only=0,audio_effects=0,enemy_init=0,enemy_ticks=0,platform_ticks=0,game_ticks=0,roundtrip=0,campaign=0,actor_tour=0;
     fs::path root,output,palette,motion_script,object_script;unsigned level=1,x=0,y=0,spawn_view=0;
     auto number=[](const std::string& value) {
         if(value.empty() || value.find_first_not_of("0123456789")!=std::string::npos)
@@ -100,6 +100,9 @@ int probe_main(int argc,char** argv) try {
         else if(key=="--output")output=fs::u8path(value);
         else if(key=="--palette")palette=fs::u8path(value);
         else if(key=="--audio")audio_name=value;
+        else if(key=="--actor-tour")actor_tour=number(value);
+        else if(key=="--campaign")campaign=number(value);
+        else if(key=="--roundtrip")roundtrip=number(value);
         else if(key=="--game-ticks")game_ticks=number(value);
         else if(key=="--platform-ticks")platform_ticks=number(value);
         else if(key=="--enemy-ticks")enemy_ticks=number(value);
@@ -185,17 +188,38 @@ int probe_main(int argc,char** argv) try {
     LevelRules rules;
     for(unsigned i=0;i<232;++i)rules.enemy_animation_frames[i]=reference["enemy_animation_frames"][i].get<bool>();
     const auto state=initialize_level(level,map,meta,rules);
+    if(campaign){
+        auto reader=[&](const std::string& name){return read(resolve(root,name));};auto assets=load_game_assets(reader);Json transitions=Json::array(),ending=Json::array();
+        for(unsigned n=1;n<=16;n=next_level(n)){
+            assets.levels[n]=load_level_assets(n,reader,assets.rules);auto game=start_game(*assets.levels[n],assets.rules);game.invulnerable=true;
+            if(n!=16){game.player.feet={game.level.finish.x+8,game.level.finish.y+8};game.enemies.boss_power=0;
+                if(n==11){auto& object=game.objects.objects[39];const auto& rule=assets.rules.objects.kinds[26];object={};object.kind=27;object.feet=game.player.feet;object.width=rule.width;object.height=rule.height;object.flags=rule.flags;object.held=1;game.objects.carried=39;}
+                game_step(game,{},false,assets.rules);if(game.phase!=GamePhase::level_complete)throw std::runtime_error("Campaign exit failed at level "+std::to_string(n));
+                transitions.push_back(Json::array({n,next_level(n)}));
+            }else{game_step(game,{},false,assets.rules);if(game.phase!=GamePhase::ending)throw std::runtime_error("Campaign ending did not start");
+                for(unsigned tick:{0u,160u,180u,400u}){auto image=ending_frame(game,assets,tick);std::string bytes;for(auto pixel:image.pixels)for(unsigned shift=0;shift<32;shift+=8)bytes.push_back(char(pixel>>shift));ending.push_back({{"tick",tick},{"sha256",titus::sha256(bytes)}});}
+                break;
+            }
+            auto saved=save_game(game,"campaign-reference");auto restored=restore_game(saved,*assets.levels[n],assets.rules,"campaign-reference");if(save_game(restored,"campaign-reference")!=saved)throw std::runtime_error("Campaign transition save differs");
+        }
+        report["campaign"]={{"uses_test_positioning",true},{"transitions",transitions},{"ending",ending}};titus::ensure_directory(output);std::ofstream file(titus::filesystem_path(output/"campaign.json"));file<<report["campaign"].dump(2)<<'\n';if(!file)throw std::runtime_error("Cannot write campaign report");std::cout<<report.dump()<<'\n';return 0;
+    }
     if(game_ticks){
         if(game_ticks>12000)throw std::runtime_error("Too many game diagnostic ticks");
         auto reader=[&](const std::string& name){return read(resolve(root,name));};auto assets=load_game_assets(reader);
         assets.levels[level]=load_level_assets(level,reader,assets.rules);auto game=start_game(*assets.levels[level],assets.rules);game.infinite_lives=true;
-        Json frames=Json::array();
+        Json frames=Json::array();const auto tour_enemies=game.enemies.enemies;
         for(unsigned tick=0;tick<game_ticks;++tick){
+            if(actor_tour){game.invulnerable=true;game.infinite_lives=true;game.message_level=0;
+                if(!(tick%120) && !tour_enemies.empty()){game.phase=GamePhase::playing;const auto& target=tour_enemies[(tick/120)%tour_enemies.size()];game.player={};game.player.facing_right=true;game.player.feet={std::clamp(target.signed_get(2)-24,4,4092),std::clamp(target.signed_get(4),32,std::max(32,int(game.level.height_tiles)*16-16))};game.camera={std::clamp(game.player.feet.x-160,0,3776),std::clamp(game.player.feet.y-86,0,std::max(0,int(game.level.height_tiles)*16-176))};}
+            }
             BodyInput input;input.right=(tick%600)<250;input.left=(tick%600)>=350;input.up=(tick%120)<24;input.down=(tick%240)>220;
+            auto previous_game=game;
             try{game_step(game,input,(tick%90)<10,assets.rules);}catch(const std::exception& e){throw std::runtime_error(std::string(e.what())+" at tick "+std::to_string(tick)+" player "+std::to_string(game.player.feet.x)+","+std::to_string(game.player.feet.y));}
             if(!(tick%50)){
-                auto image=game_frame(game,assets,game.camera);std::string bytes;for(auto pixel:image.pixels)for(unsigned shift=0;shift<32;shift+=8)bytes.push_back(char(pixel>>shift));
-                frames.push_back({{"tick",tick},{"x",game.player.feet.x},{"y",game.player.feet.y},{"state",game.player.state},{"energy",game.player.energy},{"phase",int(game.phase)},{"frame_sha256",titus::sha256(bytes)}});
+                if(roundtrip){auto snapshot=save_game(game,"probe-amiga-installation");auto restored=restore_game(snapshot,*assets.levels[level],assets.rules,"probe-amiga-installation");if(save_game(restored,"probe-amiga-installation")!=snapshot)throw std::runtime_error("Game save roundtrip differs");game=std::move(restored);}
+                auto image=game_frame(game,assets,game.camera);auto exact=smooth_game_frame(game,game,assets,game.camera.x,game.camera.y,1,320,176,1);if(exact.pixels!=image.pixels)throw std::runtime_error("Smooth renderer differs at exact integer coordinates");auto smooth=smooth_game_frame(game,previous_game,assets,game.camera.x+.25,game.camera.y+.5,2,640,352,.5);std::string smooth_bytes;for(auto pixel:smooth.pixels)for(unsigned shift=0;shift<32;shift+=8)smooth_bytes.push_back(char(pixel>>shift));std::string bytes;for(auto pixel:image.pixels)for(unsigned shift=0;shift<32;shift+=8)bytes.push_back(char(pixel>>shift));
+                frames.push_back({{"tick",tick},{"x",game.player.feet.x},{"y",game.player.feet.y},{"state",game.player.state},{"energy",game.player.energy},{"phase",int(game.phase)},{"frame_sha256",titus::sha256(bytes)},{"smooth_sha256",titus::sha256(smooth_bytes)}});
             }
         }
         titus::ensure_directory(output);std::ofstream file(titus::filesystem_path(output/"game-motion.json"));file<<frames.dump()<<'\n';if(!file)throw std::runtime_error("Cannot write game motion");
@@ -416,7 +440,7 @@ int probe_main(int argc,char** argv) try {
                 sheet.pixels[(i/8*cell_h+row)*sheet_w+i%8*cell_w+col]=s.pixels[row*s.width+col];
         }
         bmp(output/(std::string(name)+".bmp"),sheet,pal);
-        report["sprites"][name]=all.size();
+        report["sprites"][name]=all.size();Json dimensions=Json::array();for(const auto& image:all)dimensions.push_back(Json::array({image.width,image.height}));report["sprite_dimensions"][name]=dimensions;
     }
     report["sprite_total"]=sprite_total;
     for(const auto& entry:std::vector<std::pair<std::string,unsigned>>{{"titus.pc1",4},{"titre2.pc1",5},{"present2.pc1",6}}) {

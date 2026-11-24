@@ -28,8 +28,9 @@ Json runtime_features(const std::string& game,bool dual){
     if(game=="fox"||game=="prehistorik")return Json::array({"return_to_library","native_pause","fullscreen"});
     throw Error("E_GAME","Unsupported engine game");
 }
-std::string runtime_engine(const Json& r){return r.at("game_id")=="fox"?"opentitus":r.at("game_id")=="prehistorik"?"olduvai":"blues-family";}
-int runtime_slot_count(const Json& r){return r.at("game_id")=="blues"?8:0;}
+Json runtime_features(const Json& r){if(r.at("game_id")=="fox" && r.value("edition_id",std::string("dos"))=="amiga")return Json::array({"return_to_library","native_pause","fullscreen","save_slots","save_thumbnails","rewind","dynamic_view","smooth_camera","hud_modes","invulnerability","lives_options","level_select","separate_volumes","controller_bindings"});return runtime_features(r.at("game_id"),r.at("sources").size()==2);}
+std::string runtime_engine(const Json& r){return r.at("game_id")=="fox"?(r.value("edition_id",std::string("dos"))=="amiga"?"fox-amiga-native":"opentitus"):r.at("game_id")=="prehistorik"?"olduvai":"blues-family";}
+int runtime_slot_count(const Json& r){return r.at("game_id")=="blues" || (r.at("game_id")=="fox" && r.value("edition_id",std::string("dos"))=="amiga")?8:0;}
 namespace {
 void must(bool ok,const std::string& text,const char* code="E_REQUEST"){if(!ok)throw Error(code,text);}
 bool inside(const fs::path& a,const fs::path& b){auto p=normalized_path(a),q=normalized_path(b);auto i=p.begin(),j=q.begin();for(;i!=p.end();++i,++j){if(j==q.end())return false;
@@ -61,8 +62,8 @@ void validate_engine_request(const Json& r,const fs::path& file){
         if(source["installation_id"]==r["installation_id"]){must(source["edition_id"]==r["edition_id"],"Primary edition mismatch");primary=true;}
     }
     validate_catalog({{"schema_version",1},{"kind","catalog"},{"catalog_id",r[inspect?"inspection_id":"session_id"]},{"revision",1},{"profiles",Json::array({{{"id",r["profile_id"]},{"name","Jugador"}}})},{"installations",installations}});
-    must(primary&&r["save_compatibility_id"]==(game=="blues"?"blues.full.1991":game+".full.audited"),"Invalid primary source or save context");
-    must(game=="blues"||(r["edition_id"]=="dos"&&editions.size()==1),"Only the audited DOS edition is supported for this game");
+    must(primary&&r["save_compatibility_id"]==(game=="blues"?"blues.full.1991":(game=="fox" && r["edition_id"]=="amiga"?"fox.amiga.full.audited":game+".full.audited")),"Invalid primary source or save context");
+    must(game=="blues" || (editions.size()==1 && (r["edition_id"]=="dos" || (game=="fox" && r["edition_id"]=="amiga"))),"Unsupported game edition");
     fields(r["paths"],{"profile_directory","work_directory","session_directory"});std::vector<fs::path> paths;
     for(auto name:{"profile_directory","work_directory","session_directory"}){
         const auto& p=r["paths"][name];fields(p,{"platform","path"});must(p["platform"]==platform()&&p["path"].is_string(),"Invalid storage location");
@@ -81,19 +82,24 @@ void validate_engine_request(const Json& r,const fs::path& file){
     if(inspect)return;
     must(r["allow_silent_audio"].is_boolean(),"Invalid audio policy");
     must(r["action"].is_object(),"Invalid action");auto action=r["action"].value("type",std::string());
-    if(action=="load_slot"){fields(r["action"],{"type","slot"});must(game=="blues"&&r["action"]["slot"].is_number_integer()&&r["action"]["slot"]>=1&&r["action"]["slot"]<=8,"Unsupported save slot","E_UNSUPPORTED_SETTING");}
+    if(action=="load_slot"){fields(r["action"],{"type","slot"});must(runtime_slot_count(r)==8&&r["action"]["slot"].is_number_integer()&&r["action"]["slot"]>=1&&r["action"]["slot"]<=8,"Unsupported save slot","E_UNSUPPORTED_SETTING");}
     else {must(action=="new_game","Unsupported action","E_UNSUPPORTED_SETTING");fields(r["action"],{"type"});}
-    auto available=runtime_features(game,editions.size()==2);std::set<std::string> required;
+    auto available=runtime_features(r);std::set<std::string> required;
     must(r["required_features"].is_array(),"Invalid required features");for(const auto& f:r["required_features"]){must(f.is_string()&&std::find(available.begin(),available.end(),f)!=available.end(),"Unsupported required feature","E_UNSUPPORTED_SETTING");must(required.insert(f).second,"Duplicate feature");}
     if(action=="load_slot")must(required.count("save_slots"),"Load requires save_slots","E_UNSUPPORTED_SETTING");
     must(r["settings"].is_object(),"Invalid settings");
     validate_settings_values(r["settings"],game);
     const std::map<std::string,std::string> gates={{"camera","smooth_camera"},{"hud","hud_modes"},{"view_step","dynamic_view"},{"invulnerable","invulnerability"},{"infinite_lives","lives_options"},{"lives_player1","lives_options"},{"lives_player2","lives_options"},{"start_level","level_select"},{"sound_mode","audio_mode_selection"}};
-    for(auto group=r["settings"].begin();group!=r["settings"].end();++group){must(group.key()=="video"||group.key()=="audio"||group.key()=="blues"||group.key()=="input","Unknown settings group","E_UNSUPPORTED_SETTING");must(group.value().is_object(),"Invalid settings group");
+    for(auto group=r["settings"].begin();group!=r["settings"].end();++group){must(group.key()=="video"||group.key()=="audio"||group.key()=="blues"||group.key()=="fox"||group.key()=="input","Unknown settings group","E_UNSUPPORTED_SETTING");must(group.value().is_object(),"Invalid settings group");
         for(auto v=group.value().begin();v!=group.value().end();++v){auto key=v.key();const auto& value=v.value();
             if(group.key()=="video"){must(key=="fullscreen"&&value.is_boolean()&&required.count("fullscreen"),"Unsupported video setting","E_UNSUPPORTED_SETTING");}
             else if(group.key()=="audio"){must((key=="music_volume"||key=="effects_volume")&&value.is_number_integer()&&value>=0&&value<=100&&required.count("separate_volumes"),"Unsupported volume setting","E_UNSUPPORTED_SETTING");}
             else if(group.key()=="input"){must((key=="action_button"||key=="jump_button")&&value.is_number_integer()&&(value==0||value==1||value==2||value==3||value==7||value==8||value==10)&&required.count("controller_bindings"),"Unsupported controller binding","E_UNSUPPORTED_SETTING");}
+            else if(group.key()=="fox"){
+                must(game=="fox" && r["edition_id"]=="amiga","Fox Amiga settings require its native edition","E_UNSUPPORTED_SETTING");
+                const std::map<std::string,std::string> fox_gates={{"hud","hud_modes"},{"camera","smooth_camera"},{"view_step","dynamic_view"},{"invulnerable","invulnerability"},{"infinite_lives","lives_options"},{"lives","lives_options"},{"start_level","level_select"}};
+                must(fox_gates.count(key) && required.count(fox_gates.at(key)),"Unsupported Fox setting","E_UNSUPPORTED_SETTING");
+            }
             else if(group.key()=="blues"){
                 must(game=="blues","Blues settings do not apply to this game","E_UNSUPPORTED_SETTING");
                 must(gates.count(key)&&required.count(gates.at(key)),"Unsupported Blues setting","E_UNSUPPORTED_SETTING");
@@ -110,7 +116,7 @@ void validate_engine_request(const Json& r,const fs::path& file){
 
 namespace titus {
 namespace {
-void features_valid(const Json& list,const Json& r){must(list.is_array(),"Features must be an array","E_PROTOCOL");std::set<std::string> unique;auto available=runtime_features(r.at("game_id"),r.at("sources").size()==2);
+void features_valid(const Json& list,const Json& r){must(list.is_array(),"Features must be an array","E_PROTOCOL");std::set<std::string> unique;auto available=runtime_features(r);
     for(const auto& f:list)must(f.is_string()&&std::find(available.begin(),available.end(),f)!=available.end()&&unique.insert(f.get<std::string>()).second,"Invalid/duplicate capability","E_PROTOCOL");
 }
 void error_valid(const Json& e){fields(e,{"code","message"});must(e["code"].is_string()&&protocol_errors.count(e["code"].get<std::string>())&&e["message"].is_string()&&!e["message"].get<std::string>().empty()&&e["message"].get<std::string>().size()<=1024,"Invalid protocol error","E_PROTOCOL");}
@@ -139,11 +145,12 @@ void validate_runtime_inspection(const Json& d,const Json& r){fields(d,{"schema_
     const auto& index=d["save_index"];if(runtime_slot_count(r)==0){must(index.is_null(),"This game has no native save index","E_PROTOCOL");return;}must(!index.is_null(),"Missing native save index","E_PROTOCOL");fields(index,{"schema_version","kind","profile_id","game_id","engine_id","save_compatibility_id","slot_count","slots"});response_identity(index,r);must(index["kind"]=="save_index"&&index["slot_count"]==runtime_slot_count(r)&&index["slots"].is_array()&&index["slots"].size()<=static_cast<size_t>(runtime_slot_count(r)),"Invalid save index","E_PROTOCOL");
     std::set<int> slots;for(const auto& slot:index["slots"]){fields(slot,{"slot","file","format_id","format_version","edition_id","resource_fingerprint","native_resource_crc32","payload_sha256","has_preview","status"});
         must(slot["slot"].is_number_integer()&&slot["slot"]>=1&&slot["slot"]<=8&&slots.insert(slot["slot"].get<int>()).second,"Invalid/duplicate slot","E_PROTOCOL");char filename[32];snprintf(filename,sizeof filename,"saves/slot%02d.bbs",slot["slot"].get<int>());
-        must(slot["file"]==filename&&slot["format_id"]=="blues.bbs"&&(slot["format_version"].is_null()||slot["format_version"]==1||slot["format_version"]==2)&&(slot["edition_id"].is_null()||slot["edition_id"]=="dos"||slot["edition_id"]=="amiga")&&slot["has_preview"].is_boolean(),"Invalid slot metadata","E_PROTOCOL");
+        if(r["game_id"]=="fox")snprintf(filename,sizeof filename,"slot-%d.json",slot["slot"].get<int>());
+        must(slot["file"]==filename&&slot["format_id"]==(r["game_id"]=="fox"?"fox.amiga.json":"blues.bbs")&&(slot["format_version"].is_null()||slot["format_version"]==1||slot["format_version"]==2)&&(slot["edition_id"].is_null()||slot["edition_id"]=="dos"||slot["edition_id"]=="amiga")&&slot["has_preview"].is_boolean(),"Invalid slot metadata","E_PROTOCOL");
         for(auto key:{"resource_fingerprint","native_resource_crc32","payload_sha256"})if(!slot[key].is_null())must(slot[key].is_string()&&std::regex_match(slot[key].get<std::string>(),std::regex(key==std::string("native_resource_crc32")?"[0-9a-f]{8}":"[0-9a-f]{64}")),"Invalid slot hash","E_PROTOCOL");
         auto status=slot["status"];must(status=="ready"||status=="incompatible"||status=="damaged"||status=="unreadable","Invalid save status","E_PROTOCOL");
         if(status=="ready")must(!slot["format_version"].is_null()&&!slot["edition_id"].is_null()&&!slot["native_resource_crc32"].is_null()&&!slot["payload_sha256"].is_null(),"Incomplete ready slot","E_PROTOCOL");
-        must(slot["format_version"]!=1||slot["has_preview"]==false,"v1 cannot contain preview","E_PROTOCOL");
+        must(r["game_id"]!="blues"||slot["format_version"]!=1||slot["has_preview"]==false,"v1 cannot contain preview","E_PROTOCOL");
     }
 }
 }

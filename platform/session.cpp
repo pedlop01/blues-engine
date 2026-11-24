@@ -64,7 +64,7 @@ Session::Session(Paths paths,const fs::path& root,const Json& old_catalog,const 
     request_={{"schema_version",1},{"kind","launch"},{"session_id",id},{"profile_id",profile_id},{"installation_id",installation_id},{"game_id",game},{"engine_id",primary->at("engine_id")},{"edition_id",primary->at("edition_id")},{"save_compatibility_id",compat},{"platform",platform()},{"sources",sources},
       {"paths",{{"profile_directory",location(profile_)},{"work_directory",location(profile_/fs::u8path("native/"+primary->at("engine_id").get<std::string>()))},{"session_directory",location(directory_)}}},
       {"action",{{"type","new_game"}}},{"required_features",Json::array({"return_to_library","native_pause","save_slots","save_thumbnails","rewind","dynamic_view","smooth_camera","hud_modes","separate_volumes"})},{"settings",Json::object()},{"allow_silent_audio",false}};
-    if(game!="blues")request_["required_features"]=runtime_features(game,false);
+    if(game!="blues")request_["required_features"]=runtime_features(request_);
     if(options_.load_slot)request_["action"]={{"type","load_slot"},{"slot",options_.load_slot}};
     // Validate before creating profile or copying legacy files.
     validate_engine_request(request_,directory_/"request.json");migrate();
@@ -147,14 +147,14 @@ void Session::poll(){if(finished())return;try{
             if(options_.legacy_import&&path_exists(profile_)){auto backup=profile_;backup+=fs::u8path(".before-import-"+uuid());move_directory(profile_,backup);try{move_directory(staging_,profile_);}catch(...){move_directory(backup,profile_);throw;}message_="Importación completada; perfil anterior conservado en "+backup.u8string();}
             else {if(path_exists(profile_)){ensure(path_is_directory(profile_)&&path_is_empty(profile_),"El perfil cambió durante la importación.","E_IMPORT");remove_empty_directory(profile_);}move_directory(staging_,profile_);}staging_.clear();
         }
-        if(request_["game_id"]=="blues")write_document(profile_/"save-index.json",inspection_["save_index"]);
+        if(runtime_slot_count(request_))write_document(profile_/"save-index.json",inspection_["save_index"]);
         if(options_.inspect_only||cancel_){state=State::Done;message_=cancel_?"Inicio cancelado.":"Datos y perfil verificados.";return;}
         auto id=uuid();directory_=paths_.cache/"sessions"/id;ensure_directory(directory_);request_["session_id"]=id;request_["paths"]["session_directory"]=location(directory_);
         request_["paths"]["profile_directory"]=location(profile_);request_["paths"]["work_directory"]=location(profile_/fs::u8path("native/"+request_["engine_id"].get<std::string>()));
         write_document(directory_/"request.json",request_); // Keep a diagnostic request even if preference preflight fails.
         if(options_.load_slot){bool found=false;for(const auto& slot:inspection_["save_index"]["slots"])if(slot["slot"]==options_.load_slot&&slot["status"]=="ready")found=true;ensure(found,"La partida no está disponible o no es compatible.","E_SAVE");}
         SettingsStore settings(paths_);settings.recover(request_);settings.seed(request_,native_settings(request_));request_["settings"]=settings.resolve(settings.load(),request_,options_.settings);
-        for(const auto& spec:game_settings(request_["game_id"].get<std::string>())){auto& f=request_["required_features"];if(std::find(f.begin(),f.end(),spec.feature)==f.end())f.push_back(spec.feature);}
+        for(const auto& spec:game_settings(request_["game_id"].get<std::string>())){auto& f=request_["required_features"];auto available=runtime_features(request_);if(std::find(available.begin(),available.end(),spec.feature)==available.end()){if(request_["settings"].contains(spec.group)){request_["settings"][spec.group].erase(spec.key);if(request_["settings"][spec.group].empty())request_["settings"].erase(spec.group);}continue;}if(std::find(f.begin(),f.end(),spec.feature)==f.end())f.push_back(spec.feature);}
         validate_engine_request(request_,directory_/"request.json");settings.begin(request_);
         write_document(directory_/"request.json",request_);channel(directory_/"commands.jsonl");channel(directory_/"events.jsonl");
         process_=std::make_unique<Process>();std::map<std::string,std::string> env={{"TITUS_TEST_RUNTIME_MS",std::to_string(options_.test_ms)},{"TITUS_TEST_GAMEPLAY",options_.test_gameplay?"1":"0"},{"TITUS_TEST_FAULT",options_.test_fault}};

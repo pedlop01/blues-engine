@@ -13,7 +13,7 @@ static Body step_impl(const Level& level,Body b,const BodyInput& input,const Mot
     const Body previous=b;
     bool fire=action;
     if(world && world->action_latched){world->action_latched=action;fire=false;}
-    auto carrying=[&](){return world && world->carried.has_value();};
+    auto carrying=[&](){return world && (world->carried.has_value() || (context && context->carrying_enemy));};
     auto object_action=[&](){if(fire && carrying())throw_object(*world,b,input.up);};
     auto pose=[&](int x,int y){if(world)world->attachment={x,y};};
     if((b.state>5 && !(context && b.state==7)) || b.lock_ticks>65535 || b.energy>16 || b.crouch_jump_ticks>100 || b.ice_shift>3 || b.walk_phase>13 || (b.jump_phase>5 && b.jump_phase!=128) || (b.state==2 && b.jump_phase>4) || b.vx<-256 || b.vx>256 || b.vy<-256 || b.vy>256)

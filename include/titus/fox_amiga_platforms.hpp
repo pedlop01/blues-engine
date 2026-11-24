@@ -8,5 +8,5 @@ struct PlatformBody {
     Point origin;
 };
 std::vector<PlatformBody> initialize_platforms(const Level&);
-void step_platforms(std::vector<PlatformBody>&,Body&,Point camera,const NativeRules&);
+void step_platforms(std::vector<PlatformBody>&,Body&,Point camera,const NativeRules&,const std::optional<Viewport>& view={});
 }

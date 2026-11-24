@@ -1150,9 +1150,9 @@
     "game_id": "fox",
     "edition_id": "amiga",
     "variant_id": "full-audited-amiga",
-    "save_compatibility_id": "fox.full.audited",
-    "engine_id": null,
-    "status": "missing_engine",
+    "save_compatibility_id": "fox.amiga.full.audited",
+    "engine_id": "fox-amiga-native",
+    "status": "recognized",
     "anchors": [
       "level01.tbl",
       "brik01.bin"

@@ -124,6 +124,15 @@ std::vector<Image> sprites(const Bytes& d) {
     if(pos!=d.size()) bad("Trailing sprite bytes");
     return result;
 }
+std::vector<Image> characters(const Bytes& d) {
+    const unsigned count=word(d,0,true);std::size_t pos=2;if(!count || count>256)bad("Invalid character count");std::vector<Image> result;
+    for(unsigned i=0;i<count;++i){const unsigned w=word(d,pos,true),h=word(d,pos+2,true),packed=word(d,pos+4,true);pos+=6;
+        if(packed || w>512 || h>512)bad("Invalid monochrome character");
+        result.push_back(planar(d,pos,w,h,1));pos+=std::size_t((w+7)/8)*h;
+    }
+    if(pos!=d.size())bad("Trailing character bytes");
+    return result;
+}
 std::vector<Image> tiles(const Bytes& d) {
     if(d.size()!=32768) bad("Invalid tileset size");
     std::vector<Image> result;

@@ -19,6 +19,10 @@ int main(){try{
         std::string long_message;for(int i=0;i<600;++i)long_message+="á";auto bounded=runtime_error(Error("E_NATIVE",long_message),true);check(bounded["message"].get<std::string>().size()<=1024);parse_json(bounded.dump());
         result["game_id"]=std::string(game)=="fox"?"blues":"fox";rejected([&]{validate_runtime_result(result,request);});
     }
+    Json amiga={{"game_id","fox"},{"edition_id","amiga"},{"session_id",uuid()},{"profile_id",uuid()},{"save_compatibility_id","fox.amiga.full.audited"},{"sources",Json::array({Json::object()})}};
+    check(runtime_engine(amiga)=="fox-amiga-native" && runtime_slot_count(amiga)==8);auto amiga_features=runtime_features(amiga);check(std::find(amiga_features.begin(),amiga_features.end(),"rewind")!=amiga_features.end());
+    Json amiga_ready={{"schema_version",1},{"kind","event"},{"session_id",amiga["session_id"]},{"seq",1},{"event","ready"},{"body",{{"features",amiga_features},{"scene","gameplay"},{"save_slot_count",8},{"audio_active",true}}}};validate_runtime_event(amiga_ready,amiga);
+    auto dos=amiga;dos["edition_id"]="dos";check(runtime_engine(dos)=="opentitus" && runtime_slot_count(dos)==0);rejected([&]{validate_runtime_event(amiga_ready,dos);});
     rejected([&]{runtime_features("unknown",false);});
     std::cout<<"family protocol: per-game capabilities, slot counts and response identities passed\n";return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

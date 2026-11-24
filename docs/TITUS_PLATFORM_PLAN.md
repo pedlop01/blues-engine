@@ -195,7 +195,7 @@ inventario no equivale a haber integrado o validado un nuevo juego.
 | TH-11 | Evaluar integración en proceso | Piloto con un motor; propiedad y ciclo de SDL/audio/vídeo, errores y rendimiento comparados con procesos separados. Registrar qué adaptadores se integran y cuáles permanecen aislados. | TH-03, TH-10 | Completada: piloto Olduvai Linux/Windows con retornos, audio, excepciones y caída controlada; mediciones registradas. Todos los adaptadores permanecen en procesos separados. Ver INPROCESS_EVALUATION.md | 100 % |
 | TH-12 | Validar la primera expansión | Matriz por juego/edición, arranque/salida repetidos, aislamiento de datos/ajustes, fallos recuperables, regresiones de Blues y documentación del catálogo realmente soportado. Habilita la tarea 18 tras cerrar también 17. | TH-10; decisión TH-11 | Cerrada por aceptación del usuario el 24/11; evidencia automática y límites manuales conservados en EXPANSION_VALIDATION.md | 100 % |
 | TH-13 | Investigar datos Amiga adicionales | Examinar imágenes y carpetas Amiga extraídas, identificar Prehistorik 1/2, formato de disco y recursos sin modificarlos. Reutilizar herramientas disponibles si son aplicables; identificar motores/código o trabajo de ingeniería inversa y entregar viabilidad por juego. | TH-01 | Investigación completada: Fox requiere descompresión; Prehistorik 1 reutiliza LZSS/MAT; sin datos identificados de Prehistorik 2. Ver AMIGA_FEASIBILITY.md | 100 % |
-| TH-14 | Añadir Titus the Fox Amiga | Si TH-13 confirma una vía viable, implementar su adaptador y verificar gráficos, física, niveles, audio y final. Registrar la edición en el selector tras validarla. | TH-13, TH-08 | IA y plataformas contrastadas en 9000 ticks cada una; ciclo y render nativos en 15 mapas; SDL y audio arrancan en Linux/Windows. Pendientes presentación/final, opciones persistentes y adaptador gestionado. Ver FOX_AMIGA_RUNTIME.md | 64 % |
+| TH-14 | Añadir Titus the Fox Amiga | Si TH-13 confirma una vía viable, implementar su adaptador y verificar gráficos, física, niveles, audio y final. Registrar la edición en el selector tras validarla. | TH-13, TH-08 | Implementada: simulación y render nativos, campaña/final, PAT y efectos, adaptador de biblioteca, opciones comunes, rebobinado y 8 slots con miniaturas. Validación Linux/Windows y sanitizadores; pendiente revisión jugable del usuario. Ver FOX_AMIGA_RUNTIME.md | 95 % |
 | TH-15 | Añadir Prehistorik 1 Amiga | Si TH-13 confirma una vía viable, implementar su adaptador y verificar gráficos, física, niveles, audio y final. Registrar la edición en el selector tras validarla. | TH-13, TH-09 | Vía parcial demostrada: lectores/visor antes del runtime | 0 % |
 | TH-16 | Prehistorik 2 Amiga: no aplicable | Retirada del alcance: Prehistorik 2 no salió para Amiga. Se conserva el identificador para mantener el historial, sin buscar datos ni desarrollar un adaptador. | — | Cancelada / no aplicable; excluida del progreso de implementación | N/A |
 
@@ -261,7 +261,8 @@ TH-04 completa el catálogo definido en TH-03; [implementación y pruebas](CATAL
 TH-12 queda cerrada por aceptación del usuario el 24 de noviembre, sin atribuir
 a las pruebas automáticas una campaña o dispositivos físicos no documentados.
 TH-13 completada: [viabilidad Amiga](AMIGA_FEASIBILITY.md). Siguiente tarea
-Amiga: TH-14 (64 %): preparación nativa, física de objetos, daño/recuperación y música PAT contrastados;
-siguiente bloque, interacciones/actores y anclajes/render animado. La paridad
+Amiga: TH-14 implementada al 95 %, pendiente de revisión del usuario antes de marcar el 100 %.
+Incluye simulación completa, render, campaña/final, audio y adaptador gestionado con opciones,
+rebobinado y ocho slots; evidencia y límites en [FOX_AMIGA_RUNTIME.md](FOX_AMIGA_RUNTIME.md). La paridad
 PX-01/PX-02 sigue pendiente y vigente. TH-11 mantiene adaptadores separados.
 La tarea 17 continúa abierta; la distribución 18 sigue pospuesta.

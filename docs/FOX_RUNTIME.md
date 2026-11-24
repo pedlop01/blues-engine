@@ -1,8 +1,9 @@
 # TH-08: Titus the Fox DOS
 
 La biblioteca incorpora **Titus the Fox DOS**, mediante un proceso OpenTitus
-separado del frontend y del runtime Blues/Jukebox/P2. Fox Amiga y Moktar no se
-habilitan: la entrada admite únicamente el conjunto DOS auditado del catálogo.
+separado del frontend y del runtime Blues/Jukebox/P2. Esta entrada admite únicamente el conjunto DOS auditado; Moktar no se habilita.
+Fox Amiga tiene ahora su [adaptador nativo independiente TH-14](FOX_AMIGA_RUNTIME.md),
+con otro perfil, formato de guardado y conjunto de capacidades.
 
 ## Jugar y controles
 

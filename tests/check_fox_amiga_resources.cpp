@@ -6,6 +6,7 @@
 #include "titus/fox_amiga_rules.hpp"
 #include "titus/fox_amiga_enemies.hpp"
 #include "titus/fox_amiga_platforms.hpp"
+#include "titus/fox_amiga_game.hpp"
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
@@ -32,6 +33,8 @@ int main() try {
     rejects([]{unpack({2,0,0xff,0xff,0xff,0xff,12,0});});
     Bytes s={0,1,0,8,0,1,0,0,0x80,0x40,0x20,0x10};
     auto all=sprites(s);require(all.size()==1 && all[0].pixels==Bytes({1,2,4,8,0,0,0,0}));
+    auto mono=characters({0,1,0,8,0,1,0,0,0xa0});require(mono.size()==1 && mono[0].pixels==Bytes({1,0,1,0,0,0,0,0}));
+    rejects([]{characters({0,1,0,8,0,1,0,0});});
     rejects([&]{auto d=s;d.pop_back();sprites(d);});
     rejects([&]{auto d=s;d.push_back(0);sprites(d);});
     auto ts=tiles(Bytes(32768));auto m=map_view(Bytes(256),ts,0,0,32,16);
@@ -73,6 +76,18 @@ int main() try {
     attack.projectiles[0].kind=1;attack.projectiles[0].feet={100,100};attack.invulnerable=true;attack.invulnerability=0;
     target={};target.feet={100,99};step_enemy_projectiles(target,attack,actor_rules);
     require(attack.projectiles[0].kind==1 && target.energy==16 && !target.lock_ticks);
+    EnemyStepContext expanded;expanded.invulnerable=true;expanded.projectiles[0].kind=1;expanded.projectiles[0].feet={500,100};Body far_player;far_player.feet={100,99};
+    auto original_window=expanded;step_enemy_projectiles(far_player,original_window,actor_rules);require(!original_window.projectiles[0].kind);
+    expanded.view=Viewport{{0,0},960,528};step_enemy_projectiles(far_player,expanded,actor_rules);require(expanded.projectiles[0].kind==1 && (expanded.projectiles[0].flags&0x8000));
+    EnemyWorld portable;EnemyBody pickup;pickup.set(0,2);pickup.set(2,110);pickup.set(4,100);pickup.set(18,0x8000);pickup.set(20,24);pickup.set(22,20);pickup.set(90,4);portable.enemies={pickup,EnemyBody{}};
+    Body enemy_carrier;enemy_carrier.feet={100,100};enemy_carrier.facing_right=true;
+    require(pick_enemy(portable,enemy_carrier) && portable.carried==1 && portable.enemies[1].get(24)==192 && portable.enemies[1].get(0)==5);
+    attach_enemy(portable,{120,90},{-4,-31});require(portable.enemies[1].signed_get(2)==116 && portable.enemies[1].signed_get(4)==59);
+    throw_enemy(portable,enemy_carrier,false);require(!portable.carried && portable.enemies[1].signed_get(6)==160 && portable.enemies[1].get(14)==0 && portable.enemies[1].signed_get(4)==84);
+    EnemyWorld victims;EnemyBody victim;victim.set(0,1);victim.set(2,100);victim.set(4,100);victim.set(20,24);victim.set(22,20);victims.enemies.push_back(victim);
+    ObjectWorld weapon;weapon.objects[0].kind=1;weapon.objects[0].feet={100,100};weapon.objects[0].width=20;weapon.objects[0].height=20;weapon.objects[0].vx=160;weapon.objects[0].flags=128;weapon.impact_list={0};
+    EnemyStepContext impact;impact.visible_enemies={0};resolve_enemy_impacts(victims,weapon,impact);
+    require(victims.enemies[0].get(24)==64 && !weapon.objects[0].kind && impact.sound_event==5);
     Bytes poil(3060,0);
     auto le=[&](unsigned at,unsigned v){poil.at(at)=std::uint8_t(v);poil.at(at+1)=std::uint8_t(v>>8);};
     for(unsigned i=0;i<40;++i){le(768+i*6,65535);le(770+i*6,65535);le(772+i*6,65535);}
@@ -88,6 +103,25 @@ int main() try {
     Bytes raw_map(256,0);raw_map[0]=0x11;raw_map[1]=4;
     LevelRules rules;rules.enemy_animation_frames.fill(true);
     auto logical=initialize_level(1,raw_map,poil,rules);
+    LevelAssets save_assets;save_assets.initial=logical;save_assets.initial.enemies.clear();save_assets.initial.objects={};
+    NativeRules save_rules;save_rules.table_data.resize(9644);
+    auto saved_state=start_game(save_assets,save_rules);saved_state.frame=125;saved_state.lives=7;saved_state.player.energy=5;
+    auto saved=save_game(saved_state,"test-amiga-fingerprint");require(saved_game_level(saved)==1);
+    auto restored=restore_game(saved,save_assets,save_rules,"test-amiga-fingerprint");
+    require(save_game(restored,"test-amiga-fingerprint")==saved && restored.frame==125 && restored.lives==7 && restored.player.energy==5);
+    rejects([&]{restore_game(saved,save_assets,save_rules,"different-installation");});
+    bool bad_save=false;try{auto damaged=saved;damaged.pop_back();restore_game(damaged,save_assets,save_rules,"test-amiga-fingerprint");}catch(const std::exception&){bad_save=true;}require(bad_save);
+    LevelAssets door_assets;auto& room=door_assets.initial;room.number=1;room.height_tiles=8;room.map.assign(8*256,0);room.spawn={40,63};room.floor[1]=1;
+    for(unsigned x=0;x<256;++x)room.map[4*256+x]=1;
+    room.gates[0]={0x0402,0,0x0604,1,true};auto door_game=start_game(door_assets,save_rules);door_game.player.state=door_game.player.return_state=5;door_game.down_ticks=28;
+    BodyInput enter;enter.down=true;game_step(door_game,enter,false,save_rules);require(door_game.player.feet.x==40 && !door_game.gate_flags);
+    game_step(door_game,enter,false,save_rules);require(door_game.player.feet.x==64 && door_game.player.feet.y==94 && door_game.gate_flags==1 && !door_game.down_ticks);
+    GameState bonus_game;bonus_game.phase=GamePhase::level_complete;bonus_game.lives=3;bonus_game.bonus_credits=12;
+    for(unsigned tick=0;tick<50;++tick)game_step(bonus_game,{},false,save_rules);
+    require(bonus_game.lives==4 && bonus_game.bonus_credits==2 && !bonus_game.completion_spent);
+    bonus_game.lives=98;bonus_game.bonus_credits=17;bonus_game.completion_spent=3;finish_level_bonuses(bonus_game);require(bonus_game.lives==99 && !bonus_game.bonus_credits && !bonus_game.completion_spent);
+    Level animated;animated.animation.fill(128);animated.animation[10]=2;animated.animation[256+10]=3;animated.animation[512+10]=4;
+    require(animated_tile(animated,10,0)==10 && animated_tile(animated,10,8)==11 && animated_tile(animated,10,16)==12 && animated_tile(animated,11,8)==11);
     require(logical.map[0]==0x91 && logical.map[2]==77);
     require(logical.horizontal[4]==0x82 && logical.floor[5]==0x41 && logical.floor[6]==0x47);
     require(logical.objects[0].kind==7 && logical.objects[0].position.y==15);

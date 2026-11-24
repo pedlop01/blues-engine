@@ -6,10 +6,11 @@
 #include <optional>
 namespace titus::fox_amiga {
 using Bytes = std::vector<std::uint8_t>;
-// Research asset reader only. Does not expose a playable engine capability.
+// Bounded Amiga primitives shared by the native runtime and diagnostic tools.
 Bytes unpack(const Bytes& source);
 struct Image { unsigned width, height; Bytes pixels; };
 std::vector<Image> sprites(const Bytes& raw);
+std::vector<Image> characters(const Bytes& raw);
 std::vector<Image> tiles(const Bytes& raw);
 struct Picture { Image image; std::array<std::uint32_t, 64> palette{}; };
 Picture picture(const Bytes& raw, unsigned planes, bool repeat_encoded);
@@ -19,6 +20,7 @@ Image map_view(const Bytes& map, const std::vector<Image>& tiles,
 
 namespace titus::fox_amiga {
 struct Point { int x=0,y=0; };
+struct Viewport { Point camera;unsigned width=320,height=176; };
 struct Object {
     unsigned slot=0,raw_sprite=0,kind=0;
     Point position;
@@ -79,7 +81,7 @@ struct MotionRules {
     std::array<unsigned,14> walk_frames{};
     std::array<int,5> jump_impulses{};
 };
-struct MotionContext { Point camera;bool invulnerable=false,wide_carry=false; };
+struct MotionContext { Point camera;bool invulnerable=false,wide_carry=false,carrying_enemy=false; };
 struct Body {
     Point feet;
     int vx=0,vy=0;

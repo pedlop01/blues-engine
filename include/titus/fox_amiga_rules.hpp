@@ -9,7 +9,8 @@ struct NativeRules {
     MotionRules motion;
     ObjectRules objects;
     std::array<unsigned,16> palette{},level_color14{},player_palette{},hud_palette{};
-    std::array<std::string,16> level_songs;
+    std::array<std::array<unsigned,176>,16> copper_color14{};
+    std::array<std::string,16> level_songs,level_codes;
     std::array<unsigned,5> effect_frequencies{};
     std::array<SpriteRule,333> sprites{};
     std::array<std::string,4> section_sha256;

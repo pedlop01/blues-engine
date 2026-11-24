@@ -104,7 +104,8 @@
               "enum": [
                 "blues-family",
                 "opentitus",
-                "olduvai"
+                "olduvai",
+                "fox-amiga-native"
               ]
             },
             {
@@ -356,6 +357,60 @@
           },
           "additionalProperties": false,
           "minProperties": 1
+        },
+        "fox": {
+          "type": "object",
+          "properties": {
+            "camera": {
+              "enum": [
+                "classic",
+                "smooth"
+              ]
+            },
+            "hud": {
+              "enum": [
+                "classic",
+                "fixed"
+              ]
+            },
+            "view_step": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8
+            },
+            "invulnerable": {
+              "type": "boolean"
+            },
+            "infinite_lives": {
+              "type": "boolean"
+            },
+            "lives": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            },
+            "start_level": {
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                16
+              ]
+            }
+          },
+          "minProperties": 1,
+          "additionalProperties": false
         }
       },
       "required": [],
@@ -442,10 +497,13 @@
         },
         "file": {
           "type": "string",
-          "pattern": "^saves/slot0[1-8]\\.bbs$"
+          "pattern": "^(saves/slot0[1-8]\\.bbs|slot-[1-8]\\.json)$"
         },
         "format_id": {
-          "const": "blues.bbs"
+          "enum": [
+            "blues.bbs",
+            "fox.amiga.json"
+          ]
         },
         "format_version": {
           "anyOf": [
@@ -572,6 +630,9 @@
             "properties": {
               "format_version": {
                 "const": 1
+              },
+              "format_id": {
+                "const": "blues.bbs"
               }
             }
           },
@@ -685,7 +746,8 @@
                 "enum": [
                   "blues-family",
                   "opentitus",
-                  "olduvai"
+                  "olduvai",
+                  "fox-amiga-native"
                 ]
               },
               "adapter_state": {
@@ -841,7 +903,8 @@
           "enum": [
             "blues-family",
             "opentitus",
-            "olduvai"
+            "olduvai",
+            "fox-amiga-native"
           ]
         },
         "edition_id": {
@@ -976,7 +1039,8 @@
           "enum": [
             "blues-family",
             "opentitus",
-            "olduvai"
+            "olduvai",
+            "fox-amiga-native"
           ]
         },
         "outcome": {
@@ -1145,7 +1209,8 @@
                     "enum": [
                       "blues-family",
                       "opentitus",
-                      "olduvai"
+                      "olduvai",
+                      "fox-amiga-native"
                     ]
                   },
                   "build_revision": {
@@ -1400,10 +1465,16 @@
           "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
         },
         "game_id": {
-          "const": "blues"
+          "enum": [
+            "blues",
+            "fox"
+          ]
         },
         "engine_id": {
-          "const": "blues-family"
+          "enum": [
+            "blues-family",
+            "fox-amiga-native"
+          ]
         },
         "save_compatibility_id": {
           "type": "string",
@@ -1470,7 +1541,8 @@
           "enum": [
             "blues-family",
             "opentitus",
-            "olduvai"
+            "olduvai",
+            "fox-amiga-native"
           ]
         },
         "edition_id": {
@@ -1567,7 +1639,8 @@
           "enum": [
             "blues-family",
             "opentitus",
-            "olduvai"
+            "olduvai",
+            "fox-amiga-native"
           ]
         },
         "save_compatibility_id": {

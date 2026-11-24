@@ -21,5 +21,7 @@
     "managed adapter and catalog integration",
     "persistent common options and saves",
     "user review"
-  ]
+  ],
+  "historical_checkpoint": true,
+  "superseded_by": "th14-final-validation.json"
 }
