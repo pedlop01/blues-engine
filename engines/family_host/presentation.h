@@ -6,6 +6,9 @@
 static bool _family_active, _family_camera_valid;
 static int _family_w = 320, _family_h = 200, _family_last_x, _family_last_y;
 static int _family_native_x, _family_native_y;
+#ifdef FAMILY_FRACTIONAL_CAMERA
+static int _family_scroll_margin = 32;
+#endif
 static double _family_width = 320, _family_height = 200, _family_x, _family_y;
 static uint8_t *_family_pixels, *_family_border;
 #ifdef FAMILY_SEPARATE_BACKDROP
@@ -31,6 +34,9 @@ static void family_begin() {
   _family_active = true;
   /* Reloads return SDL to 320x200: never trust the last game view cache. */
   _family_w = _family_h = 0;
+#ifdef FAMILY_FRACTIONAL_CAMERA
+  _family_scroll_margin = 32;
+#endif
   _family_character = false;
   _family_requested_level = -1;
   _family_width = MIN(320 + MIN(8, MAX(0, g_sys.input.view_step)) * 64,
@@ -132,6 +138,9 @@ static bool family_before_tick() {
   return advance;
 }
 static void family_present() {
+#ifdef FAMILY_FRACTIONAL_CAMERA
+  const double previous_camera_x = _family_x, previous_camera_y = _family_y;
+#endif
   const int view = MIN(8, MAX(0, g_sys.input.view_step));
   const int target_w = MIN(320 + view * 64, MAX(320, family_map_w()));
   const int target_h = MIN(200 + view * 32, MAX(200, family_map_h() + 24));
@@ -183,16 +192,36 @@ static void family_present() {
   }
   g_sys.render_set_sprites_clipping_rect(0, 0, w, h - 24);
   g_sys.set_hud_layout(g_options.hud_mode == HUD_FIXED ? 320 : 0, 200, 0, 24);
-  g_sys.set_scroll_interpolation(x - _family_last_x, y - _family_last_y, 33,
-                                 !cut &&
-                                     g_options.camera_mode == CAMERA_SMOOTH);
+#ifdef FAMILY_FRACTIONAL_CAMERA
+  if (g_sys.set_scroll_camera)
+    g_sys.set_scroll_camera(x, y, _family_x, _family_y, 33,
+                            !cut && g_options.camera_mode == CAMERA_SMOOTH);
+  else
+#endif
+    g_sys.set_scroll_interpolation(x - _family_last_x, y - _family_last_y, 33,
+                                   !cut &&
+                                       g_options.camera_mode == CAMERA_SMOOTH);
   _family_last_x = x;
   _family_last_y = y;
   _family_camera_valid = true;
   g_sys.render_clear_sprites();
   family_draw_view(x, y, w, h, _family_pixels);
   g_sys.copy_bitmap(_family_pixels, w, h);
-  const int margin = 32, pitch = w + 2 * margin;
+  int margin = 32;
+#ifdef FAMILY_FRACTIONAL_CAMERA
+  if (!cut && g_options.camera_mode == CAMERA_SMOOTH &&
+      g_options.scroll_rate > 30) {
+    /* Cover the entire interpolation interval, including the raster's
+     * fractional displacement. Retain the largest margin until reload. */
+    double required =
+        fmax(fabs(x - previous_camera_x), fabs(y - previous_camera_y));
+    required = fmax(required, fmax(fabs(x - _family_x), fabs(y - _family_y)));
+    const int needed = ((int)ceil(required) + 2 + 15) / 16 * 16;
+    _family_scroll_margin = MAX(_family_scroll_margin, needed);
+  }
+  margin = _family_scroll_margin;
+#endif
+  const int pitch = w + 2 * margin;
   uint8_t *border =
       realloc(_family_border, (size_t)pitch * (h - 24 + 2 * margin));
   if (border) {

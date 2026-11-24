@@ -90,7 +90,9 @@ static void regression_resize() {
 static uint32_t route_time;
 static int route_sleeps, route_after_restart, route_x, route_draws,
     route_powered;
-static bool route_killed, route_restarted, route_in_powerdown;
+static bool route_killed, route_restarted, route_in_powerdown, route_scroll;
+static int motion_frames, motion_player_x;
+static double motion_camera_x;
 static uint32_t route_clock() { return route_time; }
 static void route_fade() {}
 static void route_sleep(int duration) {
@@ -98,6 +100,21 @@ static void route_sleep(int duration) {
   assert(++route_sleeps < 2000);
   if (_family_active && _family_camera_valid) {
     assert(_screen_w == _family_w && _screen_h == _family_h);
+    if (route_scroll) {
+      const int px = g_vars.players_table[0].obj.x_pos;
+      if (motion_frames > 30 && motion_frames < 160 && px >= motion_player_x &&
+          px - motion_player_x < 32 && _family_x < motion_camera_x - .001) {
+        fprintf(stderr,
+                "camera reversed while moving right: frame %d player %d -> %d "
+                "camera %.3f -> %.3f native %d\n",
+                motion_frames, motion_player_x, px, motion_camera_x, _family_x,
+                family_native_x());
+        abort();
+      }
+      motion_player_x = px;
+      motion_camera_x = _family_x;
+      ++motion_frames;
+    }
     const int sprites = _sprites_count;
     if (route_in_powerdown) {
       bool player_drawn = false;
@@ -110,8 +127,12 @@ static void route_sleep(int duration) {
     }
     for (int i = 1; i <= 4; ++i) {
       const float t = i / 4.f;
-      sdl2_draw_screen((_scroll_target_x - _scroll_previous_x) * (1 - t),
-                       (_scroll_target_y - _scroll_previous_y) * (1 - t), t);
+      if (_scroll_interpolation_active)
+        sdl2_present_at(_scroll_update_timestamp +
+                        (uint64_t)(_scroll_period_counter * t));
+      else
+        sdl2_draw_screen((float)_scroll_camera_offset_x,
+                         (float)_scroll_camera_offset_y, 1);
       assert(_sprites_count == sprites);
     }
     const char *capture = SDL_getenv("PF_CAPTURE");
@@ -140,6 +161,14 @@ static void route_events() {
   g_sys.input.space = !_family_active;
   if (!_family_active)
     return;
+  if (route_scroll) {
+    g_sys.input.direction =
+        motion_frames < 180 ? INPUT_DIRECTION_RIGHT : INPUT_DIRECTION_LEFT;
+    g_sys.input.jump = motion_frames % 60 < 8;
+    if (motion_frames >= 360)
+      g_sys.input.quit = true;
+    return;
+  }
   struct player_t *player = &g_vars.players_table[0];
   if (!route_killed && g_vars.level_loop_counter >= 12) {
     route_killed = true;
@@ -197,6 +226,36 @@ static void regression_death() {
          "player\n",
          routes);
 }
+static void regression_native_scroll() {
+  sound_init();
+  g_mix.init();
+  route_scroll = true;
+  g_sys.process_events = route_events;
+  g_sys.sleep = route_sleep;
+  g_sys.get_timestamp = route_clock;
+  g_sys.fade_in_palette = g_sys.fade_out_palette = route_fade;
+  g_options.cheats = CHEATS_OBJECT_NO_HIT | CHEATS_DECOR_NO_HIT;
+  g_options.family_infinite_lives = true;
+  for (int rate = 60; rate <= 120; rate *= 2)
+    for (int hud = 0; hud < 2; ++hud) {
+      family_end();
+      g_sys.input = (struct input_t){.space = true};
+      g_options.scroll_rate = rate;
+      g_options.hud_mode = hud;
+      g_sys.set_scroll_render_rate(rate);
+      g_vars.level = 1;
+      g_vars.player = 0;
+      g_vars.players_table[0].lifes_count = 3;
+      motion_frames = route_sleeps = 0;
+      motion_camera_x = 0;
+      motion_player_x = 0;
+      do_level();
+      assert(motion_frames >= 360);
+    }
+  g_mix.fini();
+  sound_fini();
+  puts("PASS: native right/left scrolling with camera direction checks");
+}
 static void regression_music() {
   sound_init();
   g_mix.init();
@@ -209,7 +268,150 @@ static void regression_music() {
   g_mix.fini();
   sound_fini();
 }
+
+static void regression_scroll_edges() {
+  /* Read back before Present; GPU swap-chain backbuffers are undefined after
+   * it. */
+  _save_preview_capture = true;
+  g_options.scroll_rate = 60;
+  g_sys.set_scroll_render_rate(60);
+  g_sys.input.view_step = 0;
+  g_options.hud_mode = HUD_CLASSIC;
+  memset(g_vars.tilemap_data, 0, g_vars.tilemap_w * g_vars.tilemap_h);
+  memset(g_vars.tilemap_lut_type, 0, sizeof(g_vars.tilemap_lut_type));
+  memset(g_vars.tile_palette_table, 0, sizeof(g_vars.tile_palette_table));
+  for (int page = 0; page < 6; ++page)
+    for (int n = 0; n < 256; ++n)
+      g_vars.tilemap_lut_init[page * 256 + n] = n;
+  g_vars.tilemap_current_lut = g_vars.tilemap_lut_init;
+  for (int y = 0; y < 16; ++y)
+    for (int x = 0; x < 16; x += 2)
+      g_res.tmp[y * 8 + x / 2] = (((x % 15) + 1) << 4) | (((x + 1) % 15) + 1);
+  uint8_t palette[768];
+  for (int n = 0; n < 256; ++n)
+    for (int c = 0; c < 3; ++c)
+      palette[n * 3 + c] = (n % 16) * 16;
+  g_sys.set_screen_palette(palette, 0, 256, 8);
+  for (int n = 0; n < OBJECTS_COUNT; ++n)
+    g_vars.objects_table[n].spr_num = 0xFFFF;
+  g_vars.tilemap_x = 16;
+  g_vars.tilemap_scroll_dx = 0;
+  g_vars.tilemap_y = 0;
+  g_vars.tilemap_scroll_dy = 0;
+  family_begin();
+  _family_before_draw = g_vars;
+  family_present();
+  const bool motion = SDL_getenv("PF_CAMERA_MOTION") != NULL;
+  for (int scale = 1; scale <= 3; ++scale) {
+    SDL_SetWindowSize(_window, 320 * scale, 200 * scale);
+    int w, h;
+    SDL_GetRendererOutputSize(_renderer, &w, &h);
+    assert(w == 320 * scale);
+    uint32_t *pixels = malloc((size_t)w * h * 4);
+    assert(pixels);
+    for (int phase = -24; phase <= 24; ++phase) {
+      sdl2_draw_screen(phase / 8.f, 0, 1);
+      SDL_RenderSetLogicalSize(_renderer, 0, 0);
+      assert(SDL_RenderReadPixels(_renderer, NULL, SDL_PIXELFORMAT_ARGB8888,
+                                  pixels, w * 4) == 0);
+      SDL_RenderSetLogicalSize(_renderer, _screen_w, _screen_h);
+      const uint32_t *row = pixels + (80 * scale) * w;
+      for (int x = 0; x < 32 * scale; ++x) {
+        if (row[x] != row[x + 160 * scale]) {
+          fprintf(stderr,
+                  "left-edge discontinuity: scale %d offset %.3f pixel %d: "
+                  "%08x vs %08x\n",
+                  scale, phase / 8.f, x, row[x], row[x + 160 * scale]);
+          abort();
+        }
+      }
+    }
+    free(pixels);
+    if (motion) {
+      /* Each output scale is an independent route, rather than a teleport
+       * back from the previous route (which intentionally cuts the camera). */
+      g_vars.tilemap_x = 16;
+      g_vars.tilemap_scroll_dx = 0;
+      family_cut();
+      _family_before_draw = g_vars;
+      family_present();
+      for (int frame = 1; frame <= 34; ++frame) {
+        const int native =
+            frame <= 32 ? 256 + frame * 4 : 508 + (frame - 33) * 4;
+        g_vars.tilemap_x = native / 16;
+        g_vars.tilemap_scroll_dx = (native % 16) / 4;
+        _family_before_draw = g_vars;
+        family_present();
+        assert(_scroll_interpolation_active);
+        uint32_t *moving = malloc((size_t)w * h * 4);
+        assert(moving);
+        for (int part = 0; part <= 4; ++part) {
+          sdl2_present_at(_scroll_update_timestamp +
+                          _scroll_period_counter * part / 4);
+          SDL_RenderSetLogicalSize(_renderer, 0, 0);
+          assert(SDL_RenderReadPixels(_renderer, NULL, SDL_PIXELFORMAT_ARGB8888,
+                                      moving, w * 4) == 0);
+          SDL_RenderSetLogicalSize(_renderer, _screen_w, _screen_h);
+          const uint32_t *row = moving + 80 * scale * w;
+          for (int x = 0; x < 32 * scale; ++x)
+            if (row[x] != row[x + 160 * scale] ||
+                row[w - 1 - x] != row[w - 1 - x - 160 * scale]) {
+              fprintf(stderr,
+                      "missing map edge: scale %d frame %d phase %d margin %d "
+                      "camera %.3f raster %d\n",
+                      scale, frame, part, _scroll_margin, _family_x,
+                      _family_last_x);
+              abort();
+            }
+        }
+        free(moving);
+        const uint32_t actual = display_hash();
+        sdl2_draw_screen(_family_last_x - _family_x, _family_last_y - _family_y,
+                         1);
+        if (display_hash() != actual) {
+          fprintf(stderr,
+                  "smooth camera lost precision: native %d smooth %.4f raster "
+                  "%d scale %d frame %d\n",
+                  family_native_x(), _family_x, _family_last_x, scale, frame);
+          abort();
+        }
+      }
+    }
+  }
+  if (motion) {
+    family_cut();
+    g_vars.tilemap_x = 16;
+    g_vars.tilemap_scroll_dx = 0;
+    g_vars.objects_table[0].spr_num = 19;
+    g_vars.objects_table[0].x_pos = 500;
+    g_vars.objects_table[0].y_pos = 100;
+    _family_before_draw = g_vars;
+    family_present();
+    const double old_camera = _family_x;
+    g_vars.objects_table[0].x_pos = 503;
+    g_vars.tilemap_scroll_dx = 1;
+    _family_before_draw = g_vars;
+    family_present();
+    const struct sprite_t *actor = NULL;
+    for (int n = 0; n < _sprites_count; ++n)
+      if (_sprites[n].owner == 0)
+        actor = &_sprites[n];
+    assert(actor && actor->interpolate);
+    const double half = _spritesheets[actor->sheet].r[actor->num].w / 2.;
+    const double old_anchor =
+        500 - (sprite_sizes[19] & 255) + half - old_camera;
+    const double new_anchor = 503 - (sprite_sizes[19] & 255) + half - _family_x;
+    for (int part = 0; part <= 4; ++part) {
+      const float t = part / 4.f;
+      SDL_FRect r = sdl2_sprite_rect(actor, 0, 0, t);
+      assert(fabs(r.x + half - (old_anchor + (new_anchor - old_anchor) * t)) <
+             .001);
+    }
+  }
+  _save_preview_capture = false;
+}
 static void regression_backdrop() {
+  _save_preview_capture = true;
   /* Transparent tiles reveal a striped original backdrop. It is screen
    * anchored: camera interpolation must never move it between logic ticks. */
   memset(g_res.tmp, 0, 32768);
@@ -227,6 +429,7 @@ static void regression_backdrop() {
     assert(display_hash() == reference &&
            "backdrop oscillates with tile interpolation");
   }
+  _save_preview_capture = false;
 }
 #endif
 int main(int argc, char **argv) {
@@ -281,7 +484,14 @@ int main(int argc, char **argv) {
 #ifdef PROBE_JA
   const char *regression = SDL_getenv("PF_REGRESSION");
   if (regression) {
-    if (!strcmp(regression, "death"))
+    if (!strcmp(regression, "camera")) {
+      SDL_setenv("PF_CAMERA_MOTION", "1", 1);
+      regression_scroll_edges();
+    } else if (!strcmp(regression, "motion"))
+      regression_native_scroll();
+    else if (!strcmp(regression, "scroll"))
+      regression_scroll_edges();
+    else if (!strcmp(regression, "death"))
       regression_death();
     else if (!strcmp(regression, "music"))
       regression_music();

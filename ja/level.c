@@ -3016,6 +3016,7 @@ static bool change_level(bool first_level) {
 }
 
 extern void family_select_character();
+#define FAMILY_FRACTIONAL_CAMERA
 #define FAMILY_SEPARATE_BACKDROP
 #define FAMILY_LEVEL_COUNT 31
 #define FAMILY_NO_CHARACTER false

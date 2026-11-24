@@ -20,7 +20,7 @@ source=str(a.datapath.resolve())
 if a.windows:source=subprocess.check_output(['wslpath','-w',source],text=True).strip()
 program=(a.bin_dir/('check_ja_presentation'+('.exe' if a.windows else ''))).resolve()
 report={'platform':'windows' if a.windows else 'linux','cases':[],'death_routes':32}
-for case in ['sprites','resize','backdrop','music','death']:
+for case in ['sprites','resize','backdrop','music','death','scroll','camera','motion']:
     env=dict(os.environ,SDL_VIDEODRIVER='dummy',SDL_AUDIODRIVER='dummy',PF_REGRESSION=case,
              ASAN_OPTIONS='detect_stack_use_after_return=0:detect_leaks=1',UBSAN_OPTIONS='halt_on_error=1')
     if a.windows:env['WSLENV']=':'.join(filter(None,env.get('WSLENV','').split(':')+['SDL_VIDEODRIVER','SDL_AUDIODRIVER','PF_REGRESSION']))

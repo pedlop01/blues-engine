@@ -844,7 +844,9 @@ static void sdl2_run_pause_menu() {
 #endif
 	clear_pause_input();
 	remember_held_controls();
+	const float frozen_x=(float)_scroll_camera_offset_x,frozen_y=(float)_scroll_camera_offset_y;
 	sdl2_set_scroll_interpolation(0, 0, 0, false);
+	_scroll_camera_offset_x=frozen_x;_scroll_camera_offset_y=frozen_y;
 	_pause_page = PAUSE_MAIN;
 	_pause_selection = _pause_axis = _pause_xaxis = _pause_hat = 0;
 	_pause_capture = -1; _pause_notice = _pause_options.load_notice;
@@ -867,7 +869,7 @@ static void sdl2_run_pause_menu() {
         if(_pause_page==PAUSE_QUIT&&!managed_confirmation){titus_runtime_return_request(1);managed_confirmation=true;}
         if(_pause_page!=PAUSE_QUIT&&managed_confirmation){titus_runtime_return_cancelled();managed_confirmation=false;}
 #endif
-		sdl2_draw_screen(0.f, 0.f, 1.f);
+		sdl2_draw_screen(frozen_x, frozen_y, 1.f);
 		SDL_Event ev;
 		if (SDL_WaitEventTimeout(&ev, 16)) {
 			done = pause_event(&ev);
@@ -887,6 +889,6 @@ static void sdl2_run_pause_menu() {
 	clear_pause_input();
 	_pause_menu_open = false;
 	SDL_DestroyTexture(_save_preview_texture);_save_preview_texture=NULL;_preview_texture_slot=-1;
-	sdl2_draw_screen(0.f, 0.f, 1.f);
+	sdl2_draw_screen(frozen_x, frozen_y, 1.f);
 	if (resume_audio && _window_has_focus && !g_sys.input.quit) SDL_PauseAudio(0);
 }

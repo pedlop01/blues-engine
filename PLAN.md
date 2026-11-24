@@ -224,3 +224,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-24 | PF-01–PF-08 | Autorizada la paridad de Jukebox/P2. Primera entrega con cámara y render independientes, zoom/HUD, menú adaptado, ayudas, selector paginado y rewind en memoria. No se anuncian slots hasta implementar un formato persistente propio. | Bloque abierto; progreso y validación en docs/FAMILY_PARITY_PLAN.md. |
 
 | 2026-11-24 | PF-01/PF-02/PF-07 | Revisión r2 por los fallos de Jukebox comunicados: sprites conservados entre ticks, fondo fijo separado, resolución reconstruida tras morir y búfer del nivel protegido al reiniciar música. Pruebas de regresión y 32 muertes/reapariciones con movimiento posterior. | Nueva revisión jugando; PF permanece abierto y PF-06 pendiente. |
+
+| 2026-11-24 | PF-01/PF-02 | El usuario confirma resuelto el parpadeo de Jukebox. R3 conserva la precisión fraccionaria de cámara/sprites y dimensiona el margen de tiles para cubrir todo el desplazamiento, tras reproducir la pérdida de precisión y un hueco en el borde. Nuevas pruebas de píxeles, anclas y movimiento nativo. | Scroll pendiente de nueva revisión jugando; PF sigue abierto. |

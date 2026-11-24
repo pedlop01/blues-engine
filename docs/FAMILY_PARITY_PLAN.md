@@ -72,7 +72,7 @@ PF-01/PF-08 incluyen revisar los actores que se ven al alejar el zoom. No se
 promete todavía una campaña completa, dispositivos físicos, guardados portables
 ni paridad cerrada al 100 %. La tarea 17 de Blues continúa abierta y 18 pospuesta.
 
-Entrega de revisión: `build/pf-package-windows-r2/bin/titus-engine.exe`, con todas
+Entrega de revisión: `build/pf-package-windows-r3/bin/titus-engine.exe`, con todas
 sus dependencias al lado; no es un ejecutable autónomo ni una distribución final.
 
 Resultados de la primera entrega: 47 etapas en Linux (31 JA + 16 P2), siete
@@ -123,3 +123,32 @@ histórica en el informe anterior.
 Evidencia de r2: [pf-r2-validation.json](measurements/pf-r2-validation.json),
 con las reproducciones anteriores, matrices, sanitizadores y comprobación del
 paquete Windows final (cinco motores y revisión `afe8a49-pf2`).
+
+## Revisión r3: precisión de cámara y bordes (24-11-2026)
+
+El usuario valida que r2 elimina el parpadeo, pero todavía detecta oscilaciones
+y cortes en el lado izquierdo. Se reproducen dos problemas adicionales:
+
+- La cámara se suavizaba en coma flotante, pero se entregaba al renderer la
+  posición ajustada a grupos de cuatro píxeles del raster original de Jukebox.
+  Una prueba detecta `257.2` calculado frente a `256` dibujado. Ahora el raster
+  conserva sus restricciones y la presentación recibe la posición fraccionaria;
+  tiles y anclas de los sprites comparten la misma transformación interpolada.
+- El margen fijo de 32 píxeles no cubría algunos intervalos válidos de cámara.
+  La prueba reproduce un borde sin mapa durante una transición de menos de
+  128 píxeles. El margen se calcula para todo el intervalo y conserva su máximo
+  hasta recargar el nivel, evitando huecos y realocaciones continuas.
+
+La cámara clásica y la simulación original no cambian. P2 y Blues mantienen
+su API de desplazamiento anterior; la nueva proyección se activa en Jukebox.
+La escena del menú conserva el desplazamiento fraccionario al congelarse.
+
+La regresión incorpora ocho grupos: sprites, resize, backdrop, music, death,
+scroll, camera y motion. Compara píxeles de ambos bordes a 1×/2×/3×, fases
+intermedias y posiciones finales, e interpola las anclas del personaje. Recorre
+cuatro rutas nativas de 360 pasos moviéndose a derecha/izquierda a 60/120 Hz,
+además de las 32 muertes y reapariciones de r2. Las lecturas de píxeles de la
+prueba gráfica se hacen **antes** de `SDL_RenderPresent`, como exige SDL, para
+no comparar un backbuffer descartado por Direct3D.
+
+R3 sigue pendiente de revisión jugando; no cierra PF ni añade guardados.

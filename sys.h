@@ -124,6 +124,8 @@ struct sys_t {
 	void	(*get_screen_palette)(uint8_t *rgb);
 	/* DOS tiles use zero as transparency over a stationary backdrop. */
 	void	(*set_scroll_layers)(const uint8_t *tiles,const uint8_t *backdrop,int margin);
+	/* Raster coordinates may stay coarse while presentation remains fractional. */
+	void	(*set_scroll_camera)(int raster_x,int raster_y,double camera_x,double camera_y,int period,bool enabled);
 };
 
 extern struct sys_t g_sys;

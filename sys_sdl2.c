@@ -27,6 +27,7 @@ struct sprite_t {
 	int owner, part;
 	float anchor_x, anchor_y;
 	float previous_anchor_x, previous_anchor_y;
+	float camera_offset_x, camera_offset_y;
 	bool interpolate;
 };
 
@@ -75,6 +76,7 @@ static int _shake_dx, _shake_dy;
 static int _scroll_rate = 30;
 static double _scroll_target_x, _scroll_target_y;
 static double _scroll_previous_x, _scroll_previous_y;
+static double _scroll_raster_x, _scroll_raster_y, _scroll_camera_offset_x, _scroll_camera_offset_y;
 static uint64_t _scroll_update_timestamp, _scroll_period_counter;
 static uint64_t _render_schedule_origin, _next_render_counter;
 static bool _scroll_interpolation_active, _render_schedule_initialized;
@@ -276,6 +278,25 @@ static void sdl2_set_scroll_interpolation(int dx, int dy, int simulation_period,
 		_previous_sprites_count = 0;
 	}
 	_scroll_interpolation_active = active;
+    _scroll_raster_x=_scroll_target_x;_scroll_raster_y=_scroll_target_y;
+    _scroll_camera_offset_x=_scroll_camera_offset_y=0.;
+}
+
+static void sdl2_set_scroll_camera(int raster_x, int raster_y, double camera_x,
+                                   double camera_y, int period, bool enabled) {
+  const bool previous_active = _scroll_interpolation_active;
+  const double previous_x = _scroll_target_x, previous_y = _scroll_target_y;
+  sdl2_set_scroll_interpolation(0, 0, period, enabled);
+  _scroll_target_x = camera_x;
+  _scroll_target_y = camera_y;
+  _scroll_previous_x =
+      previous_active && _scroll_interpolation_active ? previous_x : camera_x;
+  _scroll_previous_y =
+      previous_active && _scroll_interpolation_active ? previous_y : camera_y;
+  _scroll_raster_x = raster_x;
+  _scroll_raster_y = raster_y;
+  _scroll_camera_offset_x = raster_x - camera_x;
+  _scroll_camera_offset_y = raster_y - camera_y;
 }
 
 static uint32_t convert_amiga_color(uint16_t color) {
@@ -538,8 +559,8 @@ static SDL_FRect sdl2_sprite_rect(const struct sprite_t *spr, float scroll_x, fl
 		/* Anchors are screen positions from their respective simulation
 		 * frames: their delta already includes camera motion. Do not add
 		 * scroll_x/y again. Keep the current animation's foot/center anchor. */
-		r.x += (spr->previous_anchor_x - spr->anchor_x) * (1.f - progress);
-		r.y += (spr->previous_anchor_y - spr->anchor_y) * (1.f - progress);
+		r.x += spr->camera_offset_x + (spr->previous_anchor_x - spr->anchor_x) * (1.f - progress);
+		r.y += spr->camera_offset_y + (spr->previous_anchor_y - spr->anchor_y) * (1.f - progress);
 	} else {
 		r.x += scroll_x;
 		r.y += scroll_y;
@@ -727,13 +748,13 @@ static void sdl2_present_at(uint64_t timestamp) {
 	const double display_x = _scroll_previous_x + (_scroll_target_x - _scroll_previous_x) * progress;
 	const double display_y = _scroll_previous_y + (_scroll_target_y - _scroll_previous_y) * progress;
 	sdl2_draw_screen(
-		(float)(_scroll_target_x - display_x),
-		(float)(_scroll_target_y - display_y), (float)progress);
+		(float)(_scroll_raster_x - display_x),
+		(float)(_scroll_raster_y - display_y), (float)progress);
 }
 
 static void sdl2_update_screen() {
 	if (!_scroll_interpolation_active) {
-		sdl2_draw_screen(0.f, 0.f, 1.f);
+		sdl2_draw_screen((float)_scroll_camera_offset_x, (float)_scroll_camera_offset_y, 1.f);
 		return;
 	}
 	const uint64_t now = SDL_GetPerformanceCounter();
@@ -1282,8 +1303,11 @@ static void render_add_sprite(int spr_type, int frame, int x, int y, int xflip) 
 	spr->owner = _sprite_owner;
 	spr->part = _sprite_part++;
 	spr->interpolate = false;
-	spr->anchor_x = x;
-	spr->anchor_y = y;
+	/* Match screen anchors after applying the raster-to-camera correction. */
+	spr->camera_offset_x=(float)_scroll_camera_offset_x;
+	spr->camera_offset_y=(float)_scroll_camera_offset_y;
+	spr->anchor_x = x + spr->camera_offset_x;
+	spr->anchor_y = y + spr->camera_offset_y;
 	const struct spritesheet_t *sheet = &_spritesheets[spr_type];
 	if (frame >= 0 && frame < sheet->count) {
 		spr->anchor_x += sheet->r[frame].w / 2.f;
@@ -1382,6 +1406,7 @@ struct sys_t g_sys = {
 	.set_sprite_owner = sdl2_set_sprite_owner,
 	.get_screen_palette = sdl2_get_screen_palette,
 	.set_scroll_layers = sdl2_set_scroll_layers,
+	.set_scroll_camera = sdl2_set_scroll_camera,
 };
 
 #ifdef TITUS_MANAGED
