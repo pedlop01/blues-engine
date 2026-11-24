@@ -13,7 +13,7 @@ struct Library {
     std::vector<std::string> games;
     std::string error, preference_error;
     std::set<std::string> runtime_games;
-    bool dirty=false, healthy=false,blues_runtime_installed=false,fox_amiga_runtime_installed=false;
+    bool dirty=false, healthy=false,blues_runtime_installed=false,fox_amiga_runtime_installed=false,pre1_amiga_runtime_installed=false;
     explicit Library(Paths paths, Detector detector=Detector());
     void reload();
     void reconcile();

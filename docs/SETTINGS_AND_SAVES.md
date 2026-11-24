@@ -24,10 +24,11 @@ de la pantalla completa del juego.
 | Blues DOS/Amiga | Pantalla, música/efectos, botones de acción/salto, cámara, HUD, encuadre, ayudas, vidas, nivel inicial y modo de audio | Ocho slots BBS con miniaturas; carga nativa |
 | Jukebox / Prehistorik 2 DOS | Pantalla, música/efectos y botones de acción/salto | Sin slots gestionados |
 | Titus the Fox DOS | Pantalla completa; mantiene sus controles/audio nativos | Sin slots gestionados |
+| Fox Amiga / Prehistorik 1 Amiga | Pantalla, música/efectos, botones, cámara, HUD, encuadre, ayudas, vidas y nivel inicial | Ocho slots nativos con miniaturas; carga y rebobinado |
 | Prehistorik 1 DOS | Pantalla completa; mantiene sus controles/audio nativos | Sin slots gestionados |
 
 Globales puede mostrar ajustes que solo algunos juegos aplican. Las pestañas
-particulares muestran únicamente los soportados por ese adaptador. Fox no
+particulares muestran únicamente los soportados por ese adaptador. Fox DOS no
 ofrece dos buses de volumen independientes en su puente OPL; no se inventan
 sliders ni se trasladan trucos, zoom o guardados de Blues a otros motores.
 

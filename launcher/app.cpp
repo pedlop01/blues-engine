@@ -70,7 +70,7 @@ class App {
     void open_saves(){if(!library.can_play())return;browsing_saves=true;begin_play(0,true);}
     void load_selected_save(){for(const auto& slot:save_index["slots"])if(slot["slot"]==selected_slot&&slot["status"]=="ready"){library.select_edition(slot["edition_id"]);browsing_saves=false;begin_play(selected_slot);return;}}
 
-    bool test_play=false,test_family=false,test_fox=false,test_pre1=false,test_fox_amiga=false,settings_probe=false;
+    bool test_play=false,test_family=false,test_fox=false,test_pre1=false,test_fox_amiga=false,test_pre1_amiga=false,settings_probe=false;
     int play_test_stage=0;
     Uint32 play_test_started=0;
     bool smoke=false;
@@ -441,7 +441,7 @@ class App {
         if(test_fox)choices.push_back({"fox","dos"});
         if(test_pre1)choices.push_back({"prehistorik","dos"});
         choices.push_back({"blues","amiga"});
-        if(test_fox_amiga)choices={{"fox","amiga"}};
+        if(test_fox_amiga)choices={{"fox","amiga"}};if(test_pre1_amiga)choices={{"prehistorik","amiga"}};
         if(play_test_stage%2==0){
             if(play_test_stage>0)check(!session_hidden&&(SDL_GetWindowFlags(window)&SDL_WINDOW_SHOWN),"library window restored after game");
             size_t next=static_cast<size_t>(play_test_stage/2);
@@ -514,10 +514,10 @@ class App {
     }
 public:
     App(Paths p,bool test,fs::path capture_path,fs::path initial_browse,fs::path import_source,int play_probe):paths(std::move(p)),library(paths),smoke(test),screenshot(std::move(capture_path)),workflow_source(std::move(import_source)){
-        settings_probe=play_probe==-1;test_play=play_probe>0;test_family=play_probe>=2&&play_probe<=4;test_fox=play_probe>=3&&play_probe<=4;test_pre1=play_probe==4;test_fox_amiga=play_probe==5;play_test_started=SDL_GetTicks();
+        settings_probe=play_probe==-1;test_play=play_probe>0;test_family=play_probe>=2&&play_probe<=4;test_fox=play_probe>=3&&play_probe<=4;test_pre1=play_probe==4;test_fox_amiga=play_probe==5;test_pre1_amiga=play_probe==6;play_test_started=SDL_GetTicks();
         char* base=SDL_GetBasePath();if(!base)throw Error("E_PATH",SDL_GetError());package_root=fs::u8path(base);SDL_free(base);
         try{auto registry=parse_json(read_document(package_root/"engines/registry.json"));
-            for(const auto& entry:registry.at("engines"))if(entry.at("adapter_state")=="validated"&&registry.at("role")=="package"){bool installed=fs::is_regular_file(package_root/fs::u8path(entry.at("executables").at(platform()).get<std::string>()));if(entry.at("engine_id")=="blues-family")library.blues_runtime_installed=installed;if(entry.at("engine_id")=="fox-amiga-native")library.fox_amiga_runtime_installed=installed;
+            for(const auto& entry:registry.at("engines"))if(entry.at("adapter_state")=="validated"&&registry.at("role")=="package"){bool installed=fs::is_regular_file(package_root/fs::u8path(entry.at("executables").at(platform()).get<std::string>()));if(entry.at("engine_id")=="blues-family")library.blues_runtime_installed=installed;if(entry.at("engine_id")=="fox-amiga-native")library.fox_amiga_runtime_installed=installed;if(entry.at("engine_id")=="pre1-amiga-native")library.pre1_amiga_runtime_installed=installed;
                 if(installed)for(const auto& g:entry.at("games"))for(const auto& edition:g.at("editions"))if(edition=="dos")library.runtime_games.insert(g.at("game_id"));}
         }catch(const std::exception&){}
         if(!initial_browse.empty()){library.preferences["browse_path"]=normalized_path(initial_browse).u8string();library.dirty=true;}
@@ -552,6 +552,7 @@ int run(const std::vector<std::string>& args){
             else if(option=="--fox-session-smoke-test")play_probe=3;
             else if(option=="--pre1-session-smoke-test")play_probe=4;
             else if(option=="--fox-amiga-session-smoke-test")play_probe=5;
+            else if(option=="--pre1-amiga-session-smoke-test")play_probe=6;
             else if(option=="--user-dir"||option=="--screenshot"||option=="--browse-dir"||option=="--test-import"){if(++i==args.size())throw Error("E_ARGUMENT","Missing option value");auto p=fs::u8path(args[i]);if(option=="--user-dir")user=p;else if(option=="--screenshot")screenshot=p;else if(option=="--browse-dir")browse=p;else import_source=p;}
             else if(option=="--help"){std::cout<<"titus-engine [--user-dir ABS] [--browse-dir PATH]\n  F11: fullscreen; Tab/arrows/Enter: navigation; A: add; Esc: cancel/quit\n  --smoke-test [--screenshot FILE.bmp]: bounded UI regression test\n";return 0;}
             else throw Error("E_ARGUMENT","Unknown option: "+option);}

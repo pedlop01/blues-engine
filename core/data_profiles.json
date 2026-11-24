@@ -1592,9 +1592,9 @@
     "game_id": "prehistorik",
     "edition_id": "amiga",
     "variant_id": "full-audited-amiga",
-    "save_compatibility_id": "prehistorik.full.audited",
-    "engine_id": null,
-    "status": "missing_engine",
+    "save_compatibility_id": "prehistorik.amiga.full.audited",
+    "engine_id": "pre1-amiga-native",
+    "status": "recognized",
     "anchors": [
       "h1.mat",
       "level1.dur"

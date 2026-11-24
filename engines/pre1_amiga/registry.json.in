@@ -1,0 +1,11 @@
+{
+  "engine_id": "pre1-amiga-native",
+  "adapter_state": "validated",
+  "expected_protocol": 1,
+  "source_revision": "@TITUS_PRE1_AMIGA_REV@",
+  "executables": {
+    "linux": "engines/pre1_amiga/titus-pre1-amiga",
+    "windows": "engines/pre1_amiga/titus-pre1-amiga.exe"
+  },
+  "games": [{"game_id":"prehistorik","editions":["amiga"],"reference_native_features":["return_to_library","native_pause","fullscreen","save_slots","save_thumbnails","rewind","dynamic_view","smooth_camera","hud_modes","invulnerability","lives_options","level_select","separate_volumes","controller_bindings"]}]
+}

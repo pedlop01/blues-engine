@@ -115,15 +115,16 @@ std::string Library::data_status() const {
     auto status=i->at("status");
     if(status=="incomplete")return "Faltan archivos del juego";
     if(status=="unverified")return "Archivos sin verificar";
-    if(status=="missing_engine" && i->at("game_id")=="fox" && fox_amiga_runtime_installed)return "Pendiente de comprobar con el motor Amiga";
+    if(status=="missing_engine" && ((i->at("game_id")=="fox" && fox_amiga_runtime_installed)||(i->at("game_id")=="prehistorik" && pre1_amiga_runtime_installed)))return "Pendiente de comprobar con el motor Amiga";
     if(status=="missing_engine")return "Edición Amiga sin motor disponible";
     if(source()->at("kind")=="adf")return "Disco Amiga pendiente de extraer";
     if(status=="needs_preparation")return can_play()?"Conjunto verificado; preparación automática":"Preparación de recursos pendiente";
     return "Conjunto de archivos verificado";
 }
 bool Library::can_play() const {
-    auto i=selected();if(!i||!(runtime_games.count(i->at("game_id"))||(blues_runtime_installed&&i->at("game_id")=="blues")||(fox_amiga_runtime_installed&&i->at("game_id")=="fox"&&i->at("edition_id")=="amiga"))||(i->at("status")!="recognized"&&!((i->at("game_id")=="fox"||i->at("game_id")=="prehistorik")&&i->at("status")=="needs_preparation"))||!source_available()||source()->at("kind")!="directory")return false;
+    auto i=selected();if(!i||!(runtime_games.count(i->at("game_id"))||(blues_runtime_installed&&i->at("game_id")=="blues")||(fox_amiga_runtime_installed&&i->at("game_id")=="fox"&&i->at("edition_id")=="amiga")||(pre1_amiga_runtime_installed&&i->at("game_id")=="prehistorik"&&i->at("edition_id")=="amiga"))||(i->at("status")!="recognized"&&!((i->at("game_id")=="fox"||i->at("game_id")=="prehistorik")&&i->at("status")=="needs_preparation"))||!source_available()||source()->at("kind")!="directory")return false;
     if(i->at("game_id")=="fox" && i->at("edition_id")=="amiga")return fox_amiga_runtime_installed;
+    if(i->at("game_id")=="prehistorik" && i->at("edition_id")=="amiga")return pre1_amiga_runtime_installed;
     if(i->at("game_id")!="blues"&&i->at("edition_id")!="dos")return false;
     if(i->at("game_id")=="blues"&&i->at("edition_id")=="amiga"){
         for(const auto& other:catalog.at("installations"))if(other.at("game_id")=="blues"&&other.at("edition_id")=="dos"&&other.at("status")=="recognized"&&other.at("save_compatibility_id")==i->at("save_compatibility_id"))
@@ -137,7 +138,7 @@ bool Library::can_play() const {
 std::string Library::launch_reason() const {
     auto i=selected();if(!i)return "Añade una carpeta para empezar tu biblioteca.";
     if(!source_available())return "Vuelve a localizar esta instalación para recuperar sus archivos.";
-    if(i->at("status")=="missing_engine" && i->at("game_id")=="fox" && fox_amiga_runtime_installed)return "El motor Amiga ya está instalado. Vuelve a comprobar esta carpeta para actualizar la instalación.";
+    if(i->at("status")=="missing_engine" && ((i->at("game_id")=="fox" && fox_amiga_runtime_installed)||(i->at("game_id")=="prehistorik" && pre1_amiga_runtime_installed)))return "El motor Amiga ya está instalado. Vuelve a comprobar esta carpeta para actualizar la instalación.";
     if(i->at("status")=="missing_engine")return "Esta edición Amiga todavía no tiene un motor compatible.";
     if(i->at("status")=="incomplete"||i->at("status")=="unverified")return "Revisa los archivos antes de iniciar este juego.";
     if(source()->at("kind")=="adf")return "Esta imagen de disco requiere una extracción compatible.";

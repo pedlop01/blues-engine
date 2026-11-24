@@ -63,6 +63,12 @@ def path_of(location):
     return path
 
 
+def native_engine(game,edition="dos",engine=None):
+    if game in {"fox","prehistorik"} and (edition=="amiga" or engine in {"fox-amiga-native","pre1-amiga-native"}):
+        return "fox-amiga-native" if game=="fox" else "pre1-amiga-native"
+    return GAME_ENGINES[game]
+
+
 def contains(parent, child):
     return child == parent or parent in child.parents
 
@@ -75,9 +81,9 @@ def validate(document):
         unique(document["installations"], "id", "Duplicate installation id")
         for installation in document["installations"]:
             game, engine = installation["game_id"], installation["engine_id"]
-            supported = installation["edition_id"] == "dos" or game == "blues" or game == "fox"
-            expected = "fox-amiga-native" if game == "fox" and installation["edition_id"] == "amiga" else GAME_ENGINES[game]
-            legacy = game == "fox" and installation["edition_id"] == "amiga" and engine is None and installation["status"] in {"missing_engine","incomplete","unverified"}
+            supported = installation["edition_id"] == "dos" or game == "blues" or game in {"fox","prehistorik"}
+            expected = native_engine(game,installation["edition_id"])
+            legacy = game in {"fox","prehistorik"} and installation["edition_id"] == "amiga" and engine is None and installation["status"] in {"missing_engine","incomplete","unverified"}
             require(legacy or engine == (expected if supported else None), "Wrong engine for game/edition")
             if engine is None:
                 require(installation["status"] in {"missing_engine", "incomplete", "unverified"},
@@ -90,13 +96,13 @@ def validate(document):
         games = []
         for entry in document["engines"]:
             for game in entry["games"]:
-                require(("fox-amiga-native" if entry["engine_id"] == "fox-amiga-native" and game["game_id"] == "fox" else GAME_ENGINES[game["game_id"]]) == entry["engine_id"], "Registry engine/game mismatch")
-                require(game["editions"] == (["amiga"] if entry["engine_id"] == "fox-amiga-native" else ["dos", "amiga"] if game["game_id"] == "blues" else ["dos"]),
+                require(native_engine(game["game_id"],engine=entry["engine_id"]) == entry["engine_id"], "Registry engine/game mismatch")
+                require(game["editions"] == (["amiga"] if entry["engine_id"] in {"fox-amiga-native","pre1-amiga-native"} else ["dos", "amiga"] if game["game_id"] == "blues" else ["dos"]),
                         "Unverified edition must not be offered")
                 games.extend((game["game_id"],edition) for edition in game["editions"])
         require(len(games) == len(set(games)), "Game registered twice")
     elif kind == "launch":
-        require(("fox-amiga-native" if document["game_id"] == "fox" and document["edition_id"] == "amiga" else GAME_ENGINES[document["game_id"]]) == document["engine_id"], "Launch engine/game mismatch")
+        require(native_engine(document["game_id"],document["edition_id"]) == document["engine_id"], "Launch engine/game mismatch")
         unique(document["sources"], "installation_id", "Duplicate launch source")
         primary = [item for item in document["sources"] if item["installation_id"] == document["installation_id"]]
         require(len(primary) == 1, "Missing primary installation")
@@ -104,7 +110,7 @@ def validate(document):
         for source in document["sources"]:
             require(source["game_id"] == document["game_id"], "Cross-game auxiliary data")
             require(source["location"]["platform"] == document["platform"], "Source platform mismatch")
-            require(source["edition_id"] == "dos" or document["game_id"] in {"blues","fox"}, "Unsupported edition")
+            require(source["edition_id"] == "dos" or document["game_id"] in {"blues","fox","prehistorik"}, "Unsupported edition")
             path_of(source["location"])
         require(document["game_id"] == "blues" or len(document["sources"]) == 1, "Auxiliary editions only for Blues")
         unique(document["sources"], "edition_id", "Ambiguous duplicate edition in launch")
@@ -132,26 +138,27 @@ def validate(document):
                      "lives_player1": "lives_options", "lives_player2": "lives_options",
                      "start_level": "level_select", "sound_mode": "audio_mode_selection"}
             require(all(gates[key] in features for key in settings["blues"]), "Setting capability not requested")
-        if "fox" in settings:
-            require(document["game_id"]=="fox" and document["edition_id"]=="amiga", "Fox settings require its native Amiga edition")
-            gates={"camera":"smooth_camera","hud":"hud_modes","view_step":"dynamic_view","invulnerable":"invulnerability","infinite_lives":"lives_options","lives":"lives_options","start_level":"level_select"}
-            require(all(gates[key] in features for key in settings["fox"]), "Fox setting capability not requested")
+        for group in ["fox","prehistorik"]:
+            if group in settings:
+                require(document["game_id"]==group and document["edition_id"]=="amiga", "Native settings require their Amiga edition")
+                gates={"camera":"smooth_camera","hud":"hud_modes","view_step":"dynamic_view","invulnerable":"invulnerability","infinite_lives":"lives_options","lives":"lives_options","start_level":"level_select"}
+                require(all(gates[key] in features for key in settings[group]), "Native setting capability not requested")
         if document["action"]["type"] == "load_slot":
-            require((document["game_id"] == "blues" or document["engine_id"]=="fox-amiga-native") and "save_slots" in features, "This edition has no global resume")
+            require((document["game_id"] == "blues" or document["engine_id"] in {"fox-amiga-native","pre1-amiga-native"}) and "save_slots" in features, "This edition has no global resume")
     elif kind == "event" and document["event"] == "ready":
         features = set(document["body"]["features"])
         require((document["body"]["save_slot_count"] > 0) == ("save_slots" in features), "Slot capability/count mismatch")
         require("save_thumbnails" not in features or "save_slots" in features, "Thumbnails require slots")
     elif kind == "save_index":
-        require(document["engine_id"]==("fox-amiga-native" if document["game_id"]=="fox" else "blues-family"),"Wrong save index engine")
+        require(document["engine_id"]==native_engine(document["game_id"],"amiga"),"Wrong save index engine")
         unique(document["slots"], "slot", "Duplicate save slot")
         for slot in document["slots"]:
-            require(slot["file"] == (f"slot-{slot['slot']}.json" if document["game_id"]=="fox" else f"saves/slot{slot['slot']:02}.bbs"), "Wrong native slot filename")
-            require(slot["format_id"]==("fox.amiga.json" if document["game_id"]=="fox" else "blues.bbs"),"Wrong native save format")
+            require(slot["file"] == (f"slot-{slot['slot']}.json" if document["game_id"] in {"fox","prehistorik"} else f"saves/slot{slot['slot']:02}.bbs"), "Wrong native slot filename")
+            require(slot["format_id"]==(document["game_id"]+".amiga.json" if document["game_id"] in {"fox","prehistorik"} else "blues.bbs"),"Wrong native save format")
     elif kind == "inspect_request":
         validate(inspection_as_launch(document))
     elif kind == "inspection":
-        require(("fox-amiga-native" if document["game_id"]=="fox" and document["engine_id"]=="fox-amiga-native" else GAME_ENGINES[document["game_id"]]) == document["engine_id"], "Inspection identity mismatch")
+        require(native_engine(document["game_id"],engine=document["engine_id"]) == document["engine_id"], "Inspection identity mismatch")
         features = set(document["features"])
         require((document["save_slot_count"] > 0) == ("save_slots" in features), "Inspection slot capability/count mismatch")
         require("save_thumbnails" not in features or "save_slots" in features, "Inspection thumbnails require slots")

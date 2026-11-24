@@ -17,7 +17,7 @@ struct Error : std::runtime_error {
 std::string sha256(const std::string& bytes);
 std::string file_sha256(const fs::path& path);
 std::string fingerprint(const Json& manifest);
-Json parse_json(const std::string& text);
+Json parse_json(const std::string& text, std::size_t maximum_bytes=1024*1024);
 std::string platform();
 std::optional<std::string> environment_value(const char* name);
 std::string uuid();

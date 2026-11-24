@@ -23,6 +23,7 @@ def main():
     parser.add_argument('--fox', action='store_true')
     parser.add_argument('--pre1', action='store_true')
     parser.add_argument('--fox-amiga', action='store_true')
+    parser.add_argument('--pre1-amiga', action='store_true')
     args = parser.parse_args()
     binary = args.bin_dir.resolve()
     suffix = '.exe' if args.windows else ''
@@ -47,13 +48,13 @@ def main():
         c = subprocess.run([str(binary/('titus-catalog'+suffix)),'--user-dir',native(user),'add',native(originals),'--recursive'],capture_output=True,text=True,encoding='utf-8',env=env,timeout=60)
         assert c.returncode==0,c.stderr
         capture = ROOT/'build'/('library-session-windows.bmp' if args.windows else 'library-session-linux.bmp')
-        r = subprocess.run([str(binary/('titus-engine'+suffix)),'--user-dir',native(user),'--fox-amiga-session-smoke-test' if args.fox_amiga else '--pre1-session-smoke-test' if args.pre1 else '--fox-session-smoke-test' if args.fox else '--family-session-smoke-test' if args.family else '--session-smoke-test','--screenshot',native(capture)],capture_output=True,text=True,encoding='utf-8',env=env,timeout=330 if args.pre1 else 270 if args.fox else 210 if args.family else 90)
+        r = subprocess.run([str(binary/('titus-engine'+suffix)),'--user-dir',native(user),'--pre1-amiga-session-smoke-test' if args.pre1_amiga else '--fox-amiga-session-smoke-test' if args.fox_amiga else '--pre1-session-smoke-test' if args.pre1 else '--fox-session-smoke-test' if args.fox else '--family-session-smoke-test' if args.family else '--session-smoke-test','--screenshot',native(capture)],capture_output=True,text=True,encoding='utf-8',env=env,timeout=330 if args.pre1 else 270 if args.fox else 210 if args.family else 90)
         if r.returncode:
             for p in user.rglob('stderr.log'):
                 print(p,p.read_text(errors='replace')[-2000:],file=sys.stderr)
         assert r.returncode==0,(r.stdout,r.stderr)
         report = loads(r.stdout)
-        expected=1 if args.fox_amiga else 6 if args.pre1 else 5 if args.fox else 4 if args.family else 2
+        expected=1 if args.fox_amiga or args.pre1_amiga else 6 if args.pre1 else 5 if args.fox else 4 if args.family else 2
         assert report['sessions']==expected and report['session_ui_checks']==expected*2 and report['selected_edition']=='amiga'
         count=0
         for folder in (user/'cache/sessions').iterdir():
@@ -64,7 +65,10 @@ def main():
                 assert validate_session(req,events,result,0)
                 count+=1
         assert count==expected
-        if args.fox_amiga:
+        if args.pre1_amiga:
+            profile=next((user/'data/profiles').glob('*/games/prehistorik/prehistorik.amiga.full.audited'))
+            assert (profile/'native/pre1-amiga-native/preferences.json').exists()
+        elif args.fox_amiga:
             profile=next((user/'data/profiles').glob('*/games/fox/fox.amiga.full.audited'))
             assert (profile/'native/fox-amiga-native/preferences.json').exists()
         else:

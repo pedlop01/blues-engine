@@ -8,8 +8,8 @@ this repository preserves the upstream history and adds a new set of features
 focused on the first **Blues Brothers** game.
 
 **Titus Engine now has an SDL2 game library, persistent catalog and detection CLI.** The
-current Windows executable still runs Blues Brothers; the global library and new
-engine adapters are tracked in the expansion plan. Blues playtesting continues
+current Linux/Windows library launches five games through isolated engine
+adapters, tracked in the expansion plan. Blues playtesting continues
 in parallel, and final Windows packaging follows the validated expansion. The
 existing repository, executable names and save paths remain in place during
 this transition.
@@ -37,13 +37,13 @@ The new `titus-engine` frontend lists installed games and DOS/Amiga releases,
 remembers per-game selections and provides a folder/ADF browser, verification
 and installation management. Keyboard, mouse, controller and fullscreen are
 supported. **Blues Brothers DOS/Amiga, Jukebox Adventure DOS, Prehistorik 2 DOS and Titus
-the Fox DOS/Amiga and Prehistorik 1 DOS now launch from the library**, with a clean return and per-game preferences.
+the Fox DOS/Amiga and Prehistorik 1 DOS/Amiga now launch from the library**, with a clean return and per-game preferences.
 Blues also imports classic preferences and saves reversibly. Fox DOS uses a separate OpenTitus runtime with native private data preparation.
 Fox Amiga uses our independent [native C++/SDL2 runtime](docs/FOX_AMIGA_RUNTIME.md),
 with smooth camera/dynamic framing, original/fixed HUD, assists, level selection,
 independent volumes, controller bindings, VHS rewind and eight thumbnail saves.
 TH-14 was accepted by the user and completed on 24 November 2026.
-Prehistorik 1 uses Olduvai with native private DIET preparation ([guide](docs/PREHISTORIK_RUNTIME.md)). See the [family runtime](docs/FAMILY_RUNTIME.md),
+Prehistorik 1 DOS uses Olduvai with native private DIET preparation ([guide](docs/PREHISTORIK_RUNTIME.md)). See the [family runtime](docs/FAMILY_RUNTIME.md),
 [Blues runtime](docs/BLUES_RUNTIME.md), [Fox runtime](docs/FOX_RUNTIME.md) and [library](docs/LIBRARY_FRONTEND.md) guides.
 Build with `-DTITUS_BUILD_LAUNCHER=ON`, Python 3 and SDL2/SDL2_ttf/libmodplug
 development files. Fox additionally needs `TITUS_BUILD_FOX_RUNTIME=ON` and the
@@ -52,12 +52,17 @@ pinned SDL 1.2/OPL source setup in its guide. Prehistorik 1 needs
 Fox Amiga is enabled with the launcher by default, or explicitly with
 `TITUS_BUILD_FOX_AMIGA_RUNTIME=ON`; it needs SDL2 and user-supplied Amiga files,
 without OpenTitus, Unicorn or an Amiga emulator.
-Prehistorik 1 Amiga is [under development](docs/PREHISTORIK_AMIGA_RUNTIME.md):
-resource diagnostics are available, but the edition is not playable yet.
+Prehistorik 1 Amiga has a [native C++/SDL2 runtime](docs/PREHISTORIK_AMIGA_RUNTIME.md),
+with an isolated GPL Olduvai simulation adaptation, Amiga data readers and PAT audio.
+Its seven-stage campaign/finale, smooth camera, dynamic framing, original/fixed HUD,
+menu, assists, eight thumbnail saves and VHS rewind are implemented and automatically
+validated on Linux/Windows. TH-15 remains at 95% pending the user's play review.
+It is enabled with the launcher, or `TITUS_BUILD_PRE1_AMIGA_RUNTIME=ON`, without
+a DOS source export, Python, Unicorn or an Amiga emulator.
 The classic game executable still works.
 
 The library now offers [layered settings and a native save browser](docs/SETTINGS_AND_SAVES.md):
-global/game/edition/session options, supported controller bindings, and Blues and Fox Amiga
+global/game/edition/session options, supported controller bindings, and Blues, Fox Amiga and Prehistorik Amiga
 eight-slot thumbnails/resume with reversible legacy reimport.
 
 The [TH-11 integration pilot](docs/INPROCESS_EVALUATION.md) compares a real engine
@@ -109,8 +114,7 @@ dependencies and completion criteria are tracked in [PLAN.md](PLAN.md).
 The upstream engine already reimplements Blues Brothers, Blues Brothers:
 Jukebox Adventure and Prehistorik 2. Its original improvements over the DOS
 games include horizontal scrolling, configurable viewport size and game cheats.
-The enhancements described above focus on the first Blues Brothers; the native
-Windows build currently includes that engine only.
+The enhancements described above focus on the first Blues Brothers; the separate Amiga ports and multi-engine library are described above.
 
 This extension starts from
 [`d4b94bb`](https://github.com/cyxx/blues/commit/d4b94bbc15d04273b3aa7d04f320c9a60c5c1e0e).

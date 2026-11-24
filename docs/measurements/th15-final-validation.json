@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "task": "TH-15",
+  "state": "implemented_pending_user_play_review",
+  "progress_percent": 95,
+  "date": "2026-11-24",
+  "engine_id": "pre1-amiga-native",
+  "save_compatibility_id": "prehistorik.amiga.full.audited",
+  "playable_catalog": true,
+  "source_main_sha256": "d48f952eca0d74547d9e99531b54ac05beaabb42a55203fec510279bd9bd5295",
+  "original_files_in_edition": 71,
+  "all_original_files": 462,
+  "originals_match_th14_baseline": true,
+  "builds": [
+    "linux-arm64-release",
+    "windows-x86_64-release",
+    "linux-arm64-asan-ubsan"
+  ],
+  "reference": {
+    "mat_banks": 22,
+    "sprites": 997,
+    "pc1": 10,
+    "iff_samples": 13,
+    "surface_scenes": 76,
+    "caves": 53,
+    "scene_checks": "ordered draw commands plus full collision bitmap",
+    "player_cases": 304,
+    "player_ticks": 36480,
+    "rng_calls": 1792,
+    "actor_cases": 76,
+    "actor_ticks": 9120,
+    "actor_state_cases": 40,
+    "actor_state_ticks": 4800,
+    "actor_scope": "autonomous selected mutable fields and RNG, distant player, not all contacts",
+    "boss_cases": 12,
+    "boss_ticks": 2880,
+    "boss_scope": "three original main loops with input patterns, player/boss/projectile/death/respawn state",
+    "trunk_frames": [
+      44,
+      21
+    ],
+    "pat_songs": 9,
+    "pat_interrupts": 540000,
+    "pat_match": "control, volume and base period; bounded correction of original out-of-table arpeggios",
+    "arpeggio_corrected_periods": {
+      "rik6.pat": 641
+    }
+  },
+  "native_fixtures": {
+    "levels": 7,
+    "ticks_per_build": 8400,
+    "save_continuation_checkpoints": 84,
+    "rooms": 55,
+    "exit_fixtures": 7,
+    "trunk_save_and_crossing": true,
+    "rewind_snapshot_replay": true,
+    "ending_save_roundtrip": true,
+    "render_hashes_per_build": 42,
+    "original_sky_rgb": "44aaee",
+    "ending_picture_all_pixels_checked": 64000,
+    "uses_test_positioning_for_exits": true,
+    "input_only_complete_campaign": false,
+    "state_and_render_match_across_three_builds": true
+  },
+  "managed_sessions": {
+    "linux": {
+      "schema_version": 1,
+      "platform": "linux",
+      "checks": [
+        "eight native slots, payload/preview hashes and library thumbnails",
+        "library load and return command",
+        {
+          "gameplay_audio_pause_rewind": {
+            "clipped": 0,
+            "frames": 1622,
+            "jump": 62,
+            "left": 78,
+            "level": 1,
+            "nonzero": 389947,
+            "pause": true,
+            "peak": 9467,
+            "rewind_steps": 5,
+            "right": 84,
+            "samples": 407552,
+            "ticks": 49
+          }
+        },
+        "edition options, bindings and temporary override recovery",
+        "future preferences, load failure, missing result and subsequent recovery",
+        "damaged and incompatible saves are preserved and isolated"
+      ],
+      "originals_unchanged": true,
+      "original_files": 71
+    },
+    "windows": {
+      "schema_version": 1,
+      "platform": "windows",
+      "checks": [
+        "eight native slots, payload/preview hashes and library thumbnails",
+        "library load and return command",
+        {
+          "gameplay_audio_pause_rewind": {
+            "clipped": 0,
+            "frames": 758,
+            "jump": 62,
+            "left": 78,
+            "level": 1,
+            "nonzero": 496955,
+            "pause": true,
+            "peak": 9312,
+            "rewind_steps": 5,
+            "right": 84,
+            "samples": 516096,
+            "ticks": 49
+          }
+        },
+        "edition options, bindings and temporary override recovery",
+        "future preferences, load failure, missing result and subsequent recovery",
+        "damaged and incompatible saves are preserved and isolated"
+      ],
+      "originals_unchanged": true,
+      "original_files": 71
+    }
+  },
+  "regressions": {
+    "linux_ctest": {
+      "passed": 8,
+      "failed": 0
+    },
+    "windows_unit": {
+      "passed": 7,
+      "failed": 0
+    },
+    "sanitize_ctest": {
+      "passed": 7,
+      "failed": 0
+    },
+    "library_ui_checks_per_platform": 32,
+    "library_play_return_checks_per_platform": 2,
+    "fox_songs_pcm_byte_exact": 11,
+    "fox_interrupts": 132000,
+    "dos_engines_unchanged": true,
+    "legacy_amiga_catalog_upgrade": "recheck/add/relocate preserve UUID, locations and profiles"
+  },
+  "private_evidence": {
+    "terrain_original": {
+      "path": "build/th15-original-scenes-ordered/report.json",
+      "sha256": "b0ee057386670d3a631b8e6c85df9c663b93bdbff0bce3e154ed63dce47cf513"
+    },
+    "player_original": {
+      "path": "build/th15-player-current/physics-validation.json",
+      "sha256": "0018b2351b6c27b622553ce9fb4396d8fb5f0e3d55ee11b57a1d9d676da2fb53"
+    },
+    "actor_original": {
+      "path": "build/th15-actors-current-v2/report.json",
+      "sha256": "80be32afd966023d499f3a59c93bee6c128b2687c22640a5a1007ecf12808758"
+    },
+    "actor_states_original": {
+      "path": "build/th15-actors-states-v4/report.json",
+      "sha256": "47c8905f88ca327a604b6289f1b161f60d1c571df7d54c8e17c8709f5d7cdf86"
+    },
+    "rng_original": {
+      "path": "build/th15-kernel-oracle-01/report.json",
+      "sha256": "fed5f34fea874cdc0eb63d0981e30997b1987290b45f4c13a07804cb9248a931"
+    },
+    "caves_original": {
+      "path": "build/th15-rooms-final/cave-validation.json",
+      "sha256": "2eb114ba2519a6f6f1e77b619f5204a05625a415d139cb14361d20cf80c76061"
+    },
+    "bosses_original": {
+      "path": "build/th15-bosses-final/boss2-validation.json",
+      "sha256": "4dcac0e44b6a2ae796362f413139c4e1d649c62ed00dd27af474eb63fb48f91a"
+    },
+    "trunk_original": {
+      "path": "build/th15-trunk-final/trunk-validation.json",
+      "sha256": "f8e6f3e2f3d13308acaf68d941fa102ef9ea17e70169970c153e6c472fed2c2f"
+    },
+    "pat_original": {
+      "path": "build/th15-audio-long/audio-validation.json",
+      "sha256": "25787c1eee5f0b8ce63318b198016198f2659ce8cd137bcf29e6bda65c04da3a"
+    },
+    "pat_windows": {
+      "path": "build/th15-audio-windows-final/report.json",
+      "sha256": "2d218c2f2742aca15ee435f9ba441ae27a980468e3120561dbe21e76c0c52522"
+    },
+    "game_linux": {
+      "path": "build/th15-game-final-linux5.json",
+      "sha256": "bd30646eecb8137fdbc5581c7afd81a95f5fdc2a1e51f087bce524a9968bebb0"
+    },
+    "sessions_linux": {
+      "path": "build/th15-sessions-linux-final3/report.json",
+      "sha256": "68f76ae114f1fddbeeacc7de0192fb50ddfa12ad495d9cafe2a3a7b4e40cc532"
+    },
+    "sessions_windows": {
+      "path": "build/th15-sessions-windows-final2/report.json",
+      "sha256": "87c971964dec62cfdb73ea9731529f125b0300bb50656bf8407120666731f452"
+    },
+    "windows_unit": {
+      "path": "build/th15-windows-unit/report.json",
+      "sha256": "d83f8367edb7ab445aa7c4373304b3922202c6ea375abf62e5e0a8c48fe78f76"
+    },
+    "fox_audio_regression": {
+      "path": "build/th15-fox-audio-final/report.json",
+      "sha256": "25ca46c933d713d56bf419692990c2446a1614b3c5bce78ee784e8fef42ec7c8"
+    },
+    "game_windows": {
+      "path": "build/th15-game-windows-final-render/report.json",
+      "sha256": "bd30646eecb8137fdbc5581c7afd81a95f5fdc2a1e51f087bce524a9968bebb0"
+    },
+    "game_sanitize": {
+      "path": "build/th15-game-sanitize-final-render/report.json",
+      "sha256": "bd30646eecb8137fdbc5581c7afd81a95f5fdc2a1e51f087bce524a9968bebb0"
+    },
+    "resources_linux": {
+      "path": "build/th15-resources-linux-final/validation.json",
+      "sha256": "05c2a3abf1cddd909dd7159754388e0e859486011538cdab5f2824ea2d395b6a"
+    },
+    "resources_windows": {
+      "path": "build/th15-resources-windows-final/validation.json",
+      "sha256": "05c2a3abf1cddd909dd7159754388e0e859486011538cdab5f2824ea2d395b6a"
+    },
+    "resources_sanitize": {
+      "path": "build/th15-resources-sanitize-final/validation.json",
+      "sha256": "05c2a3abf1cddd909dd7159754388e0e859486011538cdab5f2824ea2d395b6a"
+    }
+  },
+  "pending_user_review": [
+    "continuous campaign play",
+    "listening",
+    "physical controller",
+    "camera and framing feel",
+    "visual polish"
+  ],
+  "distribution": "No commercial resources, extracted tables, private original code snapshots or PCM in Git/packages; user supplies original files."
+}

@@ -305,8 +305,8 @@ std::string uuid() {
     for(int i=0;i<16;++i) { if(i==4||i==6||i==8||i==10)s<<'-';s<<std::setw(2)<<unsigned(bytes[i]); }
     return s.str();
 }
-Json parse_json(const std::string& text) {
-    require(text.size()<=1024*1024,"JSON exceeds 1 MiB","E_JSON");
+Json parse_json(const std::string& text, std::size_t maximum_bytes) {
+    require(text.size()<=maximum_bytes,"JSON exceeds configured byte limit","E_JSON");
     std::vector<std::set<std::string>> scopes;
     auto callback=[&](int depth,Json::parse_event_t event,Json& parsed) {
         require(depth<=64,"JSON nesting exceeds 64","E_JSON");
@@ -445,9 +445,9 @@ void validate_catalog(const Json& c) {
         uuid_value(i["id"]);require(ids.insert(i["id"]).second,"Duplicate installation id");
         require(i["game_id"].is_string()&&engines.count(i["game_id"].get<std::string>()),"Unknown game");
         require(i["edition_id"]=="dos"||i["edition_id"]=="amiga","Unknown edition");
-        auto game=i["game_id"].get<std::string>();bool supported=i["edition_id"]=="dos"||game=="blues"||(game=="fox" && i["edition_id"]=="amiga");
-        bool legacy_fox=game=="fox" && i["edition_id"]=="amiga" && i["engine_id"].is_null() && (i["status"]=="missing_engine" || i["status"]=="unverified" || i["status"]=="incomplete");
-        require(legacy_fox || i["engine_id"]==(supported?Json(game=="fox" && i["edition_id"]=="amiga"?"fox-amiga-native":engines.at(game)):Json(nullptr)),"Wrong engine");
+        auto game=i["game_id"].get<std::string>();bool supported=i["edition_id"]=="dos"||game=="blues"||((game=="fox" || game=="prehistorik") && i["edition_id"]=="amiga");
+        bool legacy_fox=(game=="fox" || game=="prehistorik") && i["edition_id"]=="amiga" && i["engine_id"].is_null() && (i["status"]=="missing_engine" || i["status"]=="unverified" || i["status"]=="incomplete");
+        require(legacy_fox || i["engine_id"]==(supported?Json(i["edition_id"]=="amiga" && (game=="fox" || game=="prehistorik")?(game=="fox"?"fox-amiga-native":"pre1-amiga-native"):engines.at(game)):Json(nullptr)),"Wrong engine");
         identifier(i["variant_id"]);identifier(i["save_compatibility_id"]);
         string_pattern(i["fingerprint"],"[0-9a-f]{64}");
         require(i["status"]=="recognized"||i["status"]=="needs_preparation"||i["status"]=="incomplete"||i["status"]=="unverified"||i["status"]=="missing_engine","Unknown status");

@@ -10,14 +10,19 @@ struct PatInstrument {
     Bytes samples;
     unsigned length_words=0,volume=0,loop_start=0,loop_words=0;
 };
+enum class PatDialect { fox,prehistorik };
 struct PatSong {
     Bytes patterns;
     std::array<PatInstrument,15> instruments;
     std::vector<unsigned> order;
+    unsigned initial_speed=10;
+    PatDialect dialect=PatDialect::fox;
 };
 // PAT has a 20-byte title, 15 external sample descriptions and 128 orders.
 // Sample files are raw PCM; the original loader reserves their first two bytes.
 PatSong pat_song(const Bytes&,const std::function<Bytes(const std::string&)>& read_sample);
+// Shared 15-instrument external-sample PAT container; callers validate title/revision.
+PatSong external_pat_song(const Bytes&,const std::function<Bytes(const std::string&)>& read_sample);
 struct EffectSample { Bytes samples;unsigned period=0,hold_ticks=0; };
 EffectSample effect_sample(const Bytes& raw,unsigned original_frequency);
 struct PatChannel {
@@ -40,6 +45,7 @@ public:
     unsigned sub_tick()const{return tick_;}
     unsigned speed()const{return speed_;}
     unsigned loops()const{return loops_;}
+    unsigned extended_arpeggios()const{return extended_arpeggios_;}
     // Stereo signed PCM at a chosen rate; fixed point Paula sample stepping.
     // Calls tick at 50 Hz, preserving the phase across arbitrary block sizes.
     std::vector<std::int16_t> render(unsigned frames,unsigned sample_rate=44100);
@@ -50,6 +56,7 @@ private:
     int pending_order_=-1;
     bool pending_break_=false;
     std::uint64_t interrupt_phase_=0;
+    unsigned extended_arpeggios_=0;
     unsigned render_rate_=0,music_volume_=100,effect_volume_=100,effect_ticks_=0;
     std::shared_ptr<const EffectSample> effect_;
     std::uint64_t effect_phase_=0;

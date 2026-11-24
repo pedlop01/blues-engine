@@ -105,7 +105,8 @@
                 "blues-family",
                 "opentitus",
                 "olduvai",
-                "fox-amiga-native"
+                "fox-amiga-native",
+                "pre1-amiga-native"
               ]
             },
             {
@@ -411,6 +412,52 @@
           },
           "minProperties": 1,
           "additionalProperties": false
+        },
+        "prehistorik": {
+          "type": "object",
+          "properties": {
+            "camera": {
+              "enum": [
+                "classic",
+                "smooth"
+              ]
+            },
+            "hud": {
+              "enum": [
+                "classic",
+                "fixed"
+              ]
+            },
+            "view_step": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8
+            },
+            "invulnerable": {
+              "type": "boolean"
+            },
+            "infinite_lives": {
+              "type": "boolean"
+            },
+            "lives": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 99
+            },
+            "start_level": {
+              "enum": [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          },
+          "minProperties": 1,
+          "additionalProperties": false
         }
       },
       "required": [],
@@ -502,7 +549,8 @@
         "format_id": {
           "enum": [
             "blues.bbs",
-            "fox.amiga.json"
+            "fox.amiga.json",
+            "prehistorik.amiga.json"
           ]
         },
         "format_version": {
@@ -747,7 +795,8 @@
                   "blues-family",
                   "opentitus",
                   "olduvai",
-                  "fox-amiga-native"
+                  "fox-amiga-native",
+                  "pre1-amiga-native"
                 ]
               },
               "adapter_state": {
@@ -904,7 +953,8 @@
             "blues-family",
             "opentitus",
             "olduvai",
-            "fox-amiga-native"
+            "fox-amiga-native",
+            "pre1-amiga-native"
           ]
         },
         "edition_id": {
@@ -1040,7 +1090,8 @@
             "blues-family",
             "opentitus",
             "olduvai",
-            "fox-amiga-native"
+            "fox-amiga-native",
+            "pre1-amiga-native"
           ]
         },
         "outcome": {
@@ -1210,7 +1261,8 @@
                       "blues-family",
                       "opentitus",
                       "olduvai",
-                      "fox-amiga-native"
+                      "fox-amiga-native",
+                      "pre1-amiga-native"
                     ]
                   },
                   "build_revision": {
@@ -1467,13 +1519,15 @@
         "game_id": {
           "enum": [
             "blues",
-            "fox"
+            "fox",
+            "prehistorik"
           ]
         },
         "engine_id": {
           "enum": [
             "blues-family",
-            "fox-amiga-native"
+            "fox-amiga-native",
+            "pre1-amiga-native"
           ]
         },
         "save_compatibility_id": {
@@ -1542,7 +1596,8 @@
             "blues-family",
             "opentitus",
             "olduvai",
-            "fox-amiga-native"
+            "fox-amiga-native",
+            "pre1-amiga-native"
           ]
         },
         "edition_id": {
@@ -1640,7 +1695,8 @@
             "blues-family",
             "opentitus",
             "olduvai",
-            "fox-amiga-native"
+            "fox-amiga-native",
+            "pre1-amiga-native"
           ]
         },
         "save_compatibility_id": {

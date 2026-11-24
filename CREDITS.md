@@ -133,6 +133,18 @@ MIT-licensed Deark code by Jason Summers. Full provenance and build/license
 requirements: [runtime notices](engines/olduvai/NOTICE.md) and
 [managed guide](docs/PREHISTORIK_RUNTIME.md). Commercial data remains external.
 
+## Native Amiga adaptations
+
+Fox Amiga and Prehistorik 1 Amiga use separate native C++/SDL2 adapters, with
+shared bounded picture/audio primitives and distinct simulation. The selected
+Prehistorik simulation sources derive from Krzysztof Sokołowski's GPL-3.0-or-later
+Olduvai revision above; original file hashes, modification notices and GPL text
+are retained under `engines/pre1_amiga/logic`. Our Amiga adaptation reads the
+user's Hunk, levels, graphics and audio directly; no commercial tables, assets
+or 68k emulator are bundled. See [Prehistorik Amiga provenance and validation](docs/PREHISTORIK_AMIGA_RUNTIME.md)
+and [Fox Amiga](docs/FOX_AMIGA_RUNTIME.md). Research oracles use Unicorn only
+outside the runtime. These contributions do not replace cyxx/blues authorship.
+
 ## License information
 
 The inherited upstream snapshot does not include a top-level license file.

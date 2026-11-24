@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "titus/pre1_amiga.hpp"
+#include "titus/pre1_amiga_level.hpp"
 #include <iostream>
 #include <stdexcept>
 using namespace titus::pre1_amiga;
@@ -21,5 +22,10 @@ int main(){try{
     for(std::size_t n=0;n<iff.size();++n)rejects([&]{sample_8svx(Bytes(iff.begin(),iff.begin()+n));});
     auto compressed_iff=iff;compressed_iff[35]=1;rejects([&]{sample_8svx(compressed_iff);});
     rejects([]{sample_8svx(Bytes(12));});
+    CollisionRules terrain;terrain[0].push_back({0,1,3});auto map=collision({TilePlacement{0,0,0,0}},terrain);check(!empty(map,1,1) && empty(map,4,1) && !empty(map,-1,1) && empty(map,0,-1));
+    auto negative=collision({TilePlacement{-2,0,0,0}},terrain);check(!empty(negative,0,1) && empty(negative,1,1));
+    rejects([]{rules(Bytes{});});rejects([]{collision_rules(Bytes(959));});rejects([]{object_screens({0,40,0,255});});
+    auto records=object_screens({0,2,0,10,0,20,0,0,0,255});check(records.size()==2 && records[0][0].type==2 && records[0][0].words==std::vector<int>({10,20}));
+    Surface level;level.number=3;level.screens[0]={{0,0,28,0},{0,0,29,0}};auto stage=scene(level,0,28,terrain);check(stage.commands.size()==10 && stage.commands[8].a==30);
     std::cout<<"OK: "<<count<<" Prehistorik Amiga resource checks\n";return 0;
 }catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}}

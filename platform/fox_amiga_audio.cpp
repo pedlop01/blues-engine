@@ -13,6 +13,10 @@ constexpr unsigned periods[]={856,808,762,720,678,640,604,570,538,508,480,453,
 }
 PatSong pat_song(const Bytes& bytes,const std::function<Bytes(const std::string&)>& read_sample){
     if(bytes.size()<600 || bytes[0]!='l' || bytes[1]!='a' || bytes[2]!='g')throw std::runtime_error("Unsupported PAT header");
+    return external_pat_song(bytes,read_sample);
+}
+PatSong external_pat_song(const Bytes& bytes,const std::function<Bytes(const std::string&)>& read_sample){
+    if(bytes.size()<600)throw std::runtime_error("Truncated PAT container");
     const unsigned count=bytes[470];
     if(!count || count>128)throw std::runtime_error("Invalid PAT order count");
     PatSong song;unsigned last=0;
@@ -55,10 +59,11 @@ EffectSample effect_sample(const Bytes& raw,unsigned frequency){
 void PatPlayer::play_effect(std::shared_ptr<const EffectSample> effect){
     if(!effect || effect->samples.size()<2 || effect->samples.size()>131070 || (effect->samples.size()&1) || !effect->period || effect->period>65535 || !effect->hold_ticks || effect->hold_ticks>65535)throw std::runtime_error("Invalid prepared Amiga effect");
     effect_=std::move(effect);effect_phase_=0;effect_ticks_=effect_->hold_ticks;
-    channels_[3].active=false;channels_[3].period=effect_->period;channels_[3].volume=64;
+    const unsigned channel=song_.dialect==PatDialect::prehistorik?0:3;channels_[channel].active=false;channels_[channel].period=effect_->period;channels_[channel].volume=song_.dialect==PatDialect::prehistorik?63:64;
 }
 void PatPlayer::volume(unsigned music,unsigned effects){if(music>100 || effects>100)throw std::runtime_error("Invalid Amiga audio volume");music_volume_=music;effect_volume_=effects;}
-PatPlayer::PatPlayer(PatSong song):song_(std::move(song)){
+PatPlayer::PatPlayer(PatSong song):song_(std::move(song)),speed_(song_.initial_speed){
+    if(!speed_ || speed_>255)throw std::runtime_error("Invalid PAT initial speed");
     if(song_.order.empty() || song_.order.size()>128 || song_.patterns.empty() || song_.patterns.size()>128*1024 || song_.patterns.size()%1024)throw std::runtime_error("Invalid PAT song");
     for(auto n:song_.order)if(n>=song_.patterns.size()/1024)throw std::runtime_error("PAT order outside patterns");
     for(const auto& i:song_.instruments){
@@ -79,16 +84,22 @@ void PatPlayer::effect(PatChannel& c){
         auto p=std::find(std::begin(periods),std::end(periods),c.base_period);
         if(p==std::end(periods))throw std::runtime_error("PAT arpeggio has no base note");
         auto index=unsigned(p-std::begin(periods))+offset;
-        if(index>=std::size(periods))throw std::runtime_error("PAT arpeggio exceeds note table");
+        if(index>=std::size(periods)){
+            if(song_.dialect!=PatDialect::prehistorik)throw std::runtime_error("PAT arpeggio exceeds note table");
+            // Some Prehistorik patterns address past the original 36-note
+            // table into unrelated globals. Extend the octave mathematically
+            // instead of turning allocator addresses into audible periods.
+            c.period=periods[index%12]>>(index/12);++extended_arpeggios_;break;
+        }
         c.period=periods[index];break;
     }
     case 1:c.period=c.slide_period=unsigned(std::max(113,int(c.slide_period)-int(c.parameter&15)));break;
     case 2:c.period=c.slide_period=std::min(856u,c.slide_period+(c.parameter&15));break;
-    case 11:pending_order_=c.parameter;break;
-    case 12:c.volume=c.parameter&127;break;
+    case 11:if(song_.dialect==PatDialect::fox)pending_order_=c.parameter;break;
+    case 12:if(song_.dialect==PatDialect::fox)c.volume=c.parameter&127;break;
     case 13:pending_break_=true;break;
     case 14:break; // Analogue low-pass switch, not a sequencer state change.
-    case 15:speed_=c.parameter&31;break;
+    case 15:speed_=c.parameter&(song_.dialect==PatDialect::fox?31:15);break;
     default:break; // Original replay also ignores the other effect codes.
     }
 }
@@ -96,7 +107,7 @@ void PatPlayer::tick(){
     const bool occupied=effect_ticks_!=0;
     struct HoldTick { unsigned& ticks;~HoldTick(){if(ticks)--ticks;} } hold{effect_ticks_};
     if(++tick_<speed_){
-        for(unsigned n=0;n<(occupied?3u:4u);++n){auto& c=channels_[n];if(c.parameter || c.effect==11 || c.effect==12 || c.effect==13 || c.effect==15)effect(c);}
+        for(unsigned n=0;n<4;++n){if(occupied && n==(song_.dialect==PatDialect::prehistorik?0u:3u))continue;auto& c=channels_[n];if(c.parameter || c.effect==11 || c.effect==12 || c.effect==13 || c.effect==15)effect(c);}
         return;
     }
     if(pending_order_>=0){
@@ -108,15 +119,15 @@ void PatPlayer::tick(){
     std::size_t p=std::size_t(song_.order[order_])*1024+row_*16;
     for(unsigned channel=0;channel<4;++channel){
         auto& c=channels_[channel];
-        if(channel==3 && occupied){p+=4;continue;}
+        if(channel==(song_.dialect==PatDialect::prehistorik?0u:3u) && occupied){p+=4;continue;}
         const unsigned note=word(song_.patterns,p),instrument=song_.patterns[p+2]>>4;
         c.effect=song_.patterns[p+2]&15;c.parameter=song_.patterns[p+3];p+=4;
         if(instrument){
             const auto& i=song_.instruments[instrument-1];
-            if(i.samples.empty())throw std::runtime_error("PAT refers to an absent instrument");
+            if(i.samples.empty() && !(song_.dialect==PatDialect::prehistorik && !i.length_words && !i.volume))throw std::runtime_error("PAT refers to an absent instrument");
             // The original uses one shared row-volume override, reset only
             // when an instrument is loaded. It can affect subsequent channels.
-            volume_override_=c.effect==12?c.parameter+1:0;
+            volume_override_=song_.dialect==PatDialect::fox && c.effect==12?c.parameter+1:0;
             c.instrument=instrument;c.sample_offset=i.loop_words!=1?i.loop_start:0;
             c.sample_length=i.loop_words!=1?i.loop_words*2:i.length_words*2;
             c.loop_offset=i.loop_start;c.loop_length=std::max(1u,i.loop_words)*2;c.volume=i.volume;
@@ -142,10 +153,10 @@ void PatPlayer::render_into(std::int16_t* pcm,unsigned frames,unsigned sample_ra
         interrupt_phase_+=50;if(interrupt_phase_>=sample_rate){interrupt_phase_-=sample_rate;tick();}
         int left=0,right=0;
         for(unsigned j=0;j<4;++j){
-            if(j==3 && effect_ticks_ && effect_){
+            if(j==(song_.dialect==PatDialect::prehistorik?0u:3u) && effect_ticks_ && effect_){
                 const unsigned index=unsigned(effect_phase_>>32);
                 if(index<effect_->samples.size()){
-                    unsigned byte=effect_->samples[index];left+=(byte<128?int(byte):int(byte)-256)*64*int(effect_volume_)/100;
+                    unsigned byte=effect_->samples[index];left+=(byte<128?int(byte):int(byte)-256)*int(song_.dialect==PatDialect::prehistorik?63:64)*int(effect_volume_)/100;
                     effect_phase_+=(std::uint64_t(3546895)<<32)/(std::uint64_t(sample_rate)*effect_->period);
                 }
                 continue;

@@ -46,6 +46,10 @@ int main(int argc,char** argv) {
         fails([]{parse_json("{\"a\":NaN}");},"E_JSON");
         fails([]{parse_json(std::string(1024*1024+1,' '));},"E_JSON");
         fails([]{parse_json(std::string(70,'[')+std::string(70,']'));},"E_JSON");
+        const std::string large="{\"padding\":\""+std::string(1100000,'x')+"\"}";
+        check(parse_json(large,2*1024*1024).at("padding").get<std::string>().size()==1100000,"bounded native save JSON above protocol limit");
+        fails([&]{parse_json(large);},"E_JSON");
+        fails([]{parse_json("{\"a\":1,\"a\":2}",2*1024*1024);},"E_JSON");
         Temporary temp;auto source=temp.root/"juegos originales";
         auto storage=Paths::resolve(temp.root/"usuario");
         auto p=profile("blues"),q=profile("jukebox");Detector detector(Json::array({p,q}));CatalogStore store(storage,detector);
@@ -124,11 +128,12 @@ int main(int argc,char** argv) {
         check(found,"explicit incomplete upgrade keeps UUID");
         // Existing Amiga entries must gain the new engine on verification,
         // without losing UUIDs, locations or existing profile files.
-        auto fox_source=temp.root/"fox amiga";write(fox_source/"fox.dat","fox");write(fox_source/"fox.gfx","pixels");
-        auto fox_paths=Paths::resolve(temp.root/"fox-user");auto legacy=profile("fox","amiga");
+        for(const std::string game : {"fox", "prehistorik"}) {
+        auto fox_source=temp.root/(game+" amiga");write(fox_source/(game+".dat"),game);write(fox_source/(game+".gfx"),"pixels");
+        auto fox_paths=Paths::resolve(temp.root/(game+"-user"));auto legacy=profile(game,"amiga");
         CatalogStore old_fox(fox_paths,Detector(Json::array({legacy})));auto old_catalog=old_fox.add(fox_source);
         auto fox_id=old_catalog["installations"][0]["id"].get<std::string>();
-        auto modern=legacy;modern["engine_id"]="fox-amiga-native";modern["status"]="recognized";modern["save_compatibility_id"]="fox.amiga.full.audited";
+        auto modern=legacy;modern["engine_id"]=(game=="fox"?"fox-amiga-native":"pre1-amiga-native");modern["status"]="recognized";modern["save_compatibility_id"]=(game+".amiga.full.audited");
         CatalogStore new_fox(fox_paths,Detector(Json::array({modern})));
         auto keep=fox_paths.data/"profiles/old-profile/sentinel";write(keep,"preserved");
         for(unsigned operation=0;operation<3;++operation){
@@ -136,8 +141,9 @@ int main(int argc,char** argv) {
             auto migrated=operation==0?new_fox.recheck(fox_id):operation==1?new_fox.add(fox_source):new_fox.relocate(fox_id,fox_source);
             const auto& installation=migrated["installations"][0];validate_catalog(migrated);
             check(migrated["installations"].size()==1 && installation["id"]==fox_id && installation["locations"]==old_catalog["installations"][0]["locations"],"Fox migration preserves identity and locations");
-            check(installation["engine_id"]=="fox-amiga-native" && installation["status"]=="recognized" && installation["save_compatibility_id"]=="fox.amiga.full.audited","Fox migration refreshes engine and compatibility");
+            check(installation["engine_id"]==(game=="fox"?"fox-amiga-native":"pre1-amiga-native") && installation["status"]=="recognized" && installation["save_compatibility_id"]==(game+".amiga.full.audited"),"Fox migration refreshes engine and compatibility");
             check(fs::exists(keep),"Fox migration preserves profile files");
+        }
         }
         std::cout<<"OK: "<<checks<<" catalog checks\n";return 0;
     }catch(const std::exception& e) {std::cerr<<"FAIL after "<<checks<<" checks: "<<e.what()<<'\n';return 1;}
