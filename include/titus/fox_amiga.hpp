@@ -74,7 +74,7 @@ unsigned next_level(unsigned number); // 0 means no next regular level.
 }
 
 namespace titus::fox_amiga {
-// Terrain-only logical step: no object/AI, damage, ladders or carrying yet.
+// Terrain-only logical step, including ladders/crouching; no actors or damage.
 struct MotionRules {
     std::array<unsigned,14> walk_frames{};
     std::array<int,5> jump_impulses{};
@@ -84,8 +84,9 @@ struct Body {
     int vx=0,vy=0;
     unsigned state=0,frame=0,walk_phase=0,jump_phase=0,idle_ticks=0,ice_shift=0;
     bool facing_right=false;
+    unsigned crouch_jump_ticks=0;
 };
-struct BodyInput { bool left=false,right=false,up=false; };
+struct BodyInput { bool left=false,right=false,up=false,down=false; };
 Body terrain_step(const Level&,Body,const BodyInput&,const MotionRules&);
 Bytes body_projection(const Body&);
 }

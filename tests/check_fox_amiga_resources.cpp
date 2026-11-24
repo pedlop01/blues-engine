@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "titus/fox_amiga.hpp"
+#include "titus/fox_amiga_audio.hpp"
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
 using namespace titus::fox_amiga;
@@ -106,7 +108,29 @@ int main() try {
     for(unsigned i=0;i<7;++i)ice=terrain_step(plane,ice,{false,true,false},motion);
     require(ice.vx==14 && ice.feet.x==100);
     ice=terrain_step(plane,ice,{false,true,false},motion);require(ice.vx==16 && ice.feet.x==101);
-    rejects([&]{auto b=ice;b.state=4;terrain_step(plane,b,{},motion);});
+    rejects([&]{auto b=ice;b.state=6;terrain_step(plane,b,{},motion);});
     rejects([&]{auto b=ice;b.feet.x=0;terrain_step(plane,b,{},motion);});
+    Bytes pat(1624,0);pat[0]='l';pat[1]='a';pat[2]='g';pat[20]='t';pat[21]='o';pat[22]='n';pat[23]='e';
+    pat[43]=8;pat[45]=64;pat[49]=1;pat[470]=1;
+    pat[600]=1;pat[601]=172;pat[602]=0x10;
+    pat[618]=12; // Volume-zero command, including its zero parameter.
+    auto sample=[](const std::string& name){require(name=="tone");return Bytes(14,127);};
+    auto song=pat_song(pat,sample);require(song.instruments[0].samples.size()==16 && song.instruments[0].samples[0]==0);
+    PatPlayer sequencer(song);for(unsigned n=0;n<10;++n)sequencer.tick();
+    require(sequencer.channels()[0].period==428 && sequencer.channels()[0].volume==64);
+    for(unsigned n=0;n<11;++n)sequencer.tick();require(sequencer.channels()[0].volume==0);
+    auto shared=pat;shared[604]=1;shared[605]=172;shared[606]=0x10;shared[618]=0x1c;shared[619]=34;
+    PatPlayer shared_volume(pat_song(shared,sample));for(unsigned n=0;n<20;++n)shared_volume.tick();
+    require(shared_volume.channels()[0].volume==34 && shared_volume.channels()[1].volume==34);
+    PatPlayer whole(song),chunked(song);auto pcm=whole.render(44100);std::vector<std::int16_t> chunks;
+    for(unsigned n=0;n<44;++n){auto part=chunked.render(997);chunks.insert(chunks.end(),part.begin(),part.end());}
+    auto part=chunked.render(232);chunks.insert(chunks.end(),part.begin(),part.end());
+    require(pcm==chunks && std::any_of(pcm.begin(),pcm.end(),[](auto v){return v!=0;}));
+    rejects([&]{chunked.render(1,48000);});
+    rejects([&]{auto d=pat;d.pop_back();pat_song(d,sample);});
+    rejects([&]{auto d=pat;d[20]='.';pat_song(d,sample);});
+    rejects([&]{auto d=pat;d[470]=129;pat_song(d,sample);});
+    rejects([&]{auto d=pat;d[49]=16;pat_song(d,sample);});
+    rejects([&]{pat_song(pat,[](const auto&){return Bytes(1);});});
     std::cout<<"Fox Amiga resource boundaries passed\n";return 0;
 } catch(const std::exception& e){std::cerr<<e.what()<<'\n';return 1;}

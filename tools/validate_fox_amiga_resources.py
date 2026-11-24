@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """TH-14 reference check: bounded pinned packer, resource, level and player routines.
 
-No Amiga OS, trainer, game loop, audio or hardware is executed. External amitools
+No Amiga OS, trainer or complete game loop is executed. Isolated PAT replay
+stores audio registers in private mapped memory. External amitools
 and Unicorn are used only by this research tool, never by the native reader.
 No executable bytes are embedded. Output must be outside the original directory.
 SPDX-License-Identifier: GPL-3.0-or-later
@@ -30,6 +31,7 @@ def main():
     parser.add_argument('--probe', type=Path, required=True)
     parser.add_argument('--check-levels', action='store_true', help='Compare native POIL initialization and collision queries')
     parser.add_argument('--check-motion', action='store_true', help='Compare isolated terrain-only player ticks')
+    parser.add_argument('--check-audio', action='store_true', help='Compare PAT replay interrupts with the original')
     args = parser.parse_args()
     root, output = args.datapath.resolve(), args.output.resolve()
     if output == root or root in output.parents or output.exists():
@@ -75,6 +77,9 @@ def main():
             elif not bases[5] <= address < bases[5]+496:
                 raise ValueError('Packer execution escaped its isolated segment')
             return
+        if phase == 'audio':
+            if 0xe3d6c<=address<0xe43ee:return
+            raise ValueError(f'PAT replay escaped to {address:x}')
         if phase == 'motion':
             if address in (0xe6d10,0xe6fb4):
                 # Exclude bonus consumption and level completion from this
@@ -200,6 +205,34 @@ def main():
             raise ValueError(f'Native/reference mismatch: {row["name"]}')
         report['resources'].append(dict(row, reference_match=True))
         decoded_resources[row['name'].casefold()] = bytes(decoded)
+    if args.check_audio:
+        phase='audio';u.mem_map(0xdff000,4096);u.mem_map(0xbfe000,4096)
+        def set_audio_word(address,value):u.mem_write(address,int(value).to_bytes(2,'big'))
+        def set_audio_pointer(address,value):u.mem_write(address,int(value).to_bytes(4,'big'))
+        def audio_word(address):return int.from_bytes(u.mem_read(address,2),'big')
+        results=[]
+        for name,song in decoded_resources.items():
+            if not name.endswith('.pat'):continue
+            folder=output/('audio-'+name)
+            process=subprocess.run([str(args.probe.resolve()),'--datapath',str(root),'--output',str(folder),
+                '--audio',name,'--audio-ticks','12000'],capture_output=True,text=True,timeout=60)
+            if process.returncode:raise ValueError(f'{name}: {process.stderr}')
+            frames=json.loads((folder/'audio.json').read_text())
+            u.mem_write(0x190000,song);set_audio_pointer(0x80436,0x190000)
+            set_audio_pointer(0x80dec,0x180000)
+            u.mem_write(0xe43ee,bytes(0x44e6-0x43ee))
+            set_audio_word(0xe43f4,0x8000)
+            for channel in range(4):set_audio_word(0xe43f8+24*channel+22,1<<channel)
+            for instrument in range(16):set_audio_pointer(0x180000+4*instrument,0x200000+instrument*0x8000)
+            u.mem_write(0xdff000,bytes(4096));call(0xe3d6c)
+            for tick,expected in enumerate(frames):
+                call(0xe3e56)
+                observed=[be(0xe44ea),be(0xe44ee)//16,audio_word(0xe44f6),audio_word(0xe43f6)]
+                for channel in range(4):
+                    observed.extend((audio_word(0xdff0a6+16*channel),audio_word(0xdff0a8+16*channel),audio_word(0xe43f8+24*channel+16)))
+                if observed!=expected:raise ValueError(f'{name} audio tick {tick}: native {expected}, original {observed}')
+            results.append(dict(reference_match=True,**json.loads(process.stdout)['audio']))
+        report['audio']=dict(sequencer_only=True,cases=results)
     if args.check_levels or args.check_motion:
         phase = 'level'
         levels = []
@@ -323,11 +356,22 @@ def main():
                 for shift,value in ((1,0x81),(2,0x83),(3,0x85)):
                     scenarios[f'ice_{shift}']=dict(initial=dict(x=200,ice_shift=shift),floor_override=value,
                         steps=[dict(right=True)]*40+[neutral]*50)
+                ladder=dict(column=12,first_row=20,last_row=25)
+                scenarios.update(
+                    crouch_idle=dict(initial=dict(x=200,y=415),fixture=dict(floor_row=26),steps=[dict(down=True)]*10+[neutral]*10),
+                    crouch_walk=dict(initial=dict(x=200,y=415),fixture=dict(floor_row=26),steps=[dict(down=True,right=True)]*24+[dict(left=True)]*16+[neutral]*10),
+                    crouch_jump=dict(initial=dict(x=200,y=415,state=5),fixture=dict(floor_row=26),steps=[dict(up=True)]*8+[neutral]*110),
+                    crouch_ceiling=dict(initial=dict(x=200,y=415),fixture=dict(floor_row=26,ceiling_row=24),steps=[dict(down=True)]*6+[neutral]*12+[dict(up=True)]*8),
+                    ladder_up=dict(initial=dict(x=200,y=399,state=4),fixture=dict(floor_row=26,ladder=ladder),steps=[dict(up=True)]*36+[neutral]*12),
+                    ladder_down=dict(initial=dict(x=200,y=335,state=4),fixture=dict(floor_row=26,ladder=ladder),steps=[dict(down=True)]*30+[neutral]*12),
+                    ladder_enter=dict(initial=dict(x=202,y=300,state=3),fixture=dict(floor_row=26,ladder=ladder),steps=[neutral]*12+[dict(up=True)]*12),
+                    ladder_side=dict(initial=dict(x=200,y=399,state=4),fixture=dict(floor_row=26,ladder=ladder),steps=[dict(right=True)]*16+[neutral]*20),
+                    ladder_from_top=dict(initial=dict(x=202,y=303),fixture=dict(floor_row=26,ladder=ladder),steps=[dict(down=True)]*26+[neutral]*10))
                 motion_results=[]
                 base_floor=bytes(u.mem_read(0x180100,256))
                 base_horizontal=bytes(u.mem_read(0x180000,256));base_ceiling=bytes(u.mem_read(0x180200,256))
                 base_map=bytes(u.mem_read(0x190000,len(original_map)))
-                fields=(0x804f6,0x804f8,0x8051e,0x80520,0x8050e,0x80514,0x80512,0x80518,0x80496,0x80516,0x8050c)
+                fields=(0x804f6,0x804f8,0x8051e,0x80520,0x8050e,0x80514,0x80512,0x80518,0x80496,0x80516,0x8050c,0x8050a)
                 for name,scenario in scenarios.items():
                     script=output/f'{name}.json';script.write_text(json.dumps(scenario))
                     folder=output/f'motion-{name}'
@@ -338,7 +382,7 @@ def main():
                     trajectory=json.loads((folder/'motion.json').read_text())
                     initial=trajectory['initial']
                     for address,value in zip(fields,initial):set_word(address,value)
-                    for address in (0x8051a,0x8050a,0x80510,0x804ec,0x804ee,0x804f0,0x804f2):set_word(address,0)
+                    for address in (0x8051a,0x80510,0x804ec,0x804ed,0x804ee,0x804f0,0x804f2):set_word(address,0)
                     set_pointer(0x8060c,0);set_word(0x80574,4096);set_word(0x80576,height*16)
                     terrain_map,terrain_horizontal,terrain_floor,terrain_ceiling=base_map,base_horizontal,base_floor,base_ceiling
                     if 'fixture' in scenario:
@@ -350,11 +394,14 @@ def main():
                             for row in range(height):terrain_map[row*256+col]=2
                         if 'ceiling_row' in fixture:
                             terrain_map[fixture['ceiling_row']*256:(fixture['ceiling_row']+1)*256]=bytes([2])*256
+                        if 'ladder' in fixture:
+                            ladder=fixture['ladder'];terrain_floor[3]=6;terrain_ceiling[3]=2
+                            for row in range(ladder['first_row'],ladder['last_row']+1):terrain_map[row*256+ladder['column']]=3
                     if 'floor_override' in scenario:terrain_floor=bytes([scenario['floor_override']])*256
                     for address,values in ((0x190000,terrain_map),(0x180000,terrain_horizontal),(0x180100,terrain_floor),(0x180200,terrain_ceiling)):
                         u.mem_write(address,bytes(values))
                     for tick,(keys,expected) in enumerate(zip(scenario['steps'],trajectory['frames'])):
-                        for address,key in ((0x804ee,'left'),(0x804ef,'right'),(0x804ec,'up')):
+                        for address,key in ((0x804ee,'left'),(0x804ef,'right'),(0x804ec,'up'),(0x804ed,'down')):
                             u.mem_write(address,bytes([int(keys.get(key,False))]))
                         call(0xe70b4)
                         observed=[w(address) for address in fields]

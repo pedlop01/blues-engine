@@ -49,7 +49,7 @@ def main():
         original=json.loads((reference/('motion-'+name)/'motion.json').read_text())
         assert native==original,(name,'motion frame mismatch')
         cases.append(dict(name=name,ticks=case['ticks'],sha256=case['sha256']))
-    for name,initial in (('unsupported_ladder',dict(state=4)),('outside_map',dict(x=0))):
+    for name,initial in (('unsupported_actor',dict(state=6)),('outside_map',dict(x=0))):
         script=output/(name+'.json');script.write_text(json.dumps(dict(initial=initial,steps=[{}])))
         result=run(name,script)
         assert result.returncode and result.stderr and not (output/name/'report.json').exists()

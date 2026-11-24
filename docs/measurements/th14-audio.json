@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "main_sha256": "18ca46dd02a3ad3623b03d425f0e0ae489b5090498882aea6d2578161010bc45",
+  "playable": false,
+  "reference": "isolated original PAT replay; mapped audio registers, no OS",
+  "audio": {
+    "sequencer_only": true,
+    "cases": [
+      {
+        "reference_match": true,
+        "loops": 4,
+        "name": "bonus.pat",
+        "nonzero": 845773,
+        "pcm_frames": 441000,
+        "pcm_sha256": "75cdde53728868cc49ebd1c8ab01d411102c15c4e5face4b85cae854e37605b3",
+        "peak": 15040,
+        "ticks": 12000,
+        "trace_sha256": "dc30a450038362c42321ee4c912bec0e3314607f2f6fd2ff482f60f282f8e1fc"
+      },
+      {
+        "reference_match": true,
+        "loops": 37,
+        "name": "cba1.pat",
+        "nonzero": 772794,
+        "pcm_frames": 441000,
+        "pcm_sha256": "141c272e15cf1c8eeed46113f51d5ba23115da800bc1e3c06fd9fe1c62cc4540",
+        "peak": 14592,
+        "ticks": 12000,
+        "trace_sha256": "d33694d6161d60918d0ef6968a9c9fb3cd33789b7c10b2f6916aa7bb9169ac6f"
+      },
+      {
+        "reference_match": true,
+        "loops": 2,
+        "name": "jeu1.pat",
+        "nonzero": 829763,
+        "pcm_frames": 441000,
+        "pcm_sha256": "70b862cc88efed55a08162440c06076fb5ae336b5567c3e70283fe444ad3baf7",
+        "peak": 15168,
+        "ticks": 12000,
+        "trace_sha256": "587f5d0818c7323fb699e0c749c373de2efeae6508de7d4b4bf05ccbabf8f4b1"
+      },
+      {
+        "reference_match": true,
+        "loops": 1,
+        "name": "jeu5.pat",
+        "nonzero": 744507,
+        "pcm_frames": 441000,
+        "pcm_sha256": "e6cc20bf777f517f7e3ddef5bfbff9ccaf5442e6afb59005ebe57031192a5dc8",
+        "peak": 16256,
+        "ticks": 12000,
+        "trace_sha256": "02ff95c730cc4740db0030a130ff4805022ba33ad3f64261a3451a1cc188e861"
+      },
+      {
+        "reference_match": true,
+        "loops": 70,
+        "name": "mort.pat",
+        "nonzero": 781094,
+        "pcm_frames": 441000,
+        "pcm_sha256": "8f0ac70a06d90060dce1ce0a6a61b43f23f32e40fcc37bc3613c5ba5b3aa2070",
+        "peak": 14592,
+        "ticks": 12000,
+        "trace_sha256": "b8b85d8673f85790ccbf7a30a73f9c821d4ee62c217b288782cc7ebd408e9bba"
+      },
+      {
+        "reference_match": true,
+        "loops": 0,
+        "name": "pres2.pat",
+        "nonzero": 840634,
+        "pcm_frames": 441000,
+        "pcm_sha256": "1c64cda02706a04b4a7f982e37c7da63785bf1ff075da345567599f653ce4a71",
+        "peak": 15232,
+        "ticks": 12000,
+        "trace_sha256": "b64e0f0bb539ecadc308a714f065796ded17e2c1f3a9f7a7d1948e1d19fa64b2"
+      },
+      {
+        "reference_match": true,
+        "loops": 5,
+        "name": "gagne2.pat",
+        "nonzero": 842273,
+        "pcm_frames": 441000,
+        "pcm_sha256": "44138d1de116fc65d162da6103cf98dda75deb008ca9240be1a533d214e7737d",
+        "peak": 15296,
+        "ticks": 12000,
+        "trace_sha256": "eb71605e3920a5159e04a1c37a6f0ee7a138205839f9e82712b83948362efbc8"
+      },
+      {
+        "reference_match": true,
+        "loops": 0,
+        "name": "jeu22.pat",
+        "nonzero": 848856,
+        "pcm_frames": 441000,
+        "pcm_sha256": "2315c0196878b9c237f7c34bd46235660328333f31973fd97ac8a2f70bed632c",
+        "peak": 14848,
+        "ticks": 12000,
+        "trace_sha256": "5ba87209ae0e9b6b405f8884aa2b548bc94731cdd06d97a0e76312bae8b27cfb"
+      },
+      {
+        "reference_match": true,
+        "loops": 2,
+        "name": "jeu32.pat",
+        "nonzero": 676684,
+        "pcm_frames": 441000,
+        "pcm_sha256": "dd2f823f15b6228c030aabc907f2e7cf6104e0ebe297b8377b5398968661e1d0",
+        "peak": 15744,
+        "ticks": 12000,
+        "trace_sha256": "a3322d22d9d8928ec8fe0020d469645c552c9c457c08c497d03a400c3abc6f36"
+      },
+      {
+        "reference_match": true,
+        "loops": 1,
+        "name": "jeu42.pat",
+        "nonzero": 860341,
+        "pcm_frames": 441000,
+        "pcm_sha256": "14296cf964539e99f971a40553439da67811710bf00351efec7053a2d2851114",
+        "peak": 13440,
+        "ticks": 12000,
+        "trace_sha256": "f131af2e30041aa0a8e34936de55d8eba1c0600e6b25c2d1af50fe8979ba7ca3"
+      },
+      {
+        "reference_match": true,
+        "loops": 0,
+        "name": "over2.pat",
+        "nonzero": 851145,
+        "pcm_frames": 441000,
+        "pcm_sha256": "4e2535fbceba41e8d0e4c39cb44cf74be09ca1b75d62e6751b92286dc1452365",
+        "peak": 16256,
+        "ticks": 12000,
+        "trace_sha256": "af142ec8f391379df0f680f45cdebcb654b71b0e95b045216e288ab771d52706"
+      }
+    ]
+  },
+  "compared_fields": [
+    "order",
+    "next_row",
+    "sub_tick",
+    "speed",
+    "period/volume/base_period for each of four channels"
+  ],
+  "pcm_reference": "native fixed-point mixer, not original analogue output",
+  "originals_unchanged": true
+}

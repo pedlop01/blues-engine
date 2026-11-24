@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "main_sha256": "18ca46dd02a3ad3623b03d425f0e0ae489b5090498882aea6d2578161010bc45",
+  "playable": false,
+  "reference": "isolated original player routine; no actor simulation",
+  "motion": {
+    "terrain_only": true,
+    "columns": [
+      "x",
+      "y",
+      "vx",
+      "vy",
+      "state",
+      "frame",
+      "walk_phase",
+      "jump_phase",
+      "idle_ticks",
+      "ice_shift",
+      "facing_right",
+      "crouch_jump_ticks"
+    ],
+    "cases": [
+      {
+        "name": "idle",
+        "ticks": 360,
+        "reference_match": true,
+        "sha256": "336827205dc75ca6ecabc1ede894c5041502c2d0d34c54649a3206ddac4b4103",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "walk_brake",
+        "ticks": 44,
+        "reference_match": true,
+        "sha256": "5ad73d856417d42010d3d1a49328d8b19c40f15df670d0c2dbbcb1c5bcd87ed4",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "reverse",
+        "ticks": 60,
+        "reference_match": true,
+        "sha256": "dd56cd5770c230932bcefdf8843e733f68edb62e12b2ba5a607799449c8dcce4",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "short_jump",
+        "ticks": 62,
+        "reference_match": true,
+        "sha256": "790c66da01615d27f62450e7b022da7e385e8baa61e9f2c25a2f0894a49bd415",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "held_jump",
+        "ticks": 68,
+        "reference_match": true,
+        "sha256": "e65355db5d5e22829ec94867334c5933c47868b2dbca559ec6f8f133184b2045",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "moving_jump",
+        "ticks": 69,
+        "reference_match": true,
+        "sha256": "bb1c5d961bcf00fe371a725a6355d8b09e2d7554a159269720b7dc5adfbc8bc0",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "fall",
+        "ticks": 60,
+        "reference_match": true,
+        "sha256": "9ea35ffed07e9f008d4216392c188ba9f7f4d796191a9b3ae81dd0fa0acf4386",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "rising_release",
+        "ticks": 60,
+        "reference_match": true,
+        "sha256": "da84a6fbbd98f48d2becec0c98df52e0f4f355a9bb0a691b492bd6191a2d70cf",
+        "synthetic_floor": null,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "wall_right",
+        "ticks": 34,
+        "reference_match": true,
+        "sha256": "c899e9530dff157507839db52994ee031b9ba3c00a2774d662599b1a2ea0379c",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "wall_left",
+        "ticks": 34,
+        "reference_match": true,
+        "sha256": "e0425eb4411c8fc4ffc03c3f5f7ce69b1e22b0da2030347cf59a63968c402fe7",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "head_bump",
+        "ticks": 33,
+        "reference_match": true,
+        "sha256": "5c3739aaae68bb5286406d14a65afc0536eec05fc376b90d37075a4e2766a0f7",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "walk_off",
+        "ticks": 24,
+        "reference_match": true,
+        "sha256": "5e0af5ac4f815d608f1178d78d132519d930a59b90a34e5324f204a2d02d40d8",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "ice_1",
+        "ticks": 90,
+        "reference_match": true,
+        "sha256": "8beeb15836f3dbd06b5ad5e519ed126dbd8b64d900ad004734175ef569880535",
+        "synthetic_floor": 129,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "ice_2",
+        "ticks": 90,
+        "reference_match": true,
+        "sha256": "58840b512026ea5cd7a837e5181cd6e8f319f21b29e0842bd719b79fe4965301",
+        "synthetic_floor": 131,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "ice_3",
+        "ticks": 90,
+        "reference_match": true,
+        "sha256": "3dda21fc5b8eb9e7d53f3e98f6a15fe10777a2834e557acfbade85b9a3187b84",
+        "synthetic_floor": 133,
+        "synthetic_geometry": false
+      },
+      {
+        "name": "crouch_idle",
+        "ticks": 20,
+        "reference_match": true,
+        "sha256": "740c5bad60fb734e8b7bbca31183e7b8e1027863377aebec0d3a0aa8734d2324",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "crouch_walk",
+        "ticks": 50,
+        "reference_match": true,
+        "sha256": "b0a9a92c3ae24afddae11c21a80460054a059db17553255d8569cf2c394dfcdd",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "crouch_jump",
+        "ticks": 118,
+        "reference_match": true,
+        "sha256": "b720788871a0d4a6cac0a9b856f6ac1f226c8d6be50365b446e502acc156022f",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "crouch_ceiling",
+        "ticks": 26,
+        "reference_match": true,
+        "sha256": "b2c3d388e67b39a1ed424ec6d7742caa8d55c23638026fb5e9d941a47b1118fb",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "ladder_up",
+        "ticks": 48,
+        "reference_match": true,
+        "sha256": "0ee6b5a1eb1688ac068524587885c01ca5e372788d78a75638beb7ead586de1e",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "ladder_down",
+        "ticks": 42,
+        "reference_match": true,
+        "sha256": "5fc55683afb19d173a6c5800dc31d659bc7f54942819904864a327edb53ec0ce",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "ladder_enter",
+        "ticks": 24,
+        "reference_match": true,
+        "sha256": "83a3b109797e57b828e10cf238f3a0193859e60e38c639627bd9df77970f29b1",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "ladder_side",
+        "ticks": 36,
+        "reference_match": true,
+        "sha256": "0f510f8b7bf7feffb9705d235a3123882accad901854eb7e01ec1327a33d9266",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      },
+      {
+        "name": "ladder_from_top",
+        "ticks": 36,
+        "reference_match": true,
+        "sha256": "032bc59459565da5d8e548bf2ae2fab982126fb49b9b654fc3d3709ad1cad48c",
+        "synthetic_floor": null,
+        "synthetic_geometry": true
+      }
+    ]
+  },
+  "levels_verified": 15,
+  "resources_verified": 65,
+  "originals_unchanged": true
+}

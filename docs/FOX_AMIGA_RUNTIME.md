@@ -1,9 +1,10 @@
 # TH-14: Titus the Fox Amiga
 
-Estado: **en curso, 35 %**. Lectura nativa de recursos y referencia gráfica
+Estado: **en curso, 46 %**. Lectura nativa de recursos y referencia gráfica
 completadas; inicialización de niveles, consultas de colisión y transiciones
 contrastadas con el original. El núcleo de movimiento sobre terreno está
-contrastado por ticks. **Todavía no es un port jugable** ni un adaptador registrado.
+contrastado por ticks, incluidas escaleras y movimiento agachado. Las 11 canciones
+PAT tienen reproducción nativa contrastada por interrupciones. **Todavía no es un port jugable** ni un adaptador registrado.
 La edición DOS, los perfiles existentes y las capacidades del lanzador no cambian.
 
 ## Progreso
@@ -13,8 +14,8 @@ La edición DOS, los perfiles existentes y las capacidades del lanzador no cambi
 | Recursos y referencia gráfica | Descompresores nativos contrastados, mapas/tiles/sprites/pantallas leídos, escenas exportadas y paletas obtenidas del original | Completado con los límites siguientes | 20 % |
 | Inicialización y consultas Amiga | POIL, normalización de mapas/tablas, entidades iniciales, consultas de colisión, puertas y condiciones de salida contrastadas | Completado, 10 de los 20 puntos del bloque de lógica | 10 % |
 | Movimiento sobre terreno | Caminar, frenar, cambiar dirección, saltar/caer y resolver paredes/techos; selección lógica de frames, sin actores | Completado como módulo aislado y acotado | 5 % |
-| Simulación e interacciones restantes | Escaleras, agacharse, daños, coger/lanzar, IA/plataformas, anclajes/oclusión, campaña y final | Pendiente, 5 puntos restantes de lógica | 0 % |
-| Audio Amiga | Reproductor PAT, instrumentos/efectos y mezcla estable, contraste auditivo | Pendiente | 0 % |
+| Simulación e interacciones restantes | Escaleras y agacharse contrastados; pendientes daños, coger/lanzar, IA/plataformas, anclajes/oclusión, campaña y final | Parcial, 4 puntos de lógica pendientes | 1 % |
+| Audio Amiga | Secuenciador PAT y muestras externas nativos; 132.000 interrupciones contrastadas y PCM portable. Pendientes efectos, integración y contraste auditivo | Parcial, 10 puntos de audio pendientes | 10 % |
 | Adaptador e integración | Preparación privada nativa, protocolo, preferencias por edición, retorno seguro; exponer solo capacidades implementadas y conservar objetivo PX | Pendiente | 0 % |
 | Validación jugable | Regresión DOS/Blues, campaña Amiga y comprobaciones Linux/Windows, controles, audio y final | Pendiente | 0 % |
 
@@ -254,7 +255,7 @@ con los objetos cargados, sin ejecutar su simulación. Solo omite el consumo de
 bonus (`0x6d10`) y la comprobación de final (`0x6fb4`) en estas trazas para aislar
 la física. No entra en el bucle de juego, AmigaOS, audio o hardware. El motor
 nativo no ejecuta esas instrucciones; solo el comprobador externo las usa como
-referencia. Escaleras, agacharse, daño, límites de mapa no cubiertos y estados
+referencia. En aquel bloque se rechazaban escaleras y agacharse; el bloque siguiente los incorpora. Daño, límites de mapa no cubiertos y estados
 ajenos al subconjunto se rechazan expresamente, sin fingir que están soportados.
 No se habilita Jugar ni se declara esta fase un juego completo.
 
@@ -274,3 +275,82 @@ Evidencia: [contraste original](measurements/th14-motion.json) y
 Los siguientes pasos son completar las interacciones, recuperar los anclajes de
 sprites y conectar una presentación interactiva, manteniendo la lógica separada
 de la frecuencia de dibujado y el objetivo PX de scroll muy suave.
+
+
+## Escaleras y agacharse (ampliación del módulo de terreno)
+
+Se añaden los estados 4 y 5, la entrada a la escalera desde arriba o al caer,
+subida/bajada, salida superior, salida lateral y movimiento agachado con salto.
+La escalera utiliza aceleración de 8 y velocidad horizontal máxima de 32;
+agachado utiliza la aceleración normal con límite de 32. Se conserva la
+alineación al centro del tile y el estado de salida superior que impide volver
+a engancharse inmediatamente. El temporizador del salto agachado modifica los
+frames posteriores, como en el original.
+
+El contraste crece a **24 escenarios, 1578 ticks y 12 campos por tick**, contando
+los 15 casos previos. Los nueve escenarios nuevos usan geometría sintética para
+aislar cada transición; no equivalen a probar las escaleras de toda la campaña.
+Linux, Windows x64 ejecutado y ASan/UBSan producen las mismas trayectorias.
+Evidencia: [original](measurements/th14-ladders.json) y
+[validación](measurements/th14-ladders-validation.json).
+
+## Música PAT nativa
+
+`fox_amiga_audio.cpp` interpreta las 15 descripciones de instrumentos externos,
+los patrones de cuatro canales y la lista de órdenes. Los nombres se resuelven
+sin distinguir mayúsculas y se rechazan rutas, muestras truncadas, bucles fuera
+de límites y referencias inválidas. Las muestras se cargan reservando los dos
+primeros bytes a cero, igual que el cargador original.
+
+El secuenciador reproduce arpegio, deslizamiento de período, volumen, velocidad,
+salto de posición y cambio de patrón. Conserva la peculiaridad de volumen
+compartido entre canales durante la lectura de una fila. El efecto 4 se ignora,
+como en el reproductor original. Las canciones suministradas no emplean E
+(filtro analógico); su emulación analógica no está implementada.
+
+Se comparan **12000 interrupciones por canción, 132000 en las 11 canciones**:
+orden, siguiente fila, subtick, velocidad y período/volumen/período base de los
+cuatro canales. El comprobador ejecuta únicamente el inicializador y el replay
+originales; los registros de audio están en memoria privada, sin AmigaOS.
+Las interrupciones provienen de VBlank (`0x5c56`); el modo PAL usa 50 Hz.
+Esta frecuencia del audio no certifica todavía la frecuencia de la simulación.
+
+El mezclador estéreo usa avance de muestra de punto fijo y reloj Paula PAL de
+3546895 Hz. Produce WAV de 10 segundos por canción; sus bytes coinciden en Linux,
+Windows y sanitizadores, sin saturación en estos fragmentos. El procesamiento
+mantiene fase entre bloques de tamaños distintos. **La comparación de PCM es
+entre nuestras compilaciones, no contra la salida analógica de un Amiga**.
+No se ha realizado todavía una escucha comparada, ni se han conectado los
+efectos sonoros, el dispositivo SDL o la música al runtime jugable.
+
+```sh
+build/th14-venv/bin/python tools/validate_fox_amiga_resources.py --datapath ../orig-games/fox-amiga --output build/fox-amiga-audio-reference --amitools ../tools/amitools --probe build/th14-native/titus-fox-amiga-probe --check-audio
+python3 tests/check_fox_amiga_audio.py --probe build/th14-native/titus-fox-amiga-probe --datapath ../orig-games/fox-amiga --reference build/fox-amiga-audio-reference --output build/fox-amiga-audio-replay
+build/th14-native/titus-fox-amiga-probe --datapath ../orig-games/fox-amiga --output build/fox-amiga-audio-preview --audio JEU1.PAT --audio-ticks 12000
+```
+
+El último comando genera `audio.wav`, `audio.json` y `report.json`. No necesita
+el descriptor privado de paleta. `--check-audio`, `--check-motion` y
+`--check-levels` pueden combinarse. Para Windows, el replay acepta `--windows`.
+Las muestras privadas de esta sesión están en `build/th14-pat-linux2/`.
+Evidencia: [replay original](measurements/th14-audio.json) y
+[validación multiplataforma](measurements/th14-audio-validation.json).
+
+## Trabajo necesario para entregar TH-14 a revisión final
+
+La petición vigente es completar TH-14 sin supervisión y reservar el 100 % a la
+revisión del usuario. **Aún no se ha alcanzado esa entrega**: el 46 % describe
+los bloques implementados, no una tarea terminada pendiente solo de aceptación.
+
+| Bloque pendiente | Criterio de entrega |
+|---|---|
+| Interacciones | Recoger/lanzar y transportar objetos; daño, muerte y recuperación; bonus y puertas activados por controles reales |
+| Actores | IA, animaciones, impactos y plataformas; filtrar registros inválidos sin accesos fuera del mapa |
+| Presentación | Anclajes y capas contrastados, cámara y temporización reales; presentación interactiva y final |
+| Audio integrado | Efectos y prioridad del cuarto canal, dispositivo y pausa, volúmenes; escucha comparada |
+| Preparación y adaptador | Reglas extraídas sin dependencias de investigación, proceso gestionado, preferencias Amiga y retorno al lanzador |
+| Campaña y revisión | Pruebas de niveles/final y regresión DOS/Blues en Linux/Windows; revisión del usuario antes del 100 % |
+
+Las capacidades públicas y las tareas PX siguen sin cambios. No se ha habilitado
+el botón Jugar para esta edición ni sustituido música Amiga por audio DOS.
+Los 462 archivos originales conservan tamaño, fecha de modificación y SHA256.

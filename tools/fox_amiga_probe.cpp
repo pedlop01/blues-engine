@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Diagnostic viewer/exporter. Not registered as a playable engine.
 #include "titus/fox_amiga.hpp"
+#include "titus/fox_amiga_audio.hpp"
 #include "titus/catalog.hpp"
 #include <filesystem>
 #include <fstream>
@@ -37,6 +38,7 @@ void bmp(const fs::path& p,const Image& im,const std::array<std::uint32_t,64>& p
     if(!f)throw std::runtime_error("Cannot write preview");
 }
 int probe_main(int argc,char** argv) try {
+    std::string audio_name;unsigned audio_ticks=1000;
     fs::path root,output,palette,motion_script;unsigned level=1,x=0,y=0,spawn_view=0;
     auto number=[](const std::string& value) {
         if(value.empty() || value.find_first_not_of("0123456789")!=std::string::npos)
@@ -52,6 +54,8 @@ int probe_main(int argc,char** argv) try {
         if(key=="--datapath")root=fs::u8path(value);
         else if(key=="--output")output=fs::u8path(value);
         else if(key=="--palette")palette=fs::u8path(value);
+        else if(key=="--audio")audio_name=value;
+        else if(key=="--audio-ticks")audio_ticks=number(value);
         else if(key=="--motion")motion_script=fs::u8path(value);
         else if(key=="--level")level=number(value);
         else if(key=="--x")x=number(value);
@@ -59,7 +63,7 @@ int probe_main(int argc,char** argv) try {
         else if(key=="--spawn-view")spawn_view=number(value);
         else throw std::runtime_error("Unknown option: "+key);
     }
-    if(root.empty() || output.empty() || palette.empty() || level<1 || level>16 || level==15 || spawn_view>1)
+    if(root.empty() || output.empty() || (palette.empty() && audio_name.empty()) || level<1 || level>16 || level==15 || spawn_view>1)
         throw std::runtime_error("Usage: titus-fox-amiga-probe --datapath FOLDER --output PRIVATE_FOLDER --palette REFERENCE_JSON [--level 1..14/16] [--x PIXEL --y PIXEL] [--spawn-view 0/1]");
     auto canonical_root=titus::normalized_path(root), canonical_output=titus::normalized_path(output);
     root=canonical_root;output=canonical_output;
@@ -67,6 +71,27 @@ int probe_main(int argc,char** argv) try {
     if(relative.empty() || *relative.begin()!="..")throw std::runtime_error("Output must be outside original data directory");
     if(titus::path_exists(output))throw std::runtime_error("Use a new output directory to preserve previous exports");
     Json report={{"schema_version",1},{"playable",false},{"resources",Json::array()}};
+    if(!audio_name.empty()){
+        if(!audio_ticks || audio_ticks>60000)throw std::runtime_error("Invalid audio tick count");
+        auto song=pat_song(unpack(read(resolve(root,audio_name))),[&](const std::string& name){return read(resolve(root,name));});
+        PatPlayer player(song);Json frames=Json::array();
+        for(unsigned n=0;n<audio_ticks;++n){
+            player.tick();Json row=Json::array({player.order(),player.row(),player.sub_tick(),player.speed()});
+            for(const auto& c:player.channels()){row.push_back(c.period);row.push_back(c.volume);row.push_back(c.base_period);}
+            frames.push_back(row);
+        }
+        PatPlayer pcm_player(song);auto pcm=pcm_player.render(441000);
+        Bytes raw;raw.reserve(pcm.size()*2);unsigned nonzero=0,peak=0;
+        for(auto sample:pcm){unsigned v=unsigned(sample)&65535;raw.push_back(std::uint8_t(v));raw.push_back(std::uint8_t(v>>8));nonzero+=sample!=0;peak=std::max(peak,unsigned(std::abs(int(sample))));}
+        report["audio"]={{"name",audio_name},{"ticks",audio_ticks},{"trace_sha256",titus::sha256(frames.dump())},
+            {"pcm_sha256",titus::sha256(std::string(raw.begin(),raw.end()))},{"pcm_frames",441000},{"nonzero",nonzero},{"peak",peak},{"loops",player.loops()}};
+        titus::ensure_directory(output);
+        std::ofstream trace(titus::filesystem_path(output/"audio.json"));trace<<frames.dump()<<'\n';if(!trace)throw std::runtime_error("Cannot write audio trace");
+        std::ofstream wav(titus::filesystem_path(output/"audio.wav"),std::ios::binary);
+        auto put=[&](unsigned n,unsigned count){for(unsigned k=0;k<count;++k)wav.put(char(n>>(8*k)));};
+        wav.write("RIFF",4);put(unsigned(raw.size())+36,4);wav.write("WAVEfmt ",8);put(16,4);put(1,2);put(2,2);put(44100,4);put(176400,4);put(4,2);put(16,2);wav.write("data",4);put(unsigned(raw.size()),4);wav.write(reinterpret_cast<const char*>(raw.data()),std::streamsize(raw.size()));if(!wav)throw std::runtime_error("Cannot write audio preview");
+        std::ofstream file(titus::filesystem_path(output/"report.json"));file<<report.dump(2)<<'\n';if(!file)throw std::runtime_error("Cannot write audio report");std::cout<<report.dump()<<'\n';return 0;
+    }
     std::vector<fs::path> files;
     for(const auto& e:fs::directory_iterator(titus::filesystem_path(root)))if(titus::path_is_regular_file(e.path())) files.push_back(e.path());
     std::sort(files.begin(),files.end());
@@ -159,8 +184,9 @@ int probe_main(int argc,char** argv) try {
         auto initial=script.value("initial",Json::object());Body body;body.feet={initial.value("x",state.spawn.x),initial.value("y",state.spawn.y)};
         body.vx=initial.value("vx",0);body.vy=initial.value("vy",0);body.state=initial.value("state",0u);body.ice_shift=initial.value("ice_shift",0u);
         body.facing_right=initial.value("facing_right",false);
-        auto row=[](const Body& b){return Json::array({b.feet.x,b.feet.y,b.vx,b.vy,b.state,b.frame,b.walk_phase,b.jump_phase,b.idle_ticks,b.ice_shift,unsigned(b.facing_right)});};
-        Json trace={{"terrain_only",true},{"columns",{"x","y","vx","vy","state","frame","walk_phase","jump_phase","idle_ticks","ice_shift","facing_right"}},
+        body.jump_phase=initial.value("jump_phase",0u);body.crouch_jump_ticks=initial.value("crouch_jump_ticks",0u);
+        auto row=[](const Body& b){return Json::array({b.feet.x,b.feet.y,b.vx,b.vy,b.state,b.frame,b.walk_phase,b.jump_phase,b.idle_ticks,b.ice_shift,unsigned(b.facing_right),b.crouch_jump_ticks});};
+        Json trace={{"terrain_only",true},{"columns",{"x","y","vx","vy","state","frame","walk_phase","jump_phase","idle_ticks","ice_shift","facing_right","crouch_jump_ticks"}},
                     {"initial",row(body)},{"frames",Json::array()}};
         auto terrain=state;
         if(script.contains("fixture")){
@@ -177,6 +203,12 @@ int probe_main(int argc,char** argv) try {
                 unsigned y=fixture["ceiling_row"].get<unsigned>();if(y>=terrain.height_tiles)throw std::runtime_error("Invalid fixture ceiling");
                 for(unsigned col=0;col<256;++col)terrain.map[y*256+col]=2;
             }
+            if(fixture.contains("ladder")){
+                const auto& ladder=fixture["ladder"];unsigned col=ladder.at("column"),first=ladder.at("first_row"),last=ladder.at("last_row");
+                if(col>=256 || first>last || last>=terrain.height_tiles)throw std::runtime_error("Invalid fixture ladder");
+                terrain.floor[3]=6;terrain.ceiling[3]=2;
+                for(unsigned y=first;y<=last;++y)terrain.map[y*256+col]=3;
+            }
         }
         if(script.contains("floor_override")){
             auto value=script["floor_override"].get<unsigned>();if(value>255)throw std::runtime_error("Invalid fixture floor");
@@ -184,7 +216,7 @@ int probe_main(int argc,char** argv) try {
         }
         Bytes trajectory;
         for(const auto& input:script["steps"]){
-            body=terrain_step(terrain,body,{input.value("left",false),input.value("right",false),input.value("up",false)},motion_rules);
+            body=terrain_step(terrain,body,{input.value("left",false),input.value("right",false),input.value("up",false),input.value("down",false)},motion_rules);
             auto raw=body_projection(body);trajectory.insert(trajectory.end(),raw.begin(),raw.end());trace["frames"].push_back(row(body));
         }
         std::ofstream file(titus::filesystem_path(output/"motion.json"));file<<trace.dump(2)<<'\n';if(!file)throw std::runtime_error("Cannot write motion trace");
