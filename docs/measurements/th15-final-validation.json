@@ -72,16 +72,16 @@
         {
           "gameplay_audio_pause_rewind": {
             "clipped": 0,
-            "frames": 1622,
+            "frames": 2012,
             "jump": 62,
             "left": 78,
             "level": 1,
-            "nonzero": 389947,
+            "nonzero": 388216,
             "pause": true,
-            "peak": 9467,
+            "peak": 9369,
             "rewind_steps": 5,
             "right": 84,
-            "samples": 407552,
+            "samples": 405504,
             "ticks": 49
           }
         },
@@ -140,7 +140,8 @@
     "fox_songs_pcm_byte_exact": 11,
     "fox_interrupts": 132000,
     "dos_engines_unchanged": true,
-    "legacy_amiga_catalog_upgrade": "recheck/add/relocate preserve UUID, locations and profiles"
+    "legacy_amiga_catalog_upgrade": "recheck/add/relocate preserve UUID, locations and profiles",
+    "all_original_files_intact_after_package_tests": true
   },
   "private_evidence": {
     "terrain_original": {
@@ -222,6 +223,22 @@
     "resources_sanitize": {
       "path": "build/th15-resources-sanitize-final/validation.json",
       "sha256": "05c2a3abf1cddd909dd7159754388e0e859486011538cdab5f2824ea2d395b6a"
+    },
+    "package_slots_linux": {
+      "path": "build/th15-package-slots-linux/report.json",
+      "sha256": "bcf9d01c95d3865a892b521e26452217956a64751c1a021d0857be6cd595bdde"
+    },
+    "package_play_linux": {
+      "path": "build/th15-package-play-linux.log",
+      "sha256": "087c6cf644ef280e297f2c67abf52390239a7a8d24bdf1a2e6548754ae54ceb8"
+    },
+    "package_play_windows": {
+      "path": "build/th15-package-play-windows.log",
+      "sha256": "087c6cf644ef280e297f2c67abf52390239a7a8d24bdf1a2e6548754ae54ceb8"
+    },
+    "package_regression_linux": {
+      "path": "build/th15-package-regression-linux.log",
+      "sha256": "b1224fd178910937647d9c3d22b21c72a80685b1725cdc961578be9f7c40e2ff"
     }
   },
   "pending_user_review": [
@@ -231,5 +248,18 @@
     "camera and framing feel",
     "visual polish"
   ],
-  "distribution": "No commercial resources, extracted tables, private original code snapshots or PCM in Git/packages; user supplies original files."
+  "distribution": "No commercial resources, extracted tables, private original code snapshots or PCM in Git/packages; user supplies original files.",
+  "runtime_source_revision": "10178b829d748df2c95cd06b645b6690fc536674",
+  "review_packages": {
+    "linux": "build/th15-package-linux",
+    "windows": "build/th15-package-windows",
+    "engine_count": 5,
+    "prehistorik_amiga_play_return_checks_per_platform": 2,
+    "fox_amiga_play_return_checks_linux": 2,
+    "prior_engines_session_regression_linux": {
+      "sessions": 6,
+      "ui_checks": 12
+    },
+    "source_package_revision": "10178b829d748df2c95cd06b645b6690fc536674"
+  }
 }

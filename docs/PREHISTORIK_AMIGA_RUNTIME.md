@@ -122,5 +122,5 @@ los cambios de formato requieren revisar compatibilidad y versión. `tests/check
 `--bin-dir`, `--datapath`, `--output` y `--windows` para las sesiones gestionadas.
 `tests/check_launcher_sessions.py --pre1-amiga` prueba Jugar y el retorno desde
 la biblioteca. Los validadores `tools/validate_pre1_amiga_*.py` son herramientas
-de desarrollo: sus oráculos necesitan Unicorn y secciones privadas obtenidas
-por el probe, nunca incluidas en la distribución.
+de desarrollo: sus oráculos necesitan Unicorn y secciones privadas generadas
+por `tools/validate_pre1_amiga_levels.py`, nunca incluidas en la distribución.
