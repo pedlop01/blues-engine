@@ -1,0 +1,386 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-24",
+  "phase": "PF first review delivery; persistent saves pending",
+  "source_revision": "af23f846a82a1afb9ae410fc555dc95ae58416ff",
+  "family_build_revision": "af23f846a82a1afb9ae410fc555dc95ae58416ff-pf1",
+  "linux_render_state_matrix": {
+    "platform": "linux",
+    "stages": [
+      {
+        "module": "ja",
+        "stage": 1,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 2,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 3,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 4,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 5,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 6,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 7,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 8,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 9,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 10,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 11,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 12,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 13,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 14,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 15,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 16,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 17,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 18,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 19,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 20,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 21,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 22,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 23,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 24,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 25,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 26,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 27,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 28,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 29,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 30,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 31,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 0,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 1,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 2,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 3,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 4,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 5,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 6,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 7,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 8,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 9,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 10,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 11,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 12,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 13,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 14,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 15,
+        "result": "pass"
+      }
+    ]
+  },
+  "windows_render_state_matrix": {
+    "platform": "windows",
+    "stages": [
+      {
+        "module": "ja",
+        "stage": 1,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 16,
+        "result": "pass"
+      },
+      {
+        "module": "ja",
+        "stage": 31,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 0,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 5,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 9,
+        "result": "pass"
+      },
+      {
+        "module": "p2",
+        "stage": 15,
+        "result": "pass"
+      }
+    ]
+  },
+  "checks": {
+    "ctest": {
+      "passed": 8,
+      "total": 8,
+      "artifact": "build/pf-ctest-final.log"
+    },
+    "contracts": {
+      "result": "pass",
+      "artifact": "build/pf-contracts-final.log"
+    },
+    "menu": {
+      "result": "pass",
+      "artifact": "build/pf-menu.log"
+    },
+    "sanitizers": {
+      "result": "pass",
+      "tools": [
+        "ASan",
+        "UBSan",
+        "LSan"
+      ],
+      "stages": {
+        "jukebox": 1,
+        "prehistorik2": 0
+      },
+      "artifacts": [
+        "build/pf-ja-sanitize-final.log",
+        "build/pf-p2-sanitize-final.log"
+      ]
+    },
+    "managed_linux": {
+      "result": "pass",
+      "artifact": "build/pf-family-linux-final.log"
+    },
+    "managed_windows": {
+      "result": "pass",
+      "artifact": "build/pf-family-windows.log"
+    },
+    "blues_regression": {
+      "result": "pass",
+      "session_operations": 15,
+      "game_sessions": 4,
+      "artifact": "build/pf-blues-regression.log"
+    },
+    "packaged_launcher": {
+      "fullscreen": false,
+      "games": 5,
+      "installations": 8,
+      "selected_game": "blues",
+      "ui_checks": 26
+    },
+    "originals": {
+      "files": 462,
+      "unchanged": true,
+      "verification": "size, mtime_ns and SHA-256 before/after managed suites"
+    },
+    "packaged_sessions": {
+      "result": "pass",
+      "games": [
+        "jukebox",
+        "prehistorik2"
+      ],
+      "ready": true,
+      "family_build_revision": "af23f846a82a1afb9ae410fc555dc95ae58416ff-pf1",
+      "artifacts": [
+        "build/pf-packaged-jukebox.json",
+        "build/pf-packaged-prehistorik2.json"
+      ]
+    }
+  },
+  "delivery": {
+    "path": "build/pf-package-windows-r1",
+    "engines": 5,
+    "files": [
+      {
+        "path": "bin/titus-engine.exe",
+        "bytes": 4326009,
+        "sha256": "855bd9a19a5ac92721cbc5bcc5fc1b1cc2b1198f7aeae259d78f4f0169c326fb"
+      },
+      {
+        "path": "bin/engines/blues-family/blues-family-runtime.exe",
+        "bytes": 6514792,
+        "sha256": "b8f58145f95059e78dc284815049f928897ec8b2d30d54b2309d588418c412f1"
+      }
+    ]
+  },
+  "libmodplug_cross_build": {
+    "version": "0.8.9.0",
+    "source": "https://deb.debian.org/debian/pool/main/libm/libmodplug/libmodplug_0.8.9.0.orig.tar.gz",
+    "sha256": "457ca5a6c179656d66c01505c0d95fafaead4329b9dbaa0f997d00a3508ad9de",
+    "license": "Public domain (COPYING included with review package)"
+  },
+  "limits": [
+    "PF-06 persistent saves: 0%; no disk snapshots or thumbnails advertised",
+    "Review offscreen actor activation beyond original camera bounds",
+    "No complete campaigns or physical device acceptance claimed",
+    "Eight-second memory rewind restarts the current music track after release",
+    "User playtesting and acceptance pending; Blues 17 open, distribution 18 postponed"
+  ]
+}
