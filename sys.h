@@ -122,6 +122,8 @@ struct sys_t {
 	void	(*begin_sprite_frame)();
 	void	(*set_sprite_owner)(int owner);
 	void	(*get_screen_palette)(uint8_t *rgb);
+	/* DOS tiles use zero as transparency over a stationary backdrop. */
+	void	(*set_scroll_layers)(const uint8_t *tiles,const uint8_t *backdrop,int margin);
 };
 
 extern struct sys_t g_sys;

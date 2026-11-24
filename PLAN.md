@@ -222,3 +222,5 @@ Las rutas anteriores bajo `titus/blues` ya no son válidas.
 | 2026-11-24 | PX-01–PX-08 | El usuario acepta las versiones DOS: «funcionan perfecto!». Se cierra la paridad de Fox y Prehistorik al 100 %, con la validación automática y el resultado probado por el usuario. | Pendientes: cerrar la revisión de Blues 17 y preparar la distribución Windows 18. La aceptación no añade pruebas físicas o campañas que no se hayan documentado. |
 
 | 2026-11-24 | PF-01–PF-08 | Autorizada la paridad de Jukebox/P2. Primera entrega con cámara y render independientes, zoom/HUD, menú adaptado, ayudas, selector paginado y rewind en memoria. No se anuncian slots hasta implementar un formato persistente propio. | Bloque abierto; progreso y validación en docs/FAMILY_PARITY_PLAN.md. |
+
+| 2026-11-24 | PF-01/PF-02/PF-07 | Revisión r2 por los fallos de Jukebox comunicados: sprites conservados entre ticks, fondo fijo separado, resolución reconstruida tras morir y búfer del nivel protegido al reiniciar música. Pruebas de regresión y 32 muertes/reapariciones con movimiento posterior. | Nueva revisión jugando; PF permanece abierto y PF-06 pendiente. |

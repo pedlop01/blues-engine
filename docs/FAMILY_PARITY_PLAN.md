@@ -72,7 +72,7 @@ PF-01/PF-08 incluyen revisar los actores que se ven al alejar el zoom. No se
 promete todavía una campaña completa, dispositivos físicos, guardados portables
 ni paridad cerrada al 100 %. La tarea 17 de Blues continúa abierta y 18 pospuesta.
 
-Entrega de revisión: `build/pf-package-windows-r1/bin/titus-engine.exe`, con todas
+Entrega de revisión: `build/pf-package-windows-r2/bin/titus-engine.exe`, con todas
 sus dependencias al lado; no es un ejecutable autónomo ni una distribución final.
 
 Resultados de la primera entrega: 47 etapas en Linux (31 JA + 16 P2), siete
@@ -82,3 +82,40 @@ ASan/UBSan/LSan sin incidencias en las pruebas completas de zoom/HUD/FPS e
 historial de JA 1 y P2 0. Regresión de Blues: 15 operaciones de sesión y cuatro
 sesiones de juego, BBS v1/v2 y ocho previews. Detalle de la entrega en
 [pf-review-validation.json](measurements/pf-review-validation.json).
+
+## Revisión r2: parpadeo, fondo y muerte (24-11-2026)
+
+El usuario detecta parpadeo del personaje, mal desplazamiento del fondo y pantalla
+corrupta tras morir. Cuatro regresiones específicas reproducen fallos de r1:
+
+- `sprites`: el final del tick borraba la lista antes de que SDL presentara los
+  fotogramas intermedios. Se conserva hasta preparar el siguiente tick. La
+  corrección compartida también se aplica a P2; el menú mantiene la escena.
+- `resize`: al volver a 320×200 se conservaban las dimensiones del último zoom.
+  Ahora se invalida esa caché al entrar y se reconstruye la vista tras recargar.
+  El backend también recorta de forma segura bitmaps mayores que su destino.
+- `backdrop`: el fondo ya compuesto se desplazaba y volvía a su origen cada tick.
+  Jukebox separa el fondo original fijo de los tiles transparentes interpolados.
+- `music`: reanudar la música después del rewind cargaba el módulo sobre el
+  búfer de tiles/mapa. Se preserva y restaura ese búfer durante la carga.
+
+Las animaciones bloqueantes de transformación/pérdida del poder actualizan su
+instantánea en cada frame, conservando el dibujo de la secuencia original.
+Dos desplazamientos de enteros negativos pasan a multiplicaciones equivalentes
+para evitar comportamiento indefinido en la animación/velocidad nativas.
+
+`check_jukebox_regressions.py` prueba estas rutas y **32 muertes/reapariciones
+reales del bucle original en el nivel 1**, con y sin poder, 60/120 Hz, ambos HUD y zoom
+0/1/4/8. Comprueba que el jugador continúa moviéndose tras reaparecer, las vidas,
+las dimensiones y los sprites de la animación. La prueba del fondo compara
+píxeles durante el desplazamiento; la de música exige conservar todo el búfer.
+
+```sh
+python3 tests/check_jukebox_regressions.py --bin-dir build/th14-release   --datapath ../orig-games/blues2-dos --output build/pf-r2-regression-linux
+# Windows: build/th14-windows y --windows.
+# Sanitizadores: build/th14-sanitize (ASan/UBSan/LSan).
+```
+
+R2 corrige estos errores; **no cierra PF ni implementa los guardados pendientes**.
+La aceptación jugando sigue pendiente. La evidencia de r1 se conserva como
+histórica en el informe anterior.

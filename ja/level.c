@@ -21,6 +21,7 @@ static const uint16_t _vinyl_throw_delay = 5;
 static const uint16_t _object_respawn_delay = 224;
 static const uint16_t _undefined = 0x55AA;
 
+static void family_prepare_frame();
 static void level_player_draw_powerdown_animation(struct player_t *player);
 static void level_player_draw_powerup_animation(struct player_t *player, struct object_t *obj);
 static void level_update_tiles(struct object_t *obj, int ax, int dx, int bp);
@@ -1399,7 +1400,7 @@ static void level_update_object82_type4_6(struct object_t *obj) {
 		} else if (state == 1) { // head to player
 			struct player_t *player = level_get_closest_player(obj, 300);
 			if (player) {
-				object82_x_delta(obj) <<= 2; // faster
+				object82_x_delta(obj) *= 4; // signed velocity, including leftward motion
 				object82_anim_data(obj) = (object82_type(obj) == 4) ? (monster_spr_anim_data6 + 10) : (monster_spr_anim_data8 + 26);
 				object82_state(obj) = 2;
 			}
@@ -1940,7 +1941,7 @@ static void level_update_triggers() {
 				if (num >= 0) {
 					break;
 				}
-				p += num << 1; // loop
+				p += num * 2; // signed backwards animation jump
 			}
 			obj->spr_num = num | ((object82_hflip(obj) & 0x80) << 8);
 			object82_anim_data(obj) = p + 2;
@@ -2704,7 +2705,7 @@ static void level_sync() {
 	}
 	if(_family_active)family_present();
 	else {g_sys.copy_bitmap(g_res.vga, GAME_SCREEN_W, GAME_SCREEN_H);g_sys.update_screen();}
-	g_sys.render_clear_sprites();
+	if(!_family_active)g_sys.render_clear_sprites();
 	const int diff = (g_vars.timestamp + (1000 / 30)) - g_sys.get_timestamp();
 	g_sys.sleep(MAX(diff, 10));
 	g_vars.timestamp = g_sys.get_timestamp();
@@ -2936,6 +2937,7 @@ static void level_player_draw_powerdown_animation(struct player_t *player) {
 			0x7D, 0x7D, 0x7C, 0x8A, 0xFF
 		};
 		for (int i = 0; data[i] != 0xFF; ++i) {
+			family_prepare_frame();
 			level_draw_tilemap();
 			draw_panel();
 			level_draw_objects();
@@ -2965,6 +2967,7 @@ static void level_player_draw_powerup_animation(struct player_t *player, struct 
 		};
 		struct object_t *player_obj = &g_vars.objects_table[player_obj_num(&player->obj)];
 		for (int i = 0; data[i] != 0xFF; ++i) {
+			family_prepare_frame();
 			level_draw_tilemap();
 			draw_panel();
 			level_draw_objects();
@@ -3013,6 +3016,7 @@ static bool change_level(bool first_level) {
 }
 
 extern void family_select_character();
+#define FAMILY_SEPARATE_BACKDROP
 #define FAMILY_LEVEL_COUNT 31
 #define FAMILY_NO_CHARACTER false
 static const char *const family_level_names[31] = {
@@ -3049,6 +3053,8 @@ static int family_map_h() { return g_vars.tilemap_h * 16; }
 static int family_quantize_x(int x) { return x / 4 * 4; }
 static void family_draw_view(int x, int y, int w, int h, uint8_t *pixels);
 static uint8_t family_map_pixel(int wx, int wy, int sx, int sy);
+static uint8_t family_backdrop_pixel(int sx,int sy);
+static uint8_t family_map_layer_pixel(int wx,int wy);
 static size_t family_state_size();
 static void family_capture(void *data);
 static void family_restore(const void *data);
@@ -3058,6 +3064,9 @@ static void family_pause_elapsed(uint32_t elapsed) {
 }
 
 #include "engines/family_host/presentation.h"
+static void family_prepare_frame(){
+  if(_family_active){g_sys.render_clear_sprites();_family_before_draw=g_vars;}
+}
 struct family_memory {
   uint8_t palette[768];
   struct vars_t vars, render;
@@ -3079,7 +3088,14 @@ static void family_restore(const void *data) {
   g_vars.timestamp = g_sys.get_timestamp();
   g_sys.set_screen_palette(s->palette, 0, 256, 8);
 }
-static void family_resume_music() { play_music(((g_vars.level >> 3) & 3) + 1); }
+static void family_resume_music() {
+  /* play_music loads into the same scratch area as the live tiles/map. */
+  uint8_t *saved=malloc(72728);
+  if(!saved){print_warning("Cannot restart music without preserving level data");return;}
+  memcpy(saved,g_res.tmp,72728);
+  play_music(((g_vars.level >> 3) & 3) + 1);
+  memcpy(g_res.tmp,saved,72728);free(saved);
+}
 static void family_draw_view(int x, int y, int w, int h, uint8_t *pixels) {
   struct vars_t native = g_vars;
   uint8_t *vga = g_res.vga;
@@ -3099,18 +3115,19 @@ static void family_draw_view(int x, int y, int w, int h, uint8_t *pixels) {
   g_options.screen_w = 320;
   g_options.screen_h = 200;
 }
-static uint8_t family_map_pixel(int wx, int wy, int sx, int sy) {
-  uint8_t bg =
-      g_res.background[MAX(0, MIN(175, sy * 176 / MAX(1, _family_h - 24))) *
-                           320 +
-                       ((sx % 320 + 320) % 320)];
-  if (wx < 0 || wy < 0 || wx >= family_map_w() || wy >= family_map_h())
-    return bg;
-  const uint8_t tile = level_lookup_tile(
-      g_vars.tilemap_data[(wy / 16) * g_vars.tilemap_w + wx / 16]);
-  const uint8_t b = g_res.tmp[tile * 128 + (wy % 16) * 8 + (wx % 16) / 2];
-  const uint8_t color = (wx & 1) ? b & 15 : b >> 4;
-  return color ? (0x80 | (g_vars.tile_palette_table[tile] * 16) | color) : bg;
+static uint8_t family_backdrop_pixel(int sx,int sy){
+  return g_res.background[MAX(0,MIN(175,sy*176/MAX(1,_family_h-24)))*320+((sx%320+320)%320)];
+}
+static uint8_t family_map_layer_pixel(int wx,int wy){
+  if(wx<0 || wy<0 || wx>=family_map_w() || wy>=family_map_h())return 0;
+  const uint8_t tile=level_lookup_tile(g_vars.tilemap_data[(wy/16)*g_vars.tilemap_w+wx/16]);
+  const uint8_t b=g_res.tmp[tile*128+(wy%16)*8+(wx%16)/2];
+  const uint8_t color=(wx&1)?b&15:b>>4;
+  return color ? (0x80|(g_vars.tile_palette_table[tile]*16)|color) : 0;
+}
+static uint8_t family_map_pixel(int wx,int wy,int sx,int sy){
+  const uint8_t color=family_map_layer_pixel(wx,wy);
+  return color ? color : family_backdrop_pixel(sx,sy);
 }
 
 void do_level() {
@@ -3157,7 +3174,7 @@ void do_level() {
       break;
     }
     level_update_players();
-    _family_before_draw = g_vars;
+    family_prepare_frame();
     level_draw_tilemap();
     draw_panel();
     level_reset_palette();

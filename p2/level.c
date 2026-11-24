@@ -3240,7 +3240,7 @@ static void family_present();
 static void level_sync() {
 	if(_family_active)family_present();
 	else {g_sys.copy_bitmap(g_res.vga, GAME_SCREEN_W, GAME_SCREEN_H);g_sys.update_screen();}
-	g_sys.render_clear_sprites();
+	if(!_family_active)g_sys.render_clear_sprites();
 	level_wait();
 }
 

@@ -8,6 +8,9 @@ static int _family_w = 320, _family_h = 200, _family_last_x, _family_last_y;
 static int _family_native_x, _family_native_y;
 static double _family_width = 320, _family_height = 200, _family_x, _family_y;
 static uint8_t *_family_pixels, *_family_border;
+#ifdef FAMILY_SEPARATE_BACKDROP
+static uint8_t *_family_backdrop;
+#endif
 static size_t _family_capacity;
 static struct vars_t _family_before_draw;
 static int _family_requested_level = -1;
@@ -26,6 +29,8 @@ static void family_cut() {
 }
 static void family_begin() {
   _family_active = true;
+  /* Reloads return SDL to 320x200: never trust the last game view cache. */
+  _family_w = _family_h = 0;
   _family_character = false;
   _family_requested_level = -1;
   _family_width = MIN(320 + MIN(8, MAX(0, g_sys.input.view_step)) * 64,
@@ -53,11 +58,17 @@ static void family_end() {
   g_sys.set_scroll_background(NULL, 0);
   g_sys.set_hud_layout(0, 0, 0, 0);
   g_sys.resize_viewport(320, 200);
+  _family_w = 320;
+  _family_h = 200;
   g_sys.render_set_sprites_clipping_rect(0, 0, 320, 176);
   g_sys.render_clear_sprites();
   free(_family_pixels);
   _family_pixels = NULL;
   _family_capacity = 0;
+#ifdef FAMILY_SEPARATE_BACKDROP
+  free(_family_backdrop);
+  _family_backdrop = NULL;
+#endif
   free(_family_border);
   _family_border = NULL;
 }
@@ -114,7 +125,11 @@ static bool family_before_tick() {
   if (!g_sys.input.quit && !_family_character && _family_requested_level < 0 &&
       family_timeline_step())
     return false;
-  return !g_sys.input.quit && !_family_character && _family_requested_level < 0;
+  const bool advance =
+      !g_sys.input.quit && !_family_character && _family_requested_level < 0;
+  if (advance)
+    g_sys.render_clear_sprites();
+  return advance;
 }
 static void family_present() {
   const int view = MIN(8, MAX(0, g_sys.input.view_step));
@@ -182,13 +197,31 @@ static void family_present() {
       realloc(_family_border, (size_t)pitch * (h - 24 + 2 * margin));
   if (border) {
     _family_border = border;
-    for (int by = -margin; by < h - 24 + margin; ++by)
-      for (int bx = -margin; bx < w + margin; ++bx)
-        border[(by + margin) * pitch + bx + margin] =
-            (by >= 0 && by < h - 24 && bx >= 0 && bx < w)
-                ? _family_pixels[by * w + bx]
-                : family_map_pixel(x + bx, y + by, bx, by);
-    g_sys.set_scroll_background(border, margin);
+#ifdef FAMILY_SEPARATE_BACKDROP
+    if (g_sys.set_scroll_layers) {
+      uint8_t *backdrop = realloc(_family_backdrop, (size_t)w * (h - 24));
+      if (!backdrop)
+        print_error("Unable to allocate stationary backdrop");
+      _family_backdrop = backdrop;
+      for (int by = 0; by < h - 24; ++by)
+        for (int bx = 0; bx < w; ++bx)
+          backdrop[by * w + bx] = family_backdrop_pixel(bx, by);
+      for (int by = -margin; by < h - 24 + margin; ++by)
+        for (int bx = -margin; bx < w + margin; ++bx)
+          border[(by + margin) * pitch + bx + margin] =
+              family_map_layer_pixel(x + bx, y + by);
+      g_sys.set_scroll_layers(border, backdrop, margin);
+    } else
+#endif
+    {
+      for (int by = -margin; by < h - 24 + margin; ++by)
+        for (int bx = -margin; bx < w + margin; ++bx)
+          border[(by + margin) * pitch + bx + margin] =
+              (by >= 0 && by < h - 24 && bx >= 0 && bx < w)
+                  ? _family_pixels[by * w + bx]
+                  : family_map_pixel(x + bx, y + by, bx, by);
+      g_sys.set_scroll_background(border, margin);
+    }
   }
   g_sys.update_screen();
   g_sys.begin_sprite_frame();
