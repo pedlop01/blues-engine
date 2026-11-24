@@ -138,10 +138,10 @@ def validate(document):
                      "lives_player1": "lives_options", "lives_player2": "lives_options",
                      "start_level": "level_select", "sound_mode": "audio_mode_selection"}
             require(all(gates[key] in features for key in settings["blues"]), "Setting capability not requested")
-        for group in ["fox","prehistorik"]:
+        for group in ["fox","prehistorik","jukebox","prehistorik2"]:
             if group in settings:
                 require(document["game_id"]==group, "Native settings require their matching game")
-                gates={"camera":"smooth_camera","hud":"hud_modes","view_step":"dynamic_view","invulnerable":"invulnerability","infinite_lives":"lives_options","lives":"lives_options","start_level":"level_select"}
+                gates={"camera":"smooth_camera","hud":"hud_modes","view_step":"dynamic_view","invulnerable":"invulnerability","infinite_lives":"lives_options","lives":"lives_options","start_level":"level_select","render_rate":"smooth_camera"}
                 require(all(gates[key] in features for key in settings[group]), "Native setting capability not requested")
         if document["action"]["type"] == "load_slot":
             require((document["game_id"] == "blues" or document["game_id"] in {"fox","prehistorik"}) and "save_slots" in features, "This edition has no global resume")

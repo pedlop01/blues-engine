@@ -74,6 +74,8 @@ void res_fini() {
 	g_res.motif = 0;
 	free(g_res.sprites);
 	g_res.sprites = 0;
+	free(g_res.samples);
+	g_res.samples = 0;
 	free(g_res.tmp);
 	g_res.tmp = 0;
 	free(g_res.background);

@@ -52,6 +52,12 @@ void video_copy_vga(int size) {
 }
 
 void video_copy_backbuffer(int h) {
+    if(GAME_SCREEN_H>200){
+        const int scene_h=GAME_SCREEN_H-h;
+        for(int y=0;y<scene_h;++y)for(int x=0;x<GAME_SCREEN_W;++x)
+            g_res.vga[y*GAME_SCREEN_W+x]=g_res.background[(y*176/scene_h)*320+x%320];
+        memset(g_res.vga+scene_h*GAME_SCREEN_W,0,h*GAME_SCREEN_W);return;
+    }
 	int y = 0;
 	for (; y < MIN(200, GAME_SCREEN_H) - h; ++y) {
 		for (int x = 0; x < GAME_SCREEN_W; x += 320) {

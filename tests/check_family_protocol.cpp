@@ -10,7 +10,7 @@ int main(){try{
         Json ready={{"schema_version",1},{"kind","event"},{"session_id",request["session_id"]},{"seq",2},{"event","ready"},{"body",{{"features",features},{"scene","menu"},{"save_slot_count",count},{"audio_active",true}}}};
         validate_runtime_event(ready,request);
         auto wrong=ready;wrong["body"]["save_slot_count"]=count?0:8;rejected([&]{validate_runtime_event(wrong,request);});
-        if(!count){wrong=ready;wrong["body"]["features"].push_back("rewind");rejected([&]{validate_runtime_event(wrong,request);});}
+        if(!count){wrong=ready;wrong["body"]["features"].push_back("live_edition_switch");rejected([&]{validate_runtime_event(wrong,request);});}
         Json result={{"schema_version",1},{"kind","result"},{"session_id",request["session_id"]},{"game_id",game},{"engine_id",runtime_engine(request)},{"outcome","returned"},{"ready",true},{"native_exit_code",0},{"error",nullptr}};
         validate_runtime_result(result,request);
         auto failed=result;failed["outcome"]="runtime_failed";failed["native_exit_code"]=1;failed["ready"]=false;failed["error"]=runtime_error(Error("E_TEST_LOAD","before ready"),false);check(failed["error"]["code"]=="E_ENGINE_INIT");validate_runtime_result(failed,request);

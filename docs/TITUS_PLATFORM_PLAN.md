@@ -268,3 +268,10 @@ Incluye simulación completa, render, campaña/final, audio y adaptador gestiona
 rebobinado y ocho slots; evidencia y límites en [FOX_AMIGA_RUNTIME.md](FOX_AMIGA_RUNTIME.md). TH-15 cerrada al 100 % por aceptación del usuario el 24 de noviembre de 2026, tras las correcciones r2–r4 de scroll, actores vecinos e introducción.
 La paridad PX-01–PX-08 está cerrada al 100 % por aceptación del usuario. TH-11 mantiene adaptadores separados.
 La tarea 17 continúa abierta; la distribución 18 sigue pospuesta.
+
+## Paridad posterior: Jukebox y Prehistorik 2
+
+El 24-11-2026 se autoriza PF-01–PF-08. El [plan PF](FAMILY_PARITY_PLAN.md)
+recoge la primera entrega de presentación, cámara/zoom/HUD, menú/ayudas y
+rebobinado. Sigue abierto: guardados persistentes al 0 % y aceptación pendiente.
+No modifica el cierre de TH-07, TH-14, TH-15 ni PX; 17/18 conservan su estado.

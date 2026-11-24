@@ -5,6 +5,15 @@ de la base [cyxx/blues](https://github.com/cyxx/blues): Blues Brothers, Jukebox
 Adventure y Prehistorik 2. Se conserva el código de juego original del proyecto,
 con el supervisor y protocolo de [TH-06](BLUES_RUNTIME.md).
 
+## Ampliación PF en curso (24-11-2026)
+
+La primera entrega PF añade cámara/zoom/HUD, presentación 30/60/120 Hz,
+menú in-game, ayudas, selección/reinicio de nivel y rewind en memoria a ambos
+módulos DOS. Los guardados persistentes siguen pendientes; cero slots anunciados.
+El estado actual y sus límites están en [FAMILY_PARITY_PLAN.md](FAMILY_PARITY_PLAN.md).
+Las secciones siguientes conservan la evidencia y las capacidades **históricas
+de TH-07**, anteriores a esta ampliación.
+
 ## Uso y capacidades reales
 
 Abrir `build/launcher-windows/titus-engine.exe` (Windows) o

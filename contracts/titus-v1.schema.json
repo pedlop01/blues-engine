@@ -458,6 +458,100 @@
           },
           "minProperties": 1,
           "additionalProperties": false
+        },
+        "jukebox": {
+          "type": "object",
+          "properties": {
+            "camera": {
+              "enum": [
+                "classic",
+                "smooth"
+              ]
+            },
+            "hud": {
+              "enum": [
+                "classic",
+                "fixed"
+              ]
+            },
+            "view_step": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8
+            },
+            "invulnerable": {
+              "type": "boolean"
+            },
+            "infinite_lives": {
+              "type": "boolean"
+            },
+            "lives": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99
+            },
+            "start_level": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 31
+            },
+            "render_rate": {
+              "enum": [
+                30,
+                60,
+                120
+              ]
+            }
+          },
+          "minProperties": 1,
+          "additionalProperties": false
+        },
+        "prehistorik2": {
+          "type": "object",
+          "properties": {
+            "camera": {
+              "enum": [
+                "classic",
+                "smooth"
+              ]
+            },
+            "hud": {
+              "enum": [
+                "classic",
+                "fixed"
+              ]
+            },
+            "view_step": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8
+            },
+            "invulnerable": {
+              "type": "boolean"
+            },
+            "infinite_lives": {
+              "type": "boolean"
+            },
+            "lives": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 99
+            },
+            "start_level": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            },
+            "render_rate": {
+              "enum": [
+                30,
+                60,
+                120
+              ]
+            }
+          },
+          "minProperties": 1,
+          "additionalProperties": false
         }
       },
       "required": [],

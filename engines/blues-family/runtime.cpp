@@ -28,7 +28,7 @@ void emit(const char* name,const Json& body=Json::object()){
 }
 titus_native_options options(){titus_native_options o{};o.game=request["game_id"]=="jukebox"?1:request["game_id"]=="prehistorik2"?2:0;o.probe=std::getenv("TITUS_TEST_GAMEPLAY")&&std::string(std::getenv("TITUS_TEST_GAMEPLAY"))=="1";o.edition=request["edition_id"]=="amiga";
     o.action_button=o.jump_button=-1;o.load_slot=request.contains("action")&&request["action"]["type"]=="load_slot"?request["action"]["slot"].get<int>():0;
-    o.fullscreen=o.music=o.effects=o.camera=o.hud=o.view=o.invulnerable=o.infinite_lives=o.lives1=o.lives2=o.level=o.sound=-1;
+    o.rate=-1;o.fullscreen=o.music=o.effects=o.camera=o.hud=o.view=o.invulnerable=o.infinite_lives=o.lives1=o.lives2=o.level=o.sound=-1;
     static std::string dos,amiga;dos.clear();amiga.clear();for(const auto& s:request["sources"]){auto& value=s["edition_id"]=="dos"?dos:amiga;value=s["location"]["path"].get<std::string>();}o.dos=dos.empty()?nullptr:dos.c_str();o.amiga=amiga.empty()?nullptr:amiga.c_str();
     if(o.game){
         auto config=fs::u8path(request["paths"]["work_directory"]["path"].get<std::string>())/"preferences.json";
@@ -38,14 +38,15 @@ titus_native_options options(){titus_native_options o{};o.game=request["game_id"
             if(o.music<0||o.music>100||o.effects<0||o.effects>100)throw Error("E_PREFERENCES","Invalid volume");
         }
     }
-    if(o.game){auto config=fs::u8path(request["paths"]["work_directory"]["path"].get<std::string>())/"preferences.json";if(path_exists(config)){auto p=parse_json(read_document(config,8192));o.action_button=p.value("action_button",0);o.jump_button=p.value("jump_button",1);}}
+    if(o.game){auto config=fs::u8path(request["paths"]["work_directory"]["path"].get<std::string>())/"preferences.json";if(path_exists(config)){auto p=parse_json(read_document(config,8192));o.action_button=p.value("action_button",0);o.jump_button=p.value("jump_button",1);o.camera=p.value("camera",std::string("smooth"))=="smooth";o.hud=p.value("hud",std::string("classic"))=="fixed";o.view=p.value("view_step",0);o.rate=p.value("render_rate",60);o.invulnerable=p.value("invulnerable",false);o.infinite_lives=p.value("infinite_lives",false);o.lives1=p.value("lives",3);
+        if(o.view<0||o.view>8||(o.rate!=30&&o.rate!=60&&o.rate!=120)||o.lives1<1||o.lives1>99)throw Error("E_PREFERENCES","Invalid family preferences");}}
     if(!request.contains("settings"))return o;
     for(auto group=request["settings"].begin();group!=request["settings"].end();++group)for(auto item=group.value().begin();item!=group.value().end();++item){auto key=item.key();const auto& v=item.value();
         if(key=="action_button")o.action_button=v;else if(key=="jump_button")o.jump_button=v;else if(key=="fullscreen")o.fullscreen=v.get<bool>();else if(key=="music_volume")o.music=v;else if(key=="effects_volume")o.effects=v;
         else if(key=="camera")o.camera=v=="smooth";else if(key=="hud")o.hud=v=="fixed";else if(key=="view_step")o.view=v;
         else if(key=="invulnerable")o.invulnerable=v.get<bool>();else if(key=="infinite_lives")o.infinite_lives=v.get<bool>();
-        else if(key=="lives_player1")o.lives1=v;else if(key=="lives_player2")o.lives2=v;else if(key=="start_level")o.level=v;
-        else if(key=="sound_mode")o.sound=v=="dos"?1:v=="amiga"?2:0;
+        else if(key=="lives_player1"||key=="lives")o.lives1=v;else if(key=="lives_player2")o.lives2=v;else if(key=="start_level")o.level=v;
+        else if(key=="render_rate")o.rate=v;else if(key=="sound_mode")o.sound=v=="dos"?1:v=="amiga"?2:0;
     }return o;
 }
 Json inspect_saves(){Json slots=Json::array(),details=Json::array();auto profile=fs::u8path(request["paths"]["profile_directory"]["path"].get<std::string>());
@@ -104,9 +105,15 @@ int run(const std::vector<std::string>& args){bool inspecting=false;bool loaded=
         SDL_SetMainReady();if(test_ms&&gameplay_probe&&fault=="controller"){SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS,"1");if(SDL_Init(SDL_INIT_GAMECONTROLLER))throw Error("E_TEST_PAD",SDL_GetError());int device=SDL_JoystickAttachVirtual(SDL_JOYSTICK_TYPE_GAMECONTROLLER,SDL_CONTROLLER_AXIS_MAX,SDL_CONTROLLER_BUTTON_MAX,0);if(device<0||(virtual_pad=SDL_JoystickOpen(device))==nullptr)throw Error("E_TEST_PAD",SDL_GetError());}int code=titus_native_run();
         if(request["game_id"]!="blues"){
             int action,jump;titus_native_buttons(&action,&jump);int full,music,effects;titus_native_preferences(&full,&music,&effects);
-            write_document(fs::u8path(request["paths"]["work_directory"]["path"].get<std::string>())/"preferences.json",{{"schema_version",1},{"fullscreen",bool(full)},{"music_volume",music},{"effects_volume",effects},{"action_button",action},{"jump_button",jump}});
+            auto prefsfile=fs::u8path(request["paths"]["work_directory"]["path"].get<std::string>())/"preferences.json";
+            Json prefs=path_exists(prefsfile)?parse_json(read_document(prefsfile,8192)):Json::object();
+            titus_native_options actual{};titus_native_family_options(&actual);
+            prefs.update({{"schema_version",1},{"fullscreen",bool(full)},{"music_volume",music},{"effects_volume",effects},{"action_button",action},{"jump_button",jump},
+            {"camera",actual.camera?"smooth":"classic"},{"hud",actual.hud?"fixed":"classic"},{"view_step",actual.view},{"render_rate",actual.rate},
+            {"invulnerable",bool(actual.invulnerable)},{"infinite_lives",bool(actual.infinite_lives)},{"lives",actual.lives1}});
+            write_document(prefsfile,prefs);
             if(gameplay_probe){uint64_t samples,audible,clipped;int peak,effects;titus_native_audio_stats(&samples,&audible,&clipped,&peak,&effects);
-                write_document(directory/"probe-observation.json",{{"gameplay",gameplay},{"pause",pause_seen},{"frames",actor_frames},{"right",right_max-baseline_x},{"left",left_start-left_min},{"jump",baseline_y-jump_min},{"samples",samples},{"nonzero",audible},{"clipped",clipped},{"peak",peak},{"effects",effects}});}
+                write_document(directory/"probe-observation.json",{{"gameplay",gameplay},{"pause",pause_seen},{"frames",actor_frames},{"right",right_max-baseline_x},{"left",left_start-left_min},{"jump",baseline_y-jump_min},{"samples",samples},{"nonzero",audible},{"clipped",clipped},{"peak",peak},{"effects",effects},{"rewind",rewind_seen}});}
 
         }
         emit("closing");
@@ -151,6 +158,8 @@ extern "C" int titus_runtime_poll(void){
     bound_log(stdout);bound_log(stderr);
     auto push=[](SDL_Keycode key,Uint32 type=SDL_KEYDOWN){SDL_Event event{};event.type=type;event.key.keysym.sym=key;event.key.keysym.scancode=SDL_GetScancodeFromKey(key);SDL_PushEvent(&event);};
     if(test_ms&&gameplay_probe&&ready){
+        static Uint32 menu_at=0;
+        if(pause_seen&&actor_frames==146){if(!menu_at)menu_at=SDL_GetTicks();if(SDL_GetTicks()-menu_at>120){push(SDLK_p,SDL_KEYUP);++actor_frames;}}
         if(!gameplay&&SDL_GetTicks()-ready_at>15000)throw Error("E_TEST_GAMEPLAY","Could not reach interactive gameplay");
         if(!gameplay&&SDL_GetTicks()-last_skip>=120){last_skip=SDL_GetTicks();skip_down=!skip_down;push(SDLK_SPACE,skip_down?SDL_KEYDOWN:SDL_KEYUP);}
         if(gameplay&&request["game_id"]=="blues"){auto elapsed=SDL_GetTicks()-gameplay_at;
@@ -160,6 +169,12 @@ extern "C" int titus_runtime_poll(void){
             if(probe_step==3&&elapsed>1100){push(SDLK_r);++probe_step;}
             if(probe_step==4&&elapsed>1400){push(SDLK_r,SDL_KEYUP);++probe_step;}
         }
+    }
+    if(test_ms&&gameplay_probe&&gameplay&&request["game_id"]!="blues"){
+        static Uint32 rewind_at=0;
+        if(probe_step==0&&actor_frames>=120){push(SDLK_MINUS);push(SDLK_MINUS,SDL_KEYUP);push(SDLK_F7);push(SDLK_F7,SDL_KEYUP);++probe_step;}
+        if(probe_step==1&&actor_frames>=125){push(SDLK_r);rewind_at=SDL_GetTicks();++probe_step;}
+        if(probe_step==2&&SDL_GetTicks()-rewind_at>=300){push(SDLK_r,SDL_KEYUP);++probe_step;}
     }
     if(test_ms&&ready&&(!gameplay_probe||gameplay)&&
        (!gameplay_probe||request["game_id"]=="blues"||(actor_frames>=146&&pause_seen))&&SDL_GetTicks()-(gameplay_probe?gameplay_at:ready_at)>=static_cast<Uint32>(test_ms)&&!returning){returning=true;return 1;}

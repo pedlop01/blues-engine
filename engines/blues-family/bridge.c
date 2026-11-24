@@ -30,16 +30,18 @@ void titus_native_options_init(const struct titus_native_options *o,int preferen
     g_options.start_xpos16=g_options.start_ypos16=-1;g_options.scroll_rate=60;
     g_options.music_volume=g_options.effects_volume=100;g_options.camera_mode=CAMERA_SMOOTH;
     g_options.amiga_copper_bars=g_options.amiga_colors=true;g_options.screen_w=320;g_options.screen_h=200;
-    if(!o->game&&preferences&&g_sys.load_preferences)g_sys.load_preferences();
+    if(preferences&&g_sys.load_preferences)g_sys.load_preferences();
     titus_native_set_buttons(o->action_button,o->jump_button);
-    if(o->game){g_options.camera_mode=CAMERA_CLASSIC;g_options.jump_button=true;}
+    if(o->game)g_options.jump_button=true;
     g_options.dos_datapath=o->dos;g_options.amiga_datapath=o->amiga;g_options.preferred_amiga=o->edition;
     if(o->fullscreen>=0)g_options.fullscreen=o->fullscreen;
     if(o->music>=0)g_options.music_volume=o->music;if(o->effects>=0)g_options.effects_volume=o->effects;
     if(o->camera>=0)g_options.camera_mode=o->camera;if(o->hud>=0)g_options.hud_mode=o->hud;
     if(o->view>=0)g_sys.input.view_step=o->view;
+    if(o->rate>=0)g_options.scroll_rate=o->rate;
     if(o->invulnerable>=0){g_options.cheats&=~CHEATS_INVULNERABLE;if(o->invulnerable)g_options.cheats|=CHEATS_INVULNERABLE;}
-    if(o->infinite_lives>=0){g_options.cheats&=~CHEATS_UNLIMITED_LIFES;if(o->infinite_lives)g_options.cheats|=CHEATS_UNLIMITED_LIFES;}
+    if(o->infinite_lives>=0)g_options.family_infinite_lives=o->infinite_lives;
+    if(o->game!=1&&o->infinite_lives>=0){g_options.cheats&=~CHEATS_UNLIMITED_LIFES;if(o->infinite_lives)g_options.cheats|=CHEATS_UNLIMITED_LIFES;}
     if(o->lives1>=0)g_options.initial_lives[0]=o->lives1;if(o->lives2>=0)g_options.initial_lives[1]=o->lives2;
     if(o->level>=0)g_options.start_level=o->level;if(o->sound>=0)g_options.sound_mode=o->sound;
 }
@@ -51,8 +53,14 @@ int titus_native_run(void){
     if(probe_enabled){start_audio=g_sys.start_audio;g_sys.start_audio=observe_start;engine_play_sound=g_mix.play_sound;g_mix.play_sound=observe_sound;}
     g_mix.set_volumes(g_options.music_volume,g_options.effects_volume);g_mix.init();
     if(!titus_runtime_poll())game->run();
-    if(game==&game_bb&&g_sys.save_preferences)g_sys.save_preferences();
+    if(g_sys.save_preferences)g_sys.save_preferences();
     g_mix.fini();game->snd_fini();game->res_fini();g_sys.fini();return 0;
 }
 
 void titus_native_preferences(int *fullscreen,int *music,int *effects){*fullscreen=g_options.fullscreen;*music=g_options.music_volume;*effects=g_options.effects_volume;}
+
+void titus_native_family_options(struct titus_native_options *o){
+    o->camera=g_options.camera_mode;o->hud=g_options.hud_mode;o->view=g_sys.input.view_step;
+    o->rate=g_options.scroll_rate;o->invulnerable=(g_options.cheats&CHEATS_NO_HIT)!=0;
+    o->infinite_lives=g_options.family_infinite_lives;o->lives1=g_options.initial_lives[0];
+}

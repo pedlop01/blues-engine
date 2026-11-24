@@ -44,7 +44,15 @@
         "native_pause",
         "fullscreen",
         "controller_bindings",
-        "separate_volumes"
+        "separate_volumes",
+        "smooth_camera",
+        "dynamic_view",
+        "hud_modes",
+        "invulnerability",
+        "lives_options",
+        "level_select",
+        "rewind",
+        "character_select"
       ]
     },
     {
@@ -57,7 +65,14 @@
         "native_pause",
         "fullscreen",
         "controller_bindings",
-        "separate_volumes"
+        "separate_volumes",
+        "smooth_camera",
+        "dynamic_view",
+        "hud_modes",
+        "invulnerability",
+        "lives_options",
+        "level_select",
+        "rewind"
       ]
     }
   ]

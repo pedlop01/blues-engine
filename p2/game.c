@@ -333,7 +333,7 @@ static void game_run() {
 	g_vars.starttime = g_sys.get_timestamp();
 	while (!g_sys.input.quit) {
 		if (1) {
-			g_vars.player_lifes = 2;
+			g_vars.player_lifes = g_options.initial_lives[0];
 			g_vars.player_bonus_letters_mask = 0;
 			g_vars.player_club_power = 20;
 			g_vars.player_club_type = 0;
@@ -349,6 +349,7 @@ static void game_run() {
 		}
 		uint8_t level_num;
 		do {
+			g_options.family_restart_level=false;
 			level_num = g_vars.level_num;
 			if (g_vars.level_num >= 8 && g_vars.level_num < 10 && 0 /* !g_vars.level_expert_flag */ ) {
 				do_castle_screen();
@@ -356,7 +357,7 @@ static void game_run() {
 			}
 			do_level();
 			print_debug(DBG_GAME, "previous level %d current %d", level_num, g_vars.level_num);
-		} while (!g_res.dos_demo && g_vars.level_num != level_num);
+		} while (!g_res.dos_demo && (g_vars.level_num != level_num || g_options.family_restart_level));
 	}
 }
 

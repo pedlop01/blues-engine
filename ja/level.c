@@ -43,7 +43,7 @@ static void level_player_die(struct player_t *player) {
 	if (player_flags(&player->obj) & 0x40) {
 		// player_flags2(&player->other_player->obj) &= ~1;
 	}
-	--player->lifes_count;
+	if(!g_options.family_infinite_lives && player->lifes_count>0)--player->lifes_count;
 	play_sound(SOUND_14);
 }
 
@@ -2231,6 +2231,7 @@ static void draw_panel() {
 static void level_draw_objects() {
 	for (int i = OBJECTS_COUNT - 1; i >= 0; --i) {
 		struct object_t *obj = &g_vars.objects_table[i];
+		if(g_sys.set_sprite_owner)g_sys.set_sprite_owner(i);
 		if (obj->spr_num == 0xFFFF) {
 			continue;
 		}
@@ -2691,6 +2692,8 @@ static void level_adjust_player_position() {
 	assert(g_vars.player < 2);
 }
 
+static bool _family_active;
+static void family_present();
 static void level_sync() {
 	++g_vars.level_time_counter;
 	if (g_vars.level_time_counter >= 28) {
@@ -2699,8 +2702,8 @@ static void level_sync() {
 			--g_vars.level_time;
 		}
 	}
-	g_sys.copy_bitmap(g_res.vga, GAME_SCREEN_W, GAME_SCREEN_H);
-	g_sys.update_screen();
+	if(_family_active)family_present();
+	else {g_sys.copy_bitmap(g_res.vga, GAME_SCREEN_W, GAME_SCREEN_H);g_sys.update_screen();}
 	g_sys.render_clear_sprites();
 	const int diff = (g_vars.timestamp + (1000 / 30)) - g_sys.get_timestamp();
 	g_sys.sleep(MAX(diff, 10));
@@ -3009,45 +3012,177 @@ static bool change_level(bool first_level) {
 	}
 }
 
+extern void family_select_character();
+#define FAMILY_LEVEL_COUNT 31
+#define FAMILY_NO_CHARACTER false
+static const char *const family_level_names[31] = {
+    "NIVEL 01", "NIVEL 02", "NIVEL 03", "NIVEL 04", "NIVEL 05", "NIVEL 06",
+    "NIVEL 07", "NIVEL 08", "NIVEL 09", "NIVEL 10", "NIVEL 11", "NIVEL 12",
+    "NIVEL 13", "NIVEL 14", "NIVEL 15", "NIVEL 16", "NIVEL 17", "NIVEL 18",
+    "NIVEL 19", "NIVEL 20", "NIVEL 21", "NIVEL 22", "NIVEL 23", "NIVEL 24",
+    "NIVEL 25", "NIVEL 26", "NIVEL 27", "NIVEL 28", "NIVEL 29", "NIVEL 30",
+    "NIVEL 31"};
+static int family_level() { return g_vars.level - 1; }
+static bool family_level_available(int i) {
+  return READ_BE_UINT16(level_data1p + i * 2) != 0xFFFF;
+}
+static int family_lives(int i) { return g_vars.players_table[i].lifes_count; }
+static void family_set_lives(int i, int n) {
+  g_vars.players_table[i].lifes_count = n;
+}
+static bool family_invulnerable() {
+  return (g_options.cheats & CHEATS_OBJECT_NO_HIT) != 0;
+}
+static void family_set_assists(bool inv, bool infinite) {
+  g_options.cheats &= ~(CHEATS_OBJECT_NO_HIT | CHEATS_DECOR_NO_HIT);
+  if (inv)
+    g_options.cheats |= CHEATS_OBJECT_NO_HIT | CHEATS_DECOR_NO_HIT;
+}
+static int family_native_x() {
+  return g_vars.tilemap_x * 16 + g_vars.tilemap_scroll_dx * 4;
+}
+static int family_native_y() {
+  return g_vars.tilemap_y * 16 + g_vars.tilemap_scroll_dy;
+}
+static int family_map_w() { return g_vars.tilemap_w * 16; }
+static int family_map_h() { return g_vars.tilemap_h * 16; }
+static int family_quantize_x(int x) { return x / 4 * 4; }
+static void family_draw_view(int x, int y, int w, int h, uint8_t *pixels);
+static uint8_t family_map_pixel(int wx, int wy, int sx, int sy);
+static size_t family_state_size();
+static void family_capture(void *data);
+static void family_restore(const void *data);
+static void family_resume_music();
+static void family_pause_elapsed(uint32_t elapsed) {
+  g_vars.timestamp = g_sys.get_timestamp();
+}
+
+#include "engines/family_host/presentation.h"
+struct family_memory {
+  uint8_t palette[768];
+  struct vars_t vars, render;
+  uint8_t tmp[72728];
+};
+static size_t family_state_size() { return sizeof(struct family_memory); }
+static void family_capture(void *data) {
+  struct family_memory *s = data;
+  g_sys.get_screen_palette(s->palette);
+  s->vars = g_vars;
+  s->render = _family_before_draw;
+  memcpy(s->tmp, g_res.tmp, sizeof(s->tmp));
+}
+static void family_restore(const void *data) {
+  const struct family_memory *s = data;
+  g_vars = s->vars;
+  _family_before_draw = s->render;
+  memcpy(g_res.tmp, s->tmp, sizeof(s->tmp));
+  g_vars.timestamp = g_sys.get_timestamp();
+  g_sys.set_screen_palette(s->palette, 0, 256, 8);
+}
+static void family_resume_music() { play_music(((g_vars.level >> 3) & 3) + 1); }
+static void family_draw_view(int x, int y, int w, int h, uint8_t *pixels) {
+  struct vars_t native = g_vars;
+  uint8_t *vga = g_res.vga;
+  g_vars = _family_before_draw;
+  g_options.screen_w = w;
+  g_options.screen_h = h;
+  g_res.vga = pixels;
+  g_vars.tilemap_x = x / 16;
+  g_vars.tilemap_scroll_dx = (x % 16) / 4;
+  g_vars.tilemap_y = y / 16;
+  g_vars.tilemap_scroll_dy = y % 16;
+  level_draw_tilemap();
+  draw_panel();
+  level_draw_objects();
+  g_vars = native;
+  g_res.vga = vga;
+  g_options.screen_w = 320;
+  g_options.screen_h = 200;
+}
+static uint8_t family_map_pixel(int wx, int wy, int sx, int sy) {
+  uint8_t bg =
+      g_res.background[MAX(0, MIN(175, sy * 176 / MAX(1, _family_h - 24))) *
+                           320 +
+                       ((sx % 320 + 320) % 320)];
+  if (wx < 0 || wy < 0 || wx >= family_map_w() || wy >= family_map_h())
+    return bg;
+  const uint8_t tile = level_lookup_tile(
+      g_vars.tilemap_data[(wy / 16) * g_vars.tilemap_w + wx / 16]);
+  const uint8_t b = g_res.tmp[tile * 128 + (wy % 16) * 8 + (wx % 16) / 2];
+  const uint8_t color = (wx & 1) ? b & 15 : b >> 4;
+  return color ? (0x80 | (g_vars.tile_palette_table[tile] * 16) | color) : bg;
+}
+
 void do_level() {
-	change_level(true);
-	while (!g_sys.input.quit) {
+  change_level(true);
+  family_begin();
+  while (!g_sys.input.quit) {
 #ifdef TITUS_MANAGED
-		titus_runtime_gameplay();
-		titus_runtime_actor(g_vars.players_table[0].obj.x_pos,g_vars.players_table[0].obj.y_pos);
+    titus_runtime_gameplay();
+    titus_runtime_actor(g_vars.players_table[0].obj.x_pos,
+                        g_vars.players_table[0].obj.y_pos);
 #endif
-		g_vars.timestamp = g_sys.get_timestamp();
-		update_input();
-		level_update_palette();
-		level_update_input();
-		level_update_triggers();
-		if (g_vars.change_next_level_flag) {
-			++g_vars.level;
-			if (change_level(false)) {
-				continue;
-			}
-			break;
-		}
-		level_update_players();
-		level_draw_tilemap();
-		draw_panel();
-		level_reset_palette();
-		level_draw_objects();
-		level_adjust_player_position();
-		level_sync();
-		++g_vars.level_loop_counter;
-		assert(g_vars.player != 2);
-		if ((player_flags2(&g_vars.players_table[0].obj) & 0x10) == 0) {
-			continue;
-		}
-		// player fell or no energy left
-		g_sys.fade_out_palette();
-		assert(g_vars.player != 2);
-		if (g_vars.players_table[0].lifes_count != 0) {
-			init_level(get_level()); // restart
-			continue;
-		}
-		do_game_over_screen();
-		break;
-	}
+    if (!family_before_tick()) {
+      if (_family_rewinding)
+        continue;
+      if (g_sys.input.quit)
+        break;
+      if (_family_character) {
+        family_end();
+        family_select_character();
+        if (g_sys.input.quit)
+          break;
+        init_level(get_level());
+        family_begin();
+        continue;
+      }
+      g_vars.level = _family_requested_level + 1;
+      family_end();
+      change_level(false);
+      family_begin();
+      continue;
+    }
+    g_vars.timestamp = g_sys.get_timestamp();
+    update_input();
+    level_update_palette();
+    level_update_input();
+    level_update_triggers();
+    if (g_vars.change_next_level_flag) {
+      family_end();
+      ++g_vars.level;
+      if (change_level(false)) {
+        family_begin();
+        continue;
+      }
+      break;
+    }
+    level_update_players();
+    _family_before_draw = g_vars;
+    level_draw_tilemap();
+    draw_panel();
+    level_reset_palette();
+    level_draw_objects();
+    level_adjust_player_position();
+    level_sync();
+    ++g_vars.level_loop_counter;
+    family_timeline_record();
+    assert(g_vars.player != 2);
+    if ((player_flags2(&g_vars.players_table[0].obj) & 0x10) == 0) {
+      continue;
+    }
+    // player fell or no energy left
+    g_sys.fade_out_palette();
+    assert(g_vars.player != 2);
+    if (g_vars.players_table[0].lifes_count != 0 ||
+        g_options.family_infinite_lives) {
+      family_end();
+      init_level(get_level());
+      family_begin(); // restart
+      continue;
+    }
+    family_end();
+    do_game_over_screen();
+    break;
+  }
+  family_end();
 }

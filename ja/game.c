@@ -315,6 +315,8 @@ void do_game_win_screen() {
 	}
 }
 
+void family_select_character(){do_select_screen();}
+
 static void game_run() {
 	play_music(0);
 	do_splash_screen();
@@ -328,8 +330,8 @@ static void game_run() {
 			g_vars.level = 1;
 		}
 		const int ret = do_menu_screen();
-		g_vars.players_table[0].lifes_count = 3;
-		g_vars.players_table[1].lifes_count = 3;
+		g_vars.players_table[0].lifes_count = g_options.initial_lives[0];
+		g_vars.players_table[1].lifes_count = g_options.initial_lives[1];
 		if (ret == 0) {
 			break;
 		} else if (ret == 1) {

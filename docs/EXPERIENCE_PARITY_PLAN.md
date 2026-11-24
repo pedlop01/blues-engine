@@ -46,3 +46,8 @@ ha aceptado el resultado tras las pruebas reproducibles y su revisión jugando.
   eligen en la biblioteca; el cambio durante la acción sigue reservado a Blues.
 - Se mantienen la procedencia, revisión y avisos de cada motor y los originales
   de solo lectura. El trabajo no convierte los motores en un único código base.
+
+## Jukebox y Prehistorik 2
+
+Su paridad se sigue por separado en [PF-01–PF-08](FAMILY_PARITY_PLAN.md),
+autorizada el 24-11-2026 y aún en curso. PX permanece cerrada y aceptada.

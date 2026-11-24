@@ -471,7 +471,7 @@ static void sdl2_copy_bitmap(const uint8_t *p, int w, int h) {
 	SDL_UpdateTexture(_texture, 0, _screen_buffer, _screen_w * sizeof(uint32_t));
 	if (_hud_width > 0 && _screen_w >= _hud_width) {
 		const int x = (_screen_w - _hud_width) / 2;
-		SDL_UpdateTexture(_hud_texture_top, 0, _screen_buffer + x,
+		if(_hud_top>0)SDL_UpdateTexture(_hud_texture_top, 0, _screen_buffer + x,
 			_screen_w * sizeof(uint32_t));
 		SDL_UpdateTexture(_hud_texture_bottom, 0,
 			_screen_buffer + (_screen_h - _hud_bottom) * _screen_w + x,
@@ -533,12 +533,16 @@ static SDL_FRect sdl2_sprite_rect(const struct sprite_t *spr, float scroll_x, fl
 	return r;
 }
 
+static void sdl2_get_screen_palette(uint8_t *rgb) {
+    for(int i=0;i<256;++i)SDL_GetRGB(_screen_palette[i],_fmt,rgb+i*3,rgb+i*3+1,rgb+i*3+2);
+}
+
 static void sdl2_set_hud_layout(int width, int height, int top, int bottom) {
 	if (width > 0 && (width != _hud_width || top != _hud_top || bottom != _hud_bottom)) {
 		SDL_DestroyTexture(_hud_texture_top);
 		SDL_DestroyTexture(_hud_texture_bottom);
 		_hud_texture_top = SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_RGB888,
-			SDL_TEXTUREACCESS_STREAMING, width, top);
+			SDL_TEXTUREACCESS_STREAMING, width, MAX(1,top));
 		_hud_texture_bottom = SDL_CreateTexture(_renderer, SDL_PIXELFORMAT_RGB888,
 			SDL_TEXTUREACCESS_STREAMING, width, bottom);
 		if (!_hud_texture_top || !_hud_texture_bottom) print_error("Failed to allocate HUD textures");
@@ -565,7 +569,7 @@ static void sdl2_draw_hud() {
 	const float y = (output_h - _hud_height * scale) / 2.f;
 	SDL_RenderSetLogicalSize(_renderer, 0, 0);
 	SDL_FRect dst = { x, y, _hud_width * scale, _hud_top * scale };
-	SDL_RenderCopyF(_renderer, _hud_texture_top, 0, &dst);
+	if(_hud_top>0)SDL_RenderCopyF(_renderer, _hud_texture_top, 0, &dst);
 	dst.y = y + (_hud_height - _hud_bottom) * scale;
 	dst.h = _hud_bottom * scale;
 	SDL_RenderCopyF(_renderer, _hud_texture_bottom, 0, &dst);
@@ -1362,6 +1366,7 @@ struct sys_t g_sys = {
 	.set_hud_layout = sdl2_set_hud_layout,
 	.begin_sprite_frame = sdl2_begin_sprite_frame,
 	.set_sprite_owner = sdl2_set_sprite_owner,
+	.get_screen_palette = sdl2_get_screen_palette,
 };
 
 #ifdef TITUS_MANAGED

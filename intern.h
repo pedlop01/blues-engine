@@ -82,6 +82,7 @@ struct options_t {
 	bool fullscreen;
 	int preferred_amiga; /* -1: automatic selection, 0: DOS, 1: Amiga. */
 	int initial_lives[2];
+	bool family_infinite_lives, family_restart_level;
 	const char *dos_datapath;
 	const char *amiga_datapath;
 };

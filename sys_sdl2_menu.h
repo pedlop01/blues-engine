@@ -18,6 +18,11 @@ static int _edit_keys[BIND_COUNT] = {SDLK_LEFT, SDLK_RIGHT, SDLK_UP,SDLK_DOWN,SD
 static int _game_buttons[2] = {SDL_CONTROLLER_BUTTON_A,SDL_CONTROLLER_BUTTON_B};
 static int _edit_buttons[2] = {SDL_CONTROLLER_BUTTON_A,SDL_CONTROLLER_BUTTON_B};
 static struct sys_pause_options _pause_options = {.camera=CAMERA_SMOOTH,.hud=HUD_CLASSIC,.render_rate=60,.music_volume=100,.effects_volume=100};
+static int pause_level_count() { return _pause_options.level_count ? _pause_options.level_count : 6; }
+static const char *pause_level_name(int level) {
+	if (_pause_options.level_names) return _pause_options.level_names[level];
+	return _level_names[level];
+}
 static int _last_music_volume = 100, _last_effects_volume = 100;
 static int _pause_capture = -1, _pause_xaxis;
 static int _capture_ignore_key = SDLK_UNKNOWN, _capture_ignore_button = -1;
@@ -61,7 +66,7 @@ static int pause_item_count() {
 	case PAUSE_GAME: return 3;
 	case PAUSE_SLOTS: return SAVE_SLOT_COUNT+1;
 	case PAUSE_SAVE_CONFIRM: case PAUSE_LOAD_CONFIRM: return 2;
-	case PAUSE_LEVELS: return 7;
+	case PAUSE_LEVELS: return pause_level_count()+1;
 	case PAUSE_LEVEL_CONFIRM: case PAUSE_CHARACTER_CONFIRM: return 2;
 	case PAUSE_QUIT: return 2;
 	case PAUSE_OPTIONS: return 10;
@@ -331,7 +336,7 @@ static void pause_draw_settings() {
 	if (_pause_page == PAUSE_LEVEL_CONFIRM || _pause_page == PAUSE_CHARACTER_CONFIRM || _pause_page == PAUSE_DEFAULTS) {
 		const bool character = _pause_page == PAUSE_CHARACTER_CONFIRM;
 		pause_center_text(_pause_page == PAUSE_DEFAULTS ? "RESTAURAR AJUSTES?" : (character ? "ELEGIR PERSONAJE?" : "INICIAR NIVEL?"),26,2,true);
-		pause_center_text(_pause_page == PAUSE_DEFAULTS ? "OPCIONES Y CONTROLES ORIGINALES" : (character ? "REINICIARAS EL NIVEL ACTUAL" : _level_names[_selected_level]),60,1,true);
+		pause_center_text(_pause_page == PAUSE_DEFAULTS ? "OPCIONES Y CONTROLES ORIGINALES" : (character ? "REINICIARAS EL NIVEL ACTUAL" : pause_level_name(_selected_level)),60,1,true);
 		pause_center_text(_pause_page == PAUSE_DEFAULTS ? "LA PARTIDA NO SE REINICIA" : "SE PERDERA EL PROGRESO ACTUAL",82,1,false);
 		pause_row("VOLVER",NULL,4,true);
 		pause_row(_pause_page == PAUSE_DEFAULTS ? "RESTAURAR" : "INICIAR",NULL,5,true);
@@ -340,12 +345,15 @@ static void pause_draw_settings() {
 	}
 	if (_pause_page == PAUSE_LEVELS) {
 		pause_center_text("SELECCIONAR NIVEL",26,2,true);
-		for (int i=0;i<6;++i) {
+		const int first = (_pause_selection < pause_level_count() ? _pause_selection / 6 : (pause_level_count()-1)/6)*6;
+		for (int i=first;i<MIN(first+6,pause_level_count());++i) {
 			const bool available = _pause_options.available_levels[_pause_options.amiga][i];
 			const char *status = !available ? "SIN DATOS" : (i == _pause_options.current_level ? "ACTUAL" : NULL);
-			pause_row(_level_names[i],status,i,available);
+			const int selected=_pause_selection;_pause_selection-=first;
+			pause_row(pause_level_name(i),status,i-first,available);_pause_selection=selected;
 		}
-		pause_row("VOLVER",NULL,6,true);
+		const int selected=_pause_selection; if(selected==pause_level_count())_pause_selection=6;
+		pause_row("VOLVER",NULL,6,true);_pause_selection=selected;
 		pause_center_text(_pause_notice ? _pause_notice : "ENTER / A: ELEGIR  ESC: VOLVER",163,1,true);
 		pause_center_text("INICIO DESDE EL PRINCIPIO",175,1,false);
 		return;
@@ -481,6 +489,7 @@ static void sdl2_draw_pause_menu() {
 		const char *main_items[] = {"CONTINUAR", "OPCIONES", "CONTROLES", "SELECCIONAR NIVEL", "PARTIDA", "ELEGIR PERSONAJE", "SALIR DEL JUEGO"};
 		const char *quit_items[] = {"VOLVER", "SALIR"};
 #ifdef TITUS_MANAGED
+        if(_pause_options.no_character_select)main_items[5]="PERSONAJE: UNICO";
         main_items[6]="VOLVER A BIBLIOTECA";quit_items[1]="VOLVER A BIBLIOTECA";
 #endif
 		const int count = pause_item_count();
@@ -612,7 +621,7 @@ static bool pause_activate() {
 		return true;
 	}
 	if (_pause_page == PAUSE_LEVELS) {
-		if (_pause_selection == 6) return pause_back();
+		if (_pause_selection == pause_level_count()) return pause_back();
 		if (!_pause_options.available_levels[_pause_options.amiga][_pause_selection]) { _pause_notice="FALTAN ARCHIVOS DE ESTE NIVEL"; return false; }
 		_selected_level=_pause_selection; _pause_page=PAUSE_LEVEL_CONFIRM; _pause_selection=0;
 		return false;
@@ -662,7 +671,9 @@ static bool pause_activate() {
 	}
 	if (_pause_selection == 0) return true;
 	if (_pause_selection == 3) { _pause_page=PAUSE_LEVELS; _pause_selection=_pause_options.current_level; return false; }
+	if (_pause_selection == 4 && !_pause_options.save_game) { _pause_notice="GUARDADOS TODAVIA NO DISPONIBLES"; return false; }
 	if (_pause_selection == 4) { _pause_page=PAUSE_GAME; _pause_selection=0; return false; }
+	if (_pause_selection == 5 && _pause_options.no_character_select) { _pause_notice="ESTE JUEGO NO TIENE SELECCION DE PERSONAJE"; return false; }
 	if (_pause_selection == 5) { _pause_page=PAUSE_CHARACTER_CONFIRM; _pause_selection=0; return false; }
 	_pause_page = _pause_selection == 1 ? PAUSE_OPTIONS : (_pause_selection == 2 ? PAUSE_BINDINGS : PAUSE_QUIT);
 	_pause_selection = 0;
@@ -828,6 +839,9 @@ static void sdl2_run_pause_menu() {
 	const bool resume_audio = audio_status == SDL_AUDIO_PLAYING ||
 		(audio_status == SDL_AUDIO_PAUSED && !_window_has_focus);
 	SDL_PauseAudio(1);
+#ifdef TITUS_MANAGED
+    titus_runtime_probe_paused(1);
+#endif
 	clear_pause_input();
 	remember_held_controls();
 	sdl2_set_scroll_interpolation(0, 0, 0, false);

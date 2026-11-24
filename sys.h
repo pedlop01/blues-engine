@@ -62,7 +62,10 @@ struct sys_pause_options {
 	const char *(*save_error)();
 	const char *load_notice;
 	int current_level, requested_level; /* -1 means continue. */
-	bool available_levels[2][6]; /* DOS, Amiga; six stages each. */
+	bool available_levels[2][32]; /* DOS, Amiga; up to 32 entries. */
+	int level_count; /* 0: original six Blues stages. */
+	const char *const *level_names;
+	bool no_character_select;
 	enum camera_mode camera;
 	enum hud_mode hud;
 	int render_rate, view_step;
@@ -118,6 +121,7 @@ struct sys_t {
 	void	(*set_hud_layout)(int width, int height, int top, int bottom);
 	void	(*begin_sprite_frame)();
 	void	(*set_sprite_owner)(int owner);
+	void	(*get_screen_palette)(uint8_t *rgb);
 };
 
 extern struct sys_t g_sys;

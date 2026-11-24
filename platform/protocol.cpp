@@ -24,7 +24,7 @@ Json runtime_error(const std::exception& error,bool ready){
 Json blues_features(bool dual){Json features=Json::array({"return_to_library","native_pause","fullscreen","save_slots","save_thumbnails","rewind","dynamic_view","smooth_camera","hud_modes","invulnerability","lives_options","level_select","character_select","separate_volumes","audio_mode_selection","controller_bindings"});if(dual)features.push_back("live_edition_switch");return features;}
 Json runtime_features(const std::string& game,bool dual){
     if(game=="blues")return blues_features(dual);
-    if(game=="jukebox"||game=="prehistorik2")return Json::array({"return_to_library","native_pause","fullscreen","separate_volumes","controller_bindings"});
+    if(game=="jukebox"||game=="prehistorik2"){Json f=Json::array({"return_to_library","native_pause","fullscreen","separate_volumes","controller_bindings","smooth_camera","dynamic_view","hud_modes","invulnerability","lives_options","level_select","rewind"});if(game=="jukebox")f.push_back("character_select");return f;}
     if(game=="fox"||game=="prehistorik")return Json::array({"return_to_library","native_pause","fullscreen"});
     throw Error("E_GAME","Unsupported engine game");
 }
@@ -90,14 +90,14 @@ void validate_engine_request(const Json& r,const fs::path& file){
     must(r["settings"].is_object(),"Invalid settings");
     validate_settings_values(r["settings"],game);
     const std::map<std::string,std::string> gates={{"camera","smooth_camera"},{"hud","hud_modes"},{"view_step","dynamic_view"},{"invulnerable","invulnerability"},{"infinite_lives","lives_options"},{"lives_player1","lives_options"},{"lives_player2","lives_options"},{"start_level","level_select"},{"sound_mode","audio_mode_selection"}};
-    for(auto group=r["settings"].begin();group!=r["settings"].end();++group){must(group.key()=="video"||group.key()=="audio"||group.key()=="blues"||group.key()=="fox"||group.key()=="prehistorik"||group.key()=="input","Unknown settings group","E_UNSUPPORTED_SETTING");must(group.value().is_object(),"Invalid settings group");
+    for(auto group=r["settings"].begin();group!=r["settings"].end();++group){must(group.key()=="video"||group.key()=="audio"||group.key()=="blues"||group.key()=="fox"||group.key()=="prehistorik"||group.key()=="jukebox"||group.key()=="prehistorik2"||group.key()=="input","Unknown settings group","E_UNSUPPORTED_SETTING");must(group.value().is_object(),"Invalid settings group");
         for(auto v=group.value().begin();v!=group.value().end();++v){auto key=v.key();const auto& value=v.value();
             if(group.key()=="video"){must(key=="fullscreen"&&value.is_boolean()&&required.count("fullscreen"),"Unsupported video setting","E_UNSUPPORTED_SETTING");}
             else if(group.key()=="audio"){must((key=="music_volume"||key=="effects_volume")&&value.is_number_integer()&&value>=0&&value<=100&&required.count("separate_volumes"),"Unsupported volume setting","E_UNSUPPORTED_SETTING");}
             else if(group.key()=="input"){must((key=="action_button"||key=="jump_button")&&value.is_number_integer()&&(value==0||value==1||value==2||value==3||value==7||value==8||value==10)&&required.count("controller_bindings"),"Unsupported controller binding","E_UNSUPPORTED_SETTING");}
-            else if(group.key()=="fox" || group.key()=="prehistorik"){
+            else if(group.key()=="fox" || group.key()=="prehistorik"||group.key()=="jukebox"||group.key()=="prehistorik2"){
                 must(game==group.key(),"Settings require their matching game","E_UNSUPPORTED_SETTING");
-                const std::map<std::string,std::string> fox_gates={{"hud","hud_modes"},{"camera","smooth_camera"},{"view_step","dynamic_view"},{"invulnerable","invulnerability"},{"infinite_lives","lives_options"},{"lives","lives_options"},{"start_level","level_select"}};
+                const std::map<std::string,std::string> fox_gates={{"hud","hud_modes"},{"camera","smooth_camera"},{"view_step","dynamic_view"},{"invulnerable","invulnerability"},{"infinite_lives","lives_options"},{"lives","lives_options"},{"start_level","level_select"},{"render_rate","smooth_camera"}};
                 must(fox_gates.count(key) && required.count(fox_gates.at(key)),"Unsupported Fox setting","E_UNSUPPORTED_SETTING");
             }
             else if(group.key()=="blues"){

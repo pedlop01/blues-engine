@@ -49,20 +49,20 @@ def main():
             folder=local(report['directory']);req=loads((folder/'request.json').read_text());validate(req)
             events=[loads(x) for x in (folder/'events.jsonl').read_text().splitlines()];result=loads((folder/'result.json').read_text());assert validate_session(req,events,result,0)
             ready=next(e['body'] for e in events if e['event']=='ready')
-            assert ready['save_slot_count']==0 and set(ready['features'])=={'return_to_library','native_pause','fullscreen','separate_volumes','controller_bindings'}
+            assert ready['save_slot_count']==0 and set(ready['features'])==({'return_to_library','native_pause','fullscreen','separate_volumes','controller_bindings','smooth_camera','dynamic_view','hud_modes','invulnerability','lives_options','level_select','rewind'}|({'character_select'} if game=='jukebox' else set()))
             observation=loads((folder/'probe-observation.json').read_text())
             assert observation['gameplay'] and observation['pause'] and observation['frames']>=146
             assert observation['right']>40 and observation['left']>20 and observation['jump']>20,observation
             assert observation['samples']>10000 and observation['nonzero']>1000 and observation['effects']>0 and observation['peak']>1000,observation
-            assert observation['clipped']==0,observation
+            assert observation['clipped']==0 and observation['rewind'],observation
             shot=folder/'gameplay.bmp';assert shot.read_bytes()[:2]==b'BM'
             import shutil
             shutil.copyfile(shot,ROOT/'build'/f'{game}-managed-{"windows" if args.windows else "linux"}.bmp')
-            assert loads((work/'preferences.json').read_text())==full
+            saved=loads((work/'preferences.json').read_text());assert all(saved[k]==v for k,v in full.items());assert saved['camera']=='smooth'
             (work/'preferences.json').write_text(json.dumps(prefs))
             invoke('titus-session',command+['--test-ms','200'])
-            assert loads((work/'preferences.json').read_text())==prefs
-            assert not (work/'preferences.ini').exists() and not (profile/'saves').exists()
+            saved=loads((work/'preferences.json').read_text());assert all(saved[k]==v for k,v in prefs.items())
+            assert (work/'preferences.ini').exists() and not (profile/'saves').exists()
             print(game,json.dumps(observation),flush=True)
             # A future preferences version must survive untouched and fail before playing.
             future=json.dumps(dict(prefs,schema_version=2));(work/'preferences.json').write_text(future)

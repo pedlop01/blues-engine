@@ -3235,9 +3235,11 @@ static void level_wait() {
 	g_vars.timestamp = g_sys.get_timestamp();
 }
 
+static bool _family_active;
+static void family_present();
 static void level_sync() {
-	g_sys.copy_bitmap(g_res.vga, GAME_SCREEN_W, GAME_SCREEN_H);
-	g_sys.update_screen();
+	if(_family_active)family_present();
+	else {g_sys.copy_bitmap(g_res.vga, GAME_SCREEN_W, GAME_SCREEN_H);g_sys.update_screen();}
 	g_sys.render_clear_sprites();
 	level_wait();
 }
@@ -3246,6 +3248,7 @@ static void level_draw_objects() {
 	++g_vars.level_draw_counter;
 	for (int i = OBJECTS_COUNT - 1; i >= 0; --i) {
 		struct object_t *obj = &g_vars.objects_tbl[i];
+		if(g_sys.set_sprite_owner)g_sys.set_sprite_owner(i);
 		if (obj->spr_num == 0xFFFF) {
 			continue;
 		}
@@ -3886,56 +3889,199 @@ void do_gameover_animation() {
 	video_set_sprite_pos_flags(0);
 }
 
+#define FAMILY_LEVEL_COUNT 16
+#define FAMILY_NO_CHARACTER true
+static const char *const family_level_names[16] = {
+    "NIVEL 01", "NIVEL 02", "NIVEL 03", "NIVEL 04", "NIVEL 05", "NIVEL 06",
+    "NIVEL 07", "NIVEL 08", "NIVEL 09", "NIVEL 10", "NIVEL 11", "NIVEL 12",
+    "NIVEL 13", "NIVEL 14", "NIVEL 15", "NIVEL 16"};
+static int family_level() { return g_vars.level_num; }
+static bool family_level_available(int i) { return !g_res.dos_demo || i == 0; }
+static int family_lives(int i) { return i ? 0 : g_vars.player_lifes; }
+static void family_set_lives(int i, int n) {
+  if (!i)
+    g_vars.player_lifes = n;
+}
+static bool family_invulnerable() {
+  return (g_options.cheats & CHEATS_NO_HIT) != 0;
+}
+static void family_set_assists(bool inv, bool infinite) {
+  g_options.cheats &=
+      ~(CHEATS_NO_HIT | CHEATS_UNLIMITED_ENERGY | CHEATS_UNLIMITED_LIFES);
+  if (inv)
+    g_options.cheats |= CHEATS_NO_HIT | CHEATS_UNLIMITED_ENERGY;
+  if (infinite)
+    g_options.cheats |= CHEATS_UNLIMITED_LIFES;
+}
+static int family_native_x() {
+  return g_vars.tilemap.x * 16 + g_vars.tilemap.scroll_dx;
+}
+static int family_native_y() {
+  return g_vars.tilemap.y * 16 + g_vars.tilemap.scroll_dy;
+}
+static int family_map_w() { return g_vars.level_num == 9 ? 320 : 4096; }
+static int family_map_h() { return g_vars.tilemap.h * 16; }
+static int family_quantize_x(int x) { return x; }
+static void family_draw_view(int x, int y, int w, int h, uint8_t *pixels);
+static uint8_t family_map_pixel(int wx, int wy, int sx, int sy);
+static size_t family_state_size();
+static void family_capture(void *data);
+static void family_restore(const void *data);
+static void family_resume_music();
+static void family_pause_elapsed(uint32_t elapsed) {
+  g_vars.timestamp = g_sys.get_timestamp();
+  g_vars.starttime += elapsed;
+}
+
+#include "engines/family_host/presentation.h"
+struct family_memory {
+  uint8_t palette[768];
+  struct vars_t vars, render;
+  struct level_t level, restart;
+};
+static size_t family_state_size() {
+  const size_t alignment = _Alignof(struct family_memory);
+  return (sizeof(struct family_memory) + g_res.levellen + alignment - 1) /
+         alignment * alignment;
+}
+static void family_capture(void *data) {
+  struct family_memory *s = data;
+  g_sys.get_screen_palette(s->palette);
+  s->vars = g_vars;
+  s->render = _family_before_draw;
+  s->level = g_res.level;
+  s->restart = g_res.restart;
+  memcpy(s + 1, g_res.leveldat, g_res.levellen);
+}
+static void family_restore(const void *data) {
+  const struct family_memory *s = data;
+  const uint32_t now = g_sys.get_timestamp();
+  g_vars = s->vars;
+  g_vars.starttime += now - g_vars.timestamp;
+  g_vars.timestamp = now;
+  _family_before_draw = s->render;
+  g_res.level = s->level;
+  g_res.restart = s->restart;
+  memcpy(g_res.leveldat, s + 1, g_res.levellen);
+  g_sys.set_screen_palette(s->palette, 0, 256, 8);
+}
+static void family_resume_music() {
+  static const uint8_t music[] = {9,  9,  0,  0,  0,  13, 4,  4,
+                                  10, 13, 16, 16, 16, 9,  14, 4};
+  play_music(music[g_vars.level_num]);
+}
+static void family_draw_view(int x, int y, int w, int h, uint8_t *pixels) {
+  struct vars_t native = g_vars;
+  uint8_t *vga = g_res.vga;
+  g_vars = _family_before_draw;
+  g_options.screen_w = w;
+  g_options.screen_h = h;
+  g_res.vga = pixels;
+  g_vars.tilemap.x = x / 16;
+  g_vars.tilemap.scroll_dx = x % 16;
+  g_vars.tilemap.y = y / 16;
+  g_vars.tilemap.scroll_dy = y % 16;
+  level_update_tilemap();
+  level_draw_panel();
+  level_draw_orbs();
+  level_draw_objects();
+  level_draw_front_tiles();
+  level_draw_flies();
+  level_draw_snow();
+  g_vars = native;
+  g_res.vga = vga;
+  g_options.screen_w = 320;
+  g_options.screen_h = 200;
+}
+static uint8_t family_map_pixel(int wx, int wy, int sx, int sy) {
+  uint8_t bg =
+      g_res.background[MAX(0, MIN(175, sy * 176 / MAX(1, _family_h - 24))) *
+                           320 +
+                       ((sx % 320 + 320) % 320)];
+  if (wx < 0 || wy < 0 || wx >= 4096 || wy >= family_map_h())
+    return bg;
+  uint8_t tile = g_res.leveldat[(wy / 16) * 256 + wx / 16];
+  tile = g_vars.level_animated_tiles_current_tbl[tile];
+  const int num =
+      READ_LE_UINT16(g_res.leveldat + g_vars.tilemap.size + tile * 2);
+  const uint8_t *data =
+      num < 256 ? g_res.leveldat + g_vars.tilemap.size + 512 + num * 128
+                : g_res.uniondat + (num - 256) * 128;
+  uint8_t b = data[(wy % 16) * 8 + (wx % 16) / 2],
+          color = (wx & 1) ? b & 15 : b >> 4;
+  return color == 0 ? bg : color;
+}
+
 void do_level() {
-	static const uint8_t music_tbl[] = { 9, 9, 0, 0, 0, 13, 4, 4, 10, 13, 16, 16, 16, 9, 14, 4 };
-	play_music(music_tbl[g_vars.level_num]);
-	load_level_data(g_vars.level_num);
-	set_level_palette();
-	video_load_sprites();
-	video_load_front_tiles();
-	video_clear();
-	level_reset();
-	level_reset_objects();
-	level_init_tilemap();
-	level_clear_panel();
-	level_draw_panel();
-	level_sync();
-	g_vars.monster.type10_dist = 0;
-	g_vars.monster.type0_hdir = 0;
-	random_reset();
-	while (!g_sys.input.quit) {
+  static const uint8_t music_tbl[] = {9,  9,  0,  0,  0,  13, 4,  4,
+                                      10, 13, 16, 16, 16, 9,  14, 4};
+  play_music(music_tbl[g_vars.level_num]);
+  load_level_data(g_vars.level_num);
+  set_level_palette();
+  video_load_sprites();
+  video_load_front_tiles();
+  video_clear();
+  level_reset();
+  level_reset_objects();
+  level_init_tilemap();
+  level_clear_panel();
+  level_draw_panel();
+  level_sync();
+  g_vars.monster.type10_dist = 0;
+  g_vars.monster.type0_hdir = 0;
+  random_reset();
+  family_begin();
+  while (!g_sys.input.quit) {
 #ifdef TITUS_MANAGED
-		titus_runtime_gameplay();
-		titus_runtime_actor(g_vars.objects_tbl[1].x_pos,g_vars.objects_tbl[1].y_pos);
+    titus_runtime_gameplay();
+    titus_runtime_actor(g_vars.objects_tbl[1].x_pos,
+                        g_vars.objects_tbl[1].y_pos);
 #endif
-		level_update_objects_hit_animation();
-		level_update_objects_axe();
-		level_update_objects_monsters();
-		level_update_objects_club_projectiles();
-		level_update_objects_bonuses();
-		level_update_objects_bonus_scores();
-		level_update_objects_decors();
-		level_update_player();
-		level_update_player_collision();
-		level_update_objects_items();
-		level_update_gates();
-		level_update_columns();
-		g_vars.tilemap_adjust_player_pos_flag = false;
-		level_update_scrolling();
-		level_update_tilemap();
-		level_draw_panel();
-		level_draw_orbs();
-		level_draw_objects();
-		level_draw_front_tiles();
-		level_draw_flies();
-		level_draw_snow();
-		if (!level_update_objects_anim()) {
-			break;
-		}
-		level_update_panel();
-		level_sync();
-		level_update_light_palette();
-		level_update_player_bonuses();
-		level_shake_screen();
-	}
+    if (!family_before_tick()) {
+      if (_family_rewinding)
+        continue;
+      if (_family_requested_level >= 0) {
+        g_vars.level_num = _family_requested_level;
+        g_options.family_restart_level = true;
+      }
+      break;
+    }
+    level_update_objects_hit_animation();
+    level_update_objects_axe();
+    level_update_objects_monsters();
+    level_update_objects_club_projectiles();
+    level_update_objects_bonuses();
+    level_update_objects_bonus_scores();
+    level_update_objects_decors();
+    level_update_player();
+    level_update_player_collision();
+    level_update_objects_items();
+    level_update_gates();
+    level_update_columns();
+    g_vars.tilemap_adjust_player_pos_flag = false;
+    level_update_scrolling();
+    _family_before_draw = g_vars;
+    level_update_tilemap();
+    level_draw_panel();
+    level_draw_orbs();
+    level_draw_objects();
+    level_draw_front_tiles();
+    level_draw_flies();
+    level_draw_snow();
+    if (g_vars.restart_level_flag || g_vars.player_death_flag ||
+        g_vars.level_completed_flag)
+      family_end();
+    if (!level_update_objects_anim()) {
+      break;
+    }
+    if (!_family_active)
+      family_begin();
+    level_update_panel();
+    level_sync();
+    level_update_light_palette();
+    level_update_player_bonuses();
+    level_shake_screen();
+    family_timeline_record();
+  }
+  family_end();
 }
